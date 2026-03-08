@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Check, Zap } from "lucide-react"
+import { AlertTriangle, ChevronDown, ChevronRight, Clock, Copy, Check, Zap } from "lucide-react"
 
 interface Ticket {
   ticket_id: string
@@ -75,6 +75,8 @@ function formatDate(iso?: string) {
   } catch { return null }
 }
 
+const PUSH_COMMAND = "bash /home/jacobbarkley/claude/claw-dashboard/scripts/push-dashboard-data.sh"
+
 function buildEscalationMessage(ticket: Ticket): string {
   const now = new Date().toISOString().slice(0, 19) + "-05:00"
   return `---
@@ -99,12 +101,36 @@ body: |
 ---`
 }
 
-function EscalateModal({ ticket, onClose }: { ticket: Ticket; onClose: () => void }) {
+function buildCloseCommand(ticket: Ticket): string {
+  const today = new Date().toISOString().slice(0, 10)
+  return `# Close ${ticket.ticket_id}
+# Edit the ticket file, then run the push script:
+
+TICKET_FILE=~/claude/OpenClaw-s-Brain/System/Design-Backlog/rebuild-tickets/${ticket.file ?? ticket.ticket_id + ".md"}
+
+# Update status to RESOLVED and last_updated to today:
+sed -i 's/^status: .*/status: RESOLVED/' "$TICKET_FILE"
+sed -i 's/^last_updated: .*/last_updated: ${today}T00:00:00-05:00/' "$TICKET_FILE"
+
+# Push to dashboard:
+${PUSH_COMMAND}`
+}
+
+function CopyModal({
+  title,
+  description,
+  content,
+  onClose,
+}: {
+  title: string
+  description: string
+  content: string
+  onClose: () => void
+}) {
   const [copied, setCopied] = useState(false)
-  const message = buildEscalationMessage(ticket)
 
   function copy() {
-    navigator.clipboard.writeText(message)
+    navigator.clipboard.writeText(content)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -112,15 +138,11 @@ function EscalateModal({ ticket, onClose }: { ticket: Ticket; onClose: () => voi
   return (
     <DialogContent className="bg-zinc-900 border-zinc-700 max-w-xl">
       <DialogHeader>
-        <DialogTitle className="text-zinc-100 text-sm font-semibold">
-          Escalate to Claude — {ticket.ticket_id}
-        </DialogTitle>
+        <DialogTitle className="text-zinc-100 text-sm font-semibold">{title}</DialogTitle>
       </DialogHeader>
-      <p className="text-xs text-zinc-400">
-        Paste this into <code className="bg-zinc-800 px-1 rounded">claude-inbox.md</code> under <code className="bg-zinc-800 px-1 rounded">## Messages</code>, then update the MSG id.
-      </p>
+      <p className="text-xs text-zinc-400">{description}</p>
       <pre className="text-xs bg-zinc-950 border border-zinc-800 rounded p-3 overflow-auto max-h-64 text-zinc-300 whitespace-pre-wrap">
-        {message}
+        {content}
       </pre>
       <button
         onClick={copy}
@@ -135,6 +157,8 @@ function EscalateModal({ ticket, onClose }: { ticket: Ticket; onClose: () => voi
 
 function TicketCard({ ticket }: { ticket: Ticket }) {
   const [escalating, setEscalating] = useState(false)
+  const [closing, setClosing] = useState(false)
+  const isClosed = CLOSED_STATUSES.has(ticket.status)
 
   return (
     <>
@@ -179,17 +203,41 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
               <span>{formatDate(ticket.last_updated)}</span>
             )}
           </div>
-          <button
-            onClick={() => setEscalating(true)}
-            className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            → Claude
-          </button>
+          <div className="flex items-center gap-3">
+            {!isClosed && (
+              <button
+                onClick={() => setClosing(true)}
+                className="text-[10px] text-emerald-500 hover:text-emerald-400 transition-colors"
+              >
+                ✓ Close
+              </button>
+            )}
+            <button
+              onClick={() => setEscalating(true)}
+              className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              → Claude
+            </button>
+          </div>
         </div>
       </div>
 
       <Dialog open={escalating} onOpenChange={setEscalating}>
-        <EscalateModal ticket={ticket} onClose={() => setEscalating(false)} />
+        <CopyModal
+          title={`Escalate to Claude — ${ticket.ticket_id}`}
+          description="Paste into claude-inbox.md under ## Messages, then update the MSG id."
+          content={buildEscalationMessage(ticket)}
+          onClose={() => setEscalating(false)}
+        />
+      </Dialog>
+
+      <Dialog open={closing} onOpenChange={setClosing}>
+        <CopyModal
+          title={`Close ${ticket.ticket_id}`}
+          description="Run this in your WSL terminal to mark the ticket resolved and update the dashboard."
+          content={buildCloseCommand(ticket)}
+          onClose={() => setClosing(false)}
+        />
       </Dialog>
     </>
   )
