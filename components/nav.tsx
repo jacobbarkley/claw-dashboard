@@ -15,24 +15,18 @@ export function Nav({ active }: { active: "dashboard" | "pipeline" | "trading" |
         <Zap className="w-4 h-4 text-yellow-400" />
         <span className="font-semibold text-zinc-100 text-sm tracking-tight">ClawBoy</span>
       </div>
-      {LINKS.map(({ href, label, soon }) => (
-        soon ? (
-          <span key={href} className="text-sm text-zinc-600 cursor-default select-none">
-            {label}
-          </span>
-        ) : (
-          <Link
-            key={href}
-            href={href}
-            className={`text-sm transition-colors ${
-              active === href.slice(1)
-                ? "text-zinc-100 font-medium"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {label}
-          </Link>
-        )
+      {LINKS.map(({ href, label }) => (
+        <Link
+          key={href}
+          href={href}
+          className={`text-sm transition-colors ${
+            active === href.slice(1)
+              ? "text-zinc-100 font-medium"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          {label}
+        </Link>
       ))}
     </div>
   )
