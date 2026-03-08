@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-03-08T05:02:45.957682+00:00",
+  "summary": {
+    "total": 1,
+    "blockers": 0,
+    "active": 0,
+    "done": 1
+  },
+  "phases": [
+    {
+      "phase": 4,
+      "label": "Live Trading Gate",
+      "total": 1,
+      "done": 1,
+      "pct": 100
+    }
+  ],
+  "by_status": {
+    "RESOLVED": [
+      {
+        "ticket_id": "TICKET-015",
+        "phase": 4,
+        "priority": "P1",
+        "severity": "SEV2",
+        "status": "RESOLVED",
+        "created_at": "2026-03-04T07:00:00-05:00",
+        "last_updated": "2026-03-06T22:30:00-05:00",
+        "resolved_at": "2026-03-06T22:30:00-05:00",
+        "timebox_minutes": 30,
+        "dependencies": [
+          "TICKET-014"
+        ],
+        "tags": [
+          "bandaid-removal",
+          "pipeline-sequencing",
+          "root-cause"
+        ],
+        "title": "Fix Agent-08 pipeline sequencing and PAPER_ENDPOINT artifact gap",
+        "file": "TICKET-015.md"
+      }
+    ]
+  },
+  "tickets": [
+    {
+      "ticket_id": "TICKET-015",
+      "phase": 4,
+      "priority": "P1",
+      "severity": "SEV2",
+      "status": "RESOLVED",
+      "created_at": "2026-03-04T07:00:00-05:00",
+      "last_updated": "2026-03-06T22:30:00-05:00",
+      "resolved_at": "2026-03-06T22:30:00-05:00",
+      "timebox_minutes": 30,
+      "dependencies": [
+        "TICKET-014"
+      ],
+      "tags": [
+        "bandaid-removal",
+        "pipeline-sequencing",
+        "root-cause"
+      ],
+      "title": "Fix Agent-08 pipeline sequencing and PAPER_ENDPOINT artifact gap",
+      "file": "TICKET-015.md"
+    }
+  ]
+}
