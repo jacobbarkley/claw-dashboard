@@ -19,7 +19,7 @@
       "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
       "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
       "blocker_type": "internal",
-      "prereq": "Reddit API credentials (application submitted 2026-03-06, username Spacejaezy)",
+      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps — script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
       "priority": "low",
       "ticket": "TICKET-021",
       "tags": ["agent-04", "reddit", "signals", "intelligence", "post-paper-gate"]
