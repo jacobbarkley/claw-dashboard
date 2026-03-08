@@ -1,0 +1,16 @@
+{
+  "ticket_id": "TICKET-016",
+  "title": "Register Agent-08b in OpenClaw scheduler at 08:20 ET",
+  "status": "READY",
+  "priority": "P1",
+  "severity": "SEV1",
+  "last_updated": "2026-03-08T00:10:00-05:00",
+  "tags": [
+    "scheduler",
+    "agent-08b",
+    "pipeline-sequencing",
+    "monday-blocker"
+  ],
+  "escalated_at": "2026-03-08T05:48:40-05:00",
+  "processed": false
+}
