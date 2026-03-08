@@ -1,0 +1,46 @@
+{
+  "generated_at": "2026-03-08T21:00:00-05:00",
+  "queued": [
+    {
+      "id": "Q-001",
+      "title": "OpenClaw → Claude live session bridge",
+      "what": "When a Claude session opens, register the session ID to a known file. OpenClaw reads it and uses sessions_send to target the active session for real-time two-way communication.",
+      "blocker": "Claude Code does not currently expose a stable inbound ACP endpoint. Revisit when ACP story matures or if OpenClaw finds a workaround.",
+      "blocker_type": "external",
+      "prereq": null,
+      "priority": "medium",
+      "ticket": "TICKET-020",
+      "tags": ["openclaw", "claude-bridge", "acp", "live-session"]
+    },
+    {
+      "id": "Q-004",
+      "title": "Agent-04 Reddit Pipeline v2",
+      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine.",
+      "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
+      "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
+      "blocker_type": "internal",
+      "prereq": "Reddit API credentials (application submitted 2026-03-06, username Spacejaezy)",
+      "priority": "low",
+      "ticket": "TICKET-021",
+      "tags": ["agent-04", "reddit", "signals", "intelligence", "post-paper-gate"]
+    }
+  ],
+  "completed": [
+    {
+      "id": "Q-002",
+      "title": "Stale Signal Guard",
+      "what": "Agent-11 v1.2 + order_submitter.py: mandatory re-evaluation at live price when >60 min late. Hard block at >3h unless stale_signal_max_hours in risk_policy.json.",
+      "completed_at": "2026-03-06",
+      "ticket": null,
+      "tags": ["agent-11", "stale-signal", "risk"]
+    },
+    {
+      "id": "Q-003",
+      "title": "Verify trade journal + KPI aggregator (2026-03-06)",
+      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py — was using UTC date, now uses ET date via ZoneInfo.",
+      "completed_at": "2026-03-06",
+      "ticket": null,
+      "tags": ["trade-journal", "kpi", "data-integrity"]
+    }
+  ]
+}

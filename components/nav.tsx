@@ -5,10 +5,10 @@ const LINKS = [
   { href: "/dashboard", label: "Ops" },
   { href: "/pipeline",  label: "Pipeline" },
   { href: "/trading",   label: "Trading" },
-  { href: "/ideas",     label: "Ideas",    soon: true },
+  { href: "/queue",     label: "Queue" },
 ]
 
-export function Nav({ active }: { active: "dashboard" | "pipeline" | "trading" | "ideas" }) {
+export function Nav({ active }: { active: "dashboard" | "pipeline" | "trading" | "queue" }) {
   return (
     <div className="border-b border-zinc-800 px-6 py-3 flex items-center gap-6 shrink-0">
       <div className="flex items-center gap-2 mr-2">
