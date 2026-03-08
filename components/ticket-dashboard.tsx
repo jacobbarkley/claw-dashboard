@@ -156,9 +156,43 @@ function CopyModal({
 }
 
 function TicketCard({ ticket }: { ticket: Ticket }) {
-  const [escalating, setEscalating] = useState(false)
+  const [escalateState, setEscalateState] = useState<"idle" | "sending" | "sent" | "error">("idle")
   const [closing, setClosing] = useState(false)
   const isClosed = CLOSED_STATUSES.has(ticket.status)
+
+  async function escalate() {
+    setEscalateState("sending")
+    try {
+      const res = await fetch("/api/escalate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticket_id: ticket.ticket_id,
+          title: ticket.title,
+          status: ticket.status,
+          priority: ticket.priority,
+          severity: ticket.severity,
+          last_updated: ticket.last_updated,
+          tags: ticket.tags,
+        }),
+      })
+      setEscalateState(res.ok ? "sent" : "error")
+      if (res.ok) setTimeout(() => setEscalateState("idle"), 3000)
+    } catch {
+      setEscalateState("error")
+    }
+  }
+
+  const escalateLabel =
+    escalateState === "sending" ? "sending…" :
+    escalateState === "sent"    ? "✓ sent" :
+    escalateState === "error"   ? "failed" :
+    "→ Claude"
+
+  const escalateColor =
+    escalateState === "sent"  ? "text-emerald-400" :
+    escalateState === "error" ? "text-red-400" :
+    "text-blue-400 hover:text-blue-300"
 
   return (
     <>
@@ -213,23 +247,15 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
               </button>
             )}
             <button
-              onClick={() => setEscalating(true)}
-              className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+              onClick={escalate}
+              disabled={escalateState === "sending" || escalateState === "sent"}
+              className={`text-[10px] transition-colors disabled:cursor-default ${escalateColor}`}
             >
-              → Claude
+              {escalateLabel}
             </button>
           </div>
         </div>
       </div>
-
-      <Dialog open={escalating} onOpenChange={setEscalating}>
-        <CopyModal
-          title={`Escalate to Claude — ${ticket.ticket_id}`}
-          description="Paste into claude-inbox.md under ## Messages, then update the MSG id."
-          content={buildEscalationMessage(ticket)}
-          onClose={() => setEscalating(false)}
-        />
-      </Dialog>
 
       <Dialog open={closing} onOpenChange={setClosing}>
         <CopyModal
