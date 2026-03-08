@@ -4,7 +4,8 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { AlertTriangle, ChevronDown, ChevronRight, Clock, Copy, Check, Zap } from "lucide-react"
+import { AlertTriangle, ChevronDown, ChevronRight, Clock, Copy, Check } from "lucide-react"
+import { Nav } from "@/components/nav"
 
 interface Ticket {
   ticket_id: string
@@ -435,20 +436,7 @@ export function TicketDashboard({ data }: { data: TicketData | null }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
-      {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Zap className="w-5 h-5 text-yellow-400" />
-          <span className="font-semibold text-zinc-100 tracking-tight">ClawBoy Dashboard</span>
-          <Separator orientation="vertical" className="h-4 bg-zinc-700" />
-          <span className="text-xs text-zinc-500">Ops &amp; Rebuild Tracker</span>
-        </div>
-        <div className="text-xs text-zinc-600 font-mono">
-          {new Date(data.generated_at).toLocaleString("en-US", {
-            month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
-          })}
-        </div>
-      </div>
+      <Nav active="dashboard" />
 
       <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
         <SummaryCards summary={data.summary} />
