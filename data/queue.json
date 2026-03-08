@@ -45,6 +45,50 @@
       "priority": "medium",
       "ticket": null,
       "tags": ["agent-04", "stocktwits", "sentiment", "signals", "intelligence", "post-paper-gate"]
+    },
+    {
+      "id": "Q-007",
+      "title": "Form LLC — unlock business entity + tax deductions",
+      "what": "Form a single-member LLC to operate all business activities under. Unlocks deductibility of LLM subscriptions (OpenAI, Anthropic, etc.), hardware (new machine, Section 179), software tools, internet, home office, and education. You do not need revenue to form — you need to be operating in pursuit of profit, which you are. File with your state's Secretary of State, get an EIN from the IRS (free, online, takes 10 min), open a dedicated business checking account. Total cost: $50-200 depending on state.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Decide on LLC name and state of formation. Consult a CPA to confirm home state specifics before filing.",
+      "priority": "high",
+      "ticket": null,
+      "tags": ["business", "llc", "legal", "tax", "foundation"]
+    },
+    {
+      "id": "Q-008",
+      "title": "Profit path — Option 1: YouTube / content + tools",
+      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell — audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier. Requires LLC (Q-007) to treat revenue properly.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity/branding.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["business", "youtube", "content", "monetization", "brand"]
+    },
+    {
+      "id": "Q-009",
+      "title": "Profit path — Option 2: AI automation consulting / agency",
+      "what": "Sell the skillset, not a product. You know how to build multi-agent systems with real infrastructure — most businesses don't have anyone who can do this. One retainer client at $3-5k/month covers all subscriptions and hardware. Services: custom agent pipelines, OpenClaw-style automation setups, AI workflow integration for small businesses. No product needed to start — just a landing page, a LinkedIn presence, and one warm outreach campaign. Strategy: close 1-2 clients to fund the hobby side, keep scope tight (don't build something you can't maintain), productize repeatable work into templates over time. Requires LLC (Q-007) for contracts and invoicing.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "LLC formed (Q-007). Simple contract template. Define service scope and pricing before first outreach.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["business", "consulting", "agency", "ai-automation", "monetization"]
+    },
+    {
+      "id": "Q-010",
+      "title": "Profit path — Option 3: trading system product (post paper gate)",
+      "what": "Offer a managed paper→live trading service, signal subscription, or white-labeled pipeline to other traders. Highest upside but significant regulatory surface — must research RIA registration requirements, determine whether signal distribution constitutes investment advice under SEC rules, and draft appropriate disclaimers. Do not build or market this before: (a) 60-day paper gate passed with clean results, (b) LLC formed (Q-007), (c) legal review completed. Strategy: start as a signal transparency product (show the thesis, not a buy recommendation), build track record publicly, consult a securities attorney before any paid offering. This is the long-term path — fund it with Options 1 or 2 first.",
+      "blocker": "60-day paper gate not yet passed. Legal review required before any public offering.",
+      "blocker_type": "internal",
+      "prereq": "LLC formed (Q-007). Clean paper trading track record. Securities attorney consultation. RIA registration research.",
+      "priority": "low",
+      "ticket": null,
+      "tags": ["business", "trading-product", "signals", "legal", "post-paper-gate", "high-upside"]
     }
   ],
   "completed": [
