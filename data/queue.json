@@ -15,7 +15,7 @@
     {
       "id": "Q-004",
       "title": "Agent-04 Reddit Pipeline v2",
-      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine.",
+      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer — not three independent data pulls.",
       "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
       "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
       "blocker_type": "internal",
@@ -23,6 +23,28 @@
       "priority": "low",
       "ticket": "TICKET-021",
       "tags": ["agent-04", "reddit", "signals", "intelligence", "post-paper-gate"]
+    },
+    {
+      "id": "Q-005",
+      "title": "ApeWisdom integration — retail sentiment layer",
+      "what": "Integrate ApeWisdom free API into the intelligence layer. Returns ticker mention counts, rank, and 24h trend direction across WSB and finance subreddits. No auth required. Evaluate whether this replaces or supplements the full Reddit PRAW build in Q-004. Agent integration: feed mention rank and acceleration into Agent-04 or a new Agent-04b as a pre-processed retail sentiment signal. Must align with existing signal hierarchy — corroborating input only, never a standalone trade trigger. Cross-reference against Agent-01 (news), Agent-05 (technical), and options flow before any weight is assigned.",
+      "blocker": "60-day paper gate not yet reached.",
+      "blocker_type": "internal",
+      "prereq": "None — public API, no key required. Endpoint: https://apewisdom.io/api/v1.0/filter/all-stocks/",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["agent-04", "apewisdom", "reddit-sentiment", "signals", "intelligence", "post-paper-gate"]
+    },
+    {
+      "id": "Q-006",
+      "title": "Stocktwits integration — finance-specific sentiment feed",
+      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score — not three independent signals. Must not override options flow, news, or technical analysis.",
+      "blocker": "60-day paper gate not yet reached.",
+      "blocker_type": "internal",
+      "prereq": "None — public API. Review Stocktwits API docs for rate limits before building.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["agent-04", "stocktwits", "sentiment", "signals", "intelligence", "post-paper-gate"]
     }
   ],
   "completed": [
