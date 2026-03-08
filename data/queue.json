@@ -52,7 +52,7 @@
       "what": "Form a single-member LLC to operate all business activities under. Unlocks deductibility of LLM subscriptions (OpenAI, Anthropic, etc.), hardware (new machine, Section 179), software tools, internet, home office, and education. You do not need revenue to form — you need to be operating in pursuit of profit, which you are. File with your state's Secretary of State, get an EIN from the IRS (free, online, takes 10 min), open a dedicated business checking account. Total cost: $50-200 depending on state.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "Decide on LLC name and state of formation. Consult a CPA to confirm home state specifics before filing.",
+      "prereq": "Florida: file at sunbiz.org ($125 filing fee, $138.75/year annual report). No state income tax — LLC profits pass through to personal return only. Get EIN at IRS.gov (free, 10 min). Open dedicated business checking account after EIN is issued. Consult a CPA before first tax filing.",
       "priority": "high",
       "ticket": null,
       "tags": ["business", "llc", "legal", "tax", "foundation"]
