@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-03-08T05:23:55.398902+00:00",
+  "generated_at": "2026-03-08T21:15:53.377686+00:00",
   "summary": {
     "total": 7,
     "blockers": 0,
-    "active": 6,
-    "done": 1
+    "active": 5,
+    "done": 2
   },
   "phases": [
     {
@@ -25,8 +25,8 @@
       "phase": 4,
       "label": "Live Trading Gate",
       "total": 2,
-      "done": 1,
-      "pct": 50
+      "done": 2,
+      "pct": 100
     }
   ],
   "by_status": {
@@ -51,17 +51,16 @@
         ],
         "title": "Fix Agent-08 pipeline sequencing and PAPER_ENDPOINT artifact gap",
         "file": "TICKET-015.md"
-      }
-    ],
-    "READY": [
+      },
       {
         "ticket_id": "TICKET-016",
         "phase": 4,
         "priority": "P1",
         "severity": "SEV1",
-        "status": "READY",
+        "status": "RESOLVED",
         "created_at": "2026-03-08T00:10:00-05:00",
-        "last_updated": "2026-03-08T00:10:00-05:00",
+        "last_updated": "2026-03-08T22:30:00-05:00",
+        "resolved_at": "2026-03-08T22:30:00-05:00",
         "timebox_minutes": 15,
         "dependencies": [
           "TICKET-015"
@@ -74,7 +73,9 @@
         ],
         "title": "Register Agent-08b in OpenClaw scheduler at 08:20 ET",
         "file": "TICKET-016.md"
-      },
+      }
+    ],
+    "READY": [
       {
         "ticket_id": "TICKET-017",
         "phase": 2,
@@ -200,9 +201,10 @@
       "phase": 4,
       "priority": "P1",
       "severity": "SEV1",
-      "status": "READY",
+      "status": "RESOLVED",
       "created_at": "2026-03-08T00:10:00-05:00",
-      "last_updated": "2026-03-08T00:10:00-05:00",
+      "last_updated": "2026-03-08T22:30:00-05:00",
+      "resolved_at": "2026-03-08T22:30:00-05:00",
       "timebox_minutes": 15,
       "dependencies": [
         "TICKET-015"
