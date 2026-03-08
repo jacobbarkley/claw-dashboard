@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight, Lock, AlertTriangle, CheckCircle2 } from "lu
 
 interface QueueItem {
   id: string
+  category: string
   title: string
   what: string
   blocker?: string
@@ -20,6 +21,7 @@ interface QueueItem {
 
 interface CompletedItem {
   id: string
+  category?: string
   title: string
   what: string
   completed_at: string
@@ -31,6 +33,13 @@ interface QueueData {
   generated_at: string
   queued: QueueItem[]
   completed: CompletedItem[]
+}
+
+const CATEGORIES: Record<string, { label: string; color: string; dot: string }> = {
+  trading:      { label: "Trading",          color: "text-emerald-400", dot: "bg-emerald-400" },
+  llc:          { label: "LLC & Legal",       color: "text-yellow-400",  dot: "bg-yellow-400" },
+  architecture: { label: "Architecture",      color: "text-blue-400",    dot: "bg-blue-400" },
+  project:      { label: "Separate Projects", color: "text-purple-400",  dot: "bg-purple-400" },
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -51,7 +60,6 @@ function QueueCard({ item }: { item: QueueItem }) {
 
   return (
     <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-4 space-y-3">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-zinc-500">{item.id}</span>
@@ -61,14 +69,13 @@ function QueueCard({ item }: { item: QueueItem }) {
             </span>
           )}
         </div>
-        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize ${priorityColor}`}>
+        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border capitalize shrink-0 ${priorityColor}`}>
           {item.priority}
         </span>
       </div>
 
       <p className="text-sm font-medium text-zinc-100 leading-snug">{item.title}</p>
 
-      {/* Blocker badge */}
       {item.blocker && (
         <div className={`flex items-start gap-2 rounded-md border px-3 py-2 text-xs ${blockerColor}`}>
           <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5" />
@@ -81,7 +88,6 @@ function QueueCard({ item }: { item: QueueItem }) {
         </div>
       )}
 
-      {/* Expand toggle */}
       <button
         onClick={() => setExpanded(v => !v)}
         className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
@@ -123,9 +129,36 @@ function QueueCard({ item }: { item: QueueItem }) {
   )
 }
 
+function CategorySection({ category, items }: { category: string; items: QueueItem[] }) {
+  const meta = CATEGORIES[category] ?? { label: category, color: "text-zinc-400", dot: "bg-zinc-400" }
+  const blocked = items.filter(i => i.blocker)
+  const ready   = items.filter(i => !i.blocker)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
+        <h2 className={`text-xs font-semibold uppercase tracking-widest ${meta.color}`}>
+          {meta.label}
+        </h2>
+        <span className="text-xs text-zinc-600 font-mono">{items.length}</span>
+        {blocked.length > 0 && (
+          <span className="flex items-center gap-1 text-[10px] text-orange-400 ml-1">
+            <AlertTriangle className="w-3 h-3" />
+            {blocked.length} blocked
+          </span>
+        )}
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {ready.map(item  => <QueueCard key={item.id} item={item} />)}
+        {blocked.map(item => <QueueCard key={item.id} item={item} />)}
+      </div>
+    </div>
+  )
+}
+
 function CompletedSection({ items }: { items: CompletedItem[] }) {
   const [open, setOpen] = useState(false)
-
   if (items.length === 0) return null
 
   return (
@@ -137,7 +170,6 @@ function CompletedSection({ items }: { items: CompletedItem[] }) {
         {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         Completed — {items.length}
       </button>
-
       {open && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map(item => (
@@ -175,50 +207,58 @@ export function QueuePanel({ data }: { data: QueueData | null }) {
     )
   }
 
-  const blocked = data.queued.filter(i => i.blocker)
-  const ready   = data.queued.filter(i => !i.blocker)
+  // Group by category, preserving CATEGORIES order
+  const grouped = Object.keys(CATEGORIES).reduce<Record<string, QueueItem[]>>((acc, cat) => {
+    const items = data.queued.filter(i => i.category === cat)
+    if (items.length > 0) acc[cat] = items
+    return acc
+  }, {})
+
+  const totalBlocked = data.queued.filter(i => i.blocker).length
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       <Nav active="queue" />
 
-      <div className="px-6 py-6 space-y-6 max-w-4xl mx-auto">
-        {/* Summary row */}
+      <div className="px-6 py-6 space-y-8 max-w-4xl mx-auto">
+        {/* Summary */}
         <div className="flex items-center gap-6 text-sm">
           <div>
             <span className="text-2xl font-bold text-zinc-100">{data.queued.length}</span>
             <span className="text-zinc-500 ml-2">queued</span>
           </div>
-          {blocked.length > 0 && (
+          {totalBlocked > 0 && (
             <div className="flex items-center gap-1.5 text-orange-400">
               <AlertTriangle className="w-4 h-4" />
-              <span>{blocked.length} blocked</span>
+              <span>{totalBlocked} blocked</span>
             </div>
           )}
-          <div className="text-zinc-600">
-            {data.completed.length} completed
-          </div>
+          <div className="text-zinc-600">{data.completed.length} completed</div>
         </div>
 
-        {/* Ready (unblocked) items */}
-        {ready.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Ready</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {ready.map(item => <QueueCard key={item.id} item={item} />)}
-            </div>
-          </div>
-        )}
+        {/* Category legend */}
+        <div className="flex flex-wrap gap-4">
+          {Object.entries(CATEGORIES).map(([key, meta]) => {
+            const count = data.queued.filter(i => i.category === key).length
+            if (count === 0) return null
+            return (
+              <div key={key} className="flex items-center gap-1.5 text-xs">
+                <div className={`w-2 h-2 rounded-full ${meta.dot}`} />
+                <span className={meta.color}>{meta.label}</span>
+                <span className="text-zinc-600 font-mono">({count})</span>
+              </div>
+            )
+          })}
+        </div>
 
-        {/* Blocked items */}
-        {blocked.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Blocked</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {blocked.map(item => <QueueCard key={item.id} item={item} />)}
-            </div>
-          </div>
-        )}
+        <Separator className="bg-zinc-800" />
+
+        {/* Grouped sections */}
+        <div className="space-y-8">
+          {Object.entries(grouped).map(([cat, items]) => (
+            <CategorySection key={cat} category={cat} items={items} />
+          ))}
+        </div>
 
         <Separator className="bg-zinc-800" />
 
