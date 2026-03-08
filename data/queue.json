@@ -6,7 +6,7 @@
       "category": "architecture",
       "title": "OpenClaw → Claude live session bridge",
       "what": "When a Claude session opens, register the session ID to a known file. OpenClaw reads it and uses sessions_send to target the active session for real-time two-way communication.",
-      "blocker": "Claude Code does not currently expose a stable inbound ACP endpoint. Revisit when ACP story matures or if OpenClaw finds a workaround.",
+      "blocker": "Previously blocked on unstable ACP bindings. OpenClaw 2026.3.7 release notes claim ACP bindings now survive restarts — re-evaluate this blocker after updating. May now be unblocked or significantly closer.",
       "blocker_type": "external",
       "prereq": null,
       "priority": "medium",
