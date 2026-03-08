@@ -172,6 +172,19 @@ function buildGraph(selectedId: string | null) {
     })
   })
 
+  // Day-cycle loop: Agent-16 → Agent-08 (session_close.json next-day gate)
+  edges.push({
+    id: "loop-16-08",
+    source: "16",
+    target: "08",
+    animated: true,
+    label: "next day gate",
+    labelStyle: { fontSize: 9, fill: "#a78bfa" },
+    labelBgStyle: { fill: "#18181b" },
+    style: { stroke: "#7c3aed", strokeWidth: 1.5, strokeDasharray: "4 3" },
+    type: "straight",
+  })
+
   return { nodes, edges }
 }
 
@@ -188,6 +201,10 @@ function Legend() {
       <div className="flex items-center gap-1.5 ml-2 border-l border-zinc-700 pl-2">
         <div className="w-6 border-t-2 border-dashed border-zinc-400" />
         <span className="text-zinc-400">Group handoff</span>
+      </div>
+      <div className="flex items-center gap-1.5 ml-2 border-l border-zinc-700 pl-2">
+        <div className="w-6 border-t-2 border-dashed border-purple-500" />
+        <span className="text-purple-400">Day cycle</span>
       </div>
     </div>
   )

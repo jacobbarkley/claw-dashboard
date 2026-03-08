@@ -1,0 +1,453 @@
+{
+  "generated_at": "2026-03-08T06:19:17.243277+00:00",
+  "as_of_date": "2026-03-06",
+  "account": {
+    "positions_value": 1225.57,
+    "unrealized_pnl": -44.32,
+    "unrealized_pnl_pct": -3.49,
+    "cash": null
+  },
+  "positions": [
+    {
+      "symbol": "AAPL",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 265.2,
+      "current_price": 257.37,
+      "market_value": 257.37,
+      "unrealized_pnl": -7.83,
+      "unrealized_pct": -2.95,
+      "change_today_pct": -1.12
+    },
+    {
+      "symbol": "AVGO",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 341.4,
+      "current_price": 330.4005,
+      "market_value": 330.4005,
+      "unrealized_pnl": -10.9995,
+      "unrealized_pct": -3.22,
+      "change_today_pct": -0.71
+    },
+    {
+      "symbol": "MRVL",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 92.11,
+      "current_price": 89.58,
+      "market_value": 89.58,
+      "unrealized_pnl": -2.53,
+      "unrealized_pct": -2.75,
+      "change_today_pct": 18.37
+    },
+    {
+      "symbol": "MU",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 389.25,
+      "current_price": 370.5,
+      "market_value": 370.5,
+      "unrealized_pnl": -18.75,
+      "unrealized_pct": -4.82,
+      "change_today_pct": -6.69
+    },
+    {
+      "symbol": "NVDA",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 181.93,
+      "current_price": 177.7218,
+      "market_value": 177.7218,
+      "unrealized_pnl": -4.2082,
+      "unrealized_pct": -2.31,
+      "change_today_pct": -3.06
+    }
+  ],
+  "kpis": {
+    "total_trades": 5,
+    "closed_trades": 0,
+    "open_trades": 5,
+    "win_rate_pct": null,
+    "profit_factor": null,
+    "expectancy": null,
+    "net_pnl": 0,
+    "max_drawdown_pct": null,
+    "max_win_streak": 0,
+    "max_loss_streak": 0
+  },
+  "daily_performance": [
+    {
+      "date": "2026-02-04",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-05",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-06",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-09",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-10",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-11",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-12",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-13",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-16",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-17",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-18",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-19",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-20",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-23",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-24",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-25",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-26",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-27",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-02",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-03",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-04",
+      "net_pnl": 0.0,
+      "trades": 1,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-05",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-06",
+      "net_pnl": 0.0,
+      "trades": 4,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    }
+  ],
+  "equity_curve": [
+    {
+      "date": "2026-02-04",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-05",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-06",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-09",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-10",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-11",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-16",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 0.0
+    }
+  ],
+  "watchlist": [
+    {
+      "symbol": "TTD",
+      "trigger": "Long only on a 15-minute close above prior day high with volume >=1.5x the 20-bar 15-minute average, followed by a successful retest that holds above VWAP; enter on break of retest candle high.",
+      "stop": "Initial stop below retest swing low and below 15-minute VWAP support; hard stop distance capped to RL-002 risk budget.",
+      "target": "Scale 60% at +1.5R or near next daily resistance pivot, whichever comes first.",
+      "modifier": "HALF",
+      "note": "Thesis contradiction: Some firms maintain Overweight while others shift to Underperform with lower targets.. Regime fragility: momentum failure in broad risk-off tape can break follow-through."
+    },
+    {
+      "symbol": "NI",
+      "trigger": "Long only on a 15-minute close above prior day high with volume >=1.5x the 20-bar 15-minute average, followed by a successful retest that holds above VWAP; enter on break of retest candle high.",
+      "stop": "Initial stop below retest swing low and below 15-minute VWAP support; hard stop distance capped to RL-002 risk budget.",
+      "target": "Scale 60% at +1.5R or near next daily resistance pivot, whichever comes first.",
+      "modifier": "FULL",
+      "note": "Thesis contradiction: Defensive profile may underperform if market abruptly re-enters risk-on momentum regime.. Regime fragility: momentum failure in broad risk-off tape can break follow-through."
+    },
+    {
+      "symbol": "ALK",
+      "trigger": "Long only on a 15-minute close above prior day high with volume >=1.5x the 20-bar 15-minute average, followed by a successful retest that holds above VWAP; enter on break of retest candle high.",
+      "stop": "Initial stop below retest swing low and below 15-minute VWAP support; hard stop distance capped to RL-002 risk budget.",
+      "target": "Scale 60% at +1.5R or near next daily resistance pivot, whichever comes first.",
+      "modifier": "HALF",
+      "note": "Thesis contradiction: Operational expansion narratives vs recent negative price action and bearish options tone.. Regime fragility: momentum failure in broad risk-off tape can break follow-through."
+    },
+    {
+      "symbol": "AMZN",
+      "trigger": "Long only on a 15-minute close above prior day high with volume >=1.5x the 20-bar 15-minute average, followed by a successful retest that holds above VWAP; enter on break of retest candle high.",
+      "stop": "Initial stop below retest swing low and below 15-minute VWAP support; hard stop distance capped to RL-002 risk budget.",
+      "target": "Scale 60% at +1.5R or near next daily resistance pivot, whichever comes first.",
+      "modifier": "FULL",
+      "note": "Thesis contradiction: Bullish long-term targets vs concern that heavier capex may pressure near-term returns.. Regime fragility: momentum failure in broad risk-off tape can break follow-through."
+    }
+  ],
+  "exit_candidates": [
+    {
+      "symbol": "AAPL",
+      "decision": "URGENT_CLOSE",
+      "urgency": "HIGH",
+      "reason": "Mid-day urgent exit recommendation remains unresolved; position is ~-3.05% vs entry in a HIGH VIX regime with broad market weakness.",
+      "overnight_risk": "Elevated gap-down risk if weakness persists; avoid overnight carry under unresolved urgent signal.",
+      "unrealized_pnl": -7.83,
+      "unrealized_pct": -2.95
+    },
+    {
+      "symbol": "AVGO",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "MEDIUM",
+      "reason": "Position is ~-3.42% vs entry while VIX is HIGH and SPY is ~-1.25%; risk/reward for overnight hold is unfavorable.",
+      "overnight_risk": "Semiconductor beta plus elevated volatility increases overnight downside tail risk.",
+      "unrealized_pnl": -10.9995,
+      "unrealized_pct": -3.22
+    },
+    {
+      "symbol": "MRVL",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "MEDIUM",
+      "reason": "Position is ~-3.47% vs entry in a high-volatility tape; intraday instability argues for de-risking before close.",
+      "overnight_risk": "Idiosyncratic and sector correlation risk remain elevated into next session.",
+      "unrealized_pnl": -2.53,
+      "unrealized_pct": -2.75
+    },
+    {
+      "symbol": "MU",
+      "decision": "URGENT_CLOSE",
+      "urgency": "HIGH",
+      "reason": "Largest unrealized drawdown (~-4.31%) among open positions in HIGH VIX conditions indicates acute adverse-risk exposure.",
+      "overnight_risk": "High probability of adverse overnight gap relative to remaining stop distance confidence.",
+      "unrealized_pnl": -18.75,
+      "unrealized_pct": -4.82
+    },
+    {
+      "symbol": "NVDA",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "MEDIUM",
+      "reason": "Position is ~-2.27% vs entry amid broad risk-off conditions and elevated index volatility; preservation posture favored.",
+      "overnight_risk": "Overnight macro/headline sensitivity remains elevated in current regime.",
+      "unrealized_pnl": -4.2082,
+      "unrealized_pct": -2.31
+    }
+  ],
+  "tunables": {
+    "trading_mode": "PAPER",
+    "live_trading_enabled": false,
+    "paper_autopilot_enabled": true,
+    "max_daily_loss_pct": 1.0,
+    "max_risk_per_trade_pct": 0.35,
+    "max_aggregate_open_risk_pct": 1.5,
+    "max_concurrent_positions": 4,
+    "consecutive_loss_limit": 3,
+    "consecutive_loss_size_modifier": "HALF",
+    "reduce_only_size_cap": "QUARTER",
+    "updated_at": "2026-03-06T22:15:00-05:00"
+  }
+}

@@ -4,7 +4,7 @@ import { Zap } from "lucide-react"
 const LINKS = [
   { href: "/dashboard", label: "Ops" },
   { href: "/pipeline",  label: "Pipeline" },
-  { href: "/trading",   label: "Trading",  soon: true },
+  { href: "/trading",   label: "Trading" },
   { href: "/ideas",     label: "Ideas",    soon: true },
 ]
 
