@@ -1,10 +1,10 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { AlertTriangle, CheckCircle2, Circle, Clock, ExternalLink, Zap } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Clock, Copy, Check, Zap } from "lucide-react"
 
 interface Ticket {
   ticket_id: string
@@ -43,16 +43,16 @@ interface TicketData {
 }
 
 const KANBAN_COLUMNS = [
-  { status: "READY",               label: "Ready",       color: "text-zinc-400" },
-  { status: "IN_WORK",             label: "In Work",     color: "text-blue-400" },
-  { status: "EXECUTING",           label: "Executing",   color: "text-blue-400" },
-  { status: "VERIFYING",           label: "Verifying",   color: "text-yellow-400" },
-  { status: "COMMITTING",          label: "Committing",  color: "text-yellow-400" },
+  { status: "READY",               label: "Ready",         color: "text-zinc-400" },
+  { status: "IN_WORK",             label: "In Work",       color: "text-blue-400" },
+  { status: "EXECUTING",           label: "Executing",     color: "text-blue-400" },
+  { status: "VERIFYING",           label: "Verifying",     color: "text-yellow-400" },
+  { status: "COMMITTING",          label: "Committing",    color: "text-yellow-400" },
   { status: "UNDER_INVESTIGATION", label: "Investigating", color: "text-orange-400" },
-  { status: "RE_TEST",             label: "Re-Test",     color: "text-orange-400" },
-  { status: "DONE",                label: "Done",        color: "text-emerald-400" },
-  { status: "RESOLVED",            label: "Resolved",    color: "text-emerald-400" },
+  { status: "RE_TEST",             label: "Re-Test",       color: "text-orange-400" },
 ]
+
+const CLOSED_STATUSES = new Set(["DONE", "RESOLVED"])
 
 const PRIORITY_COLORS: Record<string, string> = {
   P0: "bg-red-500/20 text-red-300 border-red-500/30",
@@ -75,67 +75,128 @@ function formatDate(iso?: string) {
   } catch { return null }
 }
 
-function TicketCard({ ticket }: { ticket: Ticket }) {
-  const escalateToClaudeUrl = `/api/escalate-claude?ticket=${ticket.ticket_id}`
+function buildEscalationMessage(ticket: Ticket): string {
+  const now = new Date().toISOString().slice(0, 19) + "-05:00"
+  return `---
+id: MSG-XXX
+from: Dashboard
+sent_at: ${now}
+priority: high
+status: unread
+subject: Escalation — ${ticket.ticket_id}
+body: |
+  Ticket escalated to Claude from the dashboard.
+
+  ticket_id: ${ticket.ticket_id}
+  title: ${ticket.title}
+  status: ${ticket.status}
+  priority: ${ticket.priority ?? "unknown"}
+  severity: ${ticket.severity ?? "unknown"}
+  last_updated: ${ticket.last_updated ?? "unknown"}
+  tags: ${ticket.tags?.join(", ") ?? "none"}
+
+  Please investigate and update the ticket status.
+---`
+}
+
+function EscalateModal({ ticket, onClose }: { ticket: Ticket; onClose: () => void }) {
+  const [copied, setCopied] = useState(false)
+  const message = buildEscalationMessage(ticket)
+
+  function copy() {
+    navigator.clipboard.writeText(message)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 space-y-2 text-sm">
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-xs text-zinc-500">{ticket.ticket_id}</span>
-        <div className="flex gap-1 flex-wrap justify-end">
-          {ticket.priority && (
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${PRIORITY_COLORS[ticket.priority] ?? "bg-zinc-700 text-zinc-300"}`}>
-              {ticket.priority}
-            </span>
-          )}
-          {ticket.severity && (
-            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${SEV_COLORS[ticket.severity] ?? "bg-zinc-700 text-zinc-300"}`}>
-              {ticket.severity}
-            </span>
-          )}
+    <DialogContent className="bg-zinc-900 border-zinc-700 max-w-xl">
+      <DialogHeader>
+        <DialogTitle className="text-zinc-100 text-sm font-semibold">
+          Escalate to Claude — {ticket.ticket_id}
+        </DialogTitle>
+      </DialogHeader>
+      <p className="text-xs text-zinc-400">
+        Paste this into <code className="bg-zinc-800 px-1 rounded">claude-inbox.md</code> under <code className="bg-zinc-800 px-1 rounded">## Messages</code>, then update the MSG id.
+      </p>
+      <pre className="text-xs bg-zinc-950 border border-zinc-800 rounded p-3 overflow-auto max-h-64 text-zinc-300 whitespace-pre-wrap">
+        {message}
+      </pre>
+      <button
+        onClick={copy}
+        className="flex items-center justify-center gap-2 w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+      >
+        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+        {copied ? "Copied!" : "Copy to clipboard"}
+      </button>
+    </DialogContent>
+  )
+}
+
+function TicketCard({ ticket }: { ticket: Ticket }) {
+  const [escalating, setEscalating] = useState(false)
+
+  return (
+    <>
+      <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 space-y-2 text-sm">
+        <div className="flex items-start justify-between gap-2">
+          <span className="font-mono text-xs text-zinc-500">{ticket.ticket_id}</span>
+          <div className="flex gap-1 flex-wrap justify-end">
+            {ticket.priority && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${PRIORITY_COLORS[ticket.priority] ?? "bg-zinc-700 text-zinc-300"}`}>
+                {ticket.priority}
+              </span>
+            )}
+            {ticket.severity && (
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${SEV_COLORS[ticket.severity] ?? "bg-zinc-700 text-zinc-300"}`}>
+                {ticket.severity}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <p className="text-zinc-200 leading-snug">{ticket.title}</p>
+
+        {ticket.tags && ticket.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {ticket.tags.map(tag => (
+              <span key={tag} className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-2 text-[11px] text-zinc-500">
+            {ticket.timebox_minutes && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {ticket.timebox_minutes}m
+              </span>
+            )}
+            {ticket.last_updated && (
+              <span>{formatDate(ticket.last_updated)}</span>
+            )}
+          </div>
+          <button
+            onClick={() => setEscalating(true)}
+            className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            → Claude
+          </button>
         </div>
       </div>
 
-      <p className="text-zinc-200 leading-snug">{ticket.title}</p>
-
-      {ticket.tags && ticket.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {ticket.tags.map(tag => (
-            <span key={tag} className="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2 text-[11px] text-zinc-500">
-          {ticket.timebox_minutes && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              {ticket.timebox_minutes}m
-            </span>
-          )}
-          {ticket.last_updated && (
-            <span>{formatDate(ticket.last_updated)}</span>
-          )}
-        </div>
-        <a
-          href={escalateToClaudeUrl}
-          className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
-          title="Escalate to Claude"
-        >
-          <ExternalLink className="w-3 h-3" />
-          Claude
-        </a>
-      </div>
-    </div>
+      <Dialog open={escalating} onOpenChange={setEscalating}>
+        <EscalateModal ticket={ticket} onClose={() => setEscalating(false)} />
+      </Dialog>
+    </>
   )
 }
 
 function BlockersPanel({ tickets }: { tickets: Ticket[] }) {
   if (tickets.length === 0) return null
-
   return (
     <div className="rounded-xl border border-red-500/40 bg-red-950/20 p-4 space-y-3">
       <div className="flex items-center gap-2">
@@ -145,9 +206,7 @@ function BlockersPanel({ tickets }: { tickets: Ticket[] }) {
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {tickets.map(t => (
-          <TicketCard key={t.ticket_id} ticket={t} />
-        ))}
+        {tickets.map(t => <TicketCard key={t.ticket_id} ticket={t} />)}
       </div>
     </div>
   )
@@ -158,14 +217,17 @@ function KanbanBoard({ byStatus }: { byStatus: Record<string, Ticket[]> }) {
 
   if (activeColumns.length === 0) {
     return (
-      <div className="flex items-center justify-center h-32 text-zinc-500 text-sm">
+      <div className="flex items-center justify-center h-24 text-zinc-600 text-sm border border-zinc-800 rounded-lg">
         No active tickets
       </div>
     )
   }
 
   return (
-    <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(activeColumns.length, 4)}, minmax(0, 1fr))` }}>
+    <div
+      className="grid gap-4"
+      style={{ gridTemplateColumns: `repeat(${Math.min(activeColumns.length, 4)}, minmax(0, 1fr))` }}
+    >
       {activeColumns.map(col => {
         const tickets = byStatus[col.status] ?? []
         return (
@@ -186,6 +248,33 @@ function KanbanBoard({ byStatus }: { byStatus: Record<string, Ticket[]> }) {
   )
 }
 
+function ClosedTickets({ byStatus }: { byStatus: Record<string, Ticket[]> }) {
+  const [open, setOpen] = useState(false)
+  const closed = Object.entries(byStatus)
+    .filter(([k]) => CLOSED_STATUSES.has(k))
+    .flatMap(([, v]) => v)
+    .sort((a, b) => (b.last_updated ?? "").localeCompare(a.last_updated ?? ""))
+
+  if (closed.length === 0) return null
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
+      >
+        {open ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        Closed — {closed.length}
+      </button>
+      {open && (
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {closed.map(t => <TicketCard key={t.ticket_id} ticket={t} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PhaseProgress({ phases }: { phases: PhaseData[] }) {
   return (
     <div className="space-y-3">
@@ -196,9 +285,7 @@ function PhaseProgress({ phases }: { phases: PhaseData[] }) {
               <span className="text-zinc-500 font-mono mr-2">Phase {p.phase}</span>
               {p.label}
             </span>
-            <span className="text-zinc-500 font-mono">
-              {p.done}/{p.total}
-            </span>
+            <span className="text-zinc-500 font-mono">{p.done}/{p.total}</span>
           </div>
           <div className="relative h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div
@@ -251,15 +338,15 @@ export function TicketDashboard({ data }: { data: TicketData | null }) {
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center space-y-2">
           <div className="text-zinc-400 text-lg">No ticket data found</div>
-          <div className="text-zinc-600 text-sm">Run <code className="bg-zinc-800 px-1 rounded">python3 scripts/parse-tickets.py</code> to generate data</div>
+          <div className="text-zinc-600 text-sm font-mono">python3 scripts/parse-tickets.py</div>
         </div>
       </div>
     )
   }
 
   const blockers = data.by_status["BLOCKED"] ?? []
-  const nonBlockerByStatus = Object.fromEntries(
-    Object.entries(data.by_status).filter(([k]) => k !== "BLOCKED")
+  const activeByStatus = Object.fromEntries(
+    Object.entries(data.by_status).filter(([k]) => k !== "BLOCKED" && !CLOSED_STATUSES.has(k))
   )
 
   return (
@@ -280,31 +367,27 @@ export function TicketDashboard({ data }: { data: TicketData | null }) {
       </div>
 
       <div className="px-6 py-6 space-y-6 max-w-7xl mx-auto">
-        {/* Summary cards */}
         <SummaryCards summary={data.summary} />
 
-        {/* Blockers — always top if any */}
         {blockers.length > 0 && <BlockersPanel tickets={blockers} />}
 
-        {/* Kanban */}
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-            Active Board
-          </h2>
-          <KanbanBoard byStatus={nonBlockerByStatus} />
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Active Board</h2>
+          <KanbanBoard byStatus={activeByStatus} />
         </div>
 
         <Separator className="bg-zinc-800" />
 
-        {/* Phase progress */}
         <div className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-            Rebuild Progress
-          </h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Rebuild Progress</h2>
           <div className="max-w-lg">
             <PhaseProgress phases={data.phases} />
           </div>
         </div>
+
+        <Separator className="bg-zinc-800" />
+
+        <ClosedTickets byStatus={data.by_status} />
       </div>
     </div>
   )

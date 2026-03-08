@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 # Keep data dir but ignore stale json placeholder
+logs/*.log
