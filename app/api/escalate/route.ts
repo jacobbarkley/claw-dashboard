@@ -51,8 +51,8 @@ export async function POST(req: NextRequest) {
 
     if (!res.ok) {
       const err = await res.text()
-      console.error("GitHub API error:", err)
-      return NextResponse.json({ error: "Failed to write escalation" }, { status: 500 })
+      console.error("GitHub API error:", res.status, err)
+      return NextResponse.json({ error: "GitHub API error", status: res.status, detail: err }, { status: 500 })
     }
 
     return NextResponse.json({ ok: true, file: filename })

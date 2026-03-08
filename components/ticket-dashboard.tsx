@@ -157,11 +157,13 @@ function CopyModal({
 
 function TicketCard({ ticket }: { ticket: Ticket }) {
   const [escalateState, setEscalateState] = useState<"idle" | "sending" | "sent" | "error">("idle")
+  const [escalateError, setEscalateError] = useState<string>("")
   const [closing, setClosing] = useState(false)
   const isClosed = CLOSED_STATUSES.has(ticket.status)
 
   async function escalate() {
     setEscalateState("sending")
+    setEscalateError("")
     try {
       const res = await fetch("/api/escalate", {
         method: "POST",
@@ -176,9 +178,16 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
           tags: ticket.tags,
         }),
       })
-      setEscalateState(res.ok ? "sent" : "error")
-      if (res.ok) setTimeout(() => setEscalateState("idle"), 3000)
-    } catch {
+      if (res.ok) {
+        setEscalateState("sent")
+        setTimeout(() => setEscalateState("idle"), 3000)
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setEscalateError(`${data.status ?? res.status}: ${data.detail ?? data.error ?? "unknown"}`)
+        setEscalateState("error")
+      }
+    } catch (e: any) {
+      setEscalateError(e?.message ?? "network error")
       setEscalateState("error")
     }
   }
@@ -250,6 +259,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
               onClick={escalate}
               disabled={escalateState === "sending" || escalateState === "sent"}
               className={`text-[10px] transition-colors disabled:cursor-default ${escalateColor}`}
+              title={escalateError || undefined}
             >
               {escalateLabel}
             </button>
