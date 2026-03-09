@@ -149,6 +149,51 @@
   ],
   "completed": [
     {
+      "id": "W-005",
+      "category": "trading",
+      "title": "Late-session paper validation chain + AUTO_APPROVED_PAPER proven",
+      "what": "Built late_session_paper_validation_v1.md — compound orchestration prompt that runs a fresh abbreviated chain (universe → thesis → strategy → validation → risk eval → approval gate) outside normal market hours. Dispatched via one-shot openclaw cron job. Result: AUTO_APPROVED_PAPER confirmed 2026-03-09 with XOM and ORCL selected. Proves the governance + approval path works after today's fixes. Execution leg not included (tracked as Q-014). Chain writes to standard state paths, stops at risk_decision.json.",
+      "completed_at": "2026-03-09",
+      "ticket": null,
+      "tags": ["late-session", "paper-trading", "approval-gate", "validation", "proof-of-concept"]
+    },
+    {
+      "id": "W-004",
+      "category": "trading",
+      "title": "Prompt source drift fix — 3 cron jobs corrected to canonical prompts + gpt-5.4",
+      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list — all three now show gpt-5.4.",
+      "completed_at": "2026-03-09",
+      "ticket": null,
+      "tags": ["cron", "prompt-source", "agent-08", "agent-09", "agent-10", "model-upgrade"]
+    },
+    {
+      "id": "W-003",
+      "category": "trading",
+      "title": "Agent-09 v1.2 + Agent-10 v1.2 — governance loop fixes",
+      "what": "Fixed two bugs that caused today's paper session to block on false positives. (1) Agent-09 was applying its own outbound messaging restrictions as a global audit policy against all upstream artifact alerts — risk_status_ping from Agent-06's strategy_spec alerts was being flagged as MSG_POLICY_VIOLATION (CRITICAL). Fixed by splitting Step 6 into an upstream alert allowlist (risk_status_ping explicitly authorized) and Agent-09's own outbound policy. (2) Agent-10 was not reading session_close.json, so criticals acknowledged at session close were carried forward as OPEN indefinitely. Fixed by adding session_close.json as optional input and resolving carry-forward items that match acknowledged_issues[]. Both prompt changes pushed to OpenClaw-s-Brain. State manually adjudicated: open_critical_count 2 → 0, circuit breaker HALT → REDUCE_ONLY.",
+      "completed_at": "2026-03-09",
+      "ticket": null,
+      "tags": ["agent-09", "agent-10", "msg-policy-violation", "carry-forward", "governance", "incident-fix"]
+    },
+    {
+      "id": "W-002",
+      "category": "trading",
+      "title": "Agent-06 v1.3 + Agent-07 v1.3 — basket quality improvements",
+      "what": "Agent-06 v1.3: added primary_thesis_driver field per strategy item and STEP 3b basket correlation review. Items sharing the same primary_thesis_driver are de-duplicated — lower-conviction item excluded unless genuinely differentiated by sector, catalyst type, or hold horizon. Would have dropped CVX today (same OIL_REGIME_STRENGTH driver as XOM, no differentiated edge). Agent-07 v1.3: added 9th validation dimension edge_quality (STRONG | ACCEPTABLE | WEAK). WEAK_EDGE rule: thesis_alignment=PARTIAL AND warn_details >= 2 distinct concerns => rating auto-upgraded to FAIL. Would have failed GAP today (PARTIAL alignment + 2 distinct warns). Both changes pushed to OpenClaw-s-Brain commit 5bb4147.",
+      "completed_at": "2026-03-09",
+      "ticket": null,
+      "tags": ["agent-06", "agent-07", "basket-quality", "weak-edge", "correlation", "selection"]
+    },
+    {
+      "id": "W-001",
+      "category": "trading",
+      "title": "PostToolUse hook — dashboard auto-sync on file edits",
+      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost — pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
+      "completed_at": "2026-03-09",
+      "ticket": null,
+      "tags": ["dashboard", "automation", "hooks", "queue", "devops"]
+    },
+    {
       "id": "Q-001",
       "category": "architecture",
       "title": "OpenClaw → Claude Code live bridge via ACP (persistent channel binding)",
