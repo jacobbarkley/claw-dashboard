@@ -125,7 +125,7 @@
       "id": "T-017",
       "category": "trading",
       "title": "Fix encoding artifacts in all agent prompts",
-      "what": "Cleaned double-encoded UTF-8 mojibake (â€" → —, â€™ → ', emoji garbling) from all 14 affected agent prompts. Zero artifacts remaining across all 17 prompt files.",
+      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts — em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
       "completed_at": "2026-03-09",
       "ticket": "TICKET-017",
       "tags": ["prompt-quality", "encoding", "all-agents"]
