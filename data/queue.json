@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-03-08T22:00:00-05:00",
+  "generated_at": "2026-03-09T00:00:00-05:00",
   "queued": [
     {
-      "id": "Q-001",
-      "category": "architecture",
-      "title": "OpenClaw → Claude live session bridge",
-      "what": "When a Claude session opens, register the session ID to a known file. OpenClaw reads it and uses sessions_send to target the active session for real-time two-way communication.",
-      "blocker": "Previously blocked on unstable ACP bindings. OpenClaw 2026.3.7 release notes claim ACP bindings now survive restarts — re-evaluate this blocker after updating. May now be unblocked or significantly closer.",
-      "blocker_type": "external",
-      "prereq": null,
+      "id": "Q-012",
+      "category": "trading",
+      "title": "Harden options_regime contract for live options sleeve (Phase 2)",
+      "what": "Agent-06 and Agent-07 currently default to IV_ELEVATED when options_regime is missing or invalid (TICKET-018 conservative default). When the options sleeve activates in Phase 2, this default must become a hard fail with code MISSING_CONTRACT_INPUT: options_regime. Update both prompts: remove the IV_ELEVATED fallback, enforce hard fail on missing/invalid field, and remove the 'options sleeve inactive' conditional comment. Do not make this change before the options sleeve is live — silent defaulting is safer than hard failing in paper-only mode.",
+      "blocker": "Options sleeve not yet active. Do not harden until Phase 2 options trading is enabled.",
+      "blocker_type": "internal",
+      "prereq": "60-day paper gate passed. Options sleeve enabled in risk_policy.json. Agent-06 and Agent-07 prompts updated to v1.3+.",
       "priority": "medium",
-      "ticket": "TICKET-020",
-      "tags": ["openclaw", "claude-bridge", "acp", "live-session"]
+      "ticket": null,
+      "tags": ["agent-06", "agent-07", "options-regime", "contract-hardening", "phase-2", "options-sleeve"]
     },
     {
       "id": "Q-004",
@@ -112,6 +112,42 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-001",
+      "category": "architecture",
+      "title": "OpenClaw → Claude Code live bridge via ACP (persistent channel binding)",
+      "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
+      "completed_at": "2026-03-09",
+      "ticket": "TICKET-020",
+      "tags": ["openclaw", "claude-bridge", "acp", "live-session", "telegram"]
+    },
+    {
+      "id": "T-017",
+      "category": "trading",
+      "title": "Fix encoding artifacts in all agent prompts",
+      "what": "Cleaned double-encoded UTF-8 mojibake (â€" → —, â€™ → ', emoji garbling) from all 14 affected agent prompts. Zero artifacts remaining across all 17 prompt files.",
+      "completed_at": "2026-03-09",
+      "ticket": "TICKET-017",
+      "tags": ["prompt-quality", "encoding", "all-agents"]
+    },
+    {
+      "id": "T-018",
+      "category": "trading",
+      "title": "Formalize options_regime contract for Agent-06 and Agent-07",
+      "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
+      "completed_at": "2026-03-09",
+      "ticket": "TICKET-018",
+      "tags": ["agent-06", "agent-07", "options-regime", "contract-hardening"]
+    },
+    {
+      "id": "T-019",
+      "category": "trading",
+      "title": "Formalize Agent-12 live_trading_enabled contract input",
+      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code — no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
+      "completed_at": "2026-03-09",
+      "ticket": "TICKET-019",
+      "tags": ["agent-12", "live-trading", "contract-hardening"]
+    },
     {
       "id": "Q-002",
       "category": "trading",
