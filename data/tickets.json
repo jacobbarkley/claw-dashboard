@@ -1,25 +1,25 @@
 {
-  "generated_at": "2026-03-08T22:12:24.030692+00:00",
+  "generated_at": "2026-03-09T01:18:20.968497+00:00",
   "summary": {
     "total": 7,
     "blockers": 0,
-    "active": 5,
-    "done": 2
+    "active": 1,
+    "done": 6
   },
   "phases": [
     {
       "phase": 2,
       "label": "Trading Core",
       "total": 3,
-      "done": 0,
-      "pct": 0
+      "done": 3,
+      "pct": 100
     },
     {
       "phase": 3,
       "label": "Intelligence Layer",
       "total": 2,
-      "done": 0,
-      "pct": 0
+      "done": 1,
+      "pct": 50
     },
     {
       "phase": 4,
@@ -73,17 +73,16 @@
         ],
         "title": "Register Agent-08b in OpenClaw scheduler at 08:20 ET",
         "file": "TICKET-016.md"
-      }
-    ],
-    "READY": [
+      },
       {
         "ticket_id": "TICKET-017",
         "phase": 2,
         "priority": "P2",
         "severity": "SEV3",
-        "status": "READY",
+        "status": "RESOLVED",
         "created_at": "2026-03-08T00:10:00-05:00",
-        "last_updated": "2026-03-08T00:10:00-05:00",
+        "last_updated": "2026-03-09T00:00:00-05:00",
+        "resolved_at": "2026-03-09T00:00:00-05:00",
         "timebox_minutes": 45,
         "dependencies": [],
         "tags": [
@@ -100,9 +99,10 @@
         "phase": 2,
         "priority": "P2",
         "severity": "SEV3",
-        "status": "READY",
+        "status": "RESOLVED",
         "created_at": "2026-03-08T00:10:00-05:00",
-        "last_updated": "2026-03-08T00:10:00-05:00",
+        "last_updated": "2026-03-09T00:00:00-05:00",
+        "resolved_at": "2026-03-09T00:00:00-05:00",
         "timebox_minutes": 30,
         "dependencies": [],
         "tags": [
@@ -119,9 +119,10 @@
         "phase": 2,
         "priority": "P2",
         "severity": "SEV3",
-        "status": "READY",
+        "status": "RESOLVED",
         "created_at": "2026-03-08T00:10:00-05:00",
-        "last_updated": "2026-03-08T00:10:00-05:00",
+        "last_updated": "2026-03-09T00:00:00-05:00",
+        "resolved_at": "2026-03-09T00:00:00-05:00",
         "timebox_minutes": 20,
         "dependencies": [],
         "tags": [
@@ -137,9 +138,10 @@
         "phase": 3,
         "priority": "P1",
         "severity": "SEV2",
-        "status": "READY",
+        "status": "RESOLVED",
         "created_at": "2026-03-08T00:10:00-05:00",
-        "last_updated": "2026-03-08T22:45:00-05:00",
+        "last_updated": "2026-03-09T00:00:00-05:00",
+        "resolved_at": "2026-03-09T00:00:00-05:00",
         "timebox_minutes": 30,
         "dependencies": [],
         "tags": [
@@ -153,7 +155,9 @@
         ],
         "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
         "file": "TICKET-020.md"
-      },
+      }
+    ],
+    "READY": [
       {
         "ticket_id": "TICKET-021",
         "phase": 3,
@@ -225,9 +229,10 @@
       "phase": 2,
       "priority": "P2",
       "severity": "SEV3",
-      "status": "READY",
+      "status": "RESOLVED",
       "created_at": "2026-03-08T00:10:00-05:00",
-      "last_updated": "2026-03-08T00:10:00-05:00",
+      "last_updated": "2026-03-09T00:00:00-05:00",
+      "resolved_at": "2026-03-09T00:00:00-05:00",
       "timebox_minutes": 45,
       "dependencies": [],
       "tags": [
@@ -244,9 +249,10 @@
       "phase": 2,
       "priority": "P2",
       "severity": "SEV3",
-      "status": "READY",
+      "status": "RESOLVED",
       "created_at": "2026-03-08T00:10:00-05:00",
-      "last_updated": "2026-03-08T00:10:00-05:00",
+      "last_updated": "2026-03-09T00:00:00-05:00",
+      "resolved_at": "2026-03-09T00:00:00-05:00",
       "timebox_minutes": 30,
       "dependencies": [],
       "tags": [
@@ -263,9 +269,10 @@
       "phase": 2,
       "priority": "P2",
       "severity": "SEV3",
-      "status": "READY",
+      "status": "RESOLVED",
       "created_at": "2026-03-08T00:10:00-05:00",
-      "last_updated": "2026-03-08T00:10:00-05:00",
+      "last_updated": "2026-03-09T00:00:00-05:00",
+      "resolved_at": "2026-03-09T00:00:00-05:00",
       "timebox_minutes": 20,
       "dependencies": [],
       "tags": [
@@ -281,9 +288,10 @@
       "phase": 3,
       "priority": "P1",
       "severity": "SEV2",
-      "status": "READY",
+      "status": "RESOLVED",
       "created_at": "2026-03-08T00:10:00-05:00",
-      "last_updated": "2026-03-08T22:45:00-05:00",
+      "last_updated": "2026-03-09T00:00:00-05:00",
+      "resolved_at": "2026-03-09T00:00:00-05:00",
       "timebox_minutes": 30,
       "dependencies": [],
       "tags": [
