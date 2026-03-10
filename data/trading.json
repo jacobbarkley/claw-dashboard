@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-03-09T20:41:01.218102+00:00",
-  "as_of_date": "2026-03-09",
+  "generated_at": "2026-03-10T20:41:01.506805+00:00",
+  "as_of_date": "2026-03-10",
   "account": {
-    "positions_value": 1268.19,
-    "unrealized_pnl": -1.7,
-    "unrealized_pnl_pct": -0.13,
+    "positions_value": 1284.61,
+    "unrealized_pnl": 14.72,
+    "unrealized_pnl_pct": 1.16,
     "cash": null
   },
   "positions": [
@@ -13,55 +13,55 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 265.2,
-      "current_price": 259.88,
-      "market_value": 259.88,
-      "unrealized_pnl": -5.32,
-      "unrealized_pct": -2.01,
-      "change_today_pct": 0.94
+      "current_price": 260.9378,
+      "market_value": 260.9378,
+      "unrealized_pnl": -4.2622,
+      "unrealized_pct": -1.61,
+      "change_today_pct": 0.41
     },
     {
       "symbol": "AVGO",
       "qty": 1.0,
       "side": "long",
       "entry_price": 341.4,
-      "current_price": 345.0,
-      "market_value": 345.0,
-      "unrealized_pnl": 3.6,
-      "unrealized_pct": 1.05,
-      "change_today_pct": 4.39
+      "current_price": 342.41,
+      "market_value": 342.41,
+      "unrealized_pnl": 1.01,
+      "unrealized_pct": 0.3,
+      "change_today_pct": -0.97
     },
     {
       "symbol": "MRVL",
       "qty": 1.0,
       "side": "long",
       "entry_price": 92.11,
-      "current_price": 92.57,
-      "market_value": 92.57,
-      "unrealized_pnl": 0.46,
-      "unrealized_pct": 0.5,
-      "change_today_pct": 3.35
+      "current_price": 93.3,
+      "market_value": 93.3,
+      "unrealized_pnl": 1.19,
+      "unrealized_pct": 1.29,
+      "change_today_pct": 0.7
     },
     {
       "symbol": "MU",
       "qty": 1.0,
       "side": "long",
       "entry_price": 389.25,
-      "current_price": 388.37,
-      "market_value": 388.37,
-      "unrealized_pnl": -0.88,
-      "unrealized_pct": -0.23,
-      "change_today_pct": 4.88
+      "current_price": 403.11,
+      "market_value": 403.11,
+      "unrealized_pnl": 13.86,
+      "unrealized_pct": 3.56,
+      "change_today_pct": 3.54
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 182.37,
-      "market_value": 182.37,
-      "unrealized_pnl": 0.44,
-      "unrealized_pct": 0.24,
-      "change_today_pct": 2.56
+      "current_price": 184.85,
+      "market_value": 184.85,
+      "unrealized_pnl": 2.92,
+      "unrealized_pct": 1.6,
+      "change_today_pct": 1.2
     }
   ],
   "kpis": {
@@ -268,6 +268,14 @@
       "winners": 0,
       "losers": 0,
       "win_rate": null
+    },
+    {
+      "date": "2026-03-10",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
@@ -366,16 +374,68 @@
     {
       "date": "2026-03-09",
       "equity": 0.0
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 0.0
     }
   ],
   "watchlist": [
     {
-      "symbol": "XOM",
-      "trigger": "Long only if XOM holds an afternoon base and breaks back through that base high with 5-minute confirmation while crude/energy remains firm; if no orderly late-session trigger appears, defer to next-morning open and require the stock to hold above the prior session midpoint before entry.",
-      "stop": "Initial stop below the afternoon higher-low/VWAP support zone for same-day entry, or below the opening pullback low for next-morning entry.",
-      "target": "First scale at 1.25R to 1.5R or into a retest/extension through the intraday high near 153.9.",
+      "symbol": "ORCL",
+      "trigger": "Only engage after the cash open. Long only if ORCL reclaims the opening range high on a 5-minute closing basis with volume at or above 1.5x the prior 5-minute bar and holds above VWAP on the retest. No trade if price remains trapped inside the first 15-minute range.",
+      "stop": "Hard stop below the opening range low and below VWAP, whichever is tighter after entry. Rationale: this is an event-anticipation setup; loss of the opening structure means the pre-earnings bid is not being sponsored.",
+      "target": "Scale first into 2R or the next obvious intraday resistance above the opening range extension, whichever comes first. Rationale: pre-earnings anticipation moves often fade after the initial trend leg.",
       "modifier": "QUARTER",
-      "note": "Still exposed to geopolitical headline whipsaw even though XOM is one of the cleanest HIGH-VIX names on the board."
+      "note": "This setup depends on anticipation into tonight's earnings rather than a realized result. If software beta stays weak or macro rotation dominates, ORCL can fail despite the known catalyst. REDUCE_ONLY is active, so the setup is intentionally throttled."
+    },
+    {
+      "symbol": "ADBE",
+      "trigger": "Long only if ADBE clears prior-day high or the first 30-minute high on a 15-minute closing basis with improving relative strength versus QQQ and volume expansion. No anticipatory entry inside a weak opening chop.",
+      "stop": "Stop below the breakout level and below the 15-minute higher low that launched the move. Rationale: if anticipation buyers cannot defend the breakout, the two-days-ahead catalyst is not enough.",
+      "target": "First scale at 1.8R to 2R or at the next intraday resistance shelf from the prior session. Rationale: this is an anticipation trade, so take paid strength instead of demanding a full trend day.",
+      "modifier": "QUARTER",
+      "note": "Catalyst timing is real but not same-day, so this can stay trapped in macro noise. If the market keeps preferring energy/defensives, Adobe may not get paid before earnings. REDUCE_ONLY means reduced conviction sizing is mandatory."
+    },
+    {
+      "symbol": "HIMS",
+      "trigger": "Momentum continuation only. Enter long only if HIMS holds above the post-news gap support for at least 15 minutes and then breaks the first pullback high on 5-minute volume expansion. Do not chase an extended open >5% above the first pullback pivot.",
+      "stop": "Stop below the first higher low above gap support or below the gap-support shelf itself if that is tighter. Rationale: if the news repricing is real, the market should defend the first constructive pullback.",
+      "target": "Take first profits at 2R or near any retest of the prior news-spike high. Rationale: after a 40%+ squeeze, continuation can be violent but fragile.",
+      "modifier": "QUARTER",
+      "note": "Fresh catalyst is strong, but the stock already repriced aggressively. This can devolve into a gap-and-fade or pure short-covering unwind. REDUCE_ONLY matters even more here because post-squeeze volatility can blow through normal expectations."
+    },
+    {
+      "symbol": "AZO",
+      "trigger": "Relative-strength continuation only. Enter if AZO clears the first 30-minute high while the broader market is flat-to-weak and AZO remains above VWAP with stable spreads. Prefer a low-volatility breakout rather than a vertical opening spike.",
+      "stop": "Stop below VWAP or below the breakout base formed in the first 30 minutes, whichever is tighter. Rationale: defensive leadership should not immediately surrender structure.",
+      "target": "Take profits into a 1.5R-2R move or into fresh intraday highs where momentum stalls. Rationale: analyst-upgrade moves often offer one clean extension leg, then fade.",
+      "modifier": "QUARTER",
+      "note": "Catalyst quality is weaker because it leans on secondary upgrade reporting instead of a primary document in hand. It works only if the market keeps rewarding defensive names. REDUCE_ONLY reduces the already modest aggression level further."
+    },
+    {
+      "symbol": "BP",
+      "trigger": "Long only if crude-linked strength persists after the open and BP breaks above the first 15-minute high while holding above VWAP. Prefer confirmation from XLE/XOM strength rather than isolated BP action.",
+      "stop": "Stop below VWAP and below the pullback low that forms before the breakout. Rationale: commodity-proxy trades fail fast when sector sponsorship disappears.",
+      "target": "Scale at 1.5R-2R or into the next intraday resistance zone/high-of-day extension. Rationale: majors have lagged the crude move, so take compensation on the first good push.",
+      "modifier": "QUARTER",
+      "note": "This is mostly a macro commodity expression, not a BP-specific information edge. Reuters already flagged that equity response has lagged crude, which limits confidence in follow-through. REDUCE_ONLY means treat it as an opportunistic, not aggressive, setup."
+    },
+    {
+      "symbol": "XOM",
+      "trigger": "Enter only on confirmed sector continuation: XOM must reclaim or hold above VWAP and break the first pullback high on a 5-minute closing basis while crude and XLE stay firm. Avoid entries if XOM lags peers during the setup.",
+      "stop": "Stop below VWAP and the most recent 5-minute higher low. Rationale: this is a liquid sector-proxy trade; once sponsorship weakens, there is no reason to stay.",
+      "target": "Take first profits at 1.5R-2R or into prior intraday resistance. Rationale: if majors are still only partially validating crude, don't overstay the first extension leg.",
+      "modifier": "QUARTER",
+      "note": "XOM is the safest institutional proxy here, which also means less asymmetry. If the market keeps doubting the durability of the oil shock, upside can stall quickly. REDUCE_ONLY remains in force, so the strategy intentionally avoids full exposure."
+    },
+    {
+      "symbol": "CVX",
+      "trigger": "Long only if CVX confirms sector strength by holding above VWAP and breaking the initial consolidation high after the open. Prefer entry when the stock is not the laggard among majors and crude remains bid.",
+      "stop": "Stop below the consolidation low and below VWAP. Rationale: integrated-energy continuation should not lose both structure and volume support immediately.",
+      "target": "First scale at 1.5R-2R or the next overhead intraday resistance. Rationale: without a stock-specific catalyst, the first sector-driven leg is the highest-quality payout.",
+      "modifier": "QUARTER",
+      "note": "Chevron offers cleaner quality than smaller energy names but not a unique information edge. If the crude spike fades, the thesis compresses fast. REDUCE_ONLY requires quarter-size participation only."
     }
   ],
   "exit_candidates": [],
