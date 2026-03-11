@@ -2,6 +2,18 @@
   "generated_at": "2026-03-09T00:00:00-05:00",
   "queued": [
     {
+      "id": "Q-019",
+      "category": "infrastructure",
+      "title": "Trading system isolation — dedicated agent + on/off switch",
+      "what": "Move all 18 trading cron jobs from the main agent to a new dedicated trading agent with its own isolated workspace. Goal: pause or resume the entire trading system as a unit instead of toggling 18 jobs individually.\n\nCurrent state: all trading cron jobs run under main. OpenClaw has no native agent start/stop (openclaw agents supports add/delete/bind only). Cron disable is ID-by-ID only — no bulk or agent-scoped toggle.\n\nProposed design:\n1. Create trading agent in openclaw.json with dedicated workspace (~/.openclaw/agents/trading/workspace)\n2. Re-point all 18 TradingBot cron jobs to agentId: trading\n3. Migrate relevant state files to new workspace\n4. Build trading-pause.sh / trading-resume.sh shell scripts that bulk-disable/enable all trading job IDs via openclaw cron disable <id> — since no native group toggle exists, script the IDs\n5. Optionally: wire pause/resume to a single gate file (trading_active.json) checked by the pre-market agent — more elegant but step 4 works immediately\n\nJobs to migrate (18 total): Preflight 6am goals, Morning brief curator, trading:premarket-phase, Morning brief composer, trading:preopen-gateway, TradingBot Market Status, Universe, Research, Alt Sentiment, Thesis, Strategy, Validation, Broker Auth, Risk Decision, Systems Audit, Remediation, Risk Approval, Pre-Open Refresh, Execution, Positions (x3), Volatility (x2), EOD Decision, Post-Close, Daily Audit, Governance Review.\n\nBackup: unchanged — prompt files stay in OpenClaw-s-Brain on GitHub.\n\nPrereq check needed: confirm openclaw cron edit supports changing agentId on existing jobs, or whether jobs must be deleted and re-added.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Confirm openclaw cron edit supports agentId changes on existing jobs.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["infrastructure", "trading", "agent-isolation", "cron", "on-off-switch", "workspace"]
+    },
+    {
       "id": "Q-018",
       "category": "project",
       "title": "Persistent story agent — continuously generates YouTube scripts from the real journey",
