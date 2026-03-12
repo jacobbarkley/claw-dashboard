@@ -1,76 +1,65 @@
 {
-  "generated_at": "2026-03-11T20:41:01.415092+00:00",
-  "as_of_date": "2026-03-11",
+  "generated_at": "2026-03-12T20:41:01.877946+00:00",
+  "as_of_date": "2026-03-12",
   "account": {
-    "positions_value": 1296.16,
-    "unrealized_pnl": 26.27,
-    "unrealized_pnl_pct": 2.07,
+    "positions_value": 14314.53,
+    "unrealized_pnl": -208.78,
+    "unrealized_pnl_pct": -1.44,
     "cash": null
   },
   "positions": [
     {
-      "symbol": "AAPL",
-      "qty": 1.0,
+      "symbol": "ADBE",
+      "qty": 17.0,
       "side": "long",
-      "entry_price": 265.2,
-      "current_price": 260.17,
-      "market_value": 260.17,
-      "unrealized_pnl": -5.03,
-      "unrealized_pct": -1.9,
-      "change_today_pct": -0.25
+      "entry_price": 272.45,
+      "current_price": 270.01,
+      "market_value": 4590.17,
+      "unrealized_pnl": -41.48,
+      "unrealized_pct": -0.9,
+      "change_today_pct": -1.35
     },
     {
       "symbol": "AVGO",
       "qty": 1.0,
       "side": "long",
       "entry_price": 341.4,
-      "current_price": 340.4099,
-      "market_value": 340.4099,
-      "unrealized_pnl": -0.9901,
-      "unrealized_pct": -0.29,
-      "change_today_pct": -0.63
-    },
-    {
-      "symbol": "MRVL",
-      "qty": 1.0,
-      "side": "long",
-      "entry_price": 92.11,
-      "current_price": 90.59,
-      "market_value": 90.59,
-      "unrealized_pnl": -1.52,
-      "unrealized_pct": -1.65,
-      "change_today_pct": -2.9
-    },
-    {
-      "symbol": "MU",
-      "qty": 1.0,
-      "side": "long",
-      "entry_price": 389.25,
-      "current_price": 419.365,
-      "market_value": 419.365,
-      "unrealized_pnl": 30.115,
-      "unrealized_pct": 7.74,
-      "change_today_pct": 4.03
+      "current_price": 336.04,
+      "market_value": 336.04,
+      "unrealized_pnl": -5.36,
+      "unrealized_pct": -1.57,
+      "change_today_pct": -1.62
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 185.625,
-      "market_value": 185.625,
-      "unrealized_pnl": 3.695,
-      "unrealized_pct": 2.03,
-      "change_today_pct": 0.46
+      "current_price": 183.14,
+      "market_value": 183.14,
+      "unrealized_pnl": 1.21,
+      "unrealized_pct": 0.66,
+      "change_today_pct": -1.55
+    },
+    {
+      "symbol": "ORCL",
+      "qty": 58.0,
+      "side": "long",
+      "entry_price": 161.522931,
+      "current_price": 158.71,
+      "market_value": 9205.18,
+      "unrealized_pnl": -163.149998,
+      "unrealized_pct": -1.74,
+      "change_today_pct": -2.7
     }
   ],
   "kpis": {
-    "total_trades": 5,
-    "closed_trades": 0,
-    "open_trades": 5,
-    "win_rate_pct": null,
+    "total_trades": 10,
+    "closed_trades": 3,
+    "open_trades": 7,
+    "win_rate_pct": 0.0,
     "profit_factor": null,
-    "expectancy": null,
+    "expectancy": 0.0,
     "net_pnl": 0,
     "max_drawdown_pct": null,
     "max_win_streak": 0,
@@ -284,6 +273,14 @@
       "winners": 0,
       "losers": 0,
       "win_rate": null
+    },
+    {
+      "date": "2026-03-12",
+      "net_pnl": 0.0,
+      "trades": 5,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": 0.0
     }
   ],
   "equity_curve": [
@@ -390,10 +387,91 @@
     {
       "date": "2026-03-11",
       "equity": 0.0
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 0.0
     }
   ],
-  "watchlist": [],
-  "exit_candidates": [],
+  "watchlist": [
+    {
+      "symbol": "HIMS",
+      "trigger": "Pullback-entry preferred: buy on 5-min VWAP reclaim in the $26.50\u2013$27.00 zone on volume < 300k (orderly cooling) within the first 30 minutes. Alternate breakout entry: 5-min candle close above $27.60 with volume >= 500k and VWAP rising. Do not chase opens above $28.50 (parabolic extension risk post-catalyst).",
+      "stop": "$25.80 \u2014 structural: proxies the 50% retrace of the full breakout from pre-event close (~$15.74) and aligns with the thesis invalidation close-below-$24 zone. A daily close below $25.80 on any volume confirms momentum failure and catalyst unwind.",
+      "target": "$29.50 \u2014 psychological resistance ahead of $30.00 round number; approximately +7.7% from $27.40 premarket entry. Represents first institutional distribution zone in a post-parabolic structure.",
+      "modifier": "HALF",
+      "note": "Stock is +73% over 3 sessions on an unconfirmed speculative partnership. Parabolic moves of this magnitude historically produce violent reversals on any negative NVO statement. Post-parabolic positioning is crowded. Today's +5.9% premarket on 1.04M volume may be thin-float follow-through rather than genuine institutional accumulation \u2014 the distinction cannot be confirmed premarket. Legal settlement durability on appeal remains an assumption. Universe agent classified trigger_type as 'technical' but the actual driver is an M&A news event \u2014 classification inconsistency preserved from upstream."
+    },
+    {
+      "symbol": "PATH",
+      "trigger": "Short entry on first dead-cat bounce after open: if PATH opens at ~$11.59 and bounces to $12.00\u2013$12.30 on declining volume within the first 30 minutes, short at the VWAP rejection. Alternate break-down entry: short on 5-min candle close below $11.40 with volume >= 200k (confirms continuation of gap-down trend). Do not short into a gap-down opening if first bar closes green (reversal signal).",
+      "stop": "$12.50 \u2014 structural: matches thesis invalidation trigger (gap-up-and-hold above $12.50 on volume > 5M confirms institutional buy-the-dip floor). A close above $12.50 negates the post-earnings fade thesis.",
+      "target": "$10.75 \u2014 round number support and ~7.2% below $11.59 premarket. Represents first meaningful demand zone in a stock that was -29.3% YTD before earnings.",
+      "modifier": "HALF",
+      "note": "Already -6.4% premarket \u2014 significant fade may be priced in by open. EPS sentiment is FADING, meaning retail momentum has partially discounted the news already. Short entry timing is critical: entering into a crowded open short creates squeeze risk. 16 consecutive EPS beats creates institutional goodwill that may compress the down move faster than expected. SiliconAngle vs. EBC characterization of guidance as 'solid' vs. 'disappointing' remains an unresolved contradiction \u2014 if the 'solid' framing gains traction, the short thesis degrades rapidly."
+    },
+    {
+      "symbol": "DG",
+      "trigger": "OPTIONS STRADDLE PREFERRED \u2014 pre-earnings AMC binary event. Slight long lean given bull_pct 45 > bear_pct 35 and 7-of-10 beat frequency. Equity directional entry: long only if DG opens flat to +1% on volume > 150k and first 5-min bar holds above VWAP. Do not enter long if gap-down > 2% at open (institutional distribution pre-earnings). RL-005: no new positions within 10 minutes of any high-impact macro events this AM.",
+      "stop": "3.5% below entry price (dynamic; specific absolute level requires premarket price confirmation). Structural rationale: 3.5% covers the typical DG post-miss one-session move and aligns with exiting before the full gap-down on a miss scenario.",
+      "target": "+5% above entry (beat-and-hold scenario; consistent with typical DG post-beat 1-session move). Above-consensus same-store sales comps are the primary driver of the +5% scenario.",
+      "modifier": "QUARTER",
+      "note": "ALL thesis elements are pre-earnings projections. EPS trajectory is contracting (YoY from $1.68 \u2192 $1.61-1.62) despite revenue growth \u2014 multiple compression risk is real. Walmart and Target discount expansion is a structural competitive threat. EPS consensus variance ($1.57 to $1.62 across sources) creates execution ambiguity: if actual is $1.60, it could be framed as beat or miss depending on consensus reference. Beat frequency alone is not a reliable entry signal \u2014 magnitude matters. QUARTER sizing is a hard ceiling."
+    },
+    {
+      "symbol": "MOS",
+      "trigger": "Pullback entry preferred \u2014 do not chase +10% open. Buy if MOS pulls back to -3% from the open print and reclaims VWAP on a 5-min candle with volume >= 300k. If MOS opens and holds the full gap in a tight 15-min range (VWAP hold with declining sell volume), enter breakout on first consolidation above the premarket high. Avoid initial open chasing \u2014 geopolitical-gap opens often see 20\u201330 minute volatility before establishing directional trend.",
+      "stop": "8% below entry price OR the prior session close level (whichever is higher). Structural rationale: closing below prior session's close marks breakdown of the geopolitical catalyst narrative and signals the gap is failing to hold.",
+      "target": "+12% from entry price (extension of current fertilizer price catalyst; consistent with urea/ammonia at 2022-crisis levels sustaining through the hold period). Initial resistance at round-number psychological levels.",
+      "modifier": "HALF",
+      "note": "Geopolitical premium is binary \u2014 a ceasefire or IEA intervention produces a rapid and potentially violent reversal. +10% open creates unfavorable entry if chasing: pullback entry is strongly preferred. Mississippi production issues remain unresolved and could impair MOS relative to CF/NTR despite the same macro tailwind. Recent earnings misses (Seeking Alpha) contradict the bullish structural narrative. The FinancialContent vs. Benzinga framing divergence (MOS 'complex reaction' vs. grouped with sector peers) is unresolved \u2014 MOS may underperform CF in this run. REDUCE_ONLY is NOT active (NORMAL circuit breaker)."
+    },
+    {
+      "symbol": "CF",
+      "trigger": "Pullback entry preferred \u2014 do not chase +9.1% open. Buy if CF pulls back to approximately $54.87 (-3% from $56.56 premarket) and reclaims VWAP with volume >= 400k on a 5-min bar. Alternate breakout entry: 5-min candle close above $57.50 (above premarket high) on volume >= 400k with VWAP confirmation and broad fertilizer sector holding gains (confirm MOS and NTR also holding).",
+      "stop": "$53.50 \u2014 structural: approximates the prior session close level and marks breakdown below the pre-catalyst base. Breach confirms the geopolitical gap is not holding and narrative is unwinding.",
+      "target": "$61.00 \u2014 approximately +7.8% from $56.56 premarket entry. First resistance cluster in the fertilizer sector run and consistent with the Iran-supply-shock premium sustaining through the near-term hold period.",
+      "modifier": "HALF",
+      "note": "Same binary geopolitical risk as MOS \u2014 ceasefire = rapid reversal. Mississippi production site issues are cited in the same FinancialContent source that identifies CF as the primary beneficiary: this unresolved internal contradiction means CF's net margin capture vs. the sector peers may be lower than expected. Much of the +9.1% may already reflect geopolitical premium \u2014 real upside edge requires the Iran situation to persist or escalate. Do not enter at open gap; wait for pullback. REDUCE_ONLY is NOT active (NORMAL circuit breaker)."
+    },
+    {
+      "symbol": "OXY",
+      "trigger": "SHORT LEAN \u2014 bull_pct (33) < bear_pct (42); sentiment REVERSING with low corroboration; relative underperformance vs. energy peers (+1.8% OXY vs. +10% MOS, +9.1% CF) signals institutional non-participation. SHORT entry: if OXY fails to hold above $56.00 on the first 15-minute bar with declining volume, enter short on VWAP rejection at $56.50\u2013$57.00. LONG entry (contingent only): if OXY opens above $57.50 and holds for > 15 minutes on volume >= 500k (institutional accumulation signal) \u2014 then switch to long. Do not enter long at current premarket print without confirmation.",
+      "stop": "Short stop: $58.50 (marks squeeze above the open gap; breach = institutional momentum buy confirmed). Long stop (if triggered): $55.00 (structural; below this confirms gap-fail and momentum reversal).",
+      "target": "Short target: $54.50 \u2014 approximately -3.6% below $56.56; retraces the today's open gap and consistent with the $55.00 invalidation level from the thesis. Secondary short target: $52.00 (extended if geopolitical premium unwinds and IEA adds pressure).",
+      "modifier": "QUARTER",
+      "note": "OXY is the weakest name in today's energy rotation (+1.8% vs. sector peers +9-10%). High two-way volatility (-4.1% on March 10, +1.8% on March 12) prevents directional confidence. Sentiment is REVERSING with low corroboration \u2014 the retail/institutional divergence is wide. Trefis recession-risk framing vs. FinancialContent margin-expansion framing represents a genuine structural disagreement, not a narrative nuance. This is the lowest-conviction position in today's pipeline. QUARTER sizing is a ceiling, not a target. Abstaining from OXY equity and using the options_alternative exclusively is the preferred risk-management approach."
+    }
+  ],
+  "exit_candidates": [
+    {
+      "symbol": "ADBE",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "HIGH",
+      "reason": "Earnings release AMC tonight. Risk evaluation explicitly authorized only an OPTIONS ATM STRADDLE for ADBE earnings-window exposure; equity directional hold through earnings violates the authorized entry structure. Position has deteriorated further since midday (now -$36.89 / -0.796% vs -$16.41 / -0.354% at midday check). Daily change -1.251%. Holding an undirected equity position through a binary earnings event with no hedging structure in place is not sanctioned by the risk policy. Close before 15:55 ET to avoid earnings-window gap risk.",
+      "overnight_risk": "ADBE reports AMC tonight. Binary event risk: gap up or gap down depending on earnings beat/miss. No stop protection against overnight gap. Equity directional exposure is explicitly policy-violating for this position type per risk_evaluation ADBE note.",
+      "unrealized_pnl": -41.48,
+      "unrealized_pct": -0.9
+    },
+    {
+      "symbol": "AVGO",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "MEDIUM",
+      "reason": "Position has continued to deteriorate since midday check (-1.429% unrealized vs -1.197% at midday; daily change -1.478%). TIGHTEN_STOP flag from midday was MEDIUM urgency. VIX at 26.63 HIGH regime, SPY -1.26% today indicates broad market selling pressure. No positive catalyst; sustained downward momentum with no thesis catalyst overnight. Smallest non-NVDA position; risk-reward for overnight hold is unfavorable. Closing preserves capital rather than holding dead weight through a volatile overnight in a HIGH VIX environment.",
+      "overnight_risk": "No earnings. Macro risk remains elevated (VIX 26.63, SPY -1.26%). Position has no structural support or catalyst. Continued selling pressure likely if macro deterioration persists.",
+      "unrealized_pnl": -5.36,
+      "unrealized_pct": -1.57
+    },
+    {
+      "symbol": "ORCL",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "MEDIUM",
+      "reason": "Largest position ($9,267.82 market value). Unrealized loss has expanded from midday: now -$100.51 / -1.073% (midday showed +$35.21 / +0.376%). Daily change -2.041% is the sharpest of any position today and most material given position size. Risk_evaluation explicitly flagged post-earnings gap fill risk for days 1-3; today is post-earnings day 2, and that gap fill is actively occurring. VIX HIGH at 26.63 with SPY -1.26% amplifies the risk of holding overnight. Structural stop at $155.00 remains intact, but a -2.04% single-day move on the portfolio's largest position in a HIGH VIX environment, with active gap fill underway and no near-term catalyst, warrants closing before bell to protect capital. The unrealized P&L has swung from +$35 to -$100 intraday.",
+      "overnight_risk": "Post-earnings day 2. Risk_evaluation noted gap fill risk days 1-3. No upcoming catalyst to restore momentum. Structural stop at $155.00 limits max loss but overnight gap risk in HIGH VIX environment could breach that level before stop can execute at market open.",
+      "unrealized_pnl": -163.149998,
+      "unrealized_pct": -1.74
+    }
+  ],
   "tunables": {
     "trading_mode": "PAPER",
     "live_trading_enabled": false,
