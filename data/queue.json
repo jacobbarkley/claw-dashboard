@@ -2,6 +2,54 @@
   "generated_at": "2026-03-09T00:00:00-05:00",
   "queued": [
     {
+      "id": "Q-023",
+      "category": "trading",
+      "title": "Trading pipeline Phase 5 — state machine, vocab cleanup, integration tests",
+      "what": "Pipeline state machine (state/pipeline_state.json) representing INIT → SESSION_READY → ARTIFACTS_READY → POLICY_READY → RISK_APPROVED → EXECUTION_ALLOWED → EXECUTED|HALTED. Status vocab enforcement across all prompts and Python scripts — no more EXECUTION_FAILED for gated non-execution, consistent SKIPPED_GATED and ERROR_INTERNAL. Integration test suite covering clean happy path, stale artifact contamination, invalid policy, upstream risk halt. See refactor plan Phase 5A-D.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phases 2-4 complete",
+      "priority": "low",
+      "ticket": null,
+      "tags": ["trading", "pipeline-robustness", "state-machine", "testing", "vocab-cleanup", "phase-5"]
+    },
+    {
+      "id": "Q-022",
+      "category": "trading",
+      "title": "Trading pipeline Phase 4 — run-scoped artifact migration",
+      "what": "Migrate all stage artifact writes into state/runs/<date>/<run_id>/. Update Python scripts: order_submitter.py, broker_reconciler.py, preflight_auth.py, performance_aggregator.py, positions_fetcher.py, volatility_fetcher.py. Update all agent prompt output paths. Write dual (run-scoped primary + legacy root-state compatibility mirror) until migration complete. Add bin/run_paths.py helper with get_run_dir() and get_artifact_path(). See refactor plan Phase 4A-C.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 3 complete",
+      "priority": "low",
+      "ticket": null,
+      "tags": ["trading", "pipeline-robustness", "run-scoped", "artifact-paths", "phase-4"]
+    },
+    {
+      "id": "Q-021",
+      "category": "trading",
+      "title": "Trading pipeline Phase 3 — 4-gate Python scripts + health simplification",
+      "what": "Create bin/gate_session.py (validates session_context.json), bin/gate_artifacts.py (validates artifact_manifest.json freshness for active run), bin/gate_policy.py (validates normalized_risk_policy.json). Four canonical gates replace scattered check logic across agents. Systems auditor simplification: remove PRECEDENCE_BREACH as standalone critical gate, health verdict only HALTs for unique unsafe conditions not already covered by gates 1-4. Remediation simplification: carry-forward warnings force REDUCE_ONLY not HALT; PRECEDENCE_BREACH from prior runs doesn't cascade as fresh CRITICAL each run. See refactor plan Phase 3A-F.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 2A/2B proven in live trading run",
+      "priority": "medium",
+      "ticket": null,
+      "tags": ["trading", "pipeline-robustness", "gate-scripts", "systems-auditor", "remediation", "phase-3"]
+    },
+    {
+      "id": "Q-020",
+      "category": "trading",
+      "title": "Trading pipeline Phase 2C — preflight bootstrap validation",
+      "what": "Update preflight check scripts to verify session_context.json and normalized_risk_policy.json exist and are fresh before the pipeline proceeds. Gates the morning run on bootstrap (07:30 cron) having completed successfully. Non-blocking for the morning run but hardens the safety contract. See refactor plan Phase 2C.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 2A/2B proven in live trading run (tomorrow)",
+      "priority": "low",
+      "ticket": null,
+      "tags": ["trading", "pipeline-robustness", "preflight", "bootstrap", "phase-2c"]
+    },
+    {
       "id": "Q-019",
       "category": "infrastructure",
       "title": "Trading system isolation — dedicated agent + on/off switch",
