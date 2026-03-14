@@ -250,12 +250,21 @@ function HeroSection({
           </div>
 
           {/* Cash / positions breakdown */}
-          <div className="text-xs text-zinc-600 mt-1 space-x-3">
-            {account.cash != null && <span>Cash: ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>}
-            <span>Positions: ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-            <span className={pnlColor(account.unrealized_pnl)}>
-              Unrealized: {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 bg-emerald-950/50 border border-emerald-800/50 rounded-full px-3 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+              <span className="text-xs font-semibold text-emerald-300">
+                ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2 })} invested
+              </span>
             </span>
+            <span className={`text-xs font-medium ${pnlColor(account.unrealized_pnl)}`}>
+              {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")} unrealized
+            </span>
+            {account.cash != null && (
+              <span className="text-xs text-zinc-600">
+                ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })} cash
+              </span>
+            )}
           </div>
         </div>
 
