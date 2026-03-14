@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T03:37:15.582900+00:00",
+  "generated_at": "2026-03-14T04:26:35.018982+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -452,5 +452,86 @@
     "consecutive_loss_size_modifier": "HALF",
     "reduce_only_size_cap": "QUARTER",
     "updated_at": "2026-03-12T09:20:00-05:00"
+  },
+  "options": {
+    "gate": {
+      "status": "PASS",
+      "checked_at": "2026-03-14T04:07:43.788075+00:00",
+      "csp_slots_used": 0,
+      "available_capital": 50000.0,
+      "cash_buffer_pct": 100.0,
+      "csp_slots_max": 2
+    },
+    "candidates": [
+      {
+        "symbol": "ORCL",
+        "current_price": 155.11,
+        "expiry": "2026-04-10",
+        "dte": 27,
+        "atm_iv": 55.8,
+        "iv_rank": null,
+        "iv_rank_source": "insufficient_history",
+        "in_equity_pipeline": false,
+        "thesis_direction": null,
+        "thesis_conviction": null,
+        "strike": 150.0,
+        "bid": 7.0,
+        "delta": 0.368,
+        "premium_yield_pct": 4.833,
+        "annualized_yield_pct": 65.34,
+        "assignment_capital": 15000.0,
+        "open_interest": 568
+      },
+      {
+        "symbol": "AMD",
+        "current_price": 193.39,
+        "expiry": "2026-04-10",
+        "dte": 27,
+        "atm_iv": 52.0,
+        "iv_rank": null,
+        "iv_rank_source": "insufficient_history",
+        "in_equity_pipeline": false,
+        "thesis_direction": null,
+        "thesis_conviction": null,
+        "strike": 185.0,
+        "bid": 7.7,
+        "delta": 0.323,
+        "premium_yield_pct": 4.23,
+        "annualized_yield_pct": 57.18,
+        "assignment_capital": 18500.0,
+        "open_interest": 439
+      },
+      {
+        "symbol": "NVDA",
+        "current_price": 180.25,
+        "expiry": "2026-04-10",
+        "dte": 27,
+        "atm_iv": 40.6,
+        "iv_rank": null,
+        "iv_rank_source": "insufficient_history",
+        "in_equity_pipeline": false,
+        "thesis_direction": null,
+        "thesis_conviction": null,
+        "strike": 175.0,
+        "bid": 5.9,
+        "delta": 0.346,
+        "premium_yield_pct": 3.4,
+        "annualized_yield_pct": 45.96,
+        "assignment_capital": 17500.0,
+        "open_interest": 6893
+      }
+    ],
+    "screened": [],
+    "active_trades": [],
+    "executions": [],
+    "scan_summary": {
+      "scanned": 5,
+      "passed": 3,
+      "filtered_earnings": 0,
+      "filtered_iv": 0,
+      "filtered_no_chain": 0,
+      "filtered_error": 2
+    },
+    "as_of": "2026-03-14T00:08:38.132061-04:00"
   }
 }

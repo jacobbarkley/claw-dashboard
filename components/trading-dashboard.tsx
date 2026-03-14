@@ -74,9 +74,73 @@ interface PipelineStatus {
   audit_written_at: string | null
 }
 
+interface OptionsCandidate {
+  symbol: string
+  current_price: number
+  expiry: string
+  dte: number
+  atm_iv: number
+  iv_rank: number | null
+  iv_rank_source: string
+  in_equity_pipeline: boolean
+  thesis_direction: string | null
+  thesis_conviction: string | null
+  strike: number
+  bid: number
+  delta: number
+  premium_yield_pct: number
+  annualized_yield_pct: number
+  assignment_capital: number
+  open_interest: number | null
+}
+
+interface OptionsScreened {
+  symbol: string
+  thesis_alignment: number | null
+  assignment_willing: string | null
+  narrative_risk: string[]
+  recommendation: string | null
+  rationale: string
+}
+
+interface OptionsExecution {
+  symbol: string
+  type: string
+  strike: number
+  expiry: string
+  contracts: number
+  fill_price: number | null
+  premium: number | null
+  filled_at: string | null
+  status: string | null
+  pnl: number | null
+}
+
+interface OptionsData {
+  gate: {
+    status: string
+    checked_at: string | null
+    csp_slots_used: number
+    csp_slots_max: number
+    available_capital: number | null
+    cash_buffer_pct: number | null
+  }
+  candidates: OptionsCandidate[]
+  screened: OptionsScreened[]
+  active_trades: Array<{
+    symbol: string; type: string; strike: number; expiry: string;
+    dte: number; contracts: number; limit_price: number | null;
+    wheel_state: string; status: string | null;
+  }>
+  executions: OptionsExecution[]
+  scan_summary: { scanned: number; passed: number } | null
+  as_of: string | null
+}
+
 interface TradingData {
   generated_at: string
   as_of_date: string
+  options?: OptionsData
   account: {
     // True account values from Alpaca
     equity: number | null
@@ -702,6 +766,227 @@ function TunablesPanel({ tunables }: { tunables: Tunables }) {
   )
 }
 
+// ─── Options Panel ────────────────────────────────────────────────────────────
+function OptionsGateBadge({ status }: { status: string }) {
+  const cfg: Record<string, string> = {
+    PASS:    "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
+    FAIL:    "bg-red-900/50 text-red-300 border-red-600/50",
+    UNKNOWN: "bg-zinc-800 text-zinc-500 border-zinc-700",
+  }
+  return (
+    <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-1 rounded border ${cfg[status] ?? cfg.UNKNOWN}`}>
+      GATE {status}
+    </span>
+  )
+}
+
+function OptionsCandidateRow({ c, screened }: { c: OptionsCandidate; screened?: OptionsScreened }) {
+  const [open, setOpen] = useState(false)
+  const yieldColor = c.annualized_yield_pct >= 50 ? "text-emerald-400" : c.annualized_yield_pct >= 30 ? "text-yellow-400" : "text-zinc-300"
+  return (
+    <div
+      className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-bold text-zinc-100 text-base">{c.symbol}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-semibold">CSP</span>
+              {c.in_equity_pipeline && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-900/30 text-violet-400">in pipeline</span>
+              )}
+              {screened?.recommendation && (
+                <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
+                  screened.recommendation === "PROCEED" ? "bg-emerald-900/40 text-emerald-300" :
+                  screened.recommendation === "SKIP"    ? "bg-red-900/30 text-red-400" :
+                  "bg-yellow-900/30 text-yellow-400"
+                }`}>{screened.recommendation}</span>
+              )}
+            </div>
+            <div className="text-[11px] text-zinc-500 mt-0.5">
+              ${c.strike}P · exp {c.expiry} · {c.dte}d · δ {c.delta?.toFixed(2) ?? "—"}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className={`text-base font-semibold ${yieldColor}`}>
+              {c.annualized_yield_pct?.toFixed(1)}%
+              <span className="text-xs text-zinc-500 ml-1 font-normal">ann.</span>
+            </div>
+            <div className="text-[11px] text-zinc-500">
+              ${c.bid} bid · ${c.assignment_capital?.toLocaleString()} capital
+            </div>
+          </div>
+          {open ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0" />}
+        </div>
+      </div>
+      {open && (
+        <div className="px-4 pb-3 pt-1 border-t border-zinc-800/60 space-y-2 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <div className="text-zinc-500">Current Price</div>
+              <div className="text-zinc-200 font-medium">${c.current_price?.toFixed(2)}</div>
+            </div>
+            <div>
+              <div className="text-zinc-500">ATM IV</div>
+              <div className="text-zinc-200 font-medium">{c.atm_iv?.toFixed(1)}%</div>
+            </div>
+            <div>
+              <div className="text-zinc-500">IV Rank</div>
+              <div className="text-zinc-400">{c.iv_rank != null ? `${c.iv_rank.toFixed(0)}%` : `— (${c.iv_rank_source?.replace(/_/g, " ")})`}</div>
+            </div>
+            <div>
+              <div className="text-zinc-500">Open Interest</div>
+              <div className="text-zinc-200 font-medium">{c.open_interest?.toLocaleString() ?? "—"}</div>
+            </div>
+            <div>
+              <div className="text-zinc-500">Premium Yield</div>
+              <div className="text-zinc-200 font-medium">{c.premium_yield_pct?.toFixed(2)}%</div>
+            </div>
+            <div>
+              <div className="text-zinc-500">Assignment Capital</div>
+              <div className="text-zinc-200 font-medium">${c.assignment_capital?.toLocaleString()}</div>
+            </div>
+            {c.thesis_direction && (
+              <div>
+                <div className="text-zinc-500">Thesis</div>
+                <div className="text-zinc-200 font-medium capitalize">{c.thesis_direction} · {c.thesis_conviction}</div>
+              </div>
+            )}
+            {screened?.thesis_alignment != null && (
+              <div>
+                <div className="text-zinc-500">Thesis Alignment</div>
+                <div className="text-zinc-200 font-medium">{screened.thesis_alignment}/5</div>
+              </div>
+            )}
+          </div>
+          {screened?.rationale && (
+            <div>
+              <div className="text-zinc-500 mb-0.5">Agent-17 rationale</div>
+              <div className="text-zinc-400 leading-snug">{screened.rationale}</div>
+            </div>
+          )}
+          {screened?.narrative_risk && screened.narrative_risk.length > 0 && (
+            <div>
+              <div className="text-zinc-500 mb-0.5">Risk flags</div>
+              <div className="flex flex-wrap gap-1">
+                {screened.narrative_risk.map((r, i) => (
+                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900/30 text-orange-400">{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ActiveOptionsRow({ t }: { t: OptionsData["active_trades"][number] }) {
+  const wheelColors: Record<string, string> = {
+    IDLE:      "bg-zinc-800 text-zinc-500",
+    CSP_OPEN:  "bg-blue-900/40 text-blue-300",
+    ASSIGNED:  "bg-yellow-900/40 text-yellow-300",
+    CC_OPEN:   "bg-violet-900/40 text-violet-300",
+    COMPLETED: "bg-emerald-900/40 text-emerald-300",
+  }
+  return (
+    <div className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 flex items-center justify-between">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-bold text-zinc-100">{t.symbol}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-semibold">{t.type}</span>
+          <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${wheelColors[t.wheel_state] ?? wheelColors.IDLE}`}>
+            {t.wheel_state.replace(/_/g, " ")}
+          </span>
+        </div>
+        <div className="text-[11px] text-zinc-500 mt-0.5">
+          ${t.strike}P · {t.expiry} · {t.contracts} contract{t.contracts !== 1 ? "s" : ""} · {t.dte}d
+        </div>
+      </div>
+      {t.limit_price != null && (
+        <div className="text-right">
+          <div className="text-sm font-semibold text-zinc-100">${t.limit_price.toFixed(2)}</div>
+          <div className="text-[11px] text-zinc-500">limit</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OptionsPanel({ options }: { options: OptionsData }) {
+  const { gate, candidates, screened, active_trades, executions, scan_summary, as_of } = options
+  const screenedMap = Object.fromEntries(screened.map(s => [s.symbol, s]))
+  const hasActive = active_trades.length > 0
+  const hasExec = executions.length > 0
+
+  return (
+    <div className="space-y-4">
+      {/* Header row: gate badge + slot usage + capital */}
+      <div className="flex flex-wrap items-center gap-3 text-xs">
+        <OptionsGateBadge status={gate.status} />
+        <span className="text-zinc-500">
+          {gate.csp_slots_used}/{gate.csp_slots_max} CSP slots used
+        </span>
+        {gate.available_capital != null && (
+          <span className="text-zinc-500">
+            ${gate.available_capital.toLocaleString()} available
+          </span>
+        )}
+        {gate.cash_buffer_pct != null && (
+          <span className={`font-medium ${gate.cash_buffer_pct >= 15 ? "text-emerald-400" : "text-red-400"}`}>
+            {gate.cash_buffer_pct.toFixed(0)}% cash buffer
+          </span>
+        )}
+        {scan_summary && (
+          <span className="ml-auto text-zinc-600">
+            {scan_summary.passed}/{scan_summary.scanned} passed screen
+          </span>
+        )}
+      </div>
+
+      {/* Active trades (filled/open options positions) */}
+      {hasActive && (
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Active Positions</h3>
+          {active_trades.map((t, i) => <ActiveOptionsRow key={i} t={t} />)}
+        </div>
+      )}
+
+      {/* Execution log */}
+      {hasExec && (
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Recent Fills</h3>
+          {executions.map((e, i) => (
+            <div key={i} className="text-xs text-zinc-400 flex items-center gap-3 px-1">
+              <span className="font-mono text-zinc-200">{e.symbol}</span>
+              <span>{e.type} ${e.strike} {e.expiry}</span>
+              {e.premium != null && <span className="text-emerald-400">+${e.premium.toFixed(2)}</span>}
+              {e.pnl != null && <span className={pnlColor(e.pnl)}>{e.pnl >= 0 ? "+" : ""}{fmt(e.pnl, "$")}</span>}
+              <span className="text-zinc-600 ml-auto">{e.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CSP Candidates */}
+      {candidates.length > 0 ? (
+        <div className="space-y-2">
+          {hasActive && <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Screened Candidates</h3>}
+          {candidates.map(c => (
+            <OptionsCandidateRow key={c.symbol} c={c} screened={screenedMap[c.symbol]} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm text-zinc-600 py-4 text-center">No candidates — screener runs weekday mornings at 08:22 ET</div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function TradingDashboard({ initialData }: { initialData: TradingData | null }) {
   const [data, setData] = useState<TradingData | null>(initialData)
@@ -828,6 +1113,19 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           <Watchlist items={data.watchlist} />
         </div>
 
+        {/* Options */}
+        {data.options && (
+          <>
+            <Separator className="bg-zinc-800" />
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                <TrendingDown className="w-3.5 h-3.5 text-blue-400" />
+                Options — Wheel Strategy
+              </h2>
+              <OptionsPanel options={data.options} />
+            </div>
+          </>
+        )}
 
       </div>
     </div>

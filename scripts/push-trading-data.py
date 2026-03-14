@@ -11,8 +11,9 @@ import glob
 from pathlib import Path
 from datetime import datetime, timezone
 
-WORKSPACE = Path.home() / ".openclaw/workspace/trading-bot"
-OUTPUT    = Path(__file__).parent.parent / "data/trading.json"
+WORKSPACE        = Path.home() / ".openclaw/workspace/trading-bot"
+OPTIONS_WORKSPACE = WORKSPACE / "options"
+OUTPUT           = Path(__file__).parent.parent / "data/trading.json"
 
 
 def load(path: Path) -> dict:
@@ -186,6 +187,104 @@ def build_tunables(policy: dict) -> dict:
     }
 
 
+def build_options(candidates_raw: dict, screened_raw: dict, strategy_raw: dict,
+                  gate_raw: dict, exec_log_raw: dict) -> dict:
+    # Gate summary
+    gate = gate_raw
+    gate_summary = {
+        "status":           gate.get("status", "UNKNOWN"),
+        "checked_at":       gate.get("checked_at"),
+        "csp_slots_used":   next((c["detail"] for c in gate.get("checks", []) if c["check"] == "CSP_CONCENTRATION"), ""),
+        "available_capital": gate.get("capital_summary", {}).get("available_options_capital"),
+        "cash_buffer_pct":  round(gate.get("capital_summary", {}).get("cash_buffer_pct", 0) * 100, 1)
+                            if gate.get("capital_summary", {}).get("cash_buffer_pct") is not None else None,
+        "csp_slots_max":    2,
+    }
+    # Count used CSP slots from per_trade
+    used = len([t for t in gate.get("per_trade", []) if t.get("type") == "CSP"])
+    gate_summary["csp_slots_used"] = used
+
+    # Candidates (from options_screener.py output)
+    raw_candidates = candidates_raw.get("candidates", [])
+    candidates = []
+    for c in raw_candidates:
+        best = c.get("best_csp") or {}
+        candidates.append({
+            "symbol":              c.get("symbol"),
+            "current_price":       safe_float(c.get("current_price")),
+            "expiry":              c.get("expiry"),
+            "dte":                 c.get("dte"),
+            "atm_iv":              round(safe_float(c.get("atm_iv"), 0) * 100, 1),
+            "iv_rank":             c.get("iv_rank"),
+            "iv_rank_source":      c.get("iv_rank_source"),
+            "in_equity_pipeline":  c.get("in_equity_pipeline", False),
+            "thesis_direction":    c.get("thesis_direction"),
+            "thesis_conviction":   c.get("thesis_conviction"),
+            # Best CSP strike
+            "strike":              safe_float(best.get("strike")),
+            "bid":                 safe_float(best.get("bid")),
+            "delta":               safe_float(best.get("delta_approx")),
+            "premium_yield_pct":   safe_float(best.get("premium_yield_pct")),
+            "annualized_yield_pct": safe_float(best.get("annualized_yield_pct")),
+            "assignment_capital":  safe_float(best.get("assignment_capital")),
+            "open_interest":       best.get("open_interest"),
+        })
+
+    # Screened candidates (Agent-17 qualitative layer)
+    screened = []
+    for s in screened_raw.get("screened", []):
+        screened.append({
+            "symbol":               s.get("symbol"),
+            "thesis_alignment":     s.get("thesis_alignment_score"),
+            "assignment_willing":   s.get("assignment_willingness"),
+            "narrative_risk":       s.get("narrative_risk_flags", []),
+            "recommendation":       s.get("recommendation"),
+            "rationale":            s.get("rationale", ""),
+        })
+
+    # Active trade specifications (Agent-18 output)
+    active_trades = []
+    for t in strategy_raw.get("trades", []):
+        active_trades.append({
+            "symbol":         t.get("symbol"),
+            "type":           t.get("type"),          # CSP or CC
+            "strike":         safe_float(t.get("strike")),
+            "expiry":         t.get("expiry"),
+            "dte":            t.get("dte"),
+            "contracts":      t.get("contracts", 1),
+            "limit_price":    safe_float(t.get("limit_price")),
+            "wheel_state":    t.get("wheel_state", "IDLE"),
+            "profit_target":  safe_float(t.get("profit_target_pct")),
+            "status":         t.get("status"),
+        })
+
+    # Execution log (filled orders)
+    executions = []
+    for e in exec_log_raw.get("executions", []):
+        executions.append({
+            "symbol":      e.get("symbol"),
+            "type":        e.get("type"),
+            "strike":      safe_float(e.get("strike")),
+            "expiry":      e.get("expiry"),
+            "contracts":   e.get("contracts", 1),
+            "fill_price":  safe_float(e.get("fill_price")),
+            "premium":     safe_float(e.get("premium_collected")),
+            "filled_at":   e.get("filled_at"),
+            "status":      e.get("status"),
+            "pnl":         safe_float(e.get("realized_pnl")),
+        })
+
+    return {
+        "gate":            gate_summary,
+        "candidates":      candidates,
+        "screened":        screened,
+        "active_trades":   active_trades,
+        "executions":      executions,
+        "scan_summary":    candidates_raw.get("scan_summary"),
+        "as_of":           candidates_raw.get("written_at") or gate_raw.get("checked_at"),
+    }
+
+
 def build_pipeline_status(audit: dict, session: dict) -> dict:
     payload = audit.get("payload", {})
     return {
@@ -212,6 +311,13 @@ def main():
     audit    = load(WORKSPACE / "state/daily_audit_state.json")
     session  = load(WORKSPACE / "state/session_context.json")
 
+    # Options module (gracefully absent on weekends / before first run)
+    opt_candidates = load(OPTIONS_WORKSPACE / "state/options_candidates.json")
+    opt_screened   = load(OPTIONS_WORKSPACE / "state/options_screened.json")
+    opt_strategy   = load(OPTIONS_WORKSPACE / "state/options_strategy.json")
+    opt_gate       = load(OPTIONS_WORKSPACE / "state/gate_options_risk.json")
+    opt_exec       = load(OPTIONS_WORKSPACE / "state/options_execution_log.json")
+
     perf_dir = WORKSPACE / "data/daily-performance"
 
     positions   = build_positions(snapshot)
@@ -223,6 +329,7 @@ def main():
     tunables    = build_tunables(policy)
     perf_kpis   = kpis.get("performance_kpis", {})
     pipeline    = build_pipeline_status(audit, session)
+    options     = build_options(opt_candidates, opt_screened, opt_strategy, opt_gate, opt_exec)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -248,11 +355,13 @@ def main():
         "watchlist":         watchlist,
         "exit_candidates":   exits,
         "tunables":          tunables,
+        "options":           options,
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, indent=2, default=str))
-    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {len(watchlist)} watchlist, {len(exits)} exit candidates")
+    n_opts = len(options.get("candidates", []))
+    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {len(watchlist)} watchlist, {len(exits)} exit candidates, {n_opts} options candidates")
 
 
 if __name__ == "__main__":
