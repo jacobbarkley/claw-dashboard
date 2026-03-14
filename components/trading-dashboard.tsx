@@ -288,7 +288,7 @@ function HeroSection({
       <div className="flex items-start justify-between">
         <div>
           {/* Main number: value invested in market */}
-          <div className="text-4xl font-bold text-zinc-100 tracking-tight">
+          <div className="text-5xl font-thin text-zinc-100 tracking-wide">
             ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="text-xs mt-0.5" style={{ color: "#b0bcc6" }}>invested</div>
@@ -305,7 +305,7 @@ function HeroSection({
             {equity != null && (
               <span>
                 Account:{" "}
-                <span className="text-zinc-300 font-medium">
+                <span className="font-medium" style={{ color: "#7ab0cc" }}>
                   ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
               </span>
@@ -313,7 +313,7 @@ function HeroSection({
             {account.cash != null && (
               <span>
                 Cash:{" "}
-                <span className="text-zinc-300 font-medium">
+                <span className="font-medium" style={{ color: "#7ab0cc" }}>
                   ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
               </span>
