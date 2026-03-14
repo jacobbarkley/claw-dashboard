@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T03:21:37.847231+00:00",
+  "generated_at": "2026-03-14T03:37:15.582900+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -81,7 +81,8 @@
     "profit_factor": 0.053,
     "expectancy": -41.73,
     "net_pnl": -166.94,
-    "max_drawdown_pct": 1887.37,
+    "max_drawdown_pct": 0.1763,
+    "max_drawdown_usd": 176.28,
     "max_win_streak": 1,
     "max_loss_streak": 3
   },

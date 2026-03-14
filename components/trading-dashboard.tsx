@@ -102,6 +102,7 @@ interface TradingData {
     expectancy: number | null
     net_pnl: number
     max_drawdown_pct: number | null
+    max_drawdown_usd: number | null
     max_win_streak: number
     max_loss_streak: number
   }
@@ -394,7 +395,11 @@ function KpiGrid({ kpis }: { kpis: TradingData["kpis"] }) {
       <KpiCard label="Win Rate"      value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"} />
       <KpiCard label="Profit Factor" value={fmt(kpis.profit_factor)} />
       <KpiCard label="Expectancy"    value={fmt(kpis.expectancy, "$")} />
-      <KpiCard label="Max Drawdown"  value={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(1)}%` : "—"} />
+      <KpiCard
+        label="Max Drawdown"
+        value={kpis.max_drawdown_usd != null ? `$${kpis.max_drawdown_usd.toFixed(2)}` : "—"}
+        sub={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(2)}% of starting equity` : undefined}
+      />
       <KpiCard label="Win Streak"    value={String(kpis.max_win_streak)} sub="best" />
       <KpiCard label="Loss Streak"   value={String(kpis.max_loss_streak)} sub="worst" />
     </div>

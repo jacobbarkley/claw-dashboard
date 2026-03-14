@@ -239,6 +239,7 @@ def main():
             "expectancy":     perf_kpis.get("expectancy"),
             "net_pnl":        perf_kpis.get("net_pnl", 0),
             "max_drawdown_pct": perf_kpis.get("max_drawdown_pct"),
+            "max_drawdown_usd": perf_kpis.get("max_drawdown_usd"),
             "max_win_streak": perf_kpis.get("max_win_streak", 0),
             "max_loss_streak": perf_kpis.get("max_loss_streak", 0),
         },
