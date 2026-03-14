@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Nav } from "@/components/nav"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -11,6 +11,7 @@ import {
 import {
   TrendingUp, TrendingDown, AlertTriangle, Eye,
   Copy, Check, RefreshCw, ShieldAlert, ShieldCheck, ShieldOff,
+  ChevronDown, ChevronUp, Info,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -298,20 +299,41 @@ function HeroSection({
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function KpiCard({ label, value, sub, tooltip }: { label: string; value: string; sub?: string; tooltip?: string }) {
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
+    <Card className="bg-zinc-900 border-zinc-800 relative group">
       <CardContent className="pt-4 pb-3 px-4">
         <div className="text-xl font-bold text-zinc-100">{value}</div>
-        <div className="text-xs text-zinc-500 mt-0.5">{label}</div>
+        <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
+          {label}
+          {tooltip && <Info className="w-3 h-3 text-zinc-700 group-hover:text-zinc-500 transition-colors shrink-0" />}
+        </div>
         {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
+        {tooltip && (
+          <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-52 leading-snug shadow-xl pointer-events-none">
+            {tooltip}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
 }
 
 // ─── Equity Curve ─────────────────────────────────────────────────────────────
+type Timeframe = "1W" | "1M" | "ALL"
+
 function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; baseValue?: number | null }) {
+  const [tf, setTf] = useState<Timeframe>("ALL")
+
+  const filtered = useMemo(() => {
+    if (tf === "ALL") return data
+    const days = tf === "1W" ? 7 : 30
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - days)
+    const cutoffStr = cutoff.toISOString().slice(0, 10)
+    return data.filter(d => d.date >= cutoffStr)
+  }, [data, tf])
+
   if (!data.length) return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
@@ -322,20 +344,38 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
       </CardContent>
     </Card>
   )
-  const last = data[data.length - 1]
-  const isUp = baseValue != null ? last.equity >= baseValue : last.equity >= data[0].equity
+  const displayData = filtered.length ? filtered : data
+  const last = displayData[displayData.length - 1]
+  const isUp = baseValue != null ? last.equity >= baseValue : last.equity >= displayData[0].equity
   const fmtK = (v: number) => `$${(v / 1000).toFixed(1)}k`
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-          Account Equity
-          {baseValue && <span className="ml-2 font-normal normal-case text-zinc-600">started ${baseValue.toLocaleString()}</span>}
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+            Account Equity
+            {baseValue && <span className="ml-2 font-normal normal-case text-zinc-600">started ${baseValue.toLocaleString()}</span>}
+          </CardTitle>
+          <div className="flex items-center gap-1">
+            {(["1W", "1M", "ALL"] as Timeframe[]).map(t => (
+              <button
+                key={t}
+                onClick={() => setTf(t)}
+                className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors ${
+                  tf === t
+                    ? "bg-zinc-700 text-zinc-100"
+                    : "text-zinc-600 hover:text-zinc-400"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+          <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={fmtK} width={44} />
             <Tooltip
@@ -401,16 +441,39 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
 function KpiGrid({ kpis }: { kpis: TradingData["kpis"] }) {
   return (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-      <KpiCard label="Win Rate"      value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"} />
-      <KpiCard label="Profit Factor" value={fmt(kpis.profit_factor)} />
-      <KpiCard label="Expectancy"    value={fmt(kpis.expectancy, "$")} />
+      <KpiCard
+        label="Win Rate"
+        value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"}
+        tooltip="Percentage of closed trades that ended in profit. Above 50% means more winners than losers."
+      />
+      <KpiCard
+        label="Profit Factor"
+        value={fmt(kpis.profit_factor)}
+        tooltip="Gross profit divided by gross loss. Above 1.0 means the system makes more than it loses overall."
+      />
+      <KpiCard
+        label="Expectancy"
+        value={fmt(kpis.expectancy, "$")}
+        tooltip="Average dollar return per trade, accounting for win rate and average win/loss size. Positive means edge."
+      />
       <KpiCard
         label="Max Drawdown"
         value={kpis.max_drawdown_usd != null ? `$${kpis.max_drawdown_usd.toFixed(2)}` : "—"}
         sub={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(2)}% of starting equity` : undefined}
+        tooltip="Largest peak-to-trough loss in cumulative realized P&L, expressed as a dollar amount and % of starting equity ($100k)."
       />
-      <KpiCard label="Win Streak"    value={String(kpis.max_win_streak)} sub="best" />
-      <KpiCard label="Loss Streak"   value={String(kpis.max_loss_streak)} sub="worst" />
+      <KpiCard
+        label="Win Streak"
+        value={String(kpis.max_win_streak)}
+        sub="best"
+        tooltip="Longest consecutive string of winning trades recorded."
+      />
+      <KpiCard
+        label="Loss Streak"
+        value={String(kpis.max_loss_streak)}
+        sub="worst"
+        tooltip="Longest consecutive string of losing trades. The consecutive loss limit in risk policy will halt trading when hit."
+      />
     </div>
   )
 }
@@ -452,15 +515,21 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
           </div>
         </div>
 
-        {/* Right: current price + pnl */}
-        <div className="text-right">
-          <div className="text-base font-semibold text-zinc-100">
-            ${p.current_price?.toFixed(2) ?? "—"}
+        {/* Right: current price + pnl + chevron */}
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-base font-semibold text-zinc-100">
+              ${p.current_price?.toFixed(2) ?? "—"}
+            </div>
+            <div className={`text-xs font-medium ${pnlColor(p.unrealized_pnl)}`}>
+              {p.unrealized_pnl >= 0 ? "+" : ""}{fmt(p.unrealized_pnl, "$")}
+              <span className="opacity-70 ml-1">({fmt(p.unrealized_pct, "", "%", 1)})</span>
+            </div>
           </div>
-          <div className={`text-xs font-medium ${pnlColor(p.unrealized_pnl)}`}>
-            {p.unrealized_pnl >= 0 ? "+" : ""}{fmt(p.unrealized_pnl, "$")}
-            <span className="opacity-70 ml-1">({fmt(p.unrealized_pct, "", "%", 1)})</span>
-          </div>
+          {open
+            ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" />
+            : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0" />
+          }
         </div>
       </div>
 
@@ -679,10 +748,15 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
   const exitMap = Object.fromEntries(data.exit_candidates.map(e => [e.symbol, e]))
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-16 sm:pb-0">
       <Nav active="trading" />
 
       <div className="px-4 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
+
+        {/* About blurb */}
+        <p className="text-xs text-zinc-600 leading-relaxed">
+          Live view of an AI-managed paper trading portfolio — built in public. All positions, P&L, and decisions are generated autonomously by OpenClaw, a custom agent pipeline running on Alpaca paper trading.
+        </p>
 
         {/* Hero */}
         <HeroSection
@@ -747,13 +821,6 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           <Watchlist items={data.watchlist} />
         </div>
 
-        <Separator className="bg-zinc-800" />
-
-        {/* Risk tunables */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Risk Policy</h2>
-          <TunablesPanel tunables={data.tunables} />
-        </div>
 
       </div>
     </div>
