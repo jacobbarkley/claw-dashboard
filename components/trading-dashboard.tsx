@@ -455,7 +455,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500 shrink-0">
             Account Equity
-            {baseValue && <span className="ml-2 font-normal normal-case text-zinc-600">started ${baseValue.toLocaleString()}</span>}
+            {baseValue && <span className="ml-2 font-normal normal-case" style={{ color: "#b8860b" }}>started ${baseValue.toLocaleString()}</span>}
           </CardTitle>
           <select
             value={tf}
@@ -489,7 +489,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
               labelFormatter={(l: any) => shortDate(String(l))}
             />
             {baseValue && <ReferenceLine y={baseValue} stroke="#3f3f46" strokeDasharray="3 3" />}
-            <Line type="monotone" dataKey="equity" stroke={isUp ? "#34d399" : "#f87171"} strokeWidth={1} dot={false} />
+            <Line type="monotone" dataKey="equity" stroke="#16a34a" strokeWidth={0.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
