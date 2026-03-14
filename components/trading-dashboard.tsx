@@ -183,7 +183,7 @@ const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 
   n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
 
 const pnlColor = (n: number | null | undefined) =>
-  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-[#c47878]"
+  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-[#7ab0cc]"
 
 function shortDate(iso: string) {
   return iso.slice(5)
