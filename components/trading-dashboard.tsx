@@ -183,7 +183,7 @@ const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 
   n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
 
 const pnlColor = (n: number | null | undefined) =>
-  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-red-400"
+  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-red-300"
 
 function shortDate(iso: string) {
   return iso.slice(5)
@@ -201,7 +201,7 @@ function CircuitBreakerBadge({ state }: { state: string }) {
   const cfg: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
     NORMAL:      { label: "NORMAL",      cls: "bg-emerald-900/40 text-emerald-300 border-emerald-700/40", icon: <ShieldCheck className="w-3 h-3" /> },
     REDUCE_ONLY: { label: "REDUCE ONLY", cls: "bg-yellow-900/40 text-yellow-300 border-yellow-700/40",   icon: <ShieldAlert className="w-3 h-3" /> },
-    HALT:        { label: "HALT",        cls: "bg-red-900/50 text-red-300 border-red-600/50",            icon: <ShieldOff className="w-3 h-3" /> },
+    HALT:        { label: "HALT",        cls: "bg-red-950/60 text-red-300/70 border-red-900/40",          icon: <ShieldOff className="w-3 h-3" /> },
     UNKNOWN:     { label: "UNKNOWN",     cls: "bg-zinc-800 text-zinc-500 border-zinc-700",              icon: <ShieldAlert className="w-3 h-3" /> },
   }
   const c = cfg[state] ?? cfg.UNKNOWN
@@ -217,7 +217,7 @@ function VerdictBadge({ verdict }: { verdict: string }) {
   const cfg: Record<string, string> = {
     PASS:    "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
     WARN:    "bg-yellow-900/40 text-yellow-300 border-yellow-700/40",
-    FAIL:    "bg-red-900/50 text-red-300 border-red-600/50",
+    FAIL:    "bg-red-950/60 text-red-300/70 border-red-900/40",
     UNKNOWN: "bg-zinc-800 text-zinc-500 border-zinc-700",
   }
   return (
@@ -232,8 +232,8 @@ function PipelineStatusBar({ ps }: { ps: PipelineStatus }) {
   const hasIssues = ps.critical_issues > 0 || ps.high_issues > 0
   return (
     <div className={`rounded-lg border px-4 py-3 flex flex-wrap items-center gap-3 text-xs ${
-      ps.verdict === "FAIL" ? "bg-red-950/20 border-red-600/30" :
-      ps.verdict === "WARN" ? "bg-yellow-950/20 border-yellow-600/30" :
+      ps.verdict === "FAIL" ? "bg-zinc-900 border-red-950/50" :
+      ps.verdict === "WARN" ? "bg-zinc-900 border-yellow-900/40" :
       "bg-zinc-900 border-zinc-800"
     }`}>
       <span className="text-zinc-500 font-mono">{ps.trading_date ?? "—"}</span>
@@ -471,9 +471,9 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis
-              tick={{ fontSize: 10, fill: "#52525b" }}
+              tick={{ fontSize: 10, fill: "#8e8070" }}
               tickLine={false}
               axisLine={false}
               tickFormatter={fmtK}
@@ -549,8 +549,8 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
               formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
@@ -559,7 +559,7 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
             <ReferenceLine y={0} stroke="#3f3f46" />
             <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
               {displayData.map((d, i) => (
-                <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#f87171"} />
+                <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#4eb8c8"} />
               ))}
             </Bar>
           </BarChart>
@@ -831,7 +831,7 @@ function TunablesPanel({ tunables }: { tunables: Tunables }) {
 function OptionsGateBadge({ status }: { status: string }) {
   const cfg: Record<string, string> = {
     PASS:    "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
-    FAIL:    "bg-red-900/50 text-red-300 border-red-600/50",
+    FAIL:    "bg-red-950/60 text-red-300/70 border-red-900/40",
     UNKNOWN: "bg-zinc-800 text-zinc-500 border-zinc-700",
   }
   return (
