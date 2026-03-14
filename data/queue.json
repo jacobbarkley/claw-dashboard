@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-13T23:41:32.509028-04:00",
+  "generated_at": "2026-03-13T23:46:50.646376-04:00",
   "queued": [
     {
       "id": "Q-023",
@@ -584,6 +584,22 @@
         "sentiment",
         "signals",
         "intelligence"
+      ]
+    },
+    {
+      "id": "Q-021",
+      "category": "trading",
+      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
+      "what": "Created 4 canonical gate scripts: gate_session.py (session_context validity), gate_artifacts.py (artifact_manifest + contract foundation freshness), gate_policy.py (normalized_risk_policy completeness + bounds, handles semantic labels QUARTER/HALF/FULL), gate_broker.py (broker_auth + soft NOT_YET skip pre-08:10). Orchestrator run_gates.py runs all 4, writes gate_report.json. Premarket preflight cron (06:55) now runs run_gates.py as Step 1. Agent-08b cron updated to read gate_report.json as additional input. pipeline_contract_bootstrap.py updated to resolve semantic labels to floats in normalization. Health simplification: Agent-09 PRECEDENCE_BREACH demoted from CRITICAL/HALT to HIGH/REDUCE_ONLY. Agent-10 PRECEDENCE_BREACH carry-forward capped at HIGH/REDUCE_ONLY \u2014 cannot cascade as CRITICAL or trigger HALT. Phase 3 scheduler gate owns prevention. 4/4 gates PASS on live state.",
+      "completed_at": "2026-03-13",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "gate-scripts",
+        "systems-auditor",
+        "remediation",
+        "phase-3"
       ]
     }
   ]
