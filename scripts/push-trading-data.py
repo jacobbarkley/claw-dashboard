@@ -29,16 +29,48 @@ def safe_float(v, default=None):
         return default
 
 
-def build_account(positions: list) -> dict:
+def build_account(positions: list, snapshot: dict) -> dict:
+    # True account data from Alpaca (preferred)
+    alpaca = snapshot.get("account") or {}
+    equity       = safe_float(alpaca.get("equity"))
+    cash         = safe_float(alpaca.get("cash"))
+    last_equity  = safe_float(alpaca.get("last_equity"))
+    buying_power = safe_float(alpaca.get("buying_power"))
+
+    # Positions-derived fallbacks
     total_market_value = sum(safe_float(p.get("market_value"), 0) for p in positions)
     total_unrealized   = sum(safe_float(p.get("unrealized_pnl"), 0) for p in positions)
     entry_value        = total_market_value - total_unrealized
     unrealized_pct     = (total_unrealized / entry_value * 100) if entry_value else None
+
+    # Portfolio history for starting equity reference
+    ph         = snapshot.get("portfolio_history") or {}
+    base_value = safe_float(ph.get("base_value"))   # starting equity ($100k)
+
+    # Total P&L = current equity vs starting equity
+    total_pnl     = round(equity - base_value, 2)           if equity and base_value else None
+    total_pnl_pct = round(total_pnl / base_value * 100, 4)  if total_pnl is not None and base_value else None
+
+    # Today's P&L = current equity vs prior close
+    today_pnl     = round(equity - last_equity, 2)           if equity and last_equity else None
+    today_pnl_pct = round(today_pnl / last_equity * 100, 4)  if today_pnl is not None and last_equity else None
+
     return {
+        # True account values
+        "equity":             equity,
+        "cash":               cash,
+        "buying_power":       buying_power,
+        "base_value":         base_value,
+        # P&L from starting equity
+        "total_pnl":          total_pnl,
+        "total_pnl_pct":      total_pnl_pct,
+        # P&L vs prior close
+        "today_pnl":          today_pnl,
+        "today_pnl_pct":      today_pnl_pct,
+        # Positions breakdown
         "positions_value":    round(total_market_value, 2),
         "unrealized_pnl":     round(total_unrealized, 2),
         "unrealized_pnl_pct": round(unrealized_pct, 2) if unrealized_pct is not None else None,
-        "cash":               None,  # requires live Alpaca API call
     }
 
 
@@ -79,12 +111,21 @@ def build_daily_series(perf_dir: Path) -> list:
     return series
 
 
-def build_equity_curve(series: list) -> list:
+def build_equity_curve(snapshot: dict, daily_series: list) -> list:
+    """
+    Use Alpaca portfolio history (true account equity) as the primary source.
+    Falls back to cumulative realized P&L from trade journal if history unavailable.
+    """
+    ph = snapshot.get("portfolio_history") or {}
+    series = ph.get("series") or []
+    if series:
+        return [{"date": e["date"], "equity": e["equity"], "profit_loss": e.get("profit_loss")} for e in series]
+    # Fallback: cumulative realized P&L (less accurate — ignores unrealized)
     cumulative = 0.0
     curve = []
-    for day in series:
+    for day in daily_series:
         cumulative += day["net_pnl"] or 0
-        curve.append({"date": day["date"], "equity": round(cumulative, 2)})
+        curve.append({"date": day["date"], "equity": round(cumulative, 2), "profit_loss": None})
     return curve
 
 
@@ -174,9 +215,9 @@ def main():
     perf_dir = WORKSPACE / "data/daily-performance"
 
     positions   = build_positions(snapshot)
-    account     = build_account(positions)
+    account     = build_account(positions, snapshot)
     daily       = build_daily_series(perf_dir)
-    equity      = build_equity_curve(daily)
+    equity      = build_equity_curve(snapshot, daily)
     watchlist   = build_watchlist(strategy, positions)
     exits       = build_exit_candidates(eod, positions)
     tunables    = build_tunables(policy)

@@ -1,11 +1,18 @@
 {
-  "generated_at": "2026-03-14T03:14:50.929255+00:00",
-  "as_of_date": "2026-03-13",
+  "generated_at": "2026-03-14T03:21:37.847231+00:00",
+  "as_of_date": "2026-03-14",
   "account": {
-    "positions_value": 11743.26,
-    "unrealized_pnl": -600.45,
-    "unrealized_pnl_pct": -4.86,
-    "cash": null
+    "equity": 99232.01,
+    "cash": 87489.34,
+    "buying_power": 186721.35,
+    "base_value": 100000.0,
+    "total_pnl": -767.99,
+    "total_pnl_pct": -0.768,
+    "today_pnl": -577.18,
+    "today_pnl_pct": -0.5783,
+    "positions_value": 11742.67,
+    "unrealized_pnl": -601.04,
+    "unrealized_pnl_pct": -4.87
   },
   "positions": [
     {
@@ -13,11 +20,11 @@
       "qty": 9.0,
       "side": "long",
       "entry_price": 272.45,
-      "current_price": 249.45,
-      "market_value": 2245.05,
-      "unrealized_pnl": -207.0,
-      "unrealized_pct": -8.44,
-      "change_today_pct": -7.54
+      "current_price": 249.32,
+      "market_value": 2243.88,
+      "unrealized_pnl": -208.17,
+      "unrealized_pct": -8.49,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "AVGO",
@@ -28,7 +35,7 @@
       "market_value": 322.16,
       "unrealized_pnl": -19.24,
       "unrealized_pct": -5.64,
-      "change_today_pct": -4.11
+      "change_today_pct": 0.0
     },
     {
       "symbol": "NVDA",
@@ -39,18 +46,18 @@
       "market_value": 180.25,
       "unrealized_pnl": -1.68,
       "unrealized_pct": -0.92,
-      "change_today_pct": -1.58
+      "change_today_pct": 0.0
     },
     {
       "symbol": "ORCL",
       "qty": 58.0,
       "side": "long",
       "entry_price": 161.522931,
-      "current_price": 155.1,
-      "market_value": 8995.8,
-      "unrealized_pnl": -372.529998,
-      "unrealized_pct": -3.98,
-      "change_today_pct": -2.55
+      "current_price": 155.11,
+      "market_value": 8996.38,
+      "unrealized_pnl": -371.949998,
+      "unrealized_pct": -3.97,
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -322,124 +329,84 @@
   ],
   "equity_curve": [
     {
-      "date": "2026-02-02",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-03",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-04",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-05",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-06",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-09",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-10",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-11",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-12",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-13",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-16",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-17",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-18",
-      "equity": 0.0
-    },
-    {
-      "date": "2026-02-19",
-      "equity": 0.0
-    },
-    {
       "date": "2026-02-20",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
-      "date": "2026-02-23",
-      "equity": 0.0
+      "date": "2026-02-21",
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-02-24",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-02-25",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-02-26",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-02-27",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
-      "date": "2026-03-02",
-      "equity": 0.0
+      "date": "2026-02-28",
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-03-03",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-03-04",
-      "equity": 0.0
+      "equity": 100000.0,
+      "profit_loss": 0.0
     },
     {
       "date": "2026-03-05",
-      "equity": 0.0
+      "equity": 99997.32,
+      "profit_loss": -2.68
     },
     {
       "date": "2026-03-06",
-      "equity": 0.0
+      "equity": 99995.09,
+      "profit_loss": -2.23
     },
     {
-      "date": "2026-03-09",
-      "equity": 0.0
+      "date": "2026-03-07",
+      "equity": 99955.74,
+      "profit_loss": -39.35
     },
     {
       "date": "2026-03-10",
-      "equity": 0.0
+      "equity": 100000.36,
+      "profit_loss": 44.62
     },
     {
       "date": "2026-03-11",
-      "equity": 0.0
+      "equity": 100014.7,
+      "profit_loss": 14.34
     },
     {
       "date": "2026-03-12",
-      "equity": -4.14
+      "equity": 100027.65,
+      "profit_loss": 12.95
     },
     {
       "date": "2026-03-13",
-      "equity": -166.94
+      "equity": 99809.19,
+      "profit_loss": -218.46
     }
   ],
   "watchlist": [],
@@ -450,8 +417,8 @@
       "urgency": "HIGH",
       "reason": "Thesis deterioration confirmed at midday (-7.31% UPL, -6.40% daily in VIX 27 regime). No recovery by EOD. Abnormal adverse move + thesis-broken signal meets urgent close trigger. Friday session amplifies asymmetric weekend gap-down risk.",
       "overnight_risk": "Holding through close is not authorized. Broken thesis + high-vol + Friday gap exposure. URGENT_ENFORCEMENT_MISS risk if not closed before bell.",
-      "unrealized_pnl": -207.0,
-      "unrealized_pct": -8.44
+      "unrealized_pnl": -208.17,
+      "unrealized_pct": -8.49
     },
     {
       "symbol": "AVGO",
@@ -468,8 +435,8 @@
       "urgency": "MEDIUM",
       "reason": "4.0% unrealized loss with MEDIUM urgency and stop-tighten recommendation at midday. Friday EOD close preferred over weekend gap exposure in elevated volatility.",
       "overnight_risk": "No thesis break confirmed, but 4% drawdown in VIX 27 environment exceeds comfortable overnight hold threshold for a Friday under REDUCE_ONLY posture.",
-      "unrealized_pnl": -372.529998,
-      "unrealized_pct": -3.98
+      "unrealized_pnl": -371.949998,
+      "unrealized_pct": -3.97
     }
   ],
   "tunables": {

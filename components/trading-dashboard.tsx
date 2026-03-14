@@ -77,10 +77,19 @@ interface TradingData {
   generated_at: string
   as_of_date: string
   account: {
+    // True account values from Alpaca
+    equity: number | null
+    cash: number | null
+    buying_power: number | null
+    base_value: number | null       // starting equity ($100k)
+    total_pnl: number | null        // equity - base_value
+    total_pnl_pct: number | null
+    today_pnl: number | null        // equity - prior close
+    today_pnl_pct: number | null
+    // Positions breakdown
     positions_value: number
     unrealized_pnl: number
-    unrealized_pnl_pct: number
-    cash: number | null
+    unrealized_pnl_pct: number | null
   }
   positions: Position[]
   pipeline_status?: PipelineStatus
@@ -97,7 +106,7 @@ interface TradingData {
     max_loss_streak: number
   }
   daily_performance: Array<{ date: string; net_pnl: number; trades: number; winners: number; losers: number }>
-  equity_curve: Array<{ date: string; equity: number }>
+  equity_curve: Array<{ date: string; equity: number; profit_loss?: number | null }>
   watchlist: WatchlistItem[]
   exit_candidates: ExitCandidate[]
   tunables: Tunables
@@ -185,13 +194,12 @@ function PipelineStatusBar({ ps }: { ps: PipelineStatus }) {
 
 // ─── Hero Section ─────────────────────────────────────────────────────────────
 function HeroSection({
-  account, kpis, tunables, pipeline, asOf, lastFetched, refreshing, onRefresh,
+  account, kpis, tunables, pipeline, lastFetched, refreshing, onRefresh,
 }: {
   account: TradingData["account"]
   kpis: TradingData["kpis"]
   tunables: Tunables
   pipeline?: PipelineStatus
-  asOf: string
   lastFetched: Date
   refreshing: boolean
   onRefresh: () => void
@@ -202,32 +210,55 @@ function HeroSection({
     return () => clearInterval(id)
   }, [])
 
-  const pnl = account.unrealized_pnl
-  const pnlPct = account.unrealized_pnl_pct
+  const equity     = account.equity ?? account.positions_value
+  const totalPnl   = account.total_pnl
+  const totalPct   = account.total_pnl_pct
+  const todayPnl   = account.today_pnl
+  const todayPct   = account.today_pnl_pct
+  const baseValue  = account.base_value
 
   return (
     <div className="space-y-3">
-      {/* Top row: portfolio value + refresh */}
       <div className="flex items-start justify-between">
         <div>
+          {/* Main number: total account equity */}
           <div className="text-4xl font-bold text-zinc-100 tracking-tight">
-            ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${equity.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className={`text-lg font-semibold mt-1 ${pnlColor(pnl)}`}>
-            {pnl >= 0 ? "+" : ""}{fmt(pnl, "$")}
-            <span className="text-sm ml-2 opacity-80">({fmt(pnlPct, "", "%", 2)})</span>
-            <span className="text-xs text-zinc-500 ml-2 font-normal">unrealized</span>
+
+          {/* Today's P&L (vs prior close) */}
+          {todayPnl != null && (
+            <div className={`text-lg font-semibold mt-1 ${pnlColor(todayPnl)}`}>
+              {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+              <span className="text-sm ml-1.5 opacity-80">({fmt(todayPct, "", "%", 2)})</span>
+              <span className="text-xs text-zinc-500 ml-2 font-normal">today</span>
+            </div>
+          )}
+
+          {/* Total P&L (vs starting equity) + supporting detail */}
+          <div className="text-xs text-zinc-500 mt-1.5 space-x-3">
+            {totalPnl != null && (
+              <span>
+                Total:{" "}
+                <span className={`font-medium ${pnlColor(totalPnl)}`}>
+                  {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
+                </span>
+                {baseValue && <span className="text-zinc-600 ml-1">from ${baseValue.toLocaleString()}</span>}
+              </span>
+            )}
           </div>
-          <div className="text-xs text-zinc-600 mt-1">
-            {kpis.closed_trades} closed · {kpis.open_trades} open ·{" "}
-            <span className={pnlColor(kpis.net_pnl)}>
-              {fmt(kpis.net_pnl, "$")} realized
+
+          {/* Cash / positions breakdown */}
+          <div className="text-xs text-zinc-600 mt-1 space-x-3">
+            {account.cash != null && <span>Cash: ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>}
+            <span>Positions: ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
+            <span className={pnlColor(account.unrealized_pnl)}>
+              Unrealized: {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
             </span>
           </div>
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          {/* Badges */}
           <div className="flex items-center gap-2 flex-wrap justify-end">
             <span className={`text-[10px] font-semibold px-2 py-1 rounded border ${
               tunables.trading_mode === "PAPER"
@@ -239,7 +270,6 @@ function HeroSection({
             {pipeline && <CircuitBreakerBadge state={pipeline.circuit_breaker} />}
             {pipeline && <VerdictBadge verdict={pipeline.verdict} />}
           </div>
-          {/* Refresh indicator */}
           <button
             onClick={onRefresh}
             disabled={refreshing}
@@ -252,7 +282,6 @@ function HeroSection({
         </div>
       </div>
 
-      {/* Pipeline status bar */}
       {pipeline && <PipelineStatusBar ps={pipeline} />}
     </div>
   )
@@ -272,36 +301,43 @@ function KpiCard({ label, value, sub }: { label: string; value: string; sub?: st
 }
 
 // ─── Equity Curve ─────────────────────────────────────────────────────────────
-function EquityCurve({ data }: { data: Array<{ date: string; equity: number }> }) {
-  const nonZero = data.filter(d => d.equity !== 0)
-  if (!nonZero.length) return (
+function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; baseValue?: number | null }) {
+  if (!data.length) return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Equity Curve</CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Account Equity</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-6 flex items-center justify-center h-[140px]">
-        <p className="text-xs text-zinc-600">No realized P&L yet — curve populates once trades close</p>
+        <p className="text-xs text-zinc-600">No history available yet</p>
       </CardContent>
     </Card>
   )
-  const last = nonZero[nonZero.length - 1]
+  const last = data[data.length - 1]
+  const isUp = baseValue != null ? last.equity >= baseValue : last.equity >= data[0].equity
+  const fmtK = (v: number) => `$${(v / 1000).toFixed(1)}k`
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Equity Curve</CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+          Account Equity
+          {baseValue && <span className="ml-2 font-normal normal-case text-zinc-600">started ${baseValue.toLocaleString()}</span>}
+        </CardTitle>
       </CardHeader>
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={data} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
+            <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={fmtK} width={44} />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
-              formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "Equity"]}
+              formatter={(v: any, name: string) => [
+                `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+                name === "equity" ? "Equity" : "Daily P&L",
+              ]}
               labelFormatter={(l: any) => shortDate(String(l))}
             />
-            <ReferenceLine y={0} stroke="#3f3f46" strokeDasharray="3 3" />
-            <Line type="monotone" dataKey="equity" stroke={last.equity >= 0 ? "#34d399" : "#f87171"} strokeWidth={2} dot={false} />
+            {baseValue && <ReferenceLine y={baseValue} stroke="#3f3f46" strokeDasharray="3 3" />}
+            <Line type="monotone" dataKey="equity" stroke={isUp ? "#34d399" : "#f87171"} strokeWidth={2} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
@@ -640,7 +676,6 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           kpis={data.kpis}
           tunables={data.tunables}
           pipeline={data.pipeline_status}
-          asOf={data.as_of_date}
           lastFetched={lastFetched}
           refreshing={refreshing}
           onRefresh={refresh}
@@ -648,7 +683,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <EquityCurve data={data.equity_curve} />
+          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
           <DailyPnlChart data={data.daily_performance} />
         </div>
 
