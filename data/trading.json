@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T03:03:55.419941+00:00",
+  "generated_at": "2026-03-14T03:11:53.301272+00:00",
   "as_of_date": "2026-03-13",
   "account": {
     "positions_value": 11743.26,
@@ -79,6 +79,22 @@
     "max_loss_streak": 0
   },
   "daily_performance": [
+    {
+      "date": "2026-02-02",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-03",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
     {
       "date": "2026-02-04",
       "net_pnl": 0.0,
@@ -289,22 +305,30 @@
     },
     {
       "date": "2026-03-12",
-      "net_pnl": 0.0,
+      "net_pnl": -4.14,
       "trades": 5,
-      "winners": 0,
-      "losers": 0,
-      "win_rate": 0.0
+      "winners": 1,
+      "losers": 2,
+      "win_rate": 33.33
     },
     {
       "date": "2026-03-13",
-      "net_pnl": 0.0,
+      "net_pnl": -162.8,
       "trades": 1,
       "winners": 0,
-      "losers": 0,
+      "losers": 1,
       "win_rate": 0.0
     }
   ],
   "equity_curve": [
+    {
+      "date": "2026-02-02",
+      "equity": 0.0
+    },
+    {
+      "date": "2026-02-03",
+      "equity": 0.0
+    },
     {
       "date": "2026-02-04",
       "equity": 0.0
@@ -411,11 +435,11 @@
     },
     {
       "date": "2026-03-12",
-      "equity": 0.0
+      "equity": -4.14
     },
     {
       "date": "2026-03-13",
-      "equity": 0.0
+      "equity": -166.94
     }
   ],
   "watchlist": [],
