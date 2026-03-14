@@ -91,7 +91,7 @@ def build_equity_curve(series: list) -> list:
 def build_watchlist(strategy: dict, positions: list) -> list:
     """Items in strategy_spec that are NOT currently held."""
     held = {p["symbol"] for p in positions}
-    items = strategy.get("payload", {}).get("items", [])
+    items = (strategy.get("payload") or {}).get("items", [])
     watchlist = []
     for item in items:
         sym = item.get("symbol")
@@ -145,12 +145,31 @@ def build_tunables(policy: dict) -> dict:
     }
 
 
+def build_pipeline_status(audit: dict, session: dict) -> dict:
+    payload = audit.get("payload", {})
+    return {
+        "trading_date":    session.get("trading_date") or audit.get("pipeline_date"),
+        "run_id":          session.get("run_id"),
+        "circuit_breaker": audit.get("circuit_breaker_state", "UNKNOWN"),
+        "verdict":         payload.get("control_verdict", "UNKNOWN"),
+        "critical_issues": payload.get("critical_issue_count", 0),
+        "high_issues":     payload.get("high_issue_count", 0),
+        "medium_issues":   payload.get("medium_issue_count", 0),
+        "chain_ok":        payload.get("pipeline_chain_ok", False),
+        "approval_path":   payload.get("approval_path_summary"),
+        "paper_compliant": payload.get("paper_mode_compliant", True),
+        "audit_written_at": audit.get("written_at"),
+    }
+
+
 def main():
     snapshot = load(WORKSPACE / "state/positions_snapshot.json")
     kpis     = load(WORKSPACE / "state/pipeline_kpis_v1.json")
     strategy = load(WORKSPACE / "state/strategy_spec.json")
     eod      = load(WORKSPACE / "state/eod_decision.json")
     policy   = load(WORKSPACE / "policies/risk_policy.json")
+    audit    = load(WORKSPACE / "state/daily_audit_state.json")
+    session  = load(WORKSPACE / "state/session_context.json")
 
     perf_dir = WORKSPACE / "data/daily-performance"
 
@@ -162,12 +181,14 @@ def main():
     exits       = build_exit_candidates(eod, positions)
     tunables    = build_tunables(policy)
     perf_kpis   = kpis.get("performance_kpis", {})
+    pipeline    = build_pipeline_status(audit, session)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "as_of_date":   snapshot.get("pipeline_date") or snapshot.get("fetched_at", "")[:10],
         "account":      account,
         "positions":    positions,
+        "pipeline_status": pipeline,
         "kpis": {
             "total_trades":   perf_kpis.get("total_trades", 0),
             "closed_trades":  perf_kpis.get("closed_trades", 0),

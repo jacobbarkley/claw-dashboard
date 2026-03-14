@@ -2,7 +2,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import { TradingDashboard } from "@/components/trading-dashboard"
 
-async function getTradingData() {
+async function getInitialData() {
   try {
     const raw = await fs.readFile(path.join(process.cwd(), "data/trading.json"), "utf-8")
     return JSON.parse(raw)
@@ -12,6 +12,6 @@ async function getTradingData() {
 }
 
 export default async function TradingPage() {
-  const data = await getTradingData()
-  return <TradingDashboard data={data} />
+  const initialData = await getInitialData()
+  return <TradingDashboard initialData={initialData} />
 }
