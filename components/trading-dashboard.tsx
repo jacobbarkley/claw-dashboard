@@ -330,7 +330,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
             <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={fmtK} width={44} />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
-              formatter={(v: any, name: string) => [
+              formatter={(v: any, name: any) => [
                 `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
                 name === "equity" ? "Equity" : "Daily P&L",
               ]}
