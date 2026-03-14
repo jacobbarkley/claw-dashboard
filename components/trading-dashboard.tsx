@@ -291,17 +291,17 @@ function HeroSection({
           <div className="text-4xl font-bold text-zinc-100 tracking-tight">
             ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-zinc-500 mt-0.5">invested</div>
+          <div className="text-xs mt-0.5" style={{ color: "#b0bcc6" }}>invested</div>
 
           {/* Unrealized P&L on open positions */}
           <div className={`text-lg font-semibold mt-1 ${pnlColor(account.unrealized_pnl)}`}>
             {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
             <span className="text-sm ml-1.5 opacity-80">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
-            <span className="text-xs text-zinc-500 ml-2 font-normal">unrealized</span>
+            <span className="text-xs ml-2 font-normal" style={{ color: "#b0bcc6" }}>unrealized</span>
           </div>
 
           {/* Supporting: total account equity + cash */}
-          <div className="text-xs text-zinc-500 mt-1.5 flex flex-wrap gap-3">
+          <div className="text-xs mt-1.5 flex flex-wrap gap-3" style={{ color: "#b0bcc6" }}>
             {equity != null && (
               <span>
                 Account:{" "}
@@ -313,7 +313,7 @@ function HeroSection({
             {account.cash != null && (
               <span>
                 Cash:{" "}
-                <span className="text-zinc-400 font-medium">
+                <span className="text-zinc-300 font-medium">
                   ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                 </span>
               </span>
@@ -321,7 +321,7 @@ function HeroSection({
           </div>
 
           {/* Today + total P&L */}
-          <div className="text-xs text-zinc-500 mt-1 flex flex-wrap gap-3">
+          <div className="text-xs mt-1 flex flex-wrap gap-3" style={{ color: "#b0bcc6" }}>
             {todayPnl != null && (
               <span>
                 Today:{" "}
@@ -336,7 +336,7 @@ function HeroSection({
                 <span className={`font-medium ${pnlColor(totalPnl)}`}>
                   {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
                 </span>
-                {baseValue && <span className="text-zinc-600 ml-1">from ${baseValue.toLocaleString()}</span>}
+                {baseValue && <span className="ml-1" style={{ color: "#b0bcc6" }}>from ${baseValue.toLocaleString()}</span>}
               </span>
             )}
           </div>
@@ -480,9 +480,9 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis
-              tick={{ fontSize: 10, fill: "#8e8070" }}
+              tick={{ fontSize: 10, fill: "#b0bcc6" }}
               tickLine={false}
               axisLine={false}
               tickFormatter={fmtK}
@@ -558,8 +558,8 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#8e8070" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
               formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
