@@ -183,7 +183,7 @@ const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 
   n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
 
 const pnlColor = (n: number | null | undefined) =>
-  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-red-300"
+  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-[#c47878]"
 
 function shortDate(iso: string) {
   return iso.slice(5)
@@ -615,13 +615,7 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
   const [open, setOpen] = useState(false)
   return (
     <div
-      className={`rounded-xl border transition-colors cursor-pointer ${
-        exitDecision?.urgency === "HIGH"
-          ? "border-red-500/40 bg-red-950/10 hover:bg-red-950/20"
-          : exitDecision
-          ? "border-orange-500/30 bg-orange-950/10 hover:bg-orange-950/20"
-          : "border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60"
-      }`}
+      className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 transition-colors cursor-pointer"
       onClick={() => setOpen(o => !o)}
     >
       {/* Main row */}
@@ -632,11 +626,7 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
             <div className="flex items-center gap-2">
               <span className="font-mono font-bold text-zinc-100 text-base">{p.symbol}</span>
               {exitDecision && (
-                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                  exitDecision.urgency === "HIGH"
-                    ? "bg-red-500/20 text-red-300"
-                    : "bg-orange-500/20 text-orange-300"
-                }`}>
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">
                   {exitDecision.decision.replace(/_/g, " ")}
                 </span>
               )}
@@ -755,11 +745,11 @@ function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; pos
   return (
     <div className="space-y-2">
       {orphaned.map(item => (
-        <div key={item.symbol} className={`rounded-lg border p-3 space-y-1 ${item.urgency === "HIGH" ? "border-red-500/40 bg-red-950/10" : "border-orange-500/30 bg-orange-950/10"}`}>
+        <div key={item.symbol} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-mono font-semibold text-zinc-100">{item.symbol}</span>
-              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${item.urgency === "HIGH" ? "bg-red-500/20 text-red-300" : "bg-orange-500/20 text-orange-300"}`}>
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">
                 {item.decision.replace(/_/g, " ")}
               </span>
             </div>
@@ -1140,7 +1130,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
               Positions — {data.positions.length}
             </h2>
             {data.exit_candidates.length > 0 && (
-              <span className="text-[10px] text-orange-400 flex items-center gap-1">
+              <span className="text-[10px] text-zinc-500 flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
                 {data.exit_candidates.length} exit signal{data.exit_candidates.length > 1 ? "s" : ""}
               </span>
