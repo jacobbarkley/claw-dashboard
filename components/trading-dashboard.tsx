@@ -287,22 +287,49 @@ function HeroSection({
     <div className="space-y-3">
       <div className="flex items-start justify-between">
         <div>
-          {/* Main number: total account equity */}
+          {/* Main number: value invested in market */}
           <div className="text-4xl font-bold text-zinc-100 tracking-tight">
-            ${equity.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="text-xs text-zinc-500 mt-0.5">invested</div>
+
+          {/* Unrealized P&L on open positions */}
+          <div className={`text-lg font-semibold mt-1 ${pnlColor(account.unrealized_pnl)}`}>
+            {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
+            <span className="text-sm ml-1.5 opacity-80">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+            <span className="text-xs text-zinc-500 ml-2 font-normal">unrealized</span>
           </div>
 
-          {/* Today's P&L (vs prior close) */}
-          {todayPnl != null && (
-            <div className={`text-lg font-semibold mt-1 ${pnlColor(todayPnl)}`}>
-              {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
-              <span className="text-sm ml-1.5 opacity-80">({fmt(todayPct, "", "%", 2)})</span>
-              <span className="text-xs text-zinc-500 ml-2 font-normal">today</span>
-            </div>
-          )}
+          {/* Supporting: total account equity + cash */}
+          <div className="text-xs text-zinc-500 mt-1.5 flex flex-wrap gap-3">
+            {equity != null && (
+              <span>
+                Account:{" "}
+                <span className="text-zinc-300 font-medium">
+                  ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </span>
+              </span>
+            )}
+            {account.cash != null && (
+              <span>
+                Cash:{" "}
+                <span className="text-zinc-400 font-medium">
+                  ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </span>
+              </span>
+            )}
+          </div>
 
-          {/* Total P&L (vs starting equity) + supporting detail */}
-          <div className="text-xs text-zinc-500 mt-1.5 space-x-3">
+          {/* Today + total P&L */}
+          <div className="text-xs text-zinc-500 mt-1 flex flex-wrap gap-3">
+            {todayPnl != null && (
+              <span>
+                Today:{" "}
+                <span className={`font-medium ${pnlColor(todayPnl)}`}>
+                  {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")} ({fmt(todayPct, "", "%", 2)})
+                </span>
+              </span>
+            )}
             {totalPnl != null && (
               <span>
                 Total:{" "}
@@ -310,24 +337,6 @@ function HeroSection({
                   {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
                 </span>
                 {baseValue && <span className="text-zinc-600 ml-1">from ${baseValue.toLocaleString()}</span>}
-              </span>
-            )}
-          </div>
-
-          {/* Cash / positions breakdown */}
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 bg-emerald-950/50 border border-emerald-800/50 rounded-full px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-              <span className="text-xs font-semibold text-emerald-300">
-                ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2 })} invested
-              </span>
-            </span>
-            <span className={`text-xs font-medium ${pnlColor(account.unrealized_pnl)}`}>
-              {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")} unrealized
-            </span>
-            {account.cash != null && (
-              <span className="text-xs text-zinc-600">
-                ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })} cash
               </span>
             )}
           </div>
