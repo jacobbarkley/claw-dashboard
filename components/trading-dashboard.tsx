@@ -391,18 +391,38 @@ function KpiCard({ label, value, sub, tooltip }: { label: string; value: string;
 }
 
 // ─── Equity Curve ─────────────────────────────────────────────────────────────
-type Timeframe = "1W" | "1M" | "ALL"
+type Timeframe = "1D" | "1W" | "1M" | "YTD" | "1Y" | "3Y" | "5Y" | "ALL"
+
+const TF_OPTIONS: { value: Timeframe; label: string }[] = [
+  { value: "1D",  label: "1 Day"   },
+  { value: "1W",  label: "1 Week"  },
+  { value: "1M",  label: "1 Month" },
+  { value: "YTD", label: "YTD"     },
+  { value: "1Y",  label: "1 Year"  },
+  { value: "3Y",  label: "3 Years" },
+  { value: "5Y",  label: "5 Years" },
+  { value: "ALL", label: "All Time"},
+]
+
+function cutoffForTf(tf: Timeframe): string | null {
+  if (tf === "ALL") return null
+  const now = new Date()
+  if (tf === "YTD") {
+    return `${now.getFullYear()}-01-01`
+  }
+  const days: Record<string, number> = { "1D": 1, "1W": 7, "1M": 30, "1Y": 365, "3Y": 1095, "5Y": 1825 }
+  const d = new Date(now)
+  d.setDate(d.getDate() - (days[tf] ?? 0))
+  return d.toISOString().slice(0, 10)
+}
 
 function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; baseValue?: number | null }) {
   const [tf, setTf] = useState<Timeframe>("ALL")
 
-  const filtered = useMemo(() => {
-    if (tf === "ALL") return data
-    const days = tf === "1W" ? 7 : 30
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - days)
-    const cutoffStr = cutoff.toISOString().slice(0, 10)
-    return data.filter(d => d.date >= cutoffStr)
+  const displayData = useMemo(() => {
+    const cutoff = cutoffForTf(tf)
+    const filtered = cutoff ? data.filter(d => d.date >= cutoff) : data
+    return filtered.length ? filtered : data
   }, [data, tf])
 
   if (!data.length) return (
@@ -415,40 +435,51 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
       </CardContent>
     </Card>
   )
-  const displayData = filtered.length ? filtered : data
+
   const last = displayData[displayData.length - 1]
   const isUp = baseValue != null ? last.equity >= baseValue : last.equity >= displayData[0].equity
+
+  // Y-axis: fit to visible data ±10%, minimum band of 1% of value so flat lines still show
+  const equities = displayData.map(d => d.equity)
+  const minEq = Math.min(...equities)
+  const maxEq = Math.max(...equities)
+  const mid = (minEq + maxEq) / 2
+  const naturalPad = Math.max((maxEq - minEq) * 0.1, mid * 0.01)
+  const yMin = Math.floor((minEq - naturalPad) / 10) * 10
+  const yMax = Math.ceil((maxEq + naturalPad) / 10) * 10
   const fmtK = (v: number) => `$${(v / 1000).toFixed(1)}k`
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500 shrink-0">
             Account Equity
             {baseValue && <span className="ml-2 font-normal normal-case text-zinc-600">started ${baseValue.toLocaleString()}</span>}
           </CardTitle>
-          <div className="flex items-center gap-1">
-            {(["1W", "1M", "ALL"] as Timeframe[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setTf(t)}
-                className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors ${
-                  tf === t
-                    ? "bg-zinc-700 text-zinc-100"
-                    : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              >
-                {t}
-              </button>
+          <select
+            value={tf}
+            onChange={e => setTf(e.target.value as Timeframe)}
+            className="text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-300 rounded px-2 py-1 cursor-pointer focus:outline-none hover:border-zinc-500 transition-colors"
+          >
+            {TF_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
-          </div>
+          </select>
         </div>
       </CardHeader>
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={fmtK} width={44} />
+            <YAxis
+              tick={{ fontSize: 10, fill: "#52525b" }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={fmtK}
+              width={44}
+              domain={[yMin, yMax]}
+            />
             <Tooltip
               contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
               formatter={(v: any, name: any) => [
