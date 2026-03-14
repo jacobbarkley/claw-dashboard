@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T03:11:53.301272+00:00",
+  "generated_at": "2026-03-14T03:14:50.929255+00:00",
   "as_of_date": "2026-03-13",
   "account": {
     "positions_value": 11743.26,
@@ -70,13 +70,13 @@
     "total_trades": 11,
     "closed_trades": 4,
     "open_trades": 7,
-    "win_rate_pct": 0.0,
-    "profit_factor": null,
-    "expectancy": 0.0,
-    "net_pnl": 0,
-    "max_drawdown_pct": null,
-    "max_win_streak": 0,
-    "max_loss_streak": 0
+    "win_rate_pct": 25.0,
+    "profit_factor": 0.053,
+    "expectancy": -41.73,
+    "net_pnl": -166.94,
+    "max_drawdown_pct": 1887.37,
+    "max_win_streak": 1,
+    "max_loss_streak": 3
   },
   "daily_performance": [
     {
