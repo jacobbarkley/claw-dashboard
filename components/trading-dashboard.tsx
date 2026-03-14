@@ -300,22 +300,29 @@ function HeroSection({
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({ label, value, sub, tooltip }: { label: string; value: string; sub?: string; tooltip?: string }) {
+  const [show, setShow] = useState(false)
   return (
-    <Card className="bg-zinc-900 border-zinc-800 relative group">
-      <CardContent className="pt-4 pb-3 px-4">
-        <div className="text-xl font-bold text-zinc-100">{value}</div>
-        <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
-          {label}
-          {tooltip && <Info className="w-3 h-3 text-zinc-700 group-hover:text-zinc-500 transition-colors shrink-0" />}
-        </div>
-        {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
-        {tooltip && (
-          <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-52 leading-snug shadow-xl pointer-events-none">
-            {tooltip}
+    <div
+      className="relative"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <Card className="bg-zinc-900 border-zinc-800">
+        <CardContent className="pt-4 pb-3 px-4">
+          <div className="text-xl font-bold text-zinc-100">{value}</div>
+          <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
+            {label}
+            {tooltip && <Info className="w-3 h-3 text-zinc-700 shrink-0" />}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
+        </CardContent>
+      </Card>
+      {tooltip && show && (
+        <div className="absolute bottom-full left-0 mb-1.5 z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-52 leading-snug shadow-xl pointer-events-none">
+          {tooltip}
+        </div>
+      )}
+    </div>
   )
 }
 

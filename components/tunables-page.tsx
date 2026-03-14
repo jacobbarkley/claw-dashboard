@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Nav } from "@/components/nav"
 import { Card, CardContent } from "@/components/ui/card"
 import { Copy, Check, RefreshCw, Settings } from "lucide-react"
@@ -124,19 +124,31 @@ function TunablesPanel({ tunables, refreshing, onRefresh }: { tunables: Tunables
 
       {/* Fields grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {FIELDS.map(({ key, label, suffix, tooltip }) => (
-          <Card key={key} className="bg-zinc-900 border-zinc-800 group relative">
-            <CardContent className="px-4 py-3">
-              <div className="text-2xl font-bold text-zinc-100 font-mono">
-                {(tunables as any)[key]}{suffix}
-              </div>
-              <div className="text-xs text-zinc-500 mt-1">{label}</div>
-              <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-56 leading-snug shadow-xl pointer-events-none">
-                {tooltip}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        {FIELDS.map(({ key, label, suffix, tooltip }) => {
+          const [show, setShow] = useState(false)
+          return (
+            <div
+              key={key}
+              className="relative"
+              onMouseEnter={() => setShow(true)}
+              onMouseLeave={() => setShow(false)}
+            >
+              <Card className="bg-zinc-900 border-zinc-800">
+                <CardContent className="px-4 py-3">
+                  <div className="text-2xl font-bold text-zinc-100 font-mono">
+                    {(tunables as any)[key]}{suffix}
+                  </div>
+                  <div className="text-xs text-zinc-500 mt-1">{label}</div>
+                </CardContent>
+              </Card>
+              {show && (
+                <div className="absolute bottom-full left-0 mb-1.5 z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-56 leading-snug shadow-xl pointer-events-none">
+                  {tooltip}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* Edit instructions */}
