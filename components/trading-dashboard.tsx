@@ -489,7 +489,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
               labelFormatter={(l: any) => shortDate(String(l))}
             />
             {baseValue && <ReferenceLine y={baseValue} stroke="#3f3f46" strokeDasharray="3 3" />}
-            <Line type="monotone" dataKey="equity" stroke={isUp ? "#34d399" : "#f87171"} strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="equity" stroke={isUp ? "#34d399" : "#f87171"} strokeWidth={1} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </CardContent>
