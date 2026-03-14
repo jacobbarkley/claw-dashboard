@@ -399,6 +399,31 @@ function KpiCard({ label, value, sub, tooltip }: { label: string; value: string;
   )
 }
 
+// ─── Orbital Ring SVG overlay for charts ──────────────────────────────────────
+function OrbitalRings() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 800 200"
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <radialGradient id="chartGlow" cx="50%" cy="100%" r="70%">
+          <stop offset="0%" stopColor="#4c1d95" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#07021a" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="800" height="200" fill="url(#chartGlow)" />
+      <ellipse cx="400" cy="230" rx="180" ry="80"  fill="none" stroke="#7c3aed" strokeOpacity="0.10" strokeWidth="0.6" />
+      <ellipse cx="400" cy="230" rx="290" ry="130" fill="none" stroke="#7c3aed" strokeOpacity="0.08" strokeWidth="0.6" />
+      <ellipse cx="400" cy="230" rx="400" ry="185" fill="none" stroke="#7c3aed" strokeOpacity="0.06" strokeWidth="0.5" />
+      <ellipse cx="400" cy="230" rx="520" ry="240" fill="none" stroke="#7c3aed" strokeOpacity="0.04" strokeWidth="0.5" />
+      <ellipse cx="400" cy="230" rx="650" ry="300" fill="none" stroke="#7c3aed" strokeOpacity="0.03" strokeWidth="0.5" />
+    </svg>
+  )
+}
+
 // ─── Equity Curve ─────────────────────────────────────────────────────────────
 type Timeframe = "1D" | "1W" | "1M" | "YTD" | "1Y" | "3Y" | "5Y" | "ALL"
 
@@ -478,7 +503,9 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
         </div>
       </CardHeader>
       <CardContent className="px-2 pb-4">
-        <ResponsiveContainer width="100%" height={160}>
+        <div className="relative">
+          <OrbitalRings />
+          <ResponsiveContainer width="100%" height={160}>
           <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis
@@ -501,6 +528,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
             <Line type="monotone" dataKey="equity" stroke="#16a34a" strokeWidth={0.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
@@ -556,23 +584,26 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
         </div>
       </CardHeader>
       <CardContent className="px-2 pb-4">
-        <ResponsiveContainer width="100%" height={120}>
-          <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
-            <Tooltip
-              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
-              formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
-              labelFormatter={(l: any) => shortDate(String(l))}
-            />
-            <ReferenceLine y={0} stroke="#3f3f46" />
-            <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
-              {displayData.map((d, i) => (
-                <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#4eb8c8"} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="relative">
+          <OrbitalRings />
+          <ResponsiveContainer width="100%" height={120}>
+            <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+              <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
+              <Tooltip
+                contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
+                formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
+                labelFormatter={(l: any) => shortDate(String(l))}
+              />
+              <ReferenceLine y={0} stroke="#3f3f46" />
+              <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
+                {displayData.map((d, i) => (
+                  <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#4eb8c8"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   )
@@ -1099,8 +1130,18 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
   const exitSet = new Set(data.exit_candidates.map(e => e.symbol))
   const exitMap = Object.fromEntries(data.exit_candidates.map(e => [e.symbol, e]))
 
+  const nebulaBg = {
+    background: `
+      radial-gradient(ellipse at 15% 55%, rgba(88, 28, 220, 0.28) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 12%, rgba(109, 40, 217, 0.20) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 90%, rgba(67, 20, 140, 0.22) 0%, transparent 48%),
+      radial-gradient(ellipse at 70% 50%, rgba(76, 29, 149, 0.12) 0%, transparent 40%),
+      #07021a
+    `,
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-16 sm:pb-0">
+    <div className="min-h-screen text-zinc-100 font-sans pb-16 sm:pb-0" style={nebulaBg}>
       <Nav active="trading" />
 
       <div className="px-4 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
