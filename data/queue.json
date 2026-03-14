@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-13T23:46:50.646376-04:00",
+  "generated_at": "2026-03-14T00:09:25.108609-04:00",
   "queued": [
     {
       "id": "Q-023",
@@ -600,6 +600,22 @@
         "systems-auditor",
         "remediation",
         "phase-3"
+      ]
+    },
+    {
+      "id": "Q-012",
+      "category": "trading",
+      "title": "Options sleeve Phase 2B \u2014 Wheel strategy (CSP + CC)",
+      "what": "Built complete options module as independent sidecar (trading-bot/options/). Follows Signal Bus + Module pattern \u2014 reads equity pipeline signals read-only, writes to own namespace. Components: options_screener.py (yfinance chains, IV proxy + snapshot history, earnings blackout, OI/spread/delta/bid filters, equity signal cross-reference), gate_options_risk.py (deterministic capital/concentration gate \u2014 max 20% per CSP, max 2 concurrent, 15% cash buffer), options_order_submitter.py (OCC symbol formatting, Alpaca paper Level 2, 09:35 post-open delay), Agent-17 prompt (qualitative screening), Agent-18 prompt (CSP/CC strategy decisions, position management rules). 3 cron jobs: 08:22 screener, 08:28 strategy, 09:35 execution. Smoke test: AMD $185 CSP 57% ann, NVDA $175 CSP 46% ann, ORCL $150 CSP 65% ann. Q-005/Q-006 ApeWisdom+StockTwits data feeds into screener. Architecture reviewed by Claude Opus.",
+      "completed_at": "2026-03-14",
+      "tags": [
+        "trading",
+        "options",
+        "wheel",
+        "csp",
+        "covered-calls",
+        "agent-17",
+        "agent-18"
       ]
     }
   ]
