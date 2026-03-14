@@ -498,27 +498,57 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
 }
 
 // ─── Daily P&L ────────────────────────────────────────────────────────────────
+const PNL_TF_OPTIONS: { value: Timeframe; label: string }[] = [
+  { value: "1W",  label: "1 Week"  },
+  { value: "1M",  label: "1 Month" },
+  { value: "YTD", label: "YTD"     },
+  { value: "1Y",  label: "1 Year"  },
+  { value: "3Y",  label: "3 Years" },
+  { value: "5Y",  label: "5 Years" },
+  { value: "ALL", label: "All Time"},
+]
+
 function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }> }) {
-  const recent = data.slice(-30)
-  const hasData = recent.some(d => d.net_pnl !== 0)
+  const [tf, setTf] = useState<Timeframe>("1M")
+
+  const displayData = useMemo(() => {
+    const cutoff = cutoffForTf(tf)
+    const filtered = cutoff ? data.filter(d => d.date >= cutoff) : data
+    return filtered.length ? filtered : data
+  }, [data, tf])
+
+  const hasData = displayData.some(d => d.net_pnl !== 0)
+
   if (!hasData) return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Daily P&L (last 30 days)</CardTitle>
+        <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>Daily P&L</CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-6 flex items-center justify-center h-[100px]">
         <p className="text-xs text-zinc-600">No closed trade P&L recorded yet</p>
       </CardContent>
     </Card>
   )
+
   return (
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Daily P&L (last 30 days)</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>Daily P&L</CardTitle>
+          <select
+            value={tf}
+            onChange={e => setTf(e.target.value as Timeframe)}
+            className="text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-300 rounded px-2 py-1 cursor-pointer focus:outline-none hover:border-zinc-500 transition-colors"
+          >
+            {PNL_TF_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
       </CardHeader>
       <CardContent className="px-2 pb-4">
         <ResponsiveContainer width="100%" height={120}>
-          <BarChart data={recent} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+          <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 10, fill: "#52525b" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
             <Tooltip
@@ -528,7 +558,7 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
             />
             <ReferenceLine y={0} stroke="#3f3f46" />
             <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
-              {recent.map((d, i) => (
+              {displayData.map((d, i) => (
                 <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#f87171"} />
               ))}
             </Bar>
