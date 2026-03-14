@@ -453,7 +453,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
     <Card className="bg-zinc-900 border-zinc-800">
       <CardHeader className="pb-2 pt-4 px-4">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500 shrink-0">
+          <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>
             Account Equity
             {baseValue && <span className="ml-2 font-normal normal-case" style={{ color: "#b8860b" }}>started ${baseValue.toLocaleString()}</span>}
           </CardTitle>
