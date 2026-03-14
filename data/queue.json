@@ -1,246 +1,384 @@
 {
-  "generated_at": "2026-03-09T00:00:00-05:00",
+  "generated_at": "2026-03-13T23:41:32.509028-04:00",
   "queued": [
     {
       "id": "Q-023",
       "category": "trading",
-      "title": "Trading pipeline Phase 5 — state machine, vocab cleanup, integration tests",
-      "what": "Pipeline state machine (state/pipeline_state.json) representing INIT → SESSION_READY → ARTIFACTS_READY → POLICY_READY → RISK_APPROVED → EXECUTION_ALLOWED → EXECUTED|HALTED. Status vocab enforcement across all prompts and Python scripts — no more EXECUTION_FAILED for gated non-execution, consistent SKIPPED_GATED and ERROR_INTERNAL. Integration test suite covering clean happy path, stale artifact contamination, invalid policy, upstream risk halt. See refactor plan Phase 5A-D.",
+      "title": "Trading pipeline Phase 5 \u2014 state machine, vocab cleanup, integration tests",
+      "what": "Pipeline state machine (state/pipeline_state.json) representing INIT \u2192 SESSION_READY \u2192 ARTIFACTS_READY \u2192 POLICY_READY \u2192 RISK_APPROVED \u2192 EXECUTION_ALLOWED \u2192 EXECUTED|HALTED. Status vocab enforcement across all prompts and Python scripts \u2014 no more EXECUTION_FAILED for gated non-execution, consistent SKIPPED_GATED and ERROR_INTERNAL. Integration test suite covering clean happy path, stale artifact contamination, invalid policy, upstream risk halt. See refactor plan Phase 5A-D.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Phases 2-4 complete",
       "priority": "low",
       "ticket": null,
-      "tags": ["trading", "pipeline-robustness", "state-machine", "testing", "vocab-cleanup", "phase-5"]
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "state-machine",
+        "testing",
+        "vocab-cleanup",
+        "phase-5"
+      ]
     },
     {
       "id": "Q-022",
       "category": "trading",
-      "title": "Trading pipeline Phase 4 — run-scoped artifact migration",
+      "title": "Trading pipeline Phase 4 \u2014 run-scoped artifact migration",
       "what": "Migrate all stage artifact writes into state/runs/<date>/<run_id>/. Update Python scripts: order_submitter.py, broker_reconciler.py, preflight_auth.py, performance_aggregator.py, positions_fetcher.py, volatility_fetcher.py. Update all agent prompt output paths. Write dual (run-scoped primary + legacy root-state compatibility mirror) until migration complete. Add bin/run_paths.py helper with get_run_dir() and get_artifact_path(). See refactor plan Phase 4A-C.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Phase 3 complete",
       "priority": "low",
       "ticket": null,
-      "tags": ["trading", "pipeline-robustness", "run-scoped", "artifact-paths", "phase-4"]
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "run-scoped",
+        "artifact-paths",
+        "phase-4"
+      ]
     },
     {
       "id": "Q-021",
       "category": "trading",
-      "title": "Trading pipeline Phase 3 — 4-gate Python scripts + health simplification",
+      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
       "what": "Create bin/gate_session.py (validates session_context.json), bin/gate_artifacts.py (validates artifact_manifest.json freshness for active run), bin/gate_policy.py (validates normalized_risk_policy.json). Four canonical gates replace scattered check logic across agents. Systems auditor simplification: remove PRECEDENCE_BREACH as standalone critical gate, health verdict only HALTs for unique unsafe conditions not already covered by gates 1-4. Remediation simplification: carry-forward warnings force REDUCE_ONLY not HALT; PRECEDENCE_BREACH from prior runs doesn't cascade as fresh CRITICAL each run. See refactor plan Phase 3A-F.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Phase 2A/2B proven in live trading run",
       "priority": "medium",
       "ticket": null,
-      "tags": ["trading", "pipeline-robustness", "gate-scripts", "systems-auditor", "remediation", "phase-3"]
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "gate-scripts",
+        "systems-auditor",
+        "remediation",
+        "phase-3"
+      ]
     },
     {
       "id": "Q-020",
       "category": "trading",
-      "title": "Trading pipeline Phase 2C — preflight bootstrap validation",
+      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
       "what": "Update preflight check scripts to verify session_context.json and normalized_risk_policy.json exist and are fresh before the pipeline proceeds. Gates the morning run on bootstrap (07:30 cron) having completed successfully. Non-blocking for the morning run but hardens the safety contract. See refactor plan Phase 2C.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Phase 2A/2B proven in live trading run (tomorrow)",
       "priority": "low",
       "ticket": null,
-      "tags": ["trading", "pipeline-robustness", "preflight", "bootstrap", "phase-2c"]
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "preflight",
+        "bootstrap",
+        "phase-2c"
+      ]
     },
     {
       "id": "Q-019",
       "category": "infrastructure",
-      "title": "Trading system isolation — dedicated agent + on/off switch",
-      "what": "Move all 18 trading cron jobs from the main agent to a new dedicated trading agent with its own isolated workspace. Goal: pause or resume the entire trading system as a unit instead of toggling 18 jobs individually.\n\nCurrent state: all trading cron jobs run under main. OpenClaw has no native agent start/stop (openclaw agents supports add/delete/bind only). Cron disable is ID-by-ID only — no bulk or agent-scoped toggle.\n\nProposed design:\n1. Create trading agent in openclaw.json with dedicated workspace (~/.openclaw/agents/trading/workspace)\n2. Re-point all 18 TradingBot cron jobs to agentId: trading\n3. Migrate relevant state files to new workspace\n4. Build trading-pause.sh / trading-resume.sh shell scripts that bulk-disable/enable all trading job IDs via openclaw cron disable <id> — since no native group toggle exists, script the IDs\n5. Optionally: wire pause/resume to a single gate file (trading_active.json) checked by the pre-market agent — more elegant but step 4 works immediately\n\nJobs to migrate (18 total): Preflight 6am goals, Morning brief curator, trading:premarket-phase, Morning brief composer, trading:preopen-gateway, TradingBot Market Status, Universe, Research, Alt Sentiment, Thesis, Strategy, Validation, Broker Auth, Risk Decision, Systems Audit, Remediation, Risk Approval, Pre-Open Refresh, Execution, Positions (x3), Volatility (x2), EOD Decision, Post-Close, Daily Audit, Governance Review.\n\nBackup: unchanged — prompt files stay in OpenClaw-s-Brain on GitHub.\n\nPrereq check needed: confirm openclaw cron edit supports changing agentId on existing jobs, or whether jobs must be deleted and re-added.",
+      "title": "Trading system isolation \u2014 dedicated agent + on/off switch",
+      "what": "Move all 18 trading cron jobs from the main agent to a new dedicated trading agent with its own isolated workspace. Goal: pause or resume the entire trading system as a unit instead of toggling 18 jobs individually.\n\nCurrent state: all trading cron jobs run under main. OpenClaw has no native agent start/stop (openclaw agents supports add/delete/bind only). Cron disable is ID-by-ID only \u2014 no bulk or agent-scoped toggle.\n\nProposed design:\n1. Create trading agent in openclaw.json with dedicated workspace (~/.openclaw/agents/trading/workspace)\n2. Re-point all 18 TradingBot cron jobs to agentId: trading\n3. Migrate relevant state files to new workspace\n4. Build trading-pause.sh / trading-resume.sh shell scripts that bulk-disable/enable all trading job IDs via openclaw cron disable <id> \u2014 since no native group toggle exists, script the IDs\n5. Optionally: wire pause/resume to a single gate file (trading_active.json) checked by the pre-market agent \u2014 more elegant but step 4 works immediately\n\nJobs to migrate (18 total): Preflight 6am goals, Morning brief curator, trading:premarket-phase, Morning brief composer, trading:preopen-gateway, TradingBot Market Status, Universe, Research, Alt Sentiment, Thesis, Strategy, Validation, Broker Auth, Risk Decision, Systems Audit, Remediation, Risk Approval, Pre-Open Refresh, Execution, Positions (x3), Volatility (x2), EOD Decision, Post-Close, Daily Audit, Governance Review.\n\nBackup: unchanged \u2014 prompt files stay in OpenClaw-s-Brain on GitHub.\n\nPrereq check needed: confirm openclaw cron edit supports changing agentId on existing jobs, or whether jobs must be deleted and re-added.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Confirm openclaw cron edit supports agentId changes on existing jobs.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["infrastructure", "trading", "agent-isolation", "cron", "on-off-switch", "workspace"]
+      "tags": [
+        "infrastructure",
+        "trading",
+        "agent-isolation",
+        "cron",
+        "on-off-switch",
+        "workspace"
+      ]
     },
     {
       "id": "Q-018",
       "category": "project",
-      "title": "Persistent story agent — continuously generates YouTube scripts from the real journey",
-      "what": "A background agent that runs on a schedule (nightly or on git push to OpenClaw-s-Brain) and turns the real, ongoing story of building this system into a backlog of staged YouTube scripts. Jacob does not trigger this manually — it runs whether he thinks about content or not. By the time the recording setup is ready, there should be 30-50 scripts waiting.\n\nSOURCE MATERIAL (what the agent reads):\n- Git commits to OpenClaw-s-Brain (commit messages + diffs — this is the primary story log)\n- queue.json completed[] section (milestone log — what shipped and when)\n- trading-bot/state/ files (approvals, rejections, circuit breaker changes, new incidents)\n- runbooks/ (decisions documented, go/no-go assessments)\n- The running story-arc.md doc (see below) — what has been told, what is next\nDo NOT read raw Claude Code session JSONL files — they contain API keys and sensitive data.\n\nSTORY ARC DOCUMENT (story-arc.md in the private repo):\nThe agent maintains a living document that tracks: where we are in the journey (days since first paper trade, paper gate progress, key milestones), what has already been scripted (prevents repetition), what narrative threads are open (e.g., 'governance loop introduced ep 3, fix shown ep 5, proof shown ep 7'), and what the next 3 most interesting things to cover are. Every script generation updates this document. This is what makes the scripts feel like a series instead of isolated videos.\n\nSCRIPT OUTPUT FORMAT (one .md file per script):\n```\n---\nepisode: <N>\nseries: building-ai-trading-system\ntopic_tags: [governance, incident, agent-10]\nstatus: DRAFT\ngenerated_at: <ISO date>\nstory_arc_position: <where this fits in the narrative>\ntitle_variants:\n  - <option 1 — curiosity gap>\n  - <option 2 — direct/technical>\n  - <option 3 — result-first>\nthumbnail_brief: <text overlay + emotional direction + visual concept>\ndescription_seo: <first 150 chars must contain primary keyword, full description below>\ntags: [comma, separated, youtube, tags]\nchapters:\n  - 0:00 Hook\n  - 0:30 Context\n  ...\ncommunity_question: <specific question to end the video with>\n---\n\n[HOOK]\n... (first 30 seconds — most interesting thing first, never 'in this video')\n\n[CONTEXT]\n... (setup, what system is, why this session matters — assume smart viewer, no prior context)\n\n[CORE]\n... (real content with segment markers)\n[SCREEN:filename] for terminal/code captures\n[DIAGRAM:agent-topology] for architecture visuals\n[CARD:topic] where a future video should be linked\n[BROLL:description] for transition visuals\n[PATTERN_INTERRUPT] every 2-3 min — flag where pace/visual should shift\n\n[TAKEAWAY]\n... (honest assessment, what comes next in the arc)\n\n[OUTRO]\n... (value-first CTA, cross-link to related episode, community question)\n```\n\nYOUTUBE STRATEGY RULES baked into the agent prompt (not vague instructions — explicit rules):\n1. Hook rule: open with the most interesting single thing — the failure, the number, the discovery. Never open with context or setup.\n2. Title rule: curiosity gap + specificity. 'The fake error message my AI generated about itself' > 'Bug fix video'. Numbers always help.\n3. CTA rule: first subscribe ask comes AFTER the first real value delivery, not at the start. Viewers who get value first are 3x more likely to subscribe.\n4. Chapter rule: every script gets timestamps auto-generated from section markers. YouTube actively pushes chaptered videos.\n5. Cross-link rule: plant [CARD:topic] markers where related content should be referenced. Use natural language: 'I go much deeper on X in episode N — link in the description.' Card library builds as scripts accumulate.\n6. Pattern interrupt rule: flag [PATTERN_INTERRUPT] every 2-3 minutes. Production team changes visual or cuts to screen recording to reset attention.\n7. SEO rule: description first 150 chars contain primary keyword — that is what appears in search results. Write this line first.\n8. Community rule: every video ends with one specific, answerable question. Not 'let me know what you think.' Something like: 'What would you have done differently when the remediation loop first fired on day 1?'\n9. Series arc rule: every script references at least one prior episode and teases at least one future episode. Builds watch time across the channel.\n10. Honesty rule: this is the differentiator. The script must reference real file names, real error codes, real decisions. Generic descriptions get cut. Vague language gets cut.\n\nREPO STRUCTURE (private GitHub repo: youtube-content):\n```\nscripts/\n  chronological/          # 2026-03-09-governance-loop-incident.md\n  by-topic/\n    trading-pipeline/\n    incidents-post-mortems/\n    architecture/\n    build-log/\n  series/\n    building-ai-trading-system/  # episode sequence, numbered\nassets/\n  thumbnail-briefs/       # one per script\n  diagram-specs/          # mermaid specs auto-generated\nmeta/\n  story-arc.md            # living document, updated each run\n  keyword-research.md     # YouTube search term targets, updated monthly\n  content-calendar.md     # what is ready to produce vs. staged\n```\n\nRUN SCHEDULE: Nightly cron via OpenClaw (low priority, runs after midnight ET). Also triggered on git push to OpenClaw-s-Brain when commit message contains significant keywords (fix, incident, proof, complete, approved). Generates 1-3 scripts per run depending on how much happened. Never generates more than 3 per run — quality over volume.\n\nBRAND VOICE embedded in agent prompt: Jacob Barkley — developer building a real AI trading system in public. Not a trading tips channel. Not a generic AI tutorial. A transparent engineering journal with a financial edge. Tone: direct, technically honest, occasionally self-deprecating about failures, never polished or corporate. The audience is developers and technically curious people, not retail traders looking for stock tips.\n\nFIRST SCRIPTS TO GENERATE (day 1 backlog already exists from 2026-03-09):\n1. Architecture explainer — the 16-agent pipeline, how it works, why it is built this way\n2. Governance loop incident post-mortem — the fake error that blocked 3 days of paper trades\n3. Basket quality fix — why XOM+CVX was a redundant bet and how we fixed the selector\n4. The paper vs. live governance calibration problem — why the system was too safe for its own good",
+      "title": "Persistent story agent \u2014 continuously generates YouTube scripts from the real journey",
+      "what": "A background agent that runs on a schedule (nightly or on git push to OpenClaw-s-Brain) and turns the real, ongoing story of building this system into a backlog of staged YouTube scripts. Jacob does not trigger this manually \u2014 it runs whether he thinks about content or not. By the time the recording setup is ready, there should be 30-50 scripts waiting.\n\nSOURCE MATERIAL (what the agent reads):\n- Git commits to OpenClaw-s-Brain (commit messages + diffs \u2014 this is the primary story log)\n- queue.json completed[] section (milestone log \u2014 what shipped and when)\n- trading-bot/state/ files (approvals, rejections, circuit breaker changes, new incidents)\n- runbooks/ (decisions documented, go/no-go assessments)\n- The running story-arc.md doc (see below) \u2014 what has been told, what is next\nDo NOT read raw Claude Code session JSONL files \u2014 they contain API keys and sensitive data.\n\nSTORY ARC DOCUMENT (story-arc.md in the private repo):\nThe agent maintains a living document that tracks: where we are in the journey (days since first paper trade, paper gate progress, key milestones), what has already been scripted (prevents repetition), what narrative threads are open (e.g., 'governance loop introduced ep 3, fix shown ep 5, proof shown ep 7'), and what the next 3 most interesting things to cover are. Every script generation updates this document. This is what makes the scripts feel like a series instead of isolated videos.\n\nSCRIPT OUTPUT FORMAT (one .md file per script):\n```\n---\nepisode: <N>\nseries: building-ai-trading-system\ntopic_tags: [governance, incident, agent-10]\nstatus: DRAFT\ngenerated_at: <ISO date>\nstory_arc_position: <where this fits in the narrative>\ntitle_variants:\n  - <option 1 \u2014 curiosity gap>\n  - <option 2 \u2014 direct/technical>\n  - <option 3 \u2014 result-first>\nthumbnail_brief: <text overlay + emotional direction + visual concept>\ndescription_seo: <first 150 chars must contain primary keyword, full description below>\ntags: [comma, separated, youtube, tags]\nchapters:\n  - 0:00 Hook\n  - 0:30 Context\n  ...\ncommunity_question: <specific question to end the video with>\n---\n\n[HOOK]\n... (first 30 seconds \u2014 most interesting thing first, never 'in this video')\n\n[CONTEXT]\n... (setup, what system is, why this session matters \u2014 assume smart viewer, no prior context)\n\n[CORE]\n... (real content with segment markers)\n[SCREEN:filename] for terminal/code captures\n[DIAGRAM:agent-topology] for architecture visuals\n[CARD:topic] where a future video should be linked\n[BROLL:description] for transition visuals\n[PATTERN_INTERRUPT] every 2-3 min \u2014 flag where pace/visual should shift\n\n[TAKEAWAY]\n... (honest assessment, what comes next in the arc)\n\n[OUTRO]\n... (value-first CTA, cross-link to related episode, community question)\n```\n\nYOUTUBE STRATEGY RULES baked into the agent prompt (not vague instructions \u2014 explicit rules):\n1. Hook rule: open with the most interesting single thing \u2014 the failure, the number, the discovery. Never open with context or setup.\n2. Title rule: curiosity gap + specificity. 'The fake error message my AI generated about itself' > 'Bug fix video'. Numbers always help.\n3. CTA rule: first subscribe ask comes AFTER the first real value delivery, not at the start. Viewers who get value first are 3x more likely to subscribe.\n4. Chapter rule: every script gets timestamps auto-generated from section markers. YouTube actively pushes chaptered videos.\n5. Cross-link rule: plant [CARD:topic] markers where related content should be referenced. Use natural language: 'I go much deeper on X in episode N \u2014 link in the description.' Card library builds as scripts accumulate.\n6. Pattern interrupt rule: flag [PATTERN_INTERRUPT] every 2-3 minutes. Production team changes visual or cuts to screen recording to reset attention.\n7. SEO rule: description first 150 chars contain primary keyword \u2014 that is what appears in search results. Write this line first.\n8. Community rule: every video ends with one specific, answerable question. Not 'let me know what you think.' Something like: 'What would you have done differently when the remediation loop first fired on day 1?'\n9. Series arc rule: every script references at least one prior episode and teases at least one future episode. Builds watch time across the channel.\n10. Honesty rule: this is the differentiator. The script must reference real file names, real error codes, real decisions. Generic descriptions get cut. Vague language gets cut.\n\nREPO STRUCTURE (private GitHub repo: youtube-content):\n```\nscripts/\n  chronological/          # 2026-03-09-governance-loop-incident.md\n  by-topic/\n    trading-pipeline/\n    incidents-post-mortems/\n    architecture/\n    build-log/\n  series/\n    building-ai-trading-system/  # episode sequence, numbered\nassets/\n  thumbnail-briefs/       # one per script\n  diagram-specs/          # mermaid specs auto-generated\nmeta/\n  story-arc.md            # living document, updated each run\n  keyword-research.md     # YouTube search term targets, updated monthly\n  content-calendar.md     # what is ready to produce vs. staged\n```\n\nRUN SCHEDULE: Nightly cron via OpenClaw (low priority, runs after midnight ET). Also triggered on git push to OpenClaw-s-Brain when commit message contains significant keywords (fix, incident, proof, complete, approved). Generates 1-3 scripts per run depending on how much happened. Never generates more than 3 per run \u2014 quality over volume.\n\nBRAND VOICE embedded in agent prompt: Jacob Barkley \u2014 developer building a real AI trading system in public. Not a trading tips channel. Not a generic AI tutorial. A transparent engineering journal with a financial edge. Tone: direct, technically honest, occasionally self-deprecating about failures, never polished or corporate. The audience is developers and technically curious people, not retail traders looking for stock tips.\n\nFIRST SCRIPTS TO GENERATE (day 1 backlog already exists from 2026-03-09):\n1. Architecture explainer \u2014 the 16-agent pipeline, how it works, why it is built this way\n2. Governance loop incident post-mortem \u2014 the fake error that blocked 3 days of paper trades\n3. Basket quality fix \u2014 why XOM+CVX was a redundant bet and how we fixed the selector\n4. The paper vs. live governance calibration problem \u2014 why the system was too safe for its own good",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "Private GitHub repo created (youtube-content). Channel name and brand identity decided — brand voice must be baked into agent prompt before first run. story-arc.md initialized with current journey state (day 1, paper trading, 16 agents live). Q-016 content trigger agent optional — this agent is the autonomous version of the same concept.",
+      "prereq": "Private GitHub repo created (youtube-content). Channel name and brand identity decided \u2014 brand voice must be baked into agent prompt before first run. story-arc.md initialized with current journey state (day 1, paper trading, 16 agents live). Q-016 content trigger agent optional \u2014 this agent is the autonomous version of the same concept.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["youtube", "content", "story-agent", "automation", "brand", "build-in-public", "script-generation", "monetization"]
+      "tags": [
+        "youtube",
+        "content",
+        "story-agent",
+        "automation",
+        "brand",
+        "build-in-public",
+        "script-generation",
+        "monetization"
+      ]
     },
     {
       "id": "Q-017",
       "category": "project",
-      "title": "YouTube video production pipeline — ElevenLabs → video → captions → thumbnail → upload",
-      "what": "Automated production pipeline that takes a finished script (from Q-016) and outputs a published YouTube video. Human input is already done at this stage — this is pure production automation.\n\nSTAGE 1 — VOICE: ElevenLabs Professional Voice Clone. Jacob records 30+ min of clean audio (reading any natural text — doesn't need to be scripted). Submit via ElevenLabs API to create a persistent voice model. All future voiceover generation uses this model — one-time setup cost, infinite reuse. API key already configured in OpenClaw. Output: MP3 voiceover file per script segment.\n\nSTAGE 2 — VISUALS: Three-layer composition.\n(a) Screen recordings: auto-capture from terminal sessions using asciinema or OBS scripted capture. Triggered during actual pipeline runs — real terminal output, real state files, real code. Not staged.\n(b) Architecture diagrams: generate Mermaid diagrams from the pipeline's agent topology, animate transitions with ffmpeg. These are accurate because they're generated from the actual prompt files and cron jobs.\n(c) B-roll transitions: AI video generation (Runway ML, Pika, or similar) for abstract visual segments between technical sections. Keep to <20% of total runtime — the real footage is the differentiator.\n\nSTAGE 3 — ASSEMBLY: ffmpeg pipeline stitches audio + screen recordings + b-roll per script timing cues. Script markdown format includes explicit segment markers: [SCREEN:filename], [BROLL:prompt], [DIAGRAM:agent-topology]. Agent reads markers and assembles accordingly.\n\nSTAGE 4 — CAPTIONS: OpenAI Whisper transcribes final audio and generates .srt file. Burn captions into video with ffmpeg. Style: clean sans-serif, high contrast, lower-third placement. Not Comic Sans. Not rainbow colors. Minimal and professional.\n\nSTAGE 5 — THUMBNAIL: AI image generation (DALL-E or Stable Diffusion via API) using a consistent brand template. Template elements: dark background, bold title text overlay, small brand mark. Batch generate 3 variants per video, pick best. Consistent visual identity across all thumbnails is more important than any individual thumbnail being perfect.\n\nSTAGE 6 — UPLOAD: YouTube Data API v3. Upload video, set title/description/tags from script metadata. Description template: hook paragraph, timestamps (auto-generated from script segment markers), GitHub repo link, Ko-fi/donation link, affiliate links (Alpaca, ElevenLabs, Anthropic API). Schedule publish time rather than immediate upload — Tuesday/Thursday 9am ET performs well for technical audiences.\n\nPhased build: Stage 1 (voice clone) + Stage 6 (upload) first. Then Stage 4 (captions). Then Stage 5 (thumbnail). Stages 2+3 (visuals) last — start with screen recordings only before adding AI b-roll.\n\nMonetization hooks baked into every video: GitHub repo link (builds stars/credibility), Ko-fi link ($5 prompt pack access), affiliate links. These go in the description template from day one.",
+      "title": "YouTube video production pipeline \u2014 ElevenLabs \u2192 video \u2192 captions \u2192 thumbnail \u2192 upload",
+      "what": "Automated production pipeline that takes a finished script (from Q-016) and outputs a published YouTube video. Human input is already done at this stage \u2014 this is pure production automation.\n\nSTAGE 1 \u2014 VOICE: ElevenLabs Professional Voice Clone. Jacob records 30+ min of clean audio (reading any natural text \u2014 doesn't need to be scripted). Submit via ElevenLabs API to create a persistent voice model. All future voiceover generation uses this model \u2014 one-time setup cost, infinite reuse. API key already configured in OpenClaw. Output: MP3 voiceover file per script segment.\n\nSTAGE 2 \u2014 VISUALS: Three-layer composition.\n(a) Screen recordings: auto-capture from terminal sessions using asciinema or OBS scripted capture. Triggered during actual pipeline runs \u2014 real terminal output, real state files, real code. Not staged.\n(b) Architecture diagrams: generate Mermaid diagrams from the pipeline's agent topology, animate transitions with ffmpeg. These are accurate because they're generated from the actual prompt files and cron jobs.\n(c) B-roll transitions: AI video generation (Runway ML, Pika, or similar) for abstract visual segments between technical sections. Keep to <20% of total runtime \u2014 the real footage is the differentiator.\n\nSTAGE 3 \u2014 ASSEMBLY: ffmpeg pipeline stitches audio + screen recordings + b-roll per script timing cues. Script markdown format includes explicit segment markers: [SCREEN:filename], [BROLL:prompt], [DIAGRAM:agent-topology]. Agent reads markers and assembles accordingly.\n\nSTAGE 4 \u2014 CAPTIONS: OpenAI Whisper transcribes final audio and generates .srt file. Burn captions into video with ffmpeg. Style: clean sans-serif, high contrast, lower-third placement. Not Comic Sans. Not rainbow colors. Minimal and professional.\n\nSTAGE 5 \u2014 THUMBNAIL: AI image generation (DALL-E or Stable Diffusion via API) using a consistent brand template. Template elements: dark background, bold title text overlay, small brand mark. Batch generate 3 variants per video, pick best. Consistent visual identity across all thumbnails is more important than any individual thumbnail being perfect.\n\nSTAGE 6 \u2014 UPLOAD: YouTube Data API v3. Upload video, set title/description/tags from script metadata. Description template: hook paragraph, timestamps (auto-generated from script segment markers), GitHub repo link, Ko-fi/donation link, affiliate links (Alpaca, ElevenLabs, Anthropic API). Schedule publish time rather than immediate upload \u2014 Tuesday/Thursday 9am ET performs well for technical audiences.\n\nPhased build: Stage 1 (voice clone) + Stage 6 (upload) first. Then Stage 4 (captions). Then Stage 5 (thumbnail). Stages 2+3 (visuals) last \u2014 start with screen recordings only before adding AI b-roll.\n\nMonetization hooks baked into every video: GitHub repo link (builds stars/credibility), Ko-fi link ($5 prompt pack access), affiliate links. These go in the description template from day one.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Q-016 content trigger agent producing well-structured scripts. ElevenLabs Professional Voice Clone recorded (30+ min audio). YouTube channel created. YouTube Data API v3 credentials. Ko-fi or Gumroad account for donation/paid access link.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["youtube", "elevenlabs", "voice-clone", "video-production", "automation", "monetization", "content"]
+      "tags": [
+        "youtube",
+        "elevenlabs",
+        "voice-clone",
+        "video-production",
+        "automation",
+        "monetization",
+        "content"
+      ]
     },
     {
       "id": "Q-016",
       "category": "project",
-      "title": "YouTube content trigger agent — 5 bullets in, publish-ready script out",
-      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience — this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity — the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing — the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident → root cause → fix → lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' — lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions — not generic descriptions\n- Honest about failures and limitations — this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley — developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
+      "title": "YouTube content trigger agent \u2014 5 bullets in, publish-ready script out",
+      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience \u2014 this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity \u2014 the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing \u2014 the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident \u2192 root cause \u2192 fix \u2192 lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' \u2014 lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions \u2014 not generic descriptions\n- Honest about failures and limitations \u2014 this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley \u2014 developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "YouTube channel created with clear series concept. A few real incidents/sessions documented to use as first video content (today's governance loop incident + the basket quality improvements are both strong first videos). Decide on channel name/identity before building the agent so brand voice can be baked into the prompt.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["youtube", "content", "script-generation", "brand", "build-in-public", "monetization", "elevenlabs"]
+      "tags": [
+        "youtube",
+        "content",
+        "script-generation",
+        "brand",
+        "build-in-public",
+        "monetization",
+        "elevenlabs"
+      ]
     },
     {
       "id": "Q-015",
       "category": "trading",
-      "title": "Paper-mode governance tolerance — stop letting bookkeeping artifacts block paper runs",
+      "title": "Paper-mode governance tolerance \u2014 stop letting bookkeeping artifacts block paper runs",
       "what": "The governance layer is calibrated for live money. In paper mode, reporting artifacts and remediation bookkeeping issues should track and warn, not hard-block approval. Today's example: a missing broker EOD snapshot from 2026-03-06 created a remediation carry-forward loop that blocked three paper sessions. No trade was at risk. No real money was at risk. The system blocked anyway.\n\nRoot issue: every governance failure is treated as equally hard regardless of whether it's a safety issue (execution risk) or a bookkeeping issue (reporting gap). That distinction matters in paper mode.\n\nImplementation: add a paper_mode_governance block to risk_policy.json with two sub-lists:\n\npaper_hard_blocks (always kill approval gate, same as live):\n- HALT circuit breaker state\n- live_trading_enabled=true with any execution attempt\n- daily loss limit breach\n- VALIDATION_FAIL_CONTAMINATION (bad picks still matter for learning)\n- broker_auth_ok=false\n\npaper_soft_blocks (degrade to WARN, track in remediation, do not kill approval):\n- UNRESOLVED_CRITICAL_REMEDIATION where issue origin is a reporting/logging artifact (not an execution failure)\n- SESSION_CLOSE_RESTRICTED_GATE beyond 1 session carry-forward\n- MSG_POLICY_VIOLATION from upstream audit misclassification\n- REPEATED_PARTIAL_UPSTREAM when upstream partials are data-richness adds (research_packet, alt_sentiment) not core signal artifacts\n- INHERITED_REDUCE_ONLY from prior-session reporting gap (retain REDUCE_ONLY sizing, but do not block approval)\n\nAgent-08b (Risk Approval Gate) needs to read paper_mode_governance from risk_policy.json. When live_trading_enabled=false, check each OPEN remediation item's issue_code against the two lists. Hard blocks kill approval as today. Soft blocks append a PAPER_MODE_GOVERNANCE_WARN issue but allow AUTO_APPROVED_PAPER to proceed.\n\nAlso update Agent-10 (Remediation Manager) to tag each tracked item with a governance_class field: SAFETY or BOOKKEEPING. This makes the distinction explicit in the artifact rather than forcing Agent-08b to infer it from issue codes.\n\nDo not remove the tracking or the remediation discipline. Issues still get logged, escalated, and resolved. The only change is that BOOKKEEPING-class issues in paper mode do not hard-block the approval gate.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Agent-08b prompt (v1.0). Agent-10 prompt (v1.2). risk_policy.json schema update needed.",
       "priority": "high",
       "ticket": null,
-      "tags": ["governance", "paper-mode", "risk-policy", "agent-08b", "agent-10", "remediation", "calibration"]
+      "tags": [
+        "governance",
+        "paper-mode",
+        "risk-policy",
+        "agent-08b",
+        "agent-10",
+        "remediation",
+        "calibration"
+      ]
     },
     {
       "id": "Q-014",
       "category": "trading",
       "title": "Intraday execute-if-approved mode (Option C)",
-      "what": "Extend the late-session paper validation chain to include an execution step after approval. Today's late-session run proved the validation → approval path works (AUTO_APPROVED_PAPER, 2026-03-09). The missing piece is the execution leg.\n\nSpecific gap: Agent-12 reads preopen_refresh.json for execution_allowed. That file is not written in the current late-session chain, so Agent-12 fails on MISSING_ARTIFACT before it can place any orders.\n\nFix: add Step 7.5 to late_session_paper_validation_v1.md — write a minimal late-session preopen_refresh.json with execution_allowed=true only when approval_state=AUTO_APPROVED_PAPER and circuit_breaker_state != HALT. Then run Agent-12 against it. Agent-12 reads risk_decision.json (approved names + sizes), broker_auth_ok.json, and risk_policy.json — all of which are already written by the existing chain.\n\nEnd-to-end flow when complete:\n1. Manual trigger (Telegram command or openclaw cron --at)\n2. Fresh scan → thesis → strategy (basket correlation) → validation (WEAK_EDGE gate) → risk eval → approval gate\n3. If AUTO_APPROVED_PAPER: write late-session preopen_refresh.json → Agent-12 → paper orders placed\n4. Write execution_log.json with picked names, order IDs, fill status\n5. Summary posted to channel: names, approval state, order outcome\n\nConstraints to bake in:\n- max 1-2 names (hard cap, already in chain)\n- minimum session time remaining: skip execution if < 30 min to close (no point entering)\n- QUARTER sizing mandatory (REDUCE_ONLY inherited)\n- paper only (live_trading_enabled=false gate)\n- no order submission if market_status shows circuit_breaker_active=true\n\nTest plan: run on a day where market is open, trigger manually at ~11am or 2pm, verify execution_log.json and broker paper order both appear. Do not test near close.",
+      "what": "Extend the late-session paper validation chain to include an execution step after approval. Today's late-session run proved the validation \u2192 approval path works (AUTO_APPROVED_PAPER, 2026-03-09). The missing piece is the execution leg.\n\nSpecific gap: Agent-12 reads preopen_refresh.json for execution_allowed. That file is not written in the current late-session chain, so Agent-12 fails on MISSING_ARTIFACT before it can place any orders.\n\nFix: add Step 7.5 to late_session_paper_validation_v1.md \u2014 write a minimal late-session preopen_refresh.json with execution_allowed=true only when approval_state=AUTO_APPROVED_PAPER and circuit_breaker_state != HALT. Then run Agent-12 against it. Agent-12 reads risk_decision.json (approved names + sizes), broker_auth_ok.json, and risk_policy.json \u2014 all of which are already written by the existing chain.\n\nEnd-to-end flow when complete:\n1. Manual trigger (Telegram command or openclaw cron --at)\n2. Fresh scan \u2192 thesis \u2192 strategy (basket correlation) \u2192 validation (WEAK_EDGE gate) \u2192 risk eval \u2192 approval gate\n3. If AUTO_APPROVED_PAPER: write late-session preopen_refresh.json \u2192 Agent-12 \u2192 paper orders placed\n4. Write execution_log.json with picked names, order IDs, fill status\n5. Summary posted to channel: names, approval state, order outcome\n\nConstraints to bake in:\n- max 1-2 names (hard cap, already in chain)\n- minimum session time remaining: skip execution if < 30 min to close (no point entering)\n- QUARTER sizing mandatory (REDUCE_ONLY inherited)\n- paper only (live_trading_enabled=false gate)\n- no order submission if market_status shows circuit_breaker_active=true\n\nTest plan: run on a day where market is open, trigger manually at ~11am or 2pm, verify execution_log.json and broker paper order both appear. Do not test near close.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "late_session_paper_validation_v1.md exists (done 2026-03-09). Approval path proven (done 2026-03-09). Agent-12 prompt already handles paper execution path.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["intraday", "execution", "agent-12", "late-session", "paper-trading", "option-c"]
+      "tags": [
+        "intraday",
+        "execution",
+        "agent-12",
+        "late-session",
+        "paper-trading",
+        "option-c"
+      ]
     },
     {
       "id": "Q-013",
       "category": "governance",
-      "title": "Governance doc cleanup — sync paperwork to current runtime state",
-      "what": "OpenClaw flagged after the 2026-03-09 fix push that several status docs, manifests, and architecture notes in OpenClaw-s-Brain are behind the current runtime state. This is not blocking any run, but the divergence will cause confusion when investigating future incidents — old notes will look like live state. Scope of cleanup:\n\n(1) Agent-08 / Agent-08b split docs — any architecture overview, pipeline topology diagram, or stage-sequence reference that still describes a single monolithic Agent-08 needs to reflect the split: Agent-08 (Risk Evaluation, 08:08, produces risk_evaluation.json) and Agent-08b (Risk Approval Gate, 08:20, produces risk_decision.json). These are distinct agents with distinct outputs and different models (gpt-5.4 vs gpt-5-mini).\n\n(2) Prompt version labels — Agent-06, Agent-07, Agent-09, and Agent-10 are internally versioned at v1.3, v1.3, v1.2, and v1.2 respectively as of 2026-03-09, but the filenames still carry v1.1. Any manifest, index, or reference doc that tracks prompt versions by number needs to be updated. Alternatively, consider renaming the files to match their internal version (separate decision — see note below).\n\n(3) MSG_POLICY_VIOLATION fix notes — any verification doc or known-issues list that records MSG_POLICY_VIOLATION as an open or unresolved problem should be updated to reflect the root cause (Agent-09 was auditing its own outbound policy against upstream artifact alerts) and the fix (Agent-09 v1.2 split outbound audit from upstream alert allowlist).\n\n(4) UNRESOLVED_CRITICAL_REMEDIATION carry-forward fix notes — same as above. The 2026-03-06 session_close criticals (STOP_ORDER_FAILURE, URGENT_ENFORCEMENT_MISS) were manually adjudicated 2026-03-09. The root cause (Agent-10 not reading session_close.json acknowledged_issues) is fixed in Agent-10 v1.2. Any known-issues or open-items list referencing this loop should be closed.\n\n(5) Cron job manifest / prompt source map — the prompt source drift fix on 2026-03-09 updated three jobs in jobs.json from stale workspace .txt prompts and gpt-5.3-codex to canonical .md repo prompts and gpt-5.4. Any documentation of what each scheduled job runs (prompt path, model) should reflect the corrected state.\n\n(6) Monday go/no-go runbook — ~/.openclaw/workspace/trading-bot/runbooks/monday-go-nogo-checklist.md has several notes marked 'first run post-fix' and 'never produced under new split' for risk_evaluation.json and risk_decision.json. After the first successful Tuesday run (or whichever trading day follows 2026-03-09), update: remove the 'NOTE: This file does NOT exist yet' caveat on Step 9, update KNOWN ISSUES table to reflect resolved items, and note the confirmed proof point.\n\n(7) Pipeline health / governance overview — if there is a top-level architecture doc describing the full 16-agent pipeline, check it against the current agent list, stage sequence, output artifacts, and model assignments. Several agents have changed model and prompt version since initial setup.\n\nApproach: do a targeted pass through OpenClaw-s-Brain/System/ and /workspace/trading-bot/runbooks/ looking for stale references. Do not rewrite working docs — only update the specific fields and notes that are factually behind. Mark resolved items as resolved, update version numbers, update model references. Keep the actual runtime-critical prompt files untouched during this pass.",
+      "title": "Governance doc cleanup \u2014 sync paperwork to current runtime state",
+      "what": "OpenClaw flagged after the 2026-03-09 fix push that several status docs, manifests, and architecture notes in OpenClaw-s-Brain are behind the current runtime state. This is not blocking any run, but the divergence will cause confusion when investigating future incidents \u2014 old notes will look like live state. Scope of cleanup:\n\n(1) Agent-08 / Agent-08b split docs \u2014 any architecture overview, pipeline topology diagram, or stage-sequence reference that still describes a single monolithic Agent-08 needs to reflect the split: Agent-08 (Risk Evaluation, 08:08, produces risk_evaluation.json) and Agent-08b (Risk Approval Gate, 08:20, produces risk_decision.json). These are distinct agents with distinct outputs and different models (gpt-5.4 vs gpt-5-mini).\n\n(2) Prompt version labels \u2014 Agent-06, Agent-07, Agent-09, and Agent-10 are internally versioned at v1.3, v1.3, v1.2, and v1.2 respectively as of 2026-03-09, but the filenames still carry v1.1. Any manifest, index, or reference doc that tracks prompt versions by number needs to be updated. Alternatively, consider renaming the files to match their internal version (separate decision \u2014 see note below).\n\n(3) MSG_POLICY_VIOLATION fix notes \u2014 any verification doc or known-issues list that records MSG_POLICY_VIOLATION as an open or unresolved problem should be updated to reflect the root cause (Agent-09 was auditing its own outbound policy against upstream artifact alerts) and the fix (Agent-09 v1.2 split outbound audit from upstream alert allowlist).\n\n(4) UNRESOLVED_CRITICAL_REMEDIATION carry-forward fix notes \u2014 same as above. The 2026-03-06 session_close criticals (STOP_ORDER_FAILURE, URGENT_ENFORCEMENT_MISS) were manually adjudicated 2026-03-09. The root cause (Agent-10 not reading session_close.json acknowledged_issues) is fixed in Agent-10 v1.2. Any known-issues or open-items list referencing this loop should be closed.\n\n(5) Cron job manifest / prompt source map \u2014 the prompt source drift fix on 2026-03-09 updated three jobs in jobs.json from stale workspace .txt prompts and gpt-5.3-codex to canonical .md repo prompts and gpt-5.4. Any documentation of what each scheduled job runs (prompt path, model) should reflect the corrected state.\n\n(6) Monday go/no-go runbook \u2014 ~/.openclaw/workspace/trading-bot/runbooks/monday-go-nogo-checklist.md has several notes marked 'first run post-fix' and 'never produced under new split' for risk_evaluation.json and risk_decision.json. After the first successful Tuesday run (or whichever trading day follows 2026-03-09), update: remove the 'NOTE: This file does NOT exist yet' caveat on Step 9, update KNOWN ISSUES table to reflect resolved items, and note the confirmed proof point.\n\n(7) Pipeline health / governance overview \u2014 if there is a top-level architecture doc describing the full 16-agent pipeline, check it against the current agent list, stage sequence, output artifacts, and model assignments. Several agents have changed model and prompt version since initial setup.\n\nApproach: do a targeted pass through OpenClaw-s-Brain/System/ and /workspace/trading-bot/runbooks/ looking for stale references. Do not rewrite working docs \u2014 only update the specific fields and notes that are factually behind. Mark resolved items as resolved, update version numbers, update model references. Keep the actual runtime-critical prompt files untouched during this pass.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Best done after Tuesday's first successful run proves risk_evaluation.json and risk_decision.json under the new split. That gives accurate 'first seen' dates to put in the docs. Can start the non-runbook sections now.",
       "priority": "low",
       "ticket": null,
-      "tags": ["governance", "docs", "agent-08b", "prompt-versions", "cleanup", "post-incident"]
+      "tags": [
+        "governance",
+        "docs",
+        "agent-08b",
+        "prompt-versions",
+        "cleanup",
+        "post-incident"
+      ]
     },
     {
       "id": "Q-012",
       "category": "trading",
       "title": "Harden options_regime contract for live options sleeve (Phase 2)",
-      "what": "Agent-06 and Agent-07 currently default to IV_ELEVATED when options_regime is missing or invalid (TICKET-018 conservative default). When the options sleeve activates in Phase 2, this default must become a hard fail with code MISSING_CONTRACT_INPUT: options_regime. Update both prompts: remove the IV_ELEVATED fallback, enforce hard fail on missing/invalid field, and remove the 'options sleeve inactive' conditional comment. Do not make this change before the options sleeve is live — silent defaulting is safer than hard failing in paper-only mode.",
+      "what": "Agent-06 and Agent-07 currently default to IV_ELEVATED when options_regime is missing or invalid (TICKET-018 conservative default). When the options sleeve activates in Phase 2, this default must become a hard fail with code MISSING_CONTRACT_INPUT: options_regime. Update both prompts: remove the IV_ELEVATED fallback, enforce hard fail on missing/invalid field, and remove the 'options sleeve inactive' conditional comment. Do not make this change before the options sleeve is live \u2014 silent defaulting is safer than hard failing in paper-only mode.",
       "blocker": "Options sleeve not yet active. Do not harden until Phase 2 options trading is enabled.",
       "blocker_type": "internal",
       "prereq": "60-day paper gate passed. Options sleeve enabled in risk_policy.json. Agent-06 and Agent-07 prompts updated to v1.3+.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["agent-06", "agent-07", "options-regime", "contract-hardening", "phase-2", "options-sleeve"]
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "options-regime",
+        "contract-hardening",
+        "phase-2",
+        "options-sleeve"
+      ]
     },
     {
       "id": "Q-004",
       "category": "trading",
       "title": "Agent-04 Reddit Pipeline v2",
-      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer — not three independent data pulls.",
+      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer \u2014 not three independent data pulls.",
       "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
       "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
       "blocker_type": "internal",
-      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps — script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
+      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps \u2014 script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
       "priority": "low",
       "ticket": "TICKET-021",
-      "tags": ["agent-04", "reddit", "signals", "intelligence", "post-paper-gate"]
+      "tags": [
+        "agent-04",
+        "reddit",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ]
     },
     {
       "id": "Q-005",
       "category": "trading",
-      "title": "ApeWisdom integration — retail sentiment layer",
-      "what": "Integrate ApeWisdom free API into the intelligence layer. Returns ticker mention counts, rank, and 24h trend direction across WSB and finance subreddits. No auth required. Evaluate whether this replaces or supplements the full Reddit PRAW build in Q-004. Agent integration: feed mention rank and acceleration into Agent-04 or a new Agent-04b as a pre-processed retail sentiment signal. Must align with existing signal hierarchy — corroborating input only, never a standalone trade trigger. Cross-reference against Agent-01 (news), Agent-05 (technical), and options flow before any weight is assigned.",
+      "title": "ApeWisdom integration \u2014 retail sentiment layer",
+      "what": "Integrate ApeWisdom free API into the intelligence layer. Returns ticker mention counts, rank, and 24h trend direction across WSB and finance subreddits. No auth required. Evaluate whether this replaces or supplements the full Reddit PRAW build in Q-004. Agent integration: feed mention rank and acceleration into Agent-04 or a new Agent-04b as a pre-processed retail sentiment signal. Must align with existing signal hierarchy \u2014 corroborating input only, never a standalone trade trigger. Cross-reference against Agent-01 (news), Agent-05 (technical), and options flow before any weight is assigned.",
       "blocker": "60-day paper gate not yet reached.",
       "blocker_type": "internal",
-      "prereq": "None — public API, no key required. Endpoint: https://apewisdom.io/api/v1.0/filter/all-stocks/",
+      "prereq": "None \u2014 public API, no key required. Endpoint: https://apewisdom.io/api/v1.0/filter/all-stocks/",
       "priority": "medium",
       "ticket": null,
-      "tags": ["agent-04", "apewisdom", "reddit-sentiment", "signals", "intelligence", "post-paper-gate"]
+      "tags": [
+        "agent-04",
+        "apewisdom",
+        "reddit-sentiment",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ]
     },
     {
       "id": "Q-006",
       "category": "trading",
-      "title": "Stocktwits integration — finance-specific sentiment feed",
-      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score — not three independent signals. Must not override options flow, news, or technical analysis.",
+      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
+      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score \u2014 not three independent signals. Must not override options flow, news, or technical analysis.",
       "blocker": "60-day paper gate not yet reached.",
       "blocker_type": "internal",
-      "prereq": "None — public API. Review Stocktwits API docs for rate limits before building.",
+      "prereq": "None \u2014 public API. Review Stocktwits API docs for rate limits before building.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["agent-04", "stocktwits", "sentiment", "signals", "intelligence", "post-paper-gate"]
+      "tags": [
+        "agent-04",
+        "stocktwits",
+        "sentiment",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ]
     },
     {
       "id": "Q-010",
       "category": "trading",
-      "title": "Profit path — trading system product",
-      "what": "Offer a managed paper→live trading service, signal subscription, or white-labeled pipeline to other traders. Highest upside but significant regulatory surface — must research RIA registration requirements, determine whether signal distribution constitutes investment advice under SEC rules, and draft appropriate disclaimers. Do not build or market this before: (a) 60-day paper gate passed with clean results, (b) LLC formed (Q-007), (c) legal review completed. Strategy: start as a signal transparency product (show the thesis, not a buy recommendation), build track record publicly, consult a securities attorney before any paid offering. Fund with Q-008 or Q-009 first.",
+      "title": "Profit path \u2014 trading system product",
+      "what": "Offer a managed paper\u2192live trading service, signal subscription, or white-labeled pipeline to other traders. Highest upside but significant regulatory surface \u2014 must research RIA registration requirements, determine whether signal distribution constitutes investment advice under SEC rules, and draft appropriate disclaimers. Do not build or market this before: (a) 60-day paper gate passed with clean results, (b) LLC formed (Q-007), (c) legal review completed. Strategy: start as a signal transparency product (show the thesis, not a buy recommendation), build track record publicly, consult a securities attorney before any paid offering. Fund with Q-008 or Q-009 first.",
       "blocker": "60-day paper gate not yet passed. Legal review required before any public offering.",
       "blocker_type": "internal",
       "prereq": "LLC formed (Q-007). Clean paper trading track record. Securities attorney consultation. RIA registration research.",
       "priority": "low",
       "ticket": null,
-      "tags": ["business", "trading-product", "signals", "legal", "post-paper-gate", "high-upside"]
+      "tags": [
+        "business",
+        "trading-product",
+        "signals",
+        "legal",
+        "post-paper-gate",
+        "high-upside"
+      ]
     },
     {
       "id": "Q-007",
       "category": "llc",
       "title": "Form LLC",
-      "what": "Form a single-member LLC to operate all business activities under. Unlocks deductibility of LLM subscriptions (OpenAI, Anthropic, etc.), hardware (new machine, Section 179), software tools, internet, home office, and education. You do not need revenue to form — you need to be operating in pursuit of profit, which you are. File with Florida Secretary of State, get an EIN from the IRS (free, online, 10 min), open a dedicated business checking account. Total cost: ~$125 filing + $138.75/year annual report.",
+      "what": "Form a single-member LLC to operate all business activities under. Unlocks deductibility of LLM subscriptions (OpenAI, Anthropic, etc.), hardware (new machine, Section 179), software tools, internet, home office, and education. You do not need revenue to form \u2014 you need to be operating in pursuit of profit, which you are. File with Florida Secretary of State, get an EIN from the IRS (free, online, 10 min), open a dedicated business checking account. Total cost: ~$125 filing + $138.75/year annual report.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "Florida: file at sunbiz.org ($125 filing fee, $138.75/year annual report). No state income tax — LLC profits pass through to personal return only. Get EIN at IRS.gov (free, 10 min). Open dedicated business checking account after EIN is issued. Consult a CPA before first tax filing.",
+      "prereq": "Florida: file at sunbiz.org ($125 filing fee, $138.75/year annual report). No state income tax \u2014 LLC profits pass through to personal return only. Get EIN at IRS.gov (free, 10 min). Open dedicated business checking account after EIN is issued. Consult a CPA before first tax filing.",
       "priority": "high",
       "ticket": null,
-      "tags": ["llc", "legal", "tax", "foundation"]
+      "tags": [
+        "llc",
+        "legal",
+        "tax",
+        "foundation"
+      ]
     },
     {
       "id": "Q-011",
       "category": "llc",
       "title": "Tax & accounting setup checklist",
-      "what": "Set up the financial infrastructure to support the LLC properly and protect deductions. Key steps: (1) Open dedicated business checking — never mix personal and business money, this is non-negotiable. (2) Set up expense tracking — Wave (free) or QuickBooks Simple Start. Save every API invoice, hardware receipt, and subscription confirmation to a dedicated folder. (3) Understand Schedule C — single-member LLC files taxes on Schedule C attached to personal 1040, no separate business return required. Florida has no state income tax so no state business return either. (4) Document pursuit of profit — keep a simple log of hours worked, goals, and business activities. Protects against IRS hobby classification. (5) Section 179 for hardware — new machine can be fully expensed in year one rather than depreciated. (6) Find a CPA before first tax filing — not before forming the LLC, but before filing. Early year losses (pre-revenue) can be carried forward to offset future income, but only if IRS agrees it's a business. CPA helps document intent. Deductible categories: LLM API subscriptions, hardware, software tools, internet (business %), home office (dedicated space %), education, domain/hosting.",
+      "what": "Set up the financial infrastructure to support the LLC properly and protect deductions. Key steps: (1) Open dedicated business checking \u2014 never mix personal and business money, this is non-negotiable. (2) Set up expense tracking \u2014 Wave (free) or QuickBooks Simple Start. Save every API invoice, hardware receipt, and subscription confirmation to a dedicated folder. (3) Understand Schedule C \u2014 single-member LLC files taxes on Schedule C attached to personal 1040, no separate business return required. Florida has no state income tax so no state business return either. (4) Document pursuit of profit \u2014 keep a simple log of hours worked, goals, and business activities. Protects against IRS hobby classification. (5) Section 179 for hardware \u2014 new machine can be fully expensed in year one rather than depreciated. (6) Find a CPA before first tax filing \u2014 not before forming the LLC, but before filing. Early year losses (pre-revenue) can be carried forward to offset future income, but only if IRS agrees it's a business. CPA helps document intent. Deductible categories: LLM API subscriptions, hardware, software tools, internet (business %), home office (dedicated space %), education, domain/hosting.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "LLC formed (Q-007). Dedicated business bank account opened.",
       "priority": "high",
       "ticket": null,
-      "tags": ["llc", "tax", "accounting", "schedule-c", "section-179", "deductions"]
+      "tags": [
+        "llc",
+        "tax",
+        "accounting",
+        "schedule-c",
+        "section-179",
+        "deductions"
+      ]
     },
     {
       "id": "Q-008",
       "category": "project",
       "title": "YouTube / content + tools",
-      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell — audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
+      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell \u2014 audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity and branding.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["youtube", "content", "monetization", "brand", "audience"]
+      "tags": [
+        "youtube",
+        "content",
+        "monetization",
+        "brand",
+        "audience"
+      ]
     },
     {
       "id": "Q-009",
       "category": "project",
       "title": "AI automation consulting / agency",
-      "what": "Sell the skillset, not a product. You know how to build multi-agent systems with real infrastructure — most businesses don't have anyone who can do this. One retainer client at $3-5k/month covers all subscriptions and hardware. Services: custom agent pipelines, OpenClaw-style automation setups, AI workflow integration for small businesses. No product needed to start — just a landing page, a LinkedIn presence, and one warm outreach campaign. Strategy: close 1-2 clients to fund the hobby side, keep scope tight, productize repeatable work into templates over time.",
+      "what": "Sell the skillset, not a product. You know how to build multi-agent systems with real infrastructure \u2014 most businesses don't have anyone who can do this. One retainer client at $3-5k/month covers all subscriptions and hardware. Services: custom agent pipelines, OpenClaw-style automation setups, AI workflow integration for small businesses. No product needed to start \u2014 just a landing page, a LinkedIn presence, and one warm outreach campaign. Strategy: close 1-2 clients to fund the hobby side, keep scope tight, productize repeatable work into templates over time.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "LLC formed (Q-007). Simple contract template. Define service scope and pricing before first outreach.",
       "priority": "medium",
       "ticket": null,
-      "tags": ["consulting", "agency", "ai-automation", "monetization", "services"]
+      "tags": [
+        "consulting",
+        "agency",
+        "ai-automation",
+        "monetization",
+        "services"
+      ]
     }
   ],
   "completed": [
@@ -248,64 +386,107 @@
       "id": "W-005",
       "category": "trading",
       "title": "Late-session paper validation chain + AUTO_APPROVED_PAPER proven",
-      "what": "Built late_session_paper_validation_v1.md — compound orchestration prompt that runs a fresh abbreviated chain (universe → thesis → strategy → validation → risk eval → approval gate) outside normal market hours. Dispatched via one-shot openclaw cron job. Result: AUTO_APPROVED_PAPER confirmed 2026-03-09 with XOM and ORCL selected. Proves the governance + approval path works after today's fixes. Execution leg not included (tracked as Q-014). Chain writes to standard state paths, stops at risk_decision.json.",
+      "what": "Built late_session_paper_validation_v1.md \u2014 compound orchestration prompt that runs a fresh abbreviated chain (universe \u2192 thesis \u2192 strategy \u2192 validation \u2192 risk eval \u2192 approval gate) outside normal market hours. Dispatched via one-shot openclaw cron job. Result: AUTO_APPROVED_PAPER confirmed 2026-03-09 with XOM and ORCL selected. Proves the governance + approval path works after today's fixes. Execution leg not included (tracked as Q-014). Chain writes to standard state paths, stops at risk_decision.json.",
       "completed_at": "2026-03-09",
       "ticket": null,
-      "tags": ["late-session", "paper-trading", "approval-gate", "validation", "proof-of-concept"]
+      "tags": [
+        "late-session",
+        "paper-trading",
+        "approval-gate",
+        "validation",
+        "proof-of-concept"
+      ]
     },
     {
       "id": "W-004",
       "category": "trading",
-      "title": "Prompt source drift fix — 3 cron jobs corrected to canonical prompts + gpt-5.4",
-      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list — all three now show gpt-5.4.",
+      "title": "Prompt source drift fix \u2014 3 cron jobs corrected to canonical prompts + gpt-5.4",
+      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list \u2014 all three now show gpt-5.4.",
       "completed_at": "2026-03-09",
       "ticket": null,
-      "tags": ["cron", "prompt-source", "agent-08", "agent-09", "agent-10", "model-upgrade"]
+      "tags": [
+        "cron",
+        "prompt-source",
+        "agent-08",
+        "agent-09",
+        "agent-10",
+        "model-upgrade"
+      ]
     },
     {
       "id": "W-003",
       "category": "trading",
-      "title": "Agent-09 v1.2 + Agent-10 v1.2 — governance loop fixes",
-      "what": "Fixed two bugs that caused today's paper session to block on false positives. (1) Agent-09 was applying its own outbound messaging restrictions as a global audit policy against all upstream artifact alerts — risk_status_ping from Agent-06's strategy_spec alerts was being flagged as MSG_POLICY_VIOLATION (CRITICAL). Fixed by splitting Step 6 into an upstream alert allowlist (risk_status_ping explicitly authorized) and Agent-09's own outbound policy. (2) Agent-10 was not reading session_close.json, so criticals acknowledged at session close were carried forward as OPEN indefinitely. Fixed by adding session_close.json as optional input and resolving carry-forward items that match acknowledged_issues[]. Both prompt changes pushed to OpenClaw-s-Brain. State manually adjudicated: open_critical_count 2 → 0, circuit breaker HALT → REDUCE_ONLY.",
+      "title": "Agent-09 v1.2 + Agent-10 v1.2 \u2014 governance loop fixes",
+      "what": "Fixed two bugs that caused today's paper session to block on false positives. (1) Agent-09 was applying its own outbound messaging restrictions as a global audit policy against all upstream artifact alerts \u2014 risk_status_ping from Agent-06's strategy_spec alerts was being flagged as MSG_POLICY_VIOLATION (CRITICAL). Fixed by splitting Step 6 into an upstream alert allowlist (risk_status_ping explicitly authorized) and Agent-09's own outbound policy. (2) Agent-10 was not reading session_close.json, so criticals acknowledged at session close were carried forward as OPEN indefinitely. Fixed by adding session_close.json as optional input and resolving carry-forward items that match acknowledged_issues[]. Both prompt changes pushed to OpenClaw-s-Brain. State manually adjudicated: open_critical_count 2 \u2192 0, circuit breaker HALT \u2192 REDUCE_ONLY.",
       "completed_at": "2026-03-09",
       "ticket": null,
-      "tags": ["agent-09", "agent-10", "msg-policy-violation", "carry-forward", "governance", "incident-fix"]
+      "tags": [
+        "agent-09",
+        "agent-10",
+        "msg-policy-violation",
+        "carry-forward",
+        "governance",
+        "incident-fix"
+      ]
     },
     {
       "id": "W-002",
       "category": "trading",
-      "title": "Agent-06 v1.3 + Agent-07 v1.3 — basket quality improvements",
-      "what": "Agent-06 v1.3: added primary_thesis_driver field per strategy item and STEP 3b basket correlation review. Items sharing the same primary_thesis_driver are de-duplicated — lower-conviction item excluded unless genuinely differentiated by sector, catalyst type, or hold horizon. Would have dropped CVX today (same OIL_REGIME_STRENGTH driver as XOM, no differentiated edge). Agent-07 v1.3: added 9th validation dimension edge_quality (STRONG | ACCEPTABLE | WEAK). WEAK_EDGE rule: thesis_alignment=PARTIAL AND warn_details >= 2 distinct concerns => rating auto-upgraded to FAIL. Would have failed GAP today (PARTIAL alignment + 2 distinct warns). Both changes pushed to OpenClaw-s-Brain commit 5bb4147.",
+      "title": "Agent-06 v1.3 + Agent-07 v1.3 \u2014 basket quality improvements",
+      "what": "Agent-06 v1.3: added primary_thesis_driver field per strategy item and STEP 3b basket correlation review. Items sharing the same primary_thesis_driver are de-duplicated \u2014 lower-conviction item excluded unless genuinely differentiated by sector, catalyst type, or hold horizon. Would have dropped CVX today (same OIL_REGIME_STRENGTH driver as XOM, no differentiated edge). Agent-07 v1.3: added 9th validation dimension edge_quality (STRONG | ACCEPTABLE | WEAK). WEAK_EDGE rule: thesis_alignment=PARTIAL AND warn_details >= 2 distinct concerns => rating auto-upgraded to FAIL. Would have failed GAP today (PARTIAL alignment + 2 distinct warns). Both changes pushed to OpenClaw-s-Brain commit 5bb4147.",
       "completed_at": "2026-03-09",
       "ticket": null,
-      "tags": ["agent-06", "agent-07", "basket-quality", "weak-edge", "correlation", "selection"]
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "basket-quality",
+        "weak-edge",
+        "correlation",
+        "selection"
+      ]
     },
     {
       "id": "W-001",
       "category": "trading",
-      "title": "PostToolUse hook — dashboard auto-sync on file edits",
-      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost — pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
+      "title": "PostToolUse hook \u2014 dashboard auto-sync on file edits",
+      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost \u2014 pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
       "completed_at": "2026-03-09",
       "ticket": null,
-      "tags": ["dashboard", "automation", "hooks", "queue", "devops"]
+      "tags": [
+        "dashboard",
+        "automation",
+        "hooks",
+        "queue",
+        "devops"
+      ]
     },
     {
       "id": "Q-001",
       "category": "architecture",
-      "title": "OpenClaw → Claude Code live bridge via ACP (persistent channel binding)",
+      "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
       "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
       "completed_at": "2026-03-09",
       "ticket": "TICKET-020",
-      "tags": ["openclaw", "claude-bridge", "acp", "live-session", "telegram"]
+      "tags": [
+        "openclaw",
+        "claude-bridge",
+        "acp",
+        "live-session",
+        "telegram"
+      ]
     },
     {
       "id": "T-017",
       "category": "trading",
       "title": "Fix encoding artifacts in all agent prompts",
-      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts — em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
+      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts \u2014 em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
       "completed_at": "2026-03-09",
       "ticket": "TICKET-017",
-      "tags": ["prompt-quality", "encoding", "all-agents"]
+      "tags": [
+        "prompt-quality",
+        "encoding",
+        "all-agents"
+      ]
     },
     {
       "id": "T-018",
@@ -314,16 +495,25 @@
       "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
       "completed_at": "2026-03-09",
       "ticket": "TICKET-018",
-      "tags": ["agent-06", "agent-07", "options-regime", "contract-hardening"]
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "options-regime",
+        "contract-hardening"
+      ]
     },
     {
       "id": "T-019",
       "category": "trading",
       "title": "Formalize Agent-12 live_trading_enabled contract input",
-      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code — no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
+      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code \u2014 no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
       "completed_at": "2026-03-09",
       "ticket": "TICKET-019",
-      "tags": ["agent-12", "live-trading", "contract-hardening"]
+      "tags": [
+        "agent-12",
+        "live-trading",
+        "contract-hardening"
+      ]
     },
     {
       "id": "Q-002",
@@ -332,16 +522,69 @@
       "what": "Agent-11 v1.2 + order_submitter.py: mandatory re-evaluation at live price when >60 min late. Hard block at >3h unless stale_signal_max_hours in risk_policy.json.",
       "completed_at": "2026-03-06",
       "ticket": null,
-      "tags": ["agent-11", "stale-signal", "risk"]
+      "tags": [
+        "agent-11",
+        "stale-signal",
+        "risk"
+      ]
     },
     {
       "id": "Q-003",
       "category": "trading",
       "title": "Verify trade journal + KPI aggregator (2026-03-06)",
-      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py — was using UTC date, now uses ET date via ZoneInfo.",
+      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py \u2014 was using UTC date, now uses ET date via ZoneInfo.",
       "completed_at": "2026-03-06",
       "ticket": null,
-      "tags": ["trade-journal", "kpi", "data-integrity"]
+      "tags": [
+        "trade-journal",
+        "kpi",
+        "data-integrity"
+      ]
+    },
+    {
+      "id": "Q-020",
+      "category": "trading",
+      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
+      "what": "Added --check mode to pipeline_contract_bootstrap.py (verify_bootstrap()). Checks session_context.json, normalized_risk_policy.json, current_run.json freshness. Writes bootstrap_check.json. Agent-01 Market Status cron (07:35 ET) now runs --check as a pre-step gate \u2014 if bootstrap stale, kills the chain and sends Telegram alert before any LLM work. validation_helper.py updated to check bootstrap artifacts exist (BOOTSTRAP_ARTIFACTS list). Preflight check passes. Q-020 complete.",
+      "completed_at": "2026-03-13",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "preflight",
+        "bootstrap",
+        "phase-2c"
+      ]
+    },
+    {
+      "id": "Q-005",
+      "category": "trading",
+      "title": "ApeWisdom integration \u2014 retail sentiment layer",
+      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches all-stocks (3 pages) + WSB (2 pages), extracts mention counts, rank, rank_delta, velocity_pct per symbol. Writes to alt_sentiment_raw.json. Agent-04 cron pre-runs fetcher and passes real data to LLM \u2014 no more hallucinated ApeWisdom data. Both APIs confirmed live. Note: implemented ahead of 60-day paper gate due to signal quality need.",
+      "completed_at": "2026-03-13",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "apewisdom",
+        "reddit-sentiment",
+        "signals",
+        "intelligence"
+      ]
+    },
+    {
+      "id": "Q-006",
+      "category": "trading",
+      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
+      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches 30 messages/symbol, computes bullish_count, bearish_count, bullish_ratio, tag_rate, narrative (strongly_bullish|bullish|bearish|strongly_bearish|mixed|insufficient_data), and up to 3 message snippets. Writes to alt_sentiment_raw.json alongside ApeWisdom data. Agent-04 prompt v1.2 updated with per-field interpretation rules (momentum thresholds, manipulation detection). Note: implemented ahead of 60-day paper gate due to signal quality need.",
+      "completed_at": "2026-03-13",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "stocktwits",
+        "sentiment",
+        "signals",
+        "intelligence"
+      ]
     }
   ]
 }
