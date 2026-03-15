@@ -302,31 +302,33 @@ function CapitalHero({
   const baseValue = account.base_value
 
   return (
-    <div className="cb-card-t1 px-6 py-5 space-y-4">
-      {/* Hero number */}
-      <div>
-        <div className="text-5xl font-thin tracking-tight text-[var(--cb-text-primary)] cb-number">
-          ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+    <div className="cb-card-t1 px-6 py-6">
+      {/* Row 1: Hero number + session P&L side by side */}
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-[2.8rem] leading-none font-thin tracking-tight cb-number" style={{ color: "var(--cb-text-primary)" }}>
+            ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="cb-label mt-1.5">deployed capital</div>
         </div>
-        <div className="cb-label mt-1">in market</div>
+        {todayPnl != null && (
+          <div className="text-right pb-0.5">
+            <div className={`text-2xl font-thin cb-number ${pnlColor(todayPnl)}`}>
+              {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+            </div>
+            <div className="cb-label mt-0.5">{fmt(todayPct, "", "%", 2)} today</div>
+          </div>
+        )}
       </div>
 
-      {/* Today P&L */}
-      {todayPnl != null && (
-        <div>
-          <span className={`text-lg font-medium cb-number ${pnlColor(todayPnl)}`}>
-            {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
-            <span className="text-sm ml-1.5 opacity-75">({fmt(todayPct, "", "%", 2)})</span>
-          </span>
-          <span className="text-xs ml-2" style={{ color: "var(--cb-text-tertiary)" }}>session</span>
-        </div>
-      )}
+      {/* Divider */}
+      <div style={{ height: 1, background: "var(--cb-border-dim)", margin: "18px 0" }} />
 
-      {/* Account + Cash */}
-      <div className="flex flex-wrap gap-6">
+      {/* Row 2: Account / Cash / Unrealized / Total — horizontal strip */}
+      <div className="flex flex-wrap gap-x-8 gap-y-3">
         {equity != null && (
           <div>
-            <div className="cb-label">Account equity</div>
+            <div className="cb-label mb-1">Account equity</div>
             <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
               ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </div>
@@ -334,37 +336,29 @@ function CapitalHero({
         )}
         {account.cash != null && (
           <div>
-            <div className="cb-label">Cash</div>
+            <div className="cb-label mb-1">Cash</div>
             <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
               ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Unrealized + Total */}
-      <div className="flex flex-wrap gap-6 text-xs">
         {account.unrealized_pnl != null && (
-          <span>
-            <span className={`font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
+          <div>
+            <div className="cb-label mb-1">Unrealized</div>
+            <div className={`text-sm font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
               {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
-              <span className="opacity-70 ml-1">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
-            </span>
-            <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>unrealized</span>
-          </span>
+              <span className="text-xs ml-1 opacity-70">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+            </div>
+          </div>
         )}
         {totalPnl != null && (
-          <span>
-            <span className={`font-medium cb-number ${pnlColor(totalPnl)}`}>
-              {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
-            </span>
-            <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>total return</span>
-            {baseValue && (
-              <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>
-                from ${baseValue.toLocaleString()}
-              </span>
-            )}
-          </span>
+          <div>
+            <div className="cb-label mb-1">Total return{baseValue ? ` · from $${baseValue.toLocaleString()}` : ""}</div>
+            <div className={`text-sm font-medium cb-number ${pnlColor(totalPnl)}`}>
+              {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")}
+              <span className="text-xs ml-1 opacity-70">({fmt(totalPct, "", "%", 2)})</span>
+            </div>
+          </div>
         )}
       </div>
     </div>
@@ -586,12 +580,12 @@ function MetricCard({ label, value, sub, tooltip }: { label: string; value: stri
   const [show, setShow] = useState(false)
   return (
     <div
-      className="relative cb-card-t3 px-3 py-2.5"
+      className="relative cb-card-t3 px-3 py-3"
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <div className="text-xl font-thin cb-number text-[var(--cb-text-primary)]">{value}</div>
-      <div className="flex items-center gap-1 mt-0.5" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+      <div className="text-xl font-light cb-number" style={{ color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>{value}</div>
+      <div className="flex items-center gap-1 mt-1" style={{ fontSize: 10, color: "var(--cb-text-secondary)" }}>
         {label}
         {tooltip && <Info className="w-3 h-3 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />}
       </div>
@@ -682,18 +676,18 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
     let labelText = ""
     let labelColor = "var(--cb-text-tertiary)"
     if (exitDecision.decision === "URGENT_CLOSE") {
-      labelText = "· Urgent close"
+      labelText = "Exit now"
       labelColor = "var(--cb-red)"
     } else if (exitDecision.decision === "CLOSE_BEFORE_BELL") {
-      labelText = "· Close before bell"
+      labelText = "Exit today"
       labelColor = "var(--cb-amber)"
     } else if (exitDecision.decision !== "HOLD") {
-      labelText = `· ${exitDecision.decision.replace(/_/g, " ").toLowerCase()}`
-      labelColor = "var(--cb-text-tertiary)"
+      labelText = exitDecision.decision.replace(/_/g, " ").toLowerCase()
+      labelColor = "var(--cb-text-secondary)"
     }
     if (labelText) {
       exitLabel = (
-        <span style={{ fontSize: 10, color: labelColor }}>{labelText}</span>
+        <span style={{ fontSize: 10, color: labelColor, fontWeight: 500, letterSpacing: "0.02em" }}>{labelText}</span>
       )
     }
   }
@@ -707,13 +701,14 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{p.symbol}</span>
+            <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{p.symbol}</span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+                {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
+              </span>
+              {exitLabel && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
               {exitLabel}
             </div>
-            <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-              {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
-            </span>
           </div>
         </div>
 

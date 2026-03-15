@@ -57,22 +57,22 @@ export function AmbientField() {
     const ox = gradientOriginRef.current.x * w
     const oy = gradientOriginRef.current.y * h
 
-    // Base nebula gradient (parallax-shifted)
+    // Base gradient — desaturated indigo, lower intensity
     const grad = ctx.createRadialGradient(ox * 0.3 + w * 0.1, oy * 0.4 + h * 0.1, 0, w * 0.5, h * 0.5, w * 0.85)
-    grad.addColorStop(0,   "rgba(88, 28, 220, 0.22)")
-    grad.addColorStop(0.4, "rgba(67, 20, 140, 0.14)")
-    grad.addColorStop(1,   "rgba(4,   1,  14, 0)")
+    grad.addColorStop(0,   "rgba(55, 30, 130, 0.15)")
+    grad.addColorStop(0.4, "rgba(40, 20, 90,  0.09)")
+    grad.addColorStop(1,   "rgba(3,   1,  12, 0)")
     ctx.fillStyle = grad
     ctx.fillRect(0, 0, w, h)
 
-    // Secondary bloom (shifts opposite direction)
+    // Secondary bloom — cooler, more graphite-indigo
     const grad2 = ctx.createRadialGradient(
       w - ox * 0.2 - w * 0.05, h * 0.15, 0,
       w * 0.78, h * 0.22, w * 0.5
     )
-    grad2.addColorStop(0,   "rgba(109, 40, 217, 0.16)")
-    grad2.addColorStop(0.5, "rgba(76, 29, 149, 0.08)")
-    grad2.addColorStop(1,   "rgba(4,   1,  14, 0)")
+    grad2.addColorStop(0,   "rgba(70, 40, 160, 0.10)")
+    grad2.addColorStop(0.5, "rgba(45, 25, 100, 0.05)")
+    grad2.addColorStop(1,   "rgba(3,   1,  12, 0)")
     ctx.fillStyle = grad2
     ctx.fillRect(0, 0, w, h)
 
@@ -88,7 +88,7 @@ export function AmbientField() {
 
       ctx.beginPath()
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(180, 160, 255, ${p.opacity})`
+      ctx.fillStyle = `rgba(150, 130, 220, ${p.opacity * 0.7})`
       ctx.fill()
     }
 
@@ -146,19 +146,19 @@ export function AmbientField() {
           </filter>
         </defs>
 
-        {/* Topology contour lines */}
-        <g filter="url(#contour-blur)" stroke="#7c3aed" fill="none" strokeWidth="0.6">
+        {/* Topology contour lines — reduced opacity */}
+        <g filter="url(#contour-blur)" stroke="#6040b0" fill="none" strokeWidth="0.5">
           {CONTOUR_PATHS.map((d, i) => (
-            <path key={i} d={d} strokeOpacity={i < 5 ? 0.055 : 0.035} />
+            <path key={i} d={d} strokeOpacity={i < 5 ? 0.035 : 0.02} />
           ))}
         </g>
 
         {/* Page-level orbital arcs — very low opacity */}
-        <g fill="none" stroke="#7c3aed" strokeWidth="0.5">
-          <ellipse cx="50%" cy="108%" rx="52%" ry="40%" strokeOpacity="0.07" />
-          <ellipse cx="50%" cy="108%" rx="72%" ry="58%" strokeOpacity="0.05" />
-          <ellipse cx="50%" cy="108%" rx="95%" ry="78%" strokeOpacity="0.035" />
-          <ellipse cx="50%" cy="108%" rx="120%" ry="100%" strokeOpacity="0.02" />
+        <g fill="none" stroke="#5030a0" strokeWidth="0.5">
+          <ellipse cx="50%" cy="108%" rx="52%" ry="40%" strokeOpacity="0.05" />
+          <ellipse cx="50%" cy="108%" rx="72%" ry="58%" strokeOpacity="0.035" />
+          <ellipse cx="50%" cy="108%" rx="95%" ry="78%" strokeOpacity="0.022" />
+          <ellipse cx="50%" cy="108%" rx="120%" ry="100%" strokeOpacity="0.012" />
         </g>
 
         {/* Navigation bearing ticks (top-right corner) */}
