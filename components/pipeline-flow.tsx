@@ -20,9 +20,10 @@ import { X, Clock, ArrowRight, FileInput, FileOutput } from "lucide-react"
 // ─── Layout constants ───────────────────────────────────────────────────────
 const COL_X: Record<string, number> = {
   research:  100,
-  risk:      480,
-  execution: 860,
-  audit:     1240,
+  risk:      430,
+  options:   700,
+  execution: 970,
+  audit:     1300,
 }
 const NODE_W = 160
 const NODE_H = 72
@@ -139,7 +140,7 @@ function buildGraph(selectedId: string | null) {
   })
 
   // Sequential edges within each group
-  const groupOrder = ["research", "risk", "execution", "audit"] as const
+  const groupOrder = ["research", "risk", "options", "execution", "audit"] as const
   const edges: Edge[] = []
 
   // Within-group edges
@@ -159,7 +160,10 @@ function buildGraph(selectedId: string | null) {
   // Cross-group handoff edges (last of group → first of next group)
   const crossHandoffs: [string, string][] = [
     ["07", "08"],   // Validation → Risk Eval
-    ["08b", "11"],  // Risk Gate → Pre-Open Refresh
+    ["08b", "17"],  // Risk Gate → Options Screener
+    ["08b", "19"],  // Risk Gate → Morning Position Reviewer (parallel)
+    ["18", "11"],   // Options Strategy → Pre-Open Refresh
+    ["19", "11"],   // Morning Reviewer → Pre-Open Refresh
     ["14", "15"],   // EOD → Post-Close (execution → audit)
   ]
   crossHandoffs.forEach(([src, tgt]) => {

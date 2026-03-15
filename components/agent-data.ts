@@ -7,7 +7,7 @@ export interface Agent {
   role: string
   inputs: string[]
   output: string
-  group: "research" | "risk" | "execution" | "audit"
+  group: "research" | "risk" | "options" | "execution" | "audit"
 }
 
 export const AGENTS: Agent[] = [
@@ -133,6 +133,39 @@ export const AGENTS: Agent[] = [
     output: "risk_decision.json",
   },
   {
+    id: "17",
+    label: "Agent-17",
+    shortName: "Options Screener",
+    time: "08:22 ET",
+    role: "options",
+    group: "options",
+    description: "Options pipeline entry point. Screens the universe for wheel-strategy candidates — stocks with high IV rank, strong fundamentals, and liquid options chains. Evaluates each ticker for CSP (cash-secured put) suitability, filters by strike distance, expiry, and premium-to-risk ratio. Produces a ranked shortlist for Agent-18.",
+    inputs: ["options_candidates.json", "risk_decision.json", "market_status.json"],
+    output: "options_screened.json",
+  },
+  {
+    id: "18",
+    label: "Agent-18",
+    shortName: "Options Strategy",
+    time: "08:28 ET",
+    role: "options",
+    group: "options",
+    description: "Options execution planner. Takes the screened candidates and builds a concrete trade spec per contract: strike, expiry, target premium, max loss, and position sizing. Applies the wheel strategy logic — CSP on new positions, covered calls on assigned shares. Output feeds the execution gate.",
+    inputs: ["options_screened.json", "risk_decision.json", "market_status.json"],
+    output: "options_strategy.json",
+  },
+  {
+    id: "19",
+    label: "Agent-19",
+    shortName: "Morning Reviewer",
+    time: "08:32 ET",
+    role: "execution",
+    group: "execution",
+    description: "Pre-open position health check. Runs Brave Search (freshness=past day) and StockTwits for every open position to surface overnight news, earnings surprises, or thesis-breaking developments. Issues per-position signals — SELL_AT_OPEN, SELL_BEFORE_CLOSE, or HOLD — before the market opens. SELL_AT_OPEN positions are actioned at 9:32 by the Morning Closer; SELL_BEFORE_CLOSE hints flow to Agent-14 EOD.",
+    inputs: ["Alpaca live positions", "Brave Search (freshness=pd)", "StockTwits"],
+    output: "morning_exit_signals.json + morning_eod_hints.json",
+  },
+  {
     id: "11",
     label: "Agent-11",
     shortName: "Pre-Open Refresh",
@@ -155,14 +188,25 @@ export const AGENTS: Agent[] = [
     output: "execution_log.json",
   },
   {
+    id: "mpc",
+    label: "Morn. Closer",
+    shortName: "Morning Closer",
+    time: "09:32 ET",
+    role: "execution",
+    group: "execution",
+    description: "Post-open position closer. Reads morning_exit_signals.json and submits market SELL orders for any SELL_AT_OPEN positions via Alpaca. Runs 2 minutes after open to avoid opening bell spreads. SELL_BEFORE_CLOSE signals are intentionally skipped here — they flow to Agent-14 EOD. Logs all fills and broker rejects, fires Telegram alerts on execution.",
+    inputs: ["morning_exit_signals.json", "Alpaca live positions"],
+    output: "morning_execution_log.json",
+  },
+  {
     id: "13",
     label: "Agent-13",
     shortName: "Mid-Day Check",
     time: "12:00 ET",
     role: "execution",
     group: "execution",
-    description: "Intraday position monitor. Reviews all open positions at midday against current price action, volatility, and the original thesis. Issues hold, tighten stop, trim, or exit recommendations for each position based on how the trade is developing.",
-    inputs: ["execution_log.json", "positions_snapshot.json", "volatility_snapshot.json"],
+    description: "Intraday position monitor. Reviews all open positions at midday against current price action, volatility, and the original thesis. Issues hold, tighten stop, trim, or exit recommendations for each position based on how the trade is developing. Also reads morning exit signals for context on positions flagged pre-open.",
+    inputs: ["execution_log.json", "positions_snapshot.json", "volatility_snapshot.json", "morning_exit_signals.json"],
     output: "midday_check.json",
   },
   {
@@ -172,8 +216,8 @@ export const AGENTS: Agent[] = [
     time: "15:30 ET",
     role: "execution",
     group: "execution",
-    description: "End-of-day decision gate. With 30 minutes to close, decides whether each open position should hold overnight, be closed before the bell, or be urgently closed immediately. Weighs overnight risk against the trade thesis and current P&L.",
-    inputs: ["midday_check.json", "positions_snapshot.json", "volatility_snapshot.json"],
+    description: "End-of-day decision gate. With 30 minutes to close, decides whether each open position should hold overnight, be closed before the bell, or be urgently closed immediately. Weighs overnight risk against the trade thesis and current P&L. Reads morning_eod_hints.json so SELL_BEFORE_CLOSE signals from 8:32 AM are factored into EOD decisions.",
+    inputs: ["midday_check.json", "positions_snapshot.json", "volatility_snapshot.json", "morning_eod_hints.json"],
     output: "eod_decision.json",
   },
   {
@@ -183,8 +227,8 @@ export const AGENTS: Agent[] = [
     time: "16:05 ET",
     role: "audit",
     group: "audit",
-    description: "Post-market reconciliation. Compares what was planned vs what was executed vs what the EOD decision called for. Classifies any variances with a taxonomy and extracts lessons — the feedback loop that improves the pipeline over time.",
-    inputs: ["execution_log.json", "eod_decision.json", "positions_snapshot.json"],
+    description: "Post-market reconciliation. Compares what was planned vs what was executed vs what the EOD decision called for. Classifies any variances with a taxonomy and extracts lessons — the feedback loop that improves the pipeline over time. Now includes morning execution log for full intraday P&L accounting.",
+    inputs: ["execution_log.json", "eod_decision.json", "positions_snapshot.json", "morning_execution_log.json"],
     output: "postclose_recap.json",
   },
   {
@@ -203,6 +247,7 @@ export const AGENTS: Agent[] = [
 export const GROUP_COLORS = {
   research:  { bg: "bg-blue-950",   border: "border-blue-700",   text: "text-blue-300",   label: "Research & Analysis" },
   risk:      { bg: "bg-orange-950", border: "border-orange-700", text: "text-orange-300", label: "Risk & Approval" },
+  options:   { bg: "bg-teal-950",   border: "border-teal-700",   text: "text-teal-300",   label: "Options / Wheel" },
   execution: { bg: "bg-emerald-950",border: "border-emerald-700",text: "text-emerald-300",label: "Execution" },
   audit:     { bg: "bg-purple-950", border: "border-purple-700", text: "text-purple-300", label: "Audit & Governance" },
 }
