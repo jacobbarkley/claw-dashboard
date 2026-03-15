@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-03-15T06:06:52.156741+00:00",
+  "generated_at": "2026-03-15T23:45:12.208470+00:00",
   "summary": {
-    "total": 8,
-    "blockers": 0,
-    "active": 2,
+    "total": 10,
+    "blockers": 1,
+    "active": 3,
     "done": 6
   },
   "phases": [
@@ -31,7 +31,7 @@
     {
       "phase": 6,
       "label": "Phase 6",
-      "total": 1,
+      "total": 3,
       "done": 0,
       "pct": 0
     }
@@ -184,6 +184,28 @@
         ],
         "title": "Agent-04 Reddit Pipeline v2 \u2014 proper OAuth API with structured feature extraction",
         "file": "TICKET-021.md"
+      },
+      {
+        "ticket_id": "TICKET-023",
+        "phase": 6,
+        "priority": "P1",
+        "severity": "SEV2",
+        "status": "READY",
+        "created_at": "2026-03-15T19:40:00-04:00",
+        "last_updated": "2026-03-15T19:40:00-04:00",
+        "timebox_minutes": 600,
+        "dependencies": [],
+        "tags": [
+          "options",
+          "bull-put-spread",
+          "new-strategy",
+          "agent-20",
+          "agent-21",
+          "screener",
+          "open-universe"
+        ],
+        "title": "Bull Put Spread Module \u2014 Replace Active Options Strategy (Wheel \u2192 BPS)",
+        "file": "TICKET-023.md"
       }
     ],
     "BLOCKED_EXTERNAL": [
@@ -209,6 +231,31 @@
         ],
         "title": "Crypto Day Trading Module \u2014 BTC 5-min Candle Quant Strategy",
         "file": "TICKET-022.md"
+      }
+    ],
+    "BLOCKED": [
+      {
+        "ticket_id": "TICKET-024",
+        "phase": 6,
+        "priority": "P3",
+        "severity": "SEV4",
+        "status": "BLOCKED",
+        "created_at": "2026-03-15T19:40:00-04:00",
+        "last_updated": "2026-03-15T19:40:00-04:00",
+        "timebox_minutes": 240,
+        "dependencies": [
+          "TICKET-023"
+        ],
+        "tags": [
+          "dashboard",
+          "vercel",
+          "options",
+          "bull-put-spread",
+          "reporting",
+          "ui"
+        ],
+        "title": "Vercel Dashboard \u2014 New Options/BPS Performance Tab",
+        "file": "TICKET-024.md"
       }
     ]
   },
@@ -380,6 +427,51 @@
       ],
       "title": "Crypto Day Trading Module \u2014 BTC 5-min Candle Quant Strategy",
       "file": "TICKET-022.md"
+    },
+    {
+      "ticket_id": "TICKET-023",
+      "phase": 6,
+      "priority": "P1",
+      "severity": "SEV2",
+      "status": "READY",
+      "created_at": "2026-03-15T19:40:00-04:00",
+      "last_updated": "2026-03-15T19:40:00-04:00",
+      "timebox_minutes": 600,
+      "dependencies": [],
+      "tags": [
+        "options",
+        "bull-put-spread",
+        "new-strategy",
+        "agent-20",
+        "agent-21",
+        "screener",
+        "open-universe"
+      ],
+      "title": "Bull Put Spread Module \u2014 Replace Active Options Strategy (Wheel \u2192 BPS)",
+      "file": "TICKET-023.md"
+    },
+    {
+      "ticket_id": "TICKET-024",
+      "phase": 6,
+      "priority": "P3",
+      "severity": "SEV4",
+      "status": "BLOCKED",
+      "created_at": "2026-03-15T19:40:00-04:00",
+      "last_updated": "2026-03-15T19:40:00-04:00",
+      "timebox_minutes": 240,
+      "dependencies": [
+        "TICKET-023"
+      ],
+      "tags": [
+        "dashboard",
+        "vercel",
+        "options",
+        "bull-put-spread",
+        "reporting",
+        "ui"
+      ],
+      "title": "Vercel Dashboard \u2014 New Options/BPS Performance Tab",
+      "file": "TICKET-024.md"
     }
   ]
 }
