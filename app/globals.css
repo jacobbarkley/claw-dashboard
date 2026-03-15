@@ -83,37 +83,72 @@
 }
 
 .dark {
-  --background: #07021a;
-  --foreground: oklch(0.985 0 0);
-  --card: #0e0830;
-  --card-foreground: oklch(0.985 0 0);
-  --popover: #0e0830;
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0.00 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: #1a1040;
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: #1a1040;
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: #221452;
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: rgba(139, 92, 246, 0.12);
-  --input: rgba(139, 92, 246, 0.10);
-  --ring: oklch(0.556 0 0);
+  /* ── Surfaces ── */
+  --background: #04010e;
+  --card: #080520;
+  --popover: #0d0830;
+  --secondary: #110840;
+  --muted: #110840;
+  --accent: #180b48;
+
+  /* ── Text ── */
+  --foreground: #eeedf5;
+  --card-foreground: #eeedf5;
+  --popover-foreground: #eeedf5;
+  --secondary-foreground: #eeedf5;
+  --accent-foreground: #eeedf5;
+  --muted-foreground: #7b7892;
+
+  /* ── Structure ── */
+  --primary: #eeedf5;
+  --primary-foreground: #04010e;
+  --destructive: #e05252;
+  --border: rgba(139, 92, 246, 0.10);
+  --input: rgba(139, 92, 246, 0.08);
+  --ring: rgba(124, 58, 237, 0.40);
+
+  /* ── Charts ── */
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+
+  /* ── Sidebar ── */
+  --sidebar: #080520;
+  --sidebar-foreground: #eeedf5;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #eeedf5;
+  --sidebar-accent: #110840;
+  --sidebar-accent-foreground: #eeedf5;
+  --sidebar-border: rgba(139, 92, 246, 0.10);
+  --sidebar-ring: rgba(124, 58, 237, 0.40);
+
+  /* ── ClawBoy semantic tokens ── */
+  --cb-void:          #04010e;
+  --cb-surface-0:     #080520;
+  --cb-surface-1:     #0d0830;
+  --cb-surface-2:     #130c3c;
+
+  --cb-border-dim:    rgba(139, 92, 246, 0.07);
+  --cb-border-std:    rgba(139, 92, 246, 0.13);
+  --cb-border-hi:     rgba(139, 92, 246, 0.26);
+
+  --cb-brand:         #7c3aed;
+  --cb-brand-soft:    rgba(124, 58, 237, 0.14);
+
+  --cb-text-primary:  #eeedf5;
+  --cb-text-secondary:#7b7892;
+  --cb-text-tertiary: #3d3a52;
+
+  --cb-green:         #10b981;
+  --cb-green-soft:    rgba(16, 185, 129, 0.12);
+  --cb-amber:         #d97706;
+  --cb-amber-soft:    rgba(217, 119, 6, 0.12);
+  --cb-red:           #e05252;
+  --cb-red-soft:      rgba(224, 82, 82, 0.12);
+  --cb-steel:         #7ab0cc;
+  --cb-steel-soft:    rgba(122, 176, 204, 0.12);
 }
 
 @layer base {
@@ -126,4 +161,67 @@
   html {
     @apply font-sans;
   }
+}
+
+/* ── ClawBoy design primitives ── */
+
+/* Card tiers */
+.cb-card-t1 {
+  background: var(--cb-surface-0);
+  border: 1px solid var(--cb-border-hi);
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--cb-brand-soft), 0 8px 32px rgba(4, 1, 14, 0.6);
+}
+.cb-card-t2 {
+  background: var(--cb-surface-0);
+  border: 1px solid var(--cb-border-std);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(4, 1, 14, 0.4);
+}
+.cb-card-t3 {
+  background: transparent;
+  border: 1px solid var(--cb-border-dim);
+  border-radius: 8px;
+}
+
+/* Section label */
+.cb-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cb-text-tertiary);
+}
+
+/* Severity left-border indicators */
+.cb-severity-critical { border-left: 2px solid var(--cb-red); }
+.cb-severity-high     { border-left: 2px solid var(--cb-amber); }
+.cb-severity-medium   { border-left: 2px solid rgba(217,119,6,0.45); }
+.cb-severity-ok       { border-left: 2px solid var(--cb-green); }
+
+/* Live pulse dot */
+@keyframes cb-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+.cb-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cb-green);
+  animation: cb-pulse 2.4s ease-in-out infinite;
+}
+
+/* Number transition */
+.cb-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Ambient particle canvas — always behind content */
+.cb-ambient-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 }
