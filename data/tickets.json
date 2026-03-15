@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-03-15T02:19:32.220444+00:00",
+  "generated_at": "2026-03-15T02:34:39.884654+00:00",
   "summary": {
-    "total": 7,
+    "total": 8,
     "blockers": 0,
-    "active": 1,
+    "active": 2,
     "done": 6
   },
   "phases": [
@@ -27,6 +27,13 @@
       "total": 2,
       "done": 2,
       "pct": 100
+    },
+    {
+      "phase": 6,
+      "label": "Phase 6",
+      "total": 1,
+      "done": 0,
+      "pct": 0
     }
   ],
   "by_status": {
@@ -178,6 +185,31 @@
         "title": "Agent-04 Reddit Pipeline v2 \u2014 proper OAuth API with structured feature extraction",
         "file": "TICKET-021.md"
       }
+    ],
+    "BLOCKED_EXTERNAL": [
+      {
+        "ticket_id": "TICKET-022",
+        "phase": 6,
+        "priority": "P2",
+        "severity": "SEV3",
+        "status": "BLOCKED_EXTERNAL",
+        "created_at": "2026-03-14T22:22:00-04:00",
+        "last_updated": "2026-03-14T22:22:00-04:00",
+        "timebox_minutes": 480,
+        "dependencies": [
+          "COINBASE_API_SETUP"
+        ],
+        "tags": [
+          "crypto",
+          "btc",
+          "day-trading",
+          "quant",
+          "5min-candles",
+          "new-module"
+        ],
+        "title": "Crypto Day Trading Module \u2014 BTC 5-min Candle Quant Strategy",
+        "file": "TICKET-022.md"
+      }
     ]
   },
   "tickets": [
@@ -325,6 +357,29 @@
       ],
       "title": "Agent-04 Reddit Pipeline v2 \u2014 proper OAuth API with structured feature extraction",
       "file": "TICKET-021.md"
+    },
+    {
+      "ticket_id": "TICKET-022",
+      "phase": 6,
+      "priority": "P2",
+      "severity": "SEV3",
+      "status": "BLOCKED_EXTERNAL",
+      "created_at": "2026-03-14T22:22:00-04:00",
+      "last_updated": "2026-03-14T22:22:00-04:00",
+      "timebox_minutes": 480,
+      "dependencies": [
+        "COINBASE_API_SETUP"
+      ],
+      "tags": [
+        "crypto",
+        "btc",
+        "day-trading",
+        "quant",
+        "5min-candles",
+        "new-module"
+      ],
+      "title": "Crypto Day Trading Module \u2014 BTC 5-min Candle Quant Strategy",
+      "file": "TICKET-022.md"
     }
   ]
 }
