@@ -2,15 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Nav } from "@/components/nav"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts"
 import {
-  TrendingUp, TrendingDown, AlertTriangle, Eye,
-  Copy, Check, RefreshCw, ShieldAlert, ShieldCheck, ShieldOff,
+  Eye, Copy, Check, RefreshCw,
   ChevronDown, ChevronUp, Info,
 } from "lucide-react"
 
@@ -183,7 +180,9 @@ const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 
   n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
 
 const pnlColor = (n: number | null | undefined) =>
-  n == null ? "text-zinc-400" : n >= 0 ? "text-emerald-400" : "text-[#7ab0cc]"
+  n == null ? "text-[var(--cb-text-secondary)]"
+  : n >= 0 ? "text-[var(--cb-green)]"
+  : "text-[var(--cb-steel)]"
 
 function shortDate(iso: string) {
   return iso.slice(5)
@@ -196,74 +195,14 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diff / 3600)}h ago`
 }
 
-// ─── Circuit Breaker Badge ────────────────────────────────────────────────────
-function CircuitBreakerBadge({ state }: { state: string }) {
-  const cfg: Record<string, { label: string; cls: string; icon: React.ReactNode }> = {
-    NORMAL:      { label: "NORMAL",      cls: "bg-emerald-900/40 text-emerald-300 border-emerald-700/40", icon: <ShieldCheck className="w-3 h-3" /> },
-    REDUCE_ONLY: { label: "REDUCE ONLY", cls: "bg-yellow-900/40 text-yellow-300 border-yellow-700/40",   icon: <ShieldAlert className="w-3 h-3" /> },
-    HALT:        { label: "HALT",        cls: "bg-red-950/60 text-red-300/70 border-red-900/40",          icon: <ShieldOff className="w-3 h-3" /> },
-    UNKNOWN:     { label: "UNKNOWN",     cls: "bg-zinc-800 text-zinc-500 border-zinc-700",              icon: <ShieldAlert className="w-3 h-3" /> },
-  }
-  const c = cfg[state] ?? cfg.UNKNOWN
-  return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded border ${c.cls}`}>
-      {c.icon} {c.label}
-    </span>
-  )
-}
-
-// ─── Verdict Badge ────────────────────────────────────────────────────────────
-function VerdictBadge({ verdict }: { verdict: string }) {
-  const cfg: Record<string, string> = {
-    PASS:    "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
-    WARN:    "bg-yellow-900/40 text-yellow-300 border-yellow-700/40",
-    FAIL:    "bg-red-950/60 text-red-300/70 border-red-900/40",
-    UNKNOWN: "bg-zinc-800 text-zinc-500 border-zinc-700",
-  }
-  return (
-    <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-1 rounded border ${cfg[verdict] ?? cfg.UNKNOWN}`}>
-      {verdict}
-    </span>
-  )
-}
-
-// ─── Pipeline Status Bar ──────────────────────────────────────────────────────
-function PipelineStatusBar({ ps }: { ps: PipelineStatus }) {
-  const hasIssues = ps.critical_issues > 0 || ps.high_issues > 0
-  return (
-    <div className={`rounded-lg border px-4 py-3 flex flex-wrap items-center gap-3 text-xs ${
-      ps.verdict === "FAIL" ? "bg-zinc-900 border-red-950/50" :
-      ps.verdict === "WARN" ? "bg-zinc-900 border-yellow-900/40" :
-      "bg-zinc-900 border-zinc-800"
-    }`}>
-      <span className="text-zinc-500 font-mono">{ps.trading_date ?? "—"}</span>
-      <CircuitBreakerBadge state={ps.circuit_breaker} />
-      <VerdictBadge verdict={ps.verdict} />
-      {ps.critical_issues > 0 && (
-        <span className="text-red-400 font-medium">{ps.critical_issues} critical</span>
-      )}
-      {ps.high_issues > 0 && (
-        <span className="text-orange-400 font-medium">{ps.high_issues} high</span>
-      )}
-      {ps.medium_issues > 0 && (
-        <span className="text-yellow-400">{ps.medium_issues} medium</span>
-      )}
-      {!hasIssues && ps.verdict !== "UNKNOWN" && (
-        <span className="text-emerald-400">No critical issues</span>
-      )}
-      {ps.approval_path && (
-        <span className="ml-auto text-zinc-600">{ps.approval_path.replace(/_/g, " ")}</span>
-      )}
-    </div>
-  )
-}
-
-// ─── Hero Section ─────────────────────────────────────────────────────────────
-function HeroSection({
-  account, kpis, tunables, pipeline, lastFetched, refreshing, onRefresh,
+// ─── Command Strip ─────────────────────────────────────────────────────────────
+function CommandStrip({
+  tunables,
+  pipeline,
+  lastFetched,
+  refreshing,
+  onRefresh,
 }: {
-  account: TradingData["account"]
-  kpis: TradingData["kpis"]
   tunables: Tunables
   pipeline?: PipelineStatus
   lastFetched: Date
@@ -276,125 +215,158 @@ function HeroSection({
     return () => clearInterval(id)
   }, [])
 
-  const equity     = account.equity ?? account.positions_value
-  const totalPnl   = account.total_pnl
-  const totalPct   = account.total_pnl_pct
-  const todayPnl   = account.today_pnl
-  const todayPct   = account.today_pnl_pct
-  const baseValue  = account.base_value
+  const isLive = tunables.trading_mode !== "PAPER"
+  const modeColor = isLive ? "text-[var(--cb-red)]" : "text-[var(--cb-steel)]"
+
+  // Pipeline verdict display
+  let verdictColor = "color: var(--cb-text-tertiary)"
+  let verdictDotColor = "var(--cb-text-tertiary)"
+  let verdictText = "Pipeline · —"
+  if (pipeline) {
+    const v = pipeline.verdict
+    if (v === "PASS") {
+      verdictDotColor = "var(--cb-green)"
+      verdictColor = "color: var(--cb-green)"
+      verdictText = "Pipeline · PASS"
+    } else if (v === "WARN") {
+      verdictDotColor = "var(--cb-amber)"
+      verdictColor = "color: var(--cb-amber)"
+      const parts = ["Pipeline · WARN"]
+      if (pipeline.critical_issues > 0) parts.push(`${pipeline.critical_issues} critical`)
+      if (pipeline.high_issues > 0) parts.push(`${pipeline.high_issues} high`)
+      verdictText = parts.join(" — ")
+    } else if (v === "FAIL") {
+      verdictDotColor = "var(--cb-red)"
+      verdictColor = "color: var(--cb-red)"
+      verdictText = "Pipeline · FAIL"
+    } else {
+      verdictText = "Pipeline · " + v
+    }
+  }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <div>
-          {/* Main number: value invested in market */}
-          <div className="text-5xl font-thin text-zinc-100 tracking-wide">
-            ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="text-xs mt-0.5" style={{ color: "#b0bcc6" }}>invested</div>
-
-          {/* Unrealized P&L on open positions */}
-          <div className={`text-lg font-semibold mt-1 ${pnlColor(account.unrealized_pnl)}`}>
-            {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
-            <span className="text-sm ml-1.5 opacity-80">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
-            <span className="text-xs ml-2 font-normal" style={{ color: "#b0bcc6" }}>unrealized</span>
-          </div>
-
-          {/* Supporting: total account equity + cash */}
-          <div className="text-xs mt-1.5 flex flex-wrap gap-3" style={{ color: "#b0bcc6" }}>
-            {equity != null && (
-              <span>
-                Account:{" "}
-                <span className="font-medium" style={{ color: "#7ab0cc" }}>
-                  ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </span>
-              </span>
-            )}
-            {account.cash != null && (
-              <span>
-                Cash:{" "}
-                <span className="font-medium" style={{ color: "#7ab0cc" }}>
-                  ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                </span>
-              </span>
-            )}
-          </div>
-
-          {/* Today + total P&L */}
-          <div className="text-xs mt-1 flex flex-wrap gap-3" style={{ color: "#b0bcc6" }}>
-            {todayPnl != null && (
-              <span>
-                Today:{" "}
-                <span className={`font-medium ${pnlColor(todayPnl)}`}>
-                  {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")} ({fmt(todayPct, "", "%", 2)})
-                </span>
-              </span>
-            )}
-            {totalPnl != null && (
-              <span>
-                Total:{" "}
-                <span className={`font-medium ${pnlColor(totalPnl)}`}>
-                  {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
-                </span>
-                {baseValue && <span className="ml-1" style={{ color: "#b0bcc6" }}>from ${baseValue.toLocaleString()}</span>}
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            <span className={`text-[10px] font-semibold px-2 py-1 rounded border ${
-              tunables.trading_mode === "PAPER"
-                ? "bg-blue-900/40 text-blue-300 border-blue-700/40"
-                : "bg-red-900/40 text-red-300 border-red-700/40"
-            }`}>
-              {tunables.trading_mode}
-            </span>
-            {pipeline && <CircuitBreakerBadge state={pipeline.circuit_breaker} />}
-            {pipeline && <VerdictBadge verdict={pipeline.verdict} />}
-          </div>
-          <button
-            onClick={onRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-emerald-500 animate-pulse"}`} />
-            <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
-            {timeAgo(lastFetched.toISOString())}
-          </button>
-        </div>
+    <div className="cb-card-t3 px-4 py-2 flex items-center justify-between gap-4 mx-4 sm:mx-6 mt-2 mb-0">
+      {/* Left: mode */}
+      <div className="flex items-center gap-2">
+        <span className="cb-live-dot" />
+        <span className={`text-[11px] font-semibold tracking-wide ${modeColor}`}>
+          {tunables.trading_mode}
+        </span>
       </div>
 
-      {pipeline && <PipelineStatusBar ps={pipeline} />}
+      {/* Center: pipeline */}
+      <div className="flex items-center gap-1.5 text-[11px]">
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: verdictDotColor,
+            display: "inline-block",
+            flexShrink: 0,
+          }}
+        />
+        <span style={{ color: verdictDotColor }}>{verdictText}</span>
+      </div>
+
+      {/* Right: refresh */}
+      <button
+        onClick={onRefresh}
+        disabled={refreshing}
+        className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity"
+        style={{ color: "var(--cb-text-tertiary)" }}
+      >
+        <span style={{ color: "var(--cb-text-tertiary)" }}>
+          Updated {timeAgo(lastFetched.toISOString())}
+        </span>
+        <RefreshCw
+          className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
+          style={{ color: "var(--cb-text-tertiary)" }}
+        />
+      </button>
     </div>
   )
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ label, value, sub, tooltip }: { label: string; value: string; sub?: string; tooltip?: string }) {
-  const [show, setShow] = useState(false)
+// ─── Capital Hero ─────────────────────────────────────────────────────────────
+function CapitalHero({
+  account,
+}: {
+  account: TradingData["account"]
+}) {
+  const todayPnl  = account.today_pnl
+  const todayPct  = account.today_pnl_pct
+  const totalPnl  = account.total_pnl
+  const totalPct  = account.total_pnl_pct
+  const equity    = account.equity ?? account.positions_value
+  const baseValue = account.base_value
+
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <Card className="bg-zinc-900 border-zinc-800">
-        <CardContent className="pt-4 pb-3 px-4">
-          <div className="text-xl font-bold text-zinc-100">{value}</div>
-          <div className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1">
-            {label}
-            {tooltip && <Info className="w-3 h-3 text-zinc-700 shrink-0" />}
-          </div>
-          {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
-        </CardContent>
-      </Card>
-      {tooltip && show && (
-        <div className="absolute bottom-full left-0 mb-1.5 z-50 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-[11px] text-zinc-300 w-52 leading-snug shadow-xl pointer-events-none">
-          {tooltip}
+    <div className="cb-card-t1 px-6 py-5 space-y-4">
+      {/* Hero number */}
+      <div>
+        <div className="text-5xl font-thin tracking-tight text-[var(--cb-text-primary)] cb-number">
+          ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </div>
+        <div className="cb-label mt-1">in market</div>
+      </div>
+
+      {/* Today P&L */}
+      {todayPnl != null && (
+        <div>
+          <span className={`text-lg font-medium cb-number ${pnlColor(todayPnl)}`}>
+            {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+            <span className="text-sm ml-1.5 opacity-75">({fmt(todayPct, "", "%", 2)})</span>
+          </span>
+          <span className="text-xs ml-2" style={{ color: "var(--cb-text-tertiary)" }}>session</span>
         </div>
       )}
+
+      {/* Account + Cash */}
+      <div className="flex flex-wrap gap-6">
+        {equity != null && (
+          <div>
+            <div className="cb-label">Account equity</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+              ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+        )}
+        {account.cash != null && (
+          <div>
+            <div className="cb-label">Cash</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+              ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Unrealized + Total */}
+      <div className="flex flex-wrap gap-6 text-xs">
+        {account.unrealized_pnl != null && (
+          <span>
+            <span className={`font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
+              {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
+              <span className="opacity-70 ml-1">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+            </span>
+            <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>unrealized</span>
+          </span>
+        )}
+        {totalPnl != null && (
+          <span>
+            <span className={`font-medium cb-number ${pnlColor(totalPnl)}`}>
+              {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")} ({fmt(totalPct, "", "%", 2)})
+            </span>
+            <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>total return</span>
+            {baseValue && (
+              <span className="ml-1" style={{ color: "var(--cb-text-tertiary)" }}>
+                from ${baseValue.toLocaleString()}
+              </span>
+            )}
+          </span>
+        )}
+      </div>
     </div>
   )
 }
@@ -460,20 +432,14 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
   }, [data, tf])
 
   if (!data.length) return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Account Equity</CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-6 flex items-center justify-center h-[140px]">
-        <p className="text-xs text-zinc-600">No history available yet</p>
-      </CardContent>
-    </Card>
+    <div className="cb-card-t2 px-4 pt-4 pb-6">
+      <div className="cb-label mb-3">Account Equity</div>
+      <div className="flex items-center justify-center h-[140px]">
+        <p className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>No history available yet</p>
+      </div>
+    </div>
   )
 
-  const last = displayData[displayData.length - 1]
-  const isUp = baseValue != null ? last.equity >= baseValue : last.equity >= displayData[0].equity
-
-  // Y-axis: fit to visible data ±10%, minimum band of 1% of value so flat lines still show
   const equities = displayData.map(d => d.equity)
   const minEq = Math.min(...equities)
   const maxEq = Math.max(...equities)
@@ -484,32 +450,37 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
   const fmtK = (v: number) => `$${(v / 1000).toFixed(1)}k`
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>
-            Account Equity
-            {baseValue && <span className="ml-2 font-normal normal-case" style={{ color: "#b8860b" }}>started ${baseValue.toLocaleString()}</span>}
-          </CardTitle>
-          <select
-            value={tf}
-            onChange={e => setTf(e.target.value as Timeframe)}
-            className="text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-300 rounded px-2 py-1 cursor-pointer focus:outline-none hover:border-zinc-500 transition-colors"
-          >
-            {TF_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-      </CardHeader>
-      <CardContent className="px-2 pb-4">
-        <div className="relative">
-          <OrbitalRings />
-          <ResponsiveContainer width="100%" height={160}>
+    <div className="cb-card-t2 px-4 pt-4 pb-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="cb-label">
+          Account Equity
+          {baseValue && <span className="ml-2 font-normal normal-case" style={{ color: "var(--cb-text-tertiary)" }}>started ${baseValue.toLocaleString()}</span>}
+        </span>
+        <select
+          value={tf}
+          onChange={e => setTf(e.target.value as Timeframe)}
+          className="cursor-pointer focus:outline-none"
+          style={{
+            background: "transparent",
+            border: "1px solid rgba(139,92,246,0.2)",
+            color: "var(--cb-text-secondary)",
+            fontSize: 10,
+            borderRadius: 6,
+            padding: "2px 8px",
+          }}
+        >
+          {TF_OPTIONS.map(o => (
+            <option key={o.value} value={o.value} style={{ background: "var(--cb-surface-1)" }}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+      <div className="relative px-2">
+        <OrbitalRings />
+        <ResponsiveContainer width="100%" height={160}>
           <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis
-              tick={{ fontSize: 10, fill: "#b0bcc6" }}
+              tick={{ fontSize: 10, fill: "#7b7892" }}
               tickLine={false}
               axisLine={false}
               tickFormatter={fmtK}
@@ -517,20 +488,19 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
               domain={[yMin, yMax]}
             />
             <Tooltip
-              contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
-              formatter={(v: any, name: any) => [
+              contentStyle={{ background: "var(--cb-surface-1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, fontSize: 11 }}
+              formatter={(v: unknown) => [
                 `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-                name === "equity" ? "Equity" : "Daily P&L",
+                "Equity",
               ]}
-              labelFormatter={(l: any) => shortDate(String(l))}
+              labelFormatter={(l: unknown) => shortDate(String(l))}
             />
-            {baseValue && <ReferenceLine y={baseValue} stroke="#3f3f46" strokeDasharray="3 3" />}
+            {baseValue && <ReferenceLine y={baseValue} stroke="rgba(139,92,246,0.15)" strokeDasharray="3 3" />}
             <Line type="monotone" dataKey="equity" stroke="#16a34a" strokeWidth={0.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -557,169 +527,244 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
   const hasData = displayData.some(d => d.net_pnl !== 0)
 
   if (!hasData) return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>Daily P&L</CardTitle>
-      </CardHeader>
-      <CardContent className="px-4 pb-6 flex items-center justify-center h-[100px]">
-        <p className="text-xs text-zinc-600">No closed trade P&L recorded yet</p>
-      </CardContent>
-    </Card>
+    <div className="cb-card-t2 px-4 pt-4 pb-6">
+      <div className="cb-label mb-3">Daily P&L</div>
+      <div className="flex items-center justify-center h-[100px]">
+        <p className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>No closed trade P&L recorded yet</p>
+      </div>
+    </div>
   )
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-xs font-semibold uppercase tracking-widest shrink-0" style={{ color: "#b8860b" }}>Daily P&L</CardTitle>
-          <select
-            value={tf}
-            onChange={e => setTf(e.target.value as Timeframe)}
-            className="text-[11px] bg-zinc-800 border border-zinc-700 text-zinc-300 rounded px-2 py-1 cursor-pointer focus:outline-none hover:border-zinc-500 transition-colors"
-          >
-            {PNL_TF_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-      </CardHeader>
-      <CardContent className="px-2 pb-4">
-        <div className="relative">
-          <OrbitalRings />
-          <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
-              <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-              <YAxis tick={{ fontSize: 10, fill: "#b0bcc6" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
-              <Tooltip
-                contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 6, fontSize: 11 }}
-                formatter={(v: any) => [`$${Number(v).toFixed(2)}`, "P&L"]}
-                labelFormatter={(l: any) => shortDate(String(l))}
-              />
-              <ReferenceLine y={0} stroke="#3f3f46" />
-              <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
-                {displayData.map((d, i) => (
-                  <Cell key={i} fill={d.net_pnl >= 0 ? "#34d399" : "#4eb8c8"} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-// ─── KPI grid ─────────────────────────────────────────────────────────────────
-function KpiGrid({ kpis }: { kpis: TradingData["kpis"] }) {
-  return (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-      <KpiCard
-        label="Win Rate"
-        value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"}
-        tooltip="Percentage of closed trades that ended in profit. Above 50% means more winners than losers."
-      />
-      <KpiCard
-        label="Profit Factor"
-        value={fmt(kpis.profit_factor)}
-        tooltip="Gross profit divided by gross loss. Above 1.0 means the system makes more than it loses overall."
-      />
-      <KpiCard
-        label="Expectancy"
-        value={fmt(kpis.expectancy, "$")}
-        tooltip="Average dollar return per trade, accounting for win rate and average win/loss size. Positive means edge."
-      />
-      <KpiCard
-        label="Max Drawdown"
-        value={kpis.max_drawdown_usd != null ? `$${kpis.max_drawdown_usd.toFixed(2)}` : "—"}
-        sub={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(2)}% of starting equity` : undefined}
-        tooltip="Largest peak-to-trough loss in cumulative realized P&L, expressed as a dollar amount and % of starting equity ($100k)."
-      />
-      <KpiCard
-        label="Win Streak"
-        value={String(kpis.max_win_streak)}
-        sub="best"
-        tooltip="Longest consecutive string of winning trades recorded."
-      />
-      <KpiCard
-        label="Loss Streak"
-        value={String(kpis.max_loss_streak)}
-        sub="worst"
-        tooltip="Longest consecutive string of losing trades. The consecutive loss limit in risk policy will halt trading when hit."
-      />
+    <div className="cb-card-t2 px-4 pt-4 pb-4">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="cb-label">Daily P&L</span>
+        <select
+          value={tf}
+          onChange={e => setTf(e.target.value as Timeframe)}
+          className="cursor-pointer focus:outline-none"
+          style={{
+            background: "transparent",
+            border: "1px solid rgba(139,92,246,0.2)",
+            color: "var(--cb-text-secondary)",
+            fontSize: 10,
+            borderRadius: 6,
+            padding: "2px 8px",
+          }}
+        >
+          {PNL_TF_OPTIONS.map(o => (
+            <option key={o.value} value={o.value} style={{ background: "var(--cb-surface-1)" }}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+      <div className="relative px-2">
+        <OrbitalRings />
+        <ResponsiveContainer width="100%" height={120}>
+          <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+            <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
+            <Tooltip
+              contentStyle={{ background: "var(--cb-surface-1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, fontSize: 11 }}
+              formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, "P&L"]}
+              labelFormatter={(l: unknown) => shortDate(String(l))}
+            />
+            <ReferenceLine y={0} stroke="rgba(139,92,246,0.15)" />
+            <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
+              {displayData.map((d, i) => (
+                <Cell key={i} fill={d.net_pnl >= 0 ? "#10b981" : "#7ab0cc"} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }
 
-// ─── Position Row (Robinhood-style) ───────────────────────────────────────────
-function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCandidate }) {
-  const [open, setOpen] = useState(false)
+// ─── Performance Grid ─────────────────────────────────────────────────────────
+function MetricCard({ label, value, sub, tooltip }: { label: string; value: string; sub?: string; tooltip?: string }) {
+  const [show, setShow] = useState(false)
   return (
     <div
-      className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+      className="relative cb-card-t3 px-3 py-2.5"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <div className="text-xl font-thin cb-number text-[var(--cb-text-primary)]">{value}</div>
+      <div className="flex items-center gap-1 mt-0.5" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+        {label}
+        {tooltip && <Info className="w-3 h-3 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />}
+      </div>
+      {sub && <div style={{ fontSize: 9, color: "var(--cb-text-tertiary)" }} className="mt-0.5">{sub}</div>}
+      {tooltip && show && (
+        <div
+          className="absolute bottom-full left-0 mb-1.5 z-50 rounded-lg px-3 py-2 text-[11px] w-52 leading-snug shadow-xl pointer-events-none"
+          style={{
+            background: "var(--cb-surface-1)",
+            border: "1px solid rgba(139,92,246,0.2)",
+            color: "var(--cb-text-secondary)",
+          }}
+        >
+          {tooltip}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PerformanceGrid({ kpis }: { kpis: TradingData["kpis"] }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* Execution Quality */}
+      <div>
+        <div className="cb-label mb-2">Execution Quality</div>
+        <div className="grid grid-cols-3 gap-2">
+          <MetricCard
+            label="Win Rate"
+            value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"}
+            tooltip="Percentage of closed trades that ended in profit. Above 50% means more winners than losers."
+          />
+          <MetricCard
+            label="Profit Factor"
+            value={fmt(kpis.profit_factor)}
+            tooltip="Gross profit divided by gross loss. Above 1.0 means the system makes more than it loses overall."
+          />
+          <MetricCard
+            label="Expectancy"
+            value={fmt(kpis.expectancy, "$")}
+            tooltip="Average dollar return per trade, accounting for win rate and average win/loss size. Positive means edge."
+          />
+        </div>
+      </div>
+
+      {/* Risk Character */}
+      <div>
+        <div className="cb-label mb-2">Risk Character</div>
+        <div className="grid grid-cols-3 gap-2">
+          <MetricCard
+            label="Max Drawdown"
+            value={kpis.max_drawdown_usd != null ? `$${kpis.max_drawdown_usd.toFixed(2)}` : "—"}
+            sub={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(2)}% of base` : undefined}
+            tooltip="Largest peak-to-trough loss in cumulative realized P&L, expressed as a dollar amount and % of starting equity ($100k)."
+          />
+          <MetricCard
+            label="Win Streak"
+            value={String(kpis.max_win_streak)}
+            sub="best"
+            tooltip="Longest consecutive string of winning trades recorded."
+          />
+          <MetricCard
+            label="Loss Streak"
+            value={String(kpis.max_loss_streak)}
+            sub="worst"
+            tooltip="Longest consecutive string of losing trades. The consecutive loss limit in risk policy will halt trading when hit."
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Position Row ─────────────────────────────────────────────────────────────
+function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCandidate }) {
+  const [open, setOpen] = useState(false)
+
+  // Severity border class
+  let severityClass = ""
+  if (exitDecision) {
+    if (exitDecision.decision === "URGENT_CLOSE") severityClass = "cb-severity-critical"
+    else if (exitDecision.decision === "CLOSE_BEFORE_BELL") severityClass = "cb-severity-high"
+  }
+
+  // Exit decision inline text
+  let exitLabel: React.ReactNode = null
+  if (exitDecision) {
+    let labelText = ""
+    let labelColor = "var(--cb-text-tertiary)"
+    if (exitDecision.decision === "URGENT_CLOSE") {
+      labelText = "· Urgent close"
+      labelColor = "var(--cb-red)"
+    } else if (exitDecision.decision === "CLOSE_BEFORE_BELL") {
+      labelText = "· Close before bell"
+      labelColor = "var(--cb-amber)"
+    } else if (exitDecision.decision !== "HOLD") {
+      labelText = `· ${exitDecision.decision.replace(/_/g, " ").toLowerCase()}`
+      labelColor = "var(--cb-text-tertiary)"
+    }
+    if (labelText) {
+      exitLabel = (
+        <span style={{ fontSize: 10, color: labelColor }}>{labelText}</span>
+      )
+    }
+  }
+
+  return (
+    <div
+      className={`cb-card-t2 hover:opacity-90 transition-opacity cursor-pointer ${severityClass}`}
       onClick={() => setOpen(o => !o)}
     >
       {/* Main row */}
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Symbol + side indicator */}
           <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-zinc-100 text-base">{p.symbol}</span>
-              {exitDecision && (
-                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">
-                  {exitDecision.decision.replace(/_/g, " ")}
-                </span>
-              )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{p.symbol}</span>
+              {exitLabel}
             </div>
-            <span className="text-[11px] text-zinc-500">
+            <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
               {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
             </span>
           </div>
         </div>
 
-        {/* Right: current price + pnl + chevron */}
+        {/* Right: price + pnl + chevron */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-base font-semibold text-zinc-100">
+            <div className="text-base font-medium text-[var(--cb-text-primary)]">
               ${p.current_price?.toFixed(2) ?? "—"}
             </div>
-            <div className={`text-xs font-medium ${pnlColor(p.unrealized_pnl)}`}>
+            <div className={`text-xs font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
               {p.unrealized_pnl >= 0 ? "+" : ""}{fmt(p.unrealized_pnl, "$")}
               <span className="opacity-70 ml-1">({fmt(p.unrealized_pct, "", "%", 1)})</span>
             </div>
           </div>
           {open
-            ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" />
-            : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0" />
+            ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />
+            : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />
           }
         </div>
       </div>
 
       {/* Expanded detail */}
       {open && (
-        <div className="px-4 pb-3 pt-1 border-t border-zinc-800/60 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div
+          className="px-4 pb-3 pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs"
+          style={{
+            borderTop: "1px solid var(--cb-border-dim)",
+            background: "var(--cb-surface-1)",
+          }}
+        >
           <div>
-            <div className="text-zinc-500">Market Value</div>
-            <div className="text-zinc-200 font-medium">${p.market_value?.toFixed(2) ?? "—"}</div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Market Value</div>
+            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.market_value?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
-            <div className="text-zinc-500">Today</div>
-            <div className={`font-medium ${pnlColor(p.change_today_pct)}`}>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Today</div>
+            <div className={`font-medium cb-number ${pnlColor(p.change_today_pct)}`}>
               {fmt(p.change_today_pct, "", "%", 2)}
             </div>
           </div>
           <div>
-            <div className="text-zinc-500">Entry</div>
-            <div className="text-zinc-200 font-medium">${p.entry_price?.toFixed(2) ?? "—"}</div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Entry</div>
+            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2) ?? "—"}</div>
           </div>
           <div>
-            <div className="text-zinc-500">Side</div>
-            <div className="text-zinc-200 font-medium capitalize">{p.side}</div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Side</div>
+            <div className="font-medium capitalize" style={{ color: "var(--cb-text-primary)" }}>{p.side}</div>
           </div>
           {exitDecision?.reason && (
             <div className="col-span-2 sm:col-span-4">
-              <div className="text-zinc-500">Exit signal</div>
-              <div className="text-zinc-400 leading-snug">{exitDecision.reason}</div>
+              <p style={{ color: "var(--cb-text-secondary)" }} className="leading-snug">{exitDecision.reason}</p>
             </div>
           )}
         </div>
@@ -730,7 +775,7 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
 
 function PositionsList({ positions, exitCandidates }: { positions: Position[]; exitCandidates: ExitCandidate[] }) {
   if (!positions.length) return (
-    <div className="text-sm text-zinc-600 py-6 text-center">No open positions</div>
+    <div className="text-sm py-6 text-center" style={{ color: "var(--cb-text-tertiary)" }}>No open positions</div>
   )
   const exitMap = Object.fromEntries(exitCandidates.map(e => [e.symbol, e]))
   return (
@@ -742,32 +787,82 @@ function PositionsList({ positions, exitCandidates }: { positions: Position[]; e
   )
 }
 
-// ─── Watchlist ────────────────────────────────────────────────────────────────
-function Watchlist({ items }: { items: WatchlistItem[] }) {
+// ─── Exit Candidates standalone (non-position items) ─────────────────────────
+function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; positions: Position[] }) {
+  const heldSymbols = new Set(positions.map(p => p.symbol))
+  const orphaned = items.filter(i => !heldSymbols.has(i.symbol))
+  if (!orphaned.length) return null
+  return (
+    <div className="space-y-2">
+      {orphaned.map(item => (
+        <div key={item.symbol} className="cb-card-t2 p-3 space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{item.symbol}</span>
+              <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+                {item.decision.replace(/_/g, " ")}
+              </span>
+            </div>
+            {item.unrealized_pnl != null && (
+              <span className={`text-xs font-medium cb-number ${pnlColor(item.unrealized_pnl)}`}>
+                {fmt(item.unrealized_pnl, "$")} ({fmt(item.unrealized_pct, "", "%", 1)})
+              </span>
+            )}
+          </div>
+          <p className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>{item.reason}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Qualified Setups (Watchlist) ──────────────────────────────────────────────
+function QualifiedSetups({ items }: { items: WatchlistItem[] }) {
   const [expanded, setExpanded] = useState<string | null>(null)
-  if (!items.length) return <div className="text-sm text-zinc-600 py-4 text-center">No watchlist candidates</div>
+  if (!items.length) return (
+    <div className="text-sm py-4 text-center" style={{ color: "var(--cb-text-tertiary)" }}>No qualified setups</div>
+  )
   return (
     <div className="space-y-2">
       {items.map(item => (
-        <div key={item.symbol} className="rounded-lg border border-zinc-800 bg-zinc-900">
+        <div key={item.symbol} className="cb-card-t2">
           <button
             onClick={() => setExpanded(e => e === item.symbol ? null : item.symbol)}
             className="w-full flex items-center justify-between px-3 py-2.5 text-left"
           >
             <div className="flex items-center gap-3">
-              <span className="font-mono font-semibold text-zinc-100">{item.symbol}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded ${item.modifier === "FULL" ? "bg-blue-900/40 text-blue-300" : "bg-zinc-800 text-zinc-400"}`}>
-                {item.modifier}
-              </span>
+              <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{item.symbol}</span>
+              {item.modifier === "FULL" ? (
+                <span style={{ fontSize: 10, color: "var(--cb-brand)", fontWeight: 500 }}>{item.modifier}</span>
+              ) : (
+                <span style={{ fontSize: 10, color: "var(--cb-amber)", fontWeight: 500 }}>{item.modifier}</span>
+              )}
             </div>
-            <Eye className="w-3.5 h-3.5 text-zinc-600" />
+            <Eye className="w-3.5 h-3.5" style={{ color: "var(--cb-brand-soft)", opacity: 0.7 }} />
           </button>
           {expanded === item.symbol && (
-            <div className="px-3 pb-3 space-y-2 text-xs border-t border-zinc-800 pt-2">
-              <div><span className="text-zinc-500">Entry: </span><span className="text-zinc-300">{item.trigger}</span></div>
-              <div><span className="text-zinc-500">Stop: </span><span className="text-zinc-300">{item.stop}</span></div>
-              <div><span className="text-zinc-500">Target: </span><span className="text-zinc-300">{item.target}</span></div>
-              {item.note && <div><span className="text-zinc-500">Note: </span><span className="text-zinc-400 italic">{item.note}</span></div>}
+            <div
+              className="px-3 pb-3 space-y-1.5 text-xs pt-2"
+              style={{ borderTop: "1px solid var(--cb-border-dim)" }}
+            >
+              <div>
+                <span style={{ color: "var(--cb-text-tertiary)" }}>Entry: </span>
+                <span style={{ color: "var(--cb-text-secondary)" }}>{item.trigger}</span>
+              </div>
+              <div>
+                <span style={{ color: "var(--cb-text-tertiary)" }}>Stop: </span>
+                <span style={{ color: "var(--cb-text-secondary)" }}>{item.stop}</span>
+              </div>
+              <div>
+                <span style={{ color: "var(--cb-text-tertiary)" }}>Target: </span>
+                <span style={{ color: "var(--cb-text-secondary)" }}>{item.target}</span>
+              </div>
+              {item.note && (
+                <div>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>Note: </span>
+                  <span style={{ color: "var(--cb-text-tertiary)", fontStyle: "italic" }}>{item.note}</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -776,38 +871,239 @@ function Watchlist({ items }: { items: WatchlistItem[] }) {
   )
 }
 
-// ─── Exit Candidates standalone (non-position items) ─────────────────────────
-function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; positions: Position[] }) {
-  const heldSymbols = new Set(positions.map(p => p.symbol))
-  // Only show items NOT already rendered inline in position rows
-  const orphaned = items.filter(i => !heldSymbols.has(i.symbol))
-  if (!orphaned.length) return null
+// ─── Premium Yield (Options) ───────────────────────────────────────────────────
+function OptionsCandidateRow({ c, screened }: { c: OptionsCandidate; screened?: OptionsScreened }) {
+  const [open, setOpen] = useState(false)
+  const yieldColor =
+    c.annualized_yield_pct >= 50 ? "var(--cb-green)" :
+    c.annualized_yield_pct >= 30 ? "var(--cb-amber)" :
+    "var(--cb-text-primary)"
+
+  let recColor = "var(--cb-text-secondary)"
+  if (screened?.recommendation === "PROCEED") recColor = "var(--cb-green)"
+  else if (screened?.recommendation === "SKIP")    recColor = "var(--cb-steel)"
+  else if (screened?.recommendation === "REVIEW")  recColor = "var(--cb-amber)"
+
   return (
-    <div className="space-y-2">
-      {orphaned.map(item => (
-        <div key={item.symbol} className="rounded-lg border border-zinc-800 bg-zinc-900 p-3 space-y-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-semibold text-zinc-100">{item.symbol}</span>
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-zinc-700/60 text-zinc-400">
-                {item.decision.replace(/_/g, " ")}
-              </span>
+    <div
+      className="cb-card-t2 hover:opacity-90 transition-opacity cursor-pointer"
+      onClick={() => setOpen(o => !o)}
+    >
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{c.symbol}</span>
+              <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace" }}>CSP</span>
+              {c.in_equity_pipeline && (
+                <span style={{ fontSize: 9, color: "var(--cb-brand)" }}>in pipeline</span>
+              )}
+              {screened?.recommendation && (
+                <span style={{ fontSize: 9, color: recColor, fontWeight: 600 }}>{screened.recommendation}</span>
+              )}
             </div>
-            {item.unrealized_pnl != null && (
-              <span className={`text-xs font-medium ${pnlColor(item.unrealized_pnl)}`}>
-                {fmt(item.unrealized_pnl, "$")} ({fmt(item.unrealized_pct, "", "%", 1)})
-              </span>
+            <div className="mt-0.5" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+              ${c.strike}P · exp {c.expiry} · {c.dte}d · δ {c.delta?.toFixed(2) ?? "—"}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-right">
+            <div className="text-base font-medium cb-number" style={{ color: yieldColor }}>
+              {c.annualized_yield_pct?.toFixed(1)}%
+              <span className="text-xs ml-1 font-normal" style={{ color: "var(--cb-text-tertiary)" }}>ann.</span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+              ${c.bid} bid · ${c.assignment_capital?.toLocaleString()} capital
+            </div>
+          </div>
+          {open
+            ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />
+            : <ChevronDown className="w-4 h-4 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />
+          }
+        </div>
+      </div>
+      {open && (
+        <div
+          className="px-4 pb-3 pt-2 space-y-2 text-xs"
+          style={{ borderTop: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>Current Price</div>
+              <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${c.current_price?.toFixed(2)}</div>
+            </div>
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>ATM IV</div>
+              <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{c.atm_iv?.toFixed(1)}%</div>
+            </div>
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>IV Rank</div>
+              <div style={{ color: "var(--cb-text-secondary)" }}>{c.iv_rank != null ? `${c.iv_rank.toFixed(0)}%` : `— (${c.iv_rank_source?.replace(/_/g, " ")})`}</div>
+            </div>
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>Open Interest</div>
+              <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{c.open_interest?.toLocaleString() ?? "—"}</div>
+            </div>
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>Premium Yield</div>
+              <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{c.premium_yield_pct?.toFixed(2)}%</div>
+            </div>
+            <div>
+              <div style={{ color: "var(--cb-text-tertiary)" }}>Assignment Capital</div>
+              <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${c.assignment_capital?.toLocaleString()}</div>
+            </div>
+            {c.thesis_direction && (
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Thesis</div>
+                <div className="font-medium capitalize" style={{ color: "var(--cb-text-primary)" }}>{c.thesis_direction} · {c.thesis_conviction}</div>
+              </div>
+            )}
+            {screened?.thesis_alignment != null && (
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Thesis Alignment</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{screened.thesis_alignment}/5</div>
+              </div>
             )}
           </div>
-          <p className="text-xs text-zinc-400 leading-snug">{item.reason}</p>
+          {screened?.rationale && (
+            <div>
+              <div className="mb-0.5" style={{ color: "var(--cb-text-tertiary)" }}>Agent-17 rationale</div>
+              <div className="leading-snug" style={{ color: "var(--cb-text-secondary)" }}>{screened.rationale}</div>
+            </div>
+          )}
+          {screened?.narrative_risk && screened.narrative_risk.length > 0 && (
+            <div>
+              <div className="mb-0.5" style={{ color: "var(--cb-text-tertiary)" }}>Risk flags</div>
+              <div className="flex flex-wrap gap-1">
+                {screened.narrative_risk.map((r, i) => (
+                  <span key={i} style={{ fontSize: 10, color: "var(--cb-amber)" }}>{r}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      ))}
+      )}
+    </div>
+  )
+}
+
+function ActiveOptionsRow({ t }: { t: OptionsData["active_trades"][number] }) {
+  const wheelColors: Record<string, string> = {
+    IDLE:      "var(--cb-text-tertiary)",
+    CSP_OPEN:  "var(--cb-steel)",
+    ASSIGNED:  "var(--cb-amber)",
+    CC_OPEN:   "var(--cb-brand)",
+    COMPLETED: "var(--cb-green)",
+  }
+  return (
+    <div className="cb-card-t2 px-4 py-3 flex items-center justify-between">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{t.symbol}</span>
+          <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace" }}>{t.type}</span>
+          <span style={{ fontSize: 9, color: wheelColors[t.wheel_state] ?? wheelColors.IDLE, fontWeight: 500 }}>
+            {t.wheel_state.replace(/_/g, " ")}
+          </span>
+        </div>
+        <div className="mt-0.5" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+          ${t.strike}P · {t.expiry} · {t.contracts} contract{t.contracts !== 1 ? "s" : ""} · {t.dte}d
+        </div>
+      </div>
+      {t.limit_price != null && (
+        <div className="text-right">
+          <div className="text-sm font-medium cb-number text-[var(--cb-text-primary)]">${t.limit_price.toFixed(2)}</div>
+          <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>limit</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OptionsPanel({ options }: { options: OptionsData }) {
+  const { gate, candidates, screened, active_trades, executions, scan_summary } = options
+  const screenedMap = Object.fromEntries(screened.map(s => [s.symbol, s]))
+  const hasActive = active_trades.length > 0
+  const hasExec = executions.length > 0
+  const gateOpen = gate.status === "PASS"
+
+  return (
+    <div className="space-y-4">
+      {/* Gate + slot meta */}
+      <div className="flex flex-wrap items-center gap-4 text-xs">
+        <div className="flex items-center gap-1.5">
+          <span style={{
+            width: 7, height: 7, borderRadius: "50%",
+            background: gateOpen ? "var(--cb-green)" : "var(--cb-red)",
+            display: "inline-block",
+          }} />
+          <span style={{ color: gateOpen ? "var(--cb-green)" : "var(--cb-red)", fontWeight: 500 }}>
+            Gate {gateOpen ? "open" : "closed"}
+          </span>
+        </div>
+        <span style={{ color: "var(--cb-text-tertiary)" }}>
+          {gate.csp_slots_used} / {gate.csp_slots_max} slots
+        </span>
+        {gate.available_capital != null && (
+          <span style={{ color: "var(--cb-text-tertiary)" }}>
+            ${gate.available_capital.toLocaleString()} available
+          </span>
+        )}
+        {gate.cash_buffer_pct != null && (
+          <span className="font-medium" style={{ color: gate.cash_buffer_pct >= 15 ? "var(--cb-green)" : "var(--cb-red)" }}>
+            {gate.cash_buffer_pct.toFixed(0)}% cash buffer
+          </span>
+        )}
+        {scan_summary && (
+          <span className="ml-auto" style={{ color: "var(--cb-text-tertiary)" }}>
+            {scan_summary.passed}/{scan_summary.scanned} passed screen
+          </span>
+        )}
+      </div>
+
+      {/* Active trades */}
+      {hasActive && (
+        <div className="space-y-2">
+          <div className="cb-label">Active Positions</div>
+          {active_trades.map((t, i) => <ActiveOptionsRow key={i} t={t} />)}
+        </div>
+      )}
+
+      {/* Execution log */}
+      {hasExec && (
+        <div className="space-y-1">
+          <div className="cb-label mb-1">Recent Fills</div>
+          {executions.map((e, i) => (
+            <div key={i} className="text-xs flex items-center gap-3 px-1" style={{ color: "var(--cb-text-secondary)" }}>
+              <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{e.symbol}</span>
+              <span>{e.type} ${e.strike} {e.expiry}</span>
+              {e.premium != null && <span style={{ color: "var(--cb-green)" }}>+${e.premium.toFixed(2)}</span>}
+              {e.pnl != null && <span className={pnlColor(e.pnl)}>{e.pnl >= 0 ? "+" : ""}{fmt(e.pnl, "$")}</span>}
+              <span className="ml-auto" style={{ color: "var(--cb-text-tertiary)" }}>{e.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CSP Candidates */}
+      {candidates.length > 0 ? (
+        <div className="space-y-2">
+          {hasActive && <div className="cb-label">Screened Candidates</div>}
+          {candidates.map(c => (
+            <OptionsCandidateRow key={c.symbol} c={c} screened={screenedMap[c.symbol]} />
+          ))}
+        </div>
+      ) : (
+        <div className="text-sm py-4 text-center" style={{ color: "var(--cb-text-tertiary)" }}>
+          No setups yet — screener runs weekday mornings at 08:22
+        </div>
+      )}
     </div>
   )
 }
 
 // ─── Tunables ─────────────────────────────────────────────────────────────────
-function TunablesPanel({ tunables }: { tunables: Tunables }) {
+export function TunablesPanel({ tunables }: { tunables: Tunables }) {
   const [copied, setCopied] = useState(false)
   const fields = [
     { key: "max_daily_loss_pct",            label: "Max Daily Loss",           suffix: "%" },
@@ -823,257 +1119,45 @@ function TunablesPanel({ tunables }: { tunables: Tunables }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3 pb-1">
-        <div className={`text-xs font-semibold px-2 py-1 rounded ${tunables.trading_mode === "PAPER" ? "bg-blue-900/40 text-blue-300" : "bg-red-900/40 text-red-300"}`}>
+        <span
+          className="text-xs font-medium"
+          style={{ color: tunables.trading_mode === "PAPER" ? "#60a5fa" : "var(--cb-red)" }}
+        >
           {tunables.trading_mode}
-        </div>
-        <div className={`text-xs px-2 py-1 rounded ${tunables.paper_autopilot_enabled ? "bg-emerald-900/40 text-emerald-300" : "bg-zinc-800 text-zinc-400"}`}>
+        </span>
+        <span
+          className="text-xs"
+          style={{ color: tunables.paper_autopilot_enabled ? "var(--cb-green)" : "var(--cb-text-tertiary)" }}
+        >
           autopilot {tunables.paper_autopilot_enabled ? "ON" : "OFF"}
-        </div>
+        </span>
         {tunables.updated_at && (
-          <span className="text-[10px] text-zinc-600 ml-auto">updated {tunables.updated_at.slice(0, 10)}</span>
+          <span className="text-[10px] ml-auto" style={{ color: "var(--cb-text-tertiary)" }}>
+            updated {tunables.updated_at.slice(0, 10)}
+          </span>
         )}
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {fields.map(({ key, label, suffix }) => (
-          <div key={key} className="bg-zinc-800/50 rounded-lg px-3 py-2">
-            <div className="text-[10px] text-zinc-500">{label}</div>
-            <div className="text-sm font-semibold text-zinc-200 mt-0.5">
-              {(tunables as any)[key]}{suffix}
+          <div key={key} className="cb-card-t3 px-3 py-2">
+            <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>{label}</div>
+            <div className="text-sm font-medium mt-0.5" style={{ color: "var(--cb-text-primary)" }}>
+              {(tunables as unknown as Record<string, unknown>)[key] as string}{suffix}
             </div>
           </div>
         ))}
       </div>
       <div className="pt-1">
-        <p className="text-[11px] text-zinc-500 mb-2">Tunables are edited directly in the policy file on WSL.</p>
+        <p className="text-[11px] mb-2" style={{ color: "var(--cb-text-tertiary)" }}>Tunables are edited directly in the policy file on WSL.</p>
         <button
           onClick={() => { navigator.clipboard.writeText(editCommand); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-          className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          className="flex items-center gap-2 text-xs hover:opacity-80 transition-opacity"
+          style={{ color: "#60a5fa" }}
         >
           {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           {copied ? "Copied!" : "Copy edit command"}
         </button>
       </div>
-    </div>
-  )
-}
-
-// ─── Options Panel ────────────────────────────────────────────────────────────
-function OptionsGateBadge({ status }: { status: string }) {
-  const cfg: Record<string, string> = {
-    PASS:    "bg-emerald-900/40 text-emerald-300 border-emerald-700/40",
-    FAIL:    "bg-red-950/60 text-red-300/70 border-red-900/40",
-    UNKNOWN: "bg-zinc-800 text-zinc-500 border-zinc-700",
-  }
-  return (
-    <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-1 rounded border ${cfg[status] ?? cfg.UNKNOWN}`}>
-      GATE {status}
-    </span>
-  )
-}
-
-function OptionsCandidateRow({ c, screened }: { c: OptionsCandidate; screened?: OptionsScreened }) {
-  const [open, setOpen] = useState(false)
-  const yieldColor = c.annualized_yield_pct >= 50 ? "text-emerald-400" : c.annualized_yield_pct >= 30 ? "text-yellow-400" : "text-zinc-300"
-  return (
-    <div
-      className="rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800/60 transition-colors cursor-pointer"
-      onClick={() => setOpen(o => !o)}
-    >
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-zinc-100 text-base">{c.symbol}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-semibold">CSP</span>
-              {c.in_equity_pipeline && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-violet-900/30 text-violet-400">in pipeline</span>
-              )}
-              {screened?.recommendation && (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
-                  screened.recommendation === "PROCEED" ? "bg-emerald-900/40 text-emerald-300" :
-                  screened.recommendation === "SKIP"    ? "bg-red-900/30 text-red-400" :
-                  "bg-yellow-900/30 text-yellow-400"
-                }`}>{screened.recommendation}</span>
-              )}
-            </div>
-            <div className="text-[11px] text-zinc-500 mt-0.5">
-              ${c.strike}P · exp {c.expiry} · {c.dte}d · δ {c.delta?.toFixed(2) ?? "—"}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className={`text-base font-semibold ${yieldColor}`}>
-              {c.annualized_yield_pct?.toFixed(1)}%
-              <span className="text-xs text-zinc-500 ml-1 font-normal">ann.</span>
-            </div>
-            <div className="text-[11px] text-zinc-500">
-              ${c.bid} bid · ${c.assignment_capital?.toLocaleString()} capital
-            </div>
-          </div>
-          {open ? <ChevronUp className="w-4 h-4 text-zinc-500 shrink-0" /> : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0" />}
-        </div>
-      </div>
-      {open && (
-        <div className="px-4 pb-3 pt-1 border-t border-zinc-800/60 space-y-2 text-xs">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <div className="text-zinc-500">Current Price</div>
-              <div className="text-zinc-200 font-medium">${c.current_price?.toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-zinc-500">ATM IV</div>
-              <div className="text-zinc-200 font-medium">{c.atm_iv?.toFixed(1)}%</div>
-            </div>
-            <div>
-              <div className="text-zinc-500">IV Rank</div>
-              <div className="text-zinc-400">{c.iv_rank != null ? `${c.iv_rank.toFixed(0)}%` : `— (${c.iv_rank_source?.replace(/_/g, " ")})`}</div>
-            </div>
-            <div>
-              <div className="text-zinc-500">Open Interest</div>
-              <div className="text-zinc-200 font-medium">{c.open_interest?.toLocaleString() ?? "—"}</div>
-            </div>
-            <div>
-              <div className="text-zinc-500">Premium Yield</div>
-              <div className="text-zinc-200 font-medium">{c.premium_yield_pct?.toFixed(2)}%</div>
-            </div>
-            <div>
-              <div className="text-zinc-500">Assignment Capital</div>
-              <div className="text-zinc-200 font-medium">${c.assignment_capital?.toLocaleString()}</div>
-            </div>
-            {c.thesis_direction && (
-              <div>
-                <div className="text-zinc-500">Thesis</div>
-                <div className="text-zinc-200 font-medium capitalize">{c.thesis_direction} · {c.thesis_conviction}</div>
-              </div>
-            )}
-            {screened?.thesis_alignment != null && (
-              <div>
-                <div className="text-zinc-500">Thesis Alignment</div>
-                <div className="text-zinc-200 font-medium">{screened.thesis_alignment}/5</div>
-              </div>
-            )}
-          </div>
-          {screened?.rationale && (
-            <div>
-              <div className="text-zinc-500 mb-0.5">Agent-17 rationale</div>
-              <div className="text-zinc-400 leading-snug">{screened.rationale}</div>
-            </div>
-          )}
-          {screened?.narrative_risk && screened.narrative_risk.length > 0 && (
-            <div>
-              <div className="text-zinc-500 mb-0.5">Risk flags</div>
-              <div className="flex flex-wrap gap-1">
-                {screened.narrative_risk.map((r, i) => (
-                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-orange-900/30 text-orange-400">{r}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function ActiveOptionsRow({ t }: { t: OptionsData["active_trades"][number] }) {
-  const wheelColors: Record<string, string> = {
-    IDLE:      "bg-zinc-800 text-zinc-500",
-    CSP_OPEN:  "bg-blue-900/40 text-blue-300",
-    ASSIGNED:  "bg-yellow-900/40 text-yellow-300",
-    CC_OPEN:   "bg-violet-900/40 text-violet-300",
-    COMPLETED: "bg-emerald-900/40 text-emerald-300",
-  }
-  return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 flex items-center justify-between">
-      <div>
-        <div className="flex items-center gap-2">
-          <span className="font-mono font-bold text-zinc-100">{t.symbol}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300 font-semibold">{t.type}</span>
-          <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${wheelColors[t.wheel_state] ?? wheelColors.IDLE}`}>
-            {t.wheel_state.replace(/_/g, " ")}
-          </span>
-        </div>
-        <div className="text-[11px] text-zinc-500 mt-0.5">
-          ${t.strike}P · {t.expiry} · {t.contracts} contract{t.contracts !== 1 ? "s" : ""} · {t.dte}d
-        </div>
-      </div>
-      {t.limit_price != null && (
-        <div className="text-right">
-          <div className="text-sm font-semibold text-zinc-100">${t.limit_price.toFixed(2)}</div>
-          <div className="text-[11px] text-zinc-500">limit</div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function OptionsPanel({ options }: { options: OptionsData }) {
-  const { gate, candidates, screened, active_trades, executions, scan_summary, as_of } = options
-  const screenedMap = Object.fromEntries(screened.map(s => [s.symbol, s]))
-  const hasActive = active_trades.length > 0
-  const hasExec = executions.length > 0
-
-  return (
-    <div className="space-y-4">
-      {/* Header row: gate badge + slot usage + capital */}
-      <div className="flex flex-wrap items-center gap-3 text-xs">
-        <OptionsGateBadge status={gate.status} />
-        <span className="text-zinc-500">
-          {gate.csp_slots_used}/{gate.csp_slots_max} CSP slots used
-        </span>
-        {gate.available_capital != null && (
-          <span className="text-zinc-500">
-            ${gate.available_capital.toLocaleString()} available
-          </span>
-        )}
-        {gate.cash_buffer_pct != null && (
-          <span className={`font-medium ${gate.cash_buffer_pct >= 15 ? "text-emerald-400" : "text-red-400"}`}>
-            {gate.cash_buffer_pct.toFixed(0)}% cash buffer
-          </span>
-        )}
-        {scan_summary && (
-          <span className="ml-auto text-zinc-600">
-            {scan_summary.passed}/{scan_summary.scanned} passed screen
-          </span>
-        )}
-      </div>
-
-      {/* Active trades (filled/open options positions) */}
-      {hasActive && (
-        <div className="space-y-2">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Active Positions</h3>
-          {active_trades.map((t, i) => <ActiveOptionsRow key={i} t={t} />)}
-        </div>
-      )}
-
-      {/* Execution log */}
-      {hasExec && (
-        <div className="space-y-1">
-          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Recent Fills</h3>
-          {executions.map((e, i) => (
-            <div key={i} className="text-xs text-zinc-400 flex items-center gap-3 px-1">
-              <span className="font-mono text-zinc-200">{e.symbol}</span>
-              <span>{e.type} ${e.strike} {e.expiry}</span>
-              {e.premium != null && <span className="text-emerald-400">+${e.premium.toFixed(2)}</span>}
-              {e.pnl != null && <span className={pnlColor(e.pnl)}>{e.pnl >= 0 ? "+" : ""}{fmt(e.pnl, "$")}</span>}
-              <span className="text-zinc-600 ml-auto">{e.status}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* CSP Candidates */}
-      {candidates.length > 0 ? (
-        <div className="space-y-2">
-          {hasActive && <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">Screened Candidates</h3>}
-          {candidates.map(c => (
-            <OptionsCandidateRow key={c.symbol} c={c} screened={screenedMap[c.symbol]} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-sm text-zinc-600 py-4 text-center">No candidates — screener runs weekday mornings at 08:22 ET</div>
-      )}
     </div>
   )
 }
@@ -1115,116 +1199,107 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
   if (!data) {
     return (
-      <div className="flex flex-col h-screen bg-zinc-950 text-zinc-100">
+      <div className="flex flex-col h-screen text-[var(--cb-text-primary)]">
         <Nav active="trading" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-2">
-            <div className="text-zinc-400">No trading data found</div>
-            <div className="text-zinc-600 text-xs font-mono">python3 scripts/push-trading-data.py</div>
+            <div style={{ color: "var(--cb-text-secondary)" }}>No trading data found</div>
+            <div className="text-xs font-mono" style={{ color: "var(--cb-text-tertiary)" }}>python3 scripts/push-trading-data.py</div>
           </div>
         </div>
       </div>
     )
   }
 
-  const exitSet = new Set(data.exit_candidates.map(e => e.symbol))
-  const exitMap = Object.fromEntries(data.exit_candidates.map(e => [e.symbol, e]))
-
-  const nebulaBg = {
-    background: `
-      radial-gradient(ellipse at 15% 55%, rgba(88, 28, 220, 0.28) 0%, transparent 50%),
-      radial-gradient(ellipse at 85% 12%, rgba(109, 40, 217, 0.20) 0%, transparent 45%),
-      radial-gradient(ellipse at 50% 90%, rgba(67, 20, 140, 0.22) 0%, transparent 48%),
-      radial-gradient(ellipse at 70% 50%, rgba(76, 29, 149, 0.12) 0%, transparent 40%),
-      #07021a
-    `,
-  }
-
   return (
-    <div className="min-h-screen text-zinc-100 font-sans pb-16 sm:pb-0" style={nebulaBg}>
+    <div className="min-h-screen text-[var(--cb-text-primary)] font-sans pb-16 sm:pb-0">
       <Nav active="trading" />
 
-      <div className="px-4 sm:px-6 py-6 space-y-6 max-w-7xl mx-auto">
+      <CommandStrip
+        tunables={data.tunables}
+        pipeline={data.pipeline_status}
+        lastFetched={lastFetched}
+        refreshing={refreshing}
+        onRefresh={refresh}
+      />
+
+      <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-8">
 
         {/* About blurb */}
-        <p className="text-xs text-zinc-600 leading-relaxed">
-          Live view of an AI-managed paper trading portfolio — built in public. All positions, P&L, and decisions are generated autonomously by OpenClaw, a custom agent pipeline running on Alpaca paper trading.
+        <p className="text-xs leading-relaxed" style={{ color: "var(--cb-text-tertiary)" }}>
+          Autonomous paper trading, run entirely by AI. Positions, decisions, and risk management are handled by a 16-agent pipeline built on OpenClaw + Alpaca.
         </p>
 
-        {/* Hero */}
-        <HeroSection
-          account={data.account}
-          kpis={data.kpis}
-          tunables={data.tunables}
-          pipeline={data.pipeline_status}
-          lastFetched={lastFetched}
-          refreshing={refreshing}
-          onRefresh={refresh}
-        />
+        {/* Capital Hero */}
+        <section>
+          <CapitalHero account={data.account} />
+        </section>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
-          <DailyPnlChart data={data.daily_performance} />
-        </div>
+        <section>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
+            <DailyPnlChart data={data.daily_performance} />
+          </div>
+        </section>
 
-        {/* KPIs */}
-        <KpiGrid kpis={data.kpis} />
+        {/* Performance Grid */}
+        <section>
+          <PerformanceGrid kpis={data.kpis} />
+        </section>
 
-        <Separator className="bg-zinc-800" />
+        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
 
         {/* Positions */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              Positions — {data.positions.length}
-            </h2>
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">Open Positions · {data.positions.length}</span>
             {data.exit_candidates.length > 0 && (
-              <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
+              <span className="text-[10px]" style={{ color: "var(--cb-amber)" }}>
                 {data.exit_candidates.length} exit signal{data.exit_candidates.length > 1 ? "s" : ""}
               </span>
             )}
           </div>
           <PositionsList positions={data.positions} exitCandidates={data.exit_candidates} />
-        </div>
+        </section>
 
-        {/* Exit candidates for symbols not in current positions */}
+        {/* Orphaned exit candidates */}
         {data.exit_candidates.some(e => !data.positions.find(p => p.symbol === e.symbol)) && (
           <>
-            <Separator className="bg-zinc-800" />
-            <div className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
-                Exit Signals (no current position)
-              </h2>
+            <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <span className="cb-label">Exit Signals · No Current Position</span>
+              </div>
               <ExitCandidatesPanel items={data.exit_candidates} positions={data.positions} />
-            </div>
+            </section>
           </>
         )}
 
-        <Separator className="bg-zinc-800" />
+        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
 
-        {/* Watchlist */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-            <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
-            Watchlist — {data.watchlist.length}
-          </h2>
-          <Watchlist items={data.watchlist} />
-        </div>
+        {/* Qualified Setups */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">
+              {data.watchlist.length > 0
+                ? `Qualified Setups · ${data.watchlist.length}`
+                : "No qualified setups"}
+            </span>
+          </div>
+          <QualifiedSetups items={data.watchlist} />
+        </section>
 
-        {/* Options */}
+        {/* Premium Yield / Options */}
         {data.options && (
           <>
-            <Separator className="bg-zinc-800" />
-            <div className="space-y-3">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                <TrendingDown className="w-3.5 h-3.5 text-blue-400" />
-                Options — Wheel Strategy
-              </h2>
+            <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <span className="cb-label">Premium Yield · Wheel Strategy</span>
+              </div>
               <OptionsPanel options={data.options} />
-            </div>
+            </section>
           </>
         )}
 
