@@ -9,46 +9,67 @@ const LINKS = [
   { href: "/tunables",  label: "Tunables", icon: Settings   },
 ]
 
+const NAV_BG = "rgba(3, 1, 12, 0.92)"
+const BORDER = "rgba(90, 70, 160, 0.14)"
+
 export function Nav({ active }: { active: "dashboard" | "pipeline" | "trading" | "queue" | "tunables" }) {
   return (
     <>
-      {/* Top nav — logo always visible; links hidden on mobile */}
-      <div className="border-b px-6 py-3 flex items-center gap-6 shrink-0 backdrop-blur-md" style={{ borderColor: "rgba(139,92,246,0.15)", background: "rgba(7,2,26,0.80)" }}>
-        <div className="flex items-center gap-2 mr-2">
-          <Zap className="w-4 h-4 text-yellow-400" />
-          <span className="font-semibold text-zinc-100 text-sm tracking-tight">ClawBoy</span>
+      {/* Top nav — sticky, part of the product shell */}
+      <div
+        className="border-b px-6 py-3.5 flex items-center gap-8 shrink-0 backdrop-blur-md sticky top-0 z-40"
+        style={{ borderColor: BORDER, background: NAV_BG }}
+      >
+        {/* Brand mark */}
+        <div className="flex items-center gap-2 mr-1">
+          <Zap className="w-3.5 h-3.5" style={{ color: "#e8c84a" }} />
+          <span style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            color: "#f0eff8",
+          }}>CLAWBOY</span>
         </div>
-        <div className="hidden sm:flex items-center gap-6">
-          {LINKS.map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`text-sm transition-colors ${
-                active === href.slice(1)
-                  ? "text-zinc-100 font-medium"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
+
+        {/* Desktop links */}
+        <div className="hidden sm:flex items-center gap-7">
+          {LINKS.map(({ href, label }) => {
+            const isActive = active === href.slice(1)
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  fontSize: 12,
+                  fontWeight: isActive ? 500 : 400,
+                  letterSpacing: "0.04em",
+                  color: isActive ? "#f0eff8" : "#52506a",
+                  transition: "color 0.15s",
+                }}
+              >
+                {label}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
       {/* Mobile bottom nav */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t flex" style={{ background: "rgba(7,2,26,0.92)", borderColor: "rgba(139,92,246,0.15)" }}>
+      <div
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t flex"
+        style={{ background: "rgba(3, 1, 12, 0.96)", borderColor: BORDER }}
+      >
         {LINKS.map(({ href, label, icon: Icon }) => {
           const isActive = active === href.slice(1)
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center py-2.5 gap-0.5 transition-colors ${
-                isActive ? "text-zinc-100" : "text-zinc-600 hover:text-zinc-400"
-              }`}
+              className="flex-1 flex flex-col items-center py-2.5 gap-0.5 transition-colors"
+              style={{ color: isActive ? "#f0eff8" : "#3d3a52" }}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-[9px] font-medium">{label}</span>
+              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.05em" }}>{label.toUpperCase()}</span>
             </Link>
           )
         })}

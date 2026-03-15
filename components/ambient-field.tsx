@@ -9,15 +9,47 @@ interface Particle {
   radius: number; opacity: number
 }
 
-function initParticles(w: number, h: number, count: number): Particle[] {
-  return Array.from({ length: count }, () => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    vx: (Math.random() - 0.5) * 0.18,
-    vy: (Math.random() - 0.5) * 0.12,
-    radius: Math.random() * 0.7 + 0.3,
-    opacity: Math.random() * 0.18 + 0.04,
-  }))
+// Three depth tiers — biased toward top of viewport (hero/chart region)
+function initParticles(w: number, h: number): Particle[] {
+  const particles: Particle[] = []
+
+  // Tier 1: fine dust — 32 tiny, very faint, extremely slow
+  for (let i = 0; i < 32; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.pow(Math.random(), 1.6) * h, // bias toward top
+      vx: (Math.random() - 0.5) * 0.10,
+      vy: (Math.random() - 0.5) * 0.07,
+      radius: Math.random() * 0.35 + 0.18,
+      opacity: Math.random() * 0.09 + 0.03,
+    })
+  }
+
+  // Tier 2: mid-field — 16 medium, moderate opacity, moderate speed
+  for (let i = 0; i < 16; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.pow(Math.random(), 1.3) * h,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.10,
+      radius: Math.random() * 0.45 + 0.55,
+      opacity: Math.random() * 0.12 + 0.05,
+    })
+  }
+
+  // Tier 3: depth anchors — 5 slightly larger, sparse
+  for (let i = 0; i < 5; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h * 0.6, // upper 60% only
+      vx: (Math.random() - 0.5) * 0.08,
+      vy: (Math.random() - 0.5) * 0.06,
+      radius: Math.random() * 0.5 + 1.0,
+      opacity: Math.random() * 0.10 + 0.04,
+    })
+  }
+
+  return particles
 }
 
 // ── Contour SVG paths (topology-style wavy lines) ─────────────────────────────
@@ -102,7 +134,7 @@ export function AmbientField() {
     const resize = () => {
       canvas.width  = window.innerWidth
       canvas.height = window.innerHeight
-      particlesRef.current = initParticles(canvas.width, canvas.height, 45)
+      particlesRef.current = initParticles(canvas.width, canvas.height)
     }
 
     const onMouseMove = (e: MouseEvent) => {
@@ -114,6 +146,7 @@ export function AmbientField() {
 
     resize()
     window.addEventListener("resize", resize)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     window.addEventListener("mousemove", onMouseMove)
     rafRef.current = requestAnimationFrame(draw)
 

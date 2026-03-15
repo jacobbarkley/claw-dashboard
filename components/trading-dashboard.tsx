@@ -245,7 +245,13 @@ function CommandStrip({
   }
 
   return (
-    <div className="cb-card-t3 px-4 py-2 flex items-center justify-between gap-4 mx-4 sm:mx-6 mt-2 mb-0">
+    <div
+      className="px-6 py-2 flex items-center justify-between gap-4 backdrop-blur-md sticky top-[52px] z-30"
+      style={{
+        borderBottom: "1px solid rgba(90, 70, 160, 0.14)",
+        background: "rgba(3, 1, 12, 0.92)",
+      }}
+    >
       {/* Left: mode */}
       <div className="flex items-center gap-2">
         <span className="cb-live-dot" />
@@ -302,64 +308,68 @@ function CapitalHero({
   const baseValue = account.base_value
 
   return (
-    <div className="cb-card-t1 px-6 py-6">
-      {/* Row 1: Hero number + session P&L side by side */}
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <div className="text-[2.8rem] leading-none font-thin tracking-tight cb-number" style={{ color: "var(--cb-text-primary)" }}>
-            ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="cb-label mt-1.5">deployed capital</div>
-        </div>
-        {todayPnl != null && (
-          <div className="text-right pb-0.5">
-            <div className={`text-2xl font-thin cb-number ${pnlColor(todayPnl)}`}>
-              {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+    <div className="cb-card-hero">
+      {/* Primary zone: deployed capital + today's move */}
+      <div className="cb-hero-primary">
+        <div className="flex items-end justify-between gap-6 flex-wrap">
+          <div>
+            <div
+              className="cb-number"
+              style={{ fontSize: "clamp(2.2rem, 5vw, 3rem)", lineHeight: 1, fontWeight: 200, letterSpacing: "-0.02em", color: "var(--cb-text-primary)" }}
+            >
+              ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="cb-label mt-0.5">{fmt(todayPct, "", "%", 2)} today</div>
+            <div className="cb-label mt-2">deployed capital</div>
           </div>
-        )}
+          {todayPnl != null && (
+            <div className="text-right">
+              <div className={`cb-number ${pnlColor(todayPnl)}`} style={{ fontSize: "1.6rem", fontWeight: 200, lineHeight: 1, letterSpacing: "-0.01em" }}>
+                {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+              </div>
+              <div className="cb-label mt-1.5">{fmt(todayPct, "", "%", 2)} today</div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: "var(--cb-border-dim)", margin: "18px 0" }} />
-
-      {/* Row 2: Account / Cash / Unrealized / Total — horizontal strip */}
-      <div className="flex flex-wrap gap-x-8 gap-y-3">
-        {equity != null && (
-          <div>
-            <div className="cb-label mb-1">Account equity</div>
-            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
-              ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+      {/* Support zone: equity / cash / unrealized / total */}
+      <div className="cb-hero-support">
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          {equity != null && (
+            <div>
+              <div className="cb-label mb-1">Account equity</div>
+              <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+                ${equity.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
             </div>
-          </div>
-        )}
-        {account.cash != null && (
-          <div>
-            <div className="cb-label mb-1">Cash</div>
-            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
-              ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          )}
+          {account.cash != null && (
+            <div>
+              <div className="cb-label mb-1">Cash</div>
+              <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+                ${account.cash.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </div>
             </div>
-          </div>
-        )}
-        {account.unrealized_pnl != null && (
-          <div>
-            <div className="cb-label mb-1">Unrealized</div>
-            <div className={`text-sm font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
-              {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
-              <span className="text-xs ml-1 opacity-70">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+          )}
+          {account.unrealized_pnl != null && (
+            <div>
+              <div className="cb-label mb-1">Unrealized</div>
+              <div className={`text-sm font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
+                {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
+                <span className="text-xs ml-1 opacity-60">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+              </div>
             </div>
-          </div>
-        )}
-        {totalPnl != null && (
-          <div>
-            <div className="cb-label mb-1">Total return{baseValue ? ` · from $${baseValue.toLocaleString()}` : ""}</div>
-            <div className={`text-sm font-medium cb-number ${pnlColor(totalPnl)}`}>
-              {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")}
-              <span className="text-xs ml-1 opacity-70">({fmt(totalPct, "", "%", 2)})</span>
+          )}
+          {totalPnl != null && (
+            <div>
+              <div className="cb-label mb-1">Total return{baseValue ? ` · from $${baseValue.toLocaleString()}` : ""}</div>
+              <div className={`text-sm font-medium cb-number ${pnlColor(totalPnl)}`}>
+                {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")}
+                <span className="text-xs ml-1 opacity-60">({fmt(totalPct, "", "%", 2)})</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
@@ -387,6 +397,39 @@ function OrbitalRings() {
       <ellipse cx="400" cy="230" rx="520" ry="240" fill="none" stroke="#7c3aed" strokeOpacity="0.04" strokeWidth="0.5" />
       <ellipse cx="400" cy="230" rx="650" ry="300" fill="none" stroke="#7c3aed" strokeOpacity="0.03" strokeWidth="0.5" />
     </svg>
+  )
+}
+
+// ─── Premium Tooltip ──────────────────────────────────────────────────────────
+function ChartTooltip({ active, payload, label, formatter, labelFormatter }: {
+  active?: boolean; payload?: any[]; label?: any
+  formatter?: (val: any, name: any) => [string, string]
+  labelFormatter?: (l: any) => string
+}) {
+  if (!active || !payload?.length) return null
+  const heading = labelFormatter ? labelFormatter(label) : String(label)
+  return (
+    <div style={{
+      background: "rgba(5, 3, 14, 0.97)",
+      border: "1px solid rgba(100, 80, 180, 0.22)",
+      borderRadius: 10,
+      padding: "10px 14px",
+      boxShadow: "0 8px 32px rgba(3, 1, 12, 0.9), 0 0 0 1px rgba(255,255,255,0.02) inset",
+      minWidth: 120,
+    }}>
+      <div style={{ fontSize: 9, color: "var(--cb-text-tertiary)", marginBottom: 7, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+        {heading}
+      </div>
+      {payload.map((entry: any, i: number) => {
+        const [val, name] = formatter ? formatter(entry.value, entry.name) : [`${entry.value}`, entry.name]
+        return (
+          <div key={i}>
+            <div className="cb-number" style={{ fontSize: 16, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>{val}</div>
+            {name && <div style={{ fontSize: 9, color: "var(--cb-text-tertiary)", marginTop: 2, letterSpacing: "0.06em" }}>{name}</div>}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 
@@ -482,15 +525,13 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
               domain={[yMin, yMax]}
             />
             <Tooltip
-              contentStyle={{ background: "var(--cb-surface-1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, fontSize: 11 }}
-              formatter={(v: unknown) => [
-                `$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-                "Equity",
-              ]}
-              labelFormatter={(l: unknown) => shortDate(String(l))}
+              content={<ChartTooltip
+                formatter={(v: unknown) => [`$${Number(v).toLocaleString("en-US", { minimumFractionDigits: 2 })}`, "Equity"]}
+                labelFormatter={(l: unknown) => shortDate(String(l))}
+              />}
             />
-            {baseValue && <ReferenceLine y={baseValue} stroke="rgba(139,92,246,0.15)" strokeDasharray="3 3" />}
-            <Line type="monotone" dataKey="equity" stroke="#16a34a" strokeWidth={0.5} dot={false} />
+            {baseValue && <ReferenceLine y={baseValue} stroke="rgba(90,70,160,0.18)" strokeDasharray="4 3" />}
+            <Line type="monotone" dataKey="equity" stroke="#15803d" strokeWidth={0.8} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -558,14 +599,15 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} width={48} />
             <Tooltip
-              contentStyle={{ background: "var(--cb-surface-1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: 8, fontSize: 11 }}
-              formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, "P&L"]}
-              labelFormatter={(l: unknown) => shortDate(String(l))}
+              content={<ChartTooltip
+                formatter={(v: unknown) => [`$${Number(v).toFixed(2)}`, "P&L"]}
+                labelFormatter={(l: unknown) => shortDate(String(l))}
+              />}
             />
-            <ReferenceLine y={0} stroke="rgba(139,92,246,0.15)" />
+            <ReferenceLine y={0} stroke="rgba(90,70,160,0.18)" />
             <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
               {displayData.map((d, i) => (
-                <Cell key={i} fill={d.net_pnl >= 0 ? "#10b981" : "#7ab0cc"} />
+                <Cell key={i} fill={d.net_pnl >= 0 ? "#0f9e6e" : "#6a9eb8"} />
               ))}
             </Bar>
           </BarChart>
@@ -580,12 +622,12 @@ function MetricCard({ label, value, sub, tooltip }: { label: string; value: stri
   const [show, setShow] = useState(false)
   return (
     <div
-      className="relative cb-card-t3 px-3 py-3"
+      className="relative cb-metric"
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
-      <div className="text-xl font-light cb-number" style={{ color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>{value}</div>
-      <div className="flex items-center gap-1 mt-1" style={{ fontSize: 10, color: "var(--cb-text-secondary)" }}>
+      <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>{value}</div>
+      <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
         {label}
         {tooltip && <Info className="w-3 h-3 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />}
       </div>
@@ -1024,35 +1066,43 @@ function OptionsPanel({ options }: { options: OptionsData }) {
 
   return (
     <div className="space-y-4">
-      {/* Gate + slot meta */}
-      <div className="flex flex-wrap items-center gap-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <span style={{
-            width: 7, height: 7, borderRadius: "50%",
-            background: gateOpen ? "var(--cb-green)" : "var(--cb-red)",
-            display: "inline-block",
-          }} />
-          <span style={{ color: gateOpen ? "var(--cb-green)" : "var(--cb-red)", fontWeight: 500 }}>
-            Gate {gateOpen ? "open" : "closed"}
-          </span>
+      {/* Gate summary — structured grid */}
+      <div className="cb-card-t3 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+          <div className="cb-label mb-1">Gate</div>
+          <div className="text-sm font-medium" style={{ color: gateOpen ? "var(--cb-green)" : "var(--cb-red)" }}>
+            {gateOpen ? "Open" : "Closed"}
+          </div>
         </div>
-        <span style={{ color: "var(--cb-text-tertiary)" }}>
-          {gate.csp_slots_used} / {gate.csp_slots_max} slots
-        </span>
+        <div>
+          <div className="cb-label mb-1">CSP Slots</div>
+          <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-text-primary)" }}>
+            {gate.csp_slots_used} <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}>/ {gate.csp_slots_max}</span>
+          </div>
+        </div>
         {gate.available_capital != null && (
-          <span style={{ color: "var(--cb-text-tertiary)" }}>
-            ${gate.available_capital.toLocaleString()} available
-          </span>
+          <div>
+            <div className="cb-label mb-1">Available</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+              ${gate.available_capital.toLocaleString()}
+            </div>
+          </div>
         )}
         {gate.cash_buffer_pct != null && (
-          <span className="font-medium" style={{ color: gate.cash_buffer_pct >= 15 ? "var(--cb-green)" : "var(--cb-red)" }}>
-            {gate.cash_buffer_pct.toFixed(0)}% cash buffer
-          </span>
+          <div>
+            <div className="cb-label mb-1">Cash Buffer</div>
+            <div className="text-sm font-medium cb-number" style={{ color: gate.cash_buffer_pct >= 15 ? "var(--cb-green)" : "var(--cb-red)" }}>
+              {gate.cash_buffer_pct.toFixed(0)}%
+            </div>
+          </div>
         )}
         {scan_summary && (
-          <span className="ml-auto" style={{ color: "var(--cb-text-tertiary)" }}>
-            {scan_summary.passed}/{scan_summary.scanned} passed screen
-          </span>
+          <div>
+            <div className="cb-label mb-1">Screened</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-text-primary)" }}>
+              {scan_summary.passed} <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}>/ {scan_summary.scanned}</span>
+            </div>
+          </div>
         )}
       </div>
 
@@ -1220,9 +1270,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
       <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-8">
 
-        {/* About blurb */}
-        <p className="text-xs leading-relaxed" style={{ color: "var(--cb-text-tertiary)" }}>
-          Autonomous paper trading, run entirely by AI. Positions, decisions, and risk management are handled by a 16-agent pipeline built on OpenClaw + Alpaca.
+        {/* System caption */}
+        <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+          Autonomous · Paper · OpenClaw × Alpaca · 16-agent pipeline
         </p>
 
         {/* Capital Hero */}

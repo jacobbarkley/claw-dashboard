@@ -168,13 +168,33 @@
 /* ── ClawBoy design primitives ── */
 
 /* Card tiers */
+
+/* Hero card — two internal zones, no outer padding (zones own padding) */
+.cb-card-hero {
+  border: 1px solid var(--cb-border-hi);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(70, 50, 140, 0.06),
+    0 1px 0 rgba(140, 120, 240, 0.05) inset,
+    0 20px 60px rgba(3, 1, 12, 0.85);
+}
+.cb-hero-primary {
+  background: linear-gradient(155deg, rgba(28, 18, 64, 0.50) 0%, rgba(8, 5, 22, 0.20) 100%);
+  padding: 28px 28px 22px;
+}
+.cb-hero-support {
+  background: rgba(3, 1, 12, 0.35);
+  padding: 16px 28px 20px;
+  border-top: 1px solid var(--cb-border-dim);
+}
+
 .cb-card-t1 {
   background: var(--cb-surface-0);
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(80, 60, 160, 0.08),
-    0 1px 0 rgba(160, 140, 255, 0.06) inset,
+    0 0 0 1px rgba(80, 60, 160, 0.06),
     0 12px 40px rgba(3, 1, 12, 0.7);
 }
 .cb-card-t2 {
@@ -188,22 +208,28 @@
   border: 1px solid var(--cb-border-dim);
   border-radius: 8px;
 }
+/* Borderless metric readout — analytics/utility only */
+.cb-metric {
+  background: rgba(255, 255, 255, 0.018);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
 
 /* Section label */
 .cb-label {
   font-size: 10px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--cb-text-secondary);
-  opacity: 0.65;
+  opacity: 0.60;
 }
 
-/* Severity left-border indicators */
-.cb-severity-critical { border-left: 2px solid var(--cb-red); }
-.cb-severity-high     { border-left: 2px solid var(--cb-amber); }
-.cb-severity-medium   { border-left: 2px solid rgba(217,119,6,0.45); }
-.cb-severity-ok       { border-left: 2px solid var(--cb-green); }
+/* Severity left-border indicators — soft, embedded */
+.cb-severity-critical { border-left: 2px solid rgba(224, 82, 82, 0.55); }
+.cb-severity-high     { border-left: 2px solid rgba(217, 119, 6, 0.50); }
+.cb-severity-medium   { border-left: 2px solid rgba(217, 119, 6, 0.28); }
+.cb-severity-ok       { border-left: 2px solid rgba(16, 185, 129, 0.30); }
 
 /* Live pulse dot */
 @keyframes cb-pulse {
