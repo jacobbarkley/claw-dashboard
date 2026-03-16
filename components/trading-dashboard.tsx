@@ -1703,8 +1703,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
     }
   }, [])
 
-  // Poll every 60 seconds
+  // Fetch live data immediately on mount, then poll every 60 seconds
   useEffect(() => {
+    refresh()
     const id = setInterval(refresh, 60_000)
     return () => clearInterval(id)
   }, [refresh])
@@ -1813,12 +1814,12 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           />
         </section>
 
-        {/* Options — Bull Put Spreads */}
+        {/* Options — Active Trades */}
         <>
           <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
           <section>
             <div className="flex items-center justify-between mb-3">
-              <span className="cb-label">Options · Bull Put Spreads</span>
+              <span className="cb-label">Options · Active Trades</span>
               {data.bps?.as_of && (
                 <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
                   {data.bps.as_of.slice(0, 10)}

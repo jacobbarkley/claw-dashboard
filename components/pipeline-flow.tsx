@@ -35,9 +35,9 @@ const STAGES = [
   },
   {
     id: "options",
-    name: "Options · Bull Put Spreads",
+    name: "Options · Active Trades",
     groups: ["options", "bps"],
-    purpose: "BPS spread screening, position selection, order execution",
+    purpose: "Options screening, position selection, order execution",
     keyOutput: "bps_execution_log.json",
     timeWindow: "08:25–09:40",
   },
