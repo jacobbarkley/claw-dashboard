@@ -1,63 +1,52 @@
 {
-  "generated_at": "2026-03-16T15:45:03.723673+00:00",
+  "generated_at": "2026-03-16T15:49:16.944423+00:00",
   "as_of_date": "2026-03-16",
   "account": {
-    "equity": 99284.93,
-    "cash": 87489.33,
-    "buying_power": 186774.26,
+    "equity": 99384.09,
+    "cash": 91948.57,
+    "buying_power": 191332.66,
     "base_value": 100000.0,
-    "total_pnl": -715.07,
-    "total_pnl_pct": -0.7151,
-    "today_pnl": 52.93,
-    "today_pnl_pct": 0.0533,
-    "positions_value": 11795.06,
-    "unrealized_pnl": -548.65,
-    "unrealized_pnl_pct": -4.44
+    "total_pnl": -615.91,
+    "total_pnl_pct": -0.6159,
+    "today_pnl": 152.09,
+    "today_pnl_pct": 0.1533,
+    "positions_value": 7435.52,
+    "unrealized_pnl": -1.23,
+    "unrealized_pnl_pct": -0.02
   },
   "positions": [
     {
-      "symbol": "ADBE",
-      "qty": 9.0,
+      "symbol": "BX",
+      "qty": 33.0,
       "side": "long",
-      "entry_price": 272.45,
-      "current_price": 246.73,
-      "market_value": 2220.57,
-      "unrealized_pnl": -231.48,
-      "unrealized_pct": -9.44,
-      "change_today_pct": -1.04
+      "entry_price": 107.17,
+      "current_price": 107.1125,
+      "market_value": 3534.7125,
+      "unrealized_pnl": -1.8975,
+      "unrealized_pct": -0.05,
+      "change_today_pct": 0.31
     },
     {
-      "symbol": "AVGO",
-      "qty": 1.0,
+      "symbol": "KKR",
+      "qty": 43.0,
       "side": "long",
-      "entry_price": 341.4,
-      "current_price": 324.9,
-      "market_value": 324.9,
-      "unrealized_pnl": -16.5,
-      "unrealized_pct": -4.83,
-      "change_today_pct": 0.85
+      "entry_price": 86.47,
+      "current_price": 86.42,
+      "market_value": 3716.06,
+      "unrealized_pnl": -2.15,
+      "unrealized_pct": -0.06,
+      "change_today_pct": 0.57
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 183.9,
-      "market_value": 183.9,
-      "unrealized_pnl": 1.97,
-      "unrealized_pct": 1.08,
-      "change_today_pct": 2.02
-    },
-    {
-      "symbol": "ORCL",
-      "qty": 58.0,
-      "side": "long",
-      "entry_price": 161.522931,
-      "current_price": 156.305,
-      "market_value": 9065.69,
-      "unrealized_pnl": -302.639998,
-      "unrealized_pct": -3.23,
-      "change_today_pct": 0.77
+      "current_price": 184.75,
+      "market_value": 184.75,
+      "unrealized_pnl": 2.82,
+      "unrealized_pct": 1.55,
+      "change_today_pct": 2.5
     }
   ],
   "pipeline_status": {
@@ -424,7 +413,7 @@
         "target": "",
         "modifier": "FULL",
         "note": "RSI 64, Rev +22%",
-        "in_position": true
+        "in_position": false
       },
       {
         "symbol": "BX",
@@ -433,7 +422,7 @@
         "target": "",
         "modifier": "FULL",
         "note": "RSI 41, Rev +51%",
-        "in_position": false
+        "in_position": true
       },
       {
         "symbol": "DASH",
@@ -469,7 +458,7 @@
         "target": "",
         "modifier": "FULL",
         "note": "RSI 41, Rev +76%",
-        "in_position": false
+        "in_position": true
       },
       {
         "symbol": "DTE",
@@ -496,7 +485,7 @@
         "target": "",
         "modifier": "FULL",
         "note": "RSI 52, Rev +12%",
-        "in_position": true
+        "in_position": false
       },
       {
         "symbol": "GDDY",
@@ -563,8 +552,8 @@
       "urgency": "HIGH",
       "reason": "Thesis deterioration confirmed at midday (-7.31% UPL, -6.40% daily in VIX 27 regime). No recovery by EOD. Abnormal adverse move + thesis-broken signal meets urgent close trigger. Friday session amplifies asymmetric weekend gap-down risk.",
       "overnight_risk": "Holding through close is not authorized. Broken thesis + high-vol + Friday gap exposure. URGENT_ENFORCEMENT_MISS risk if not closed before bell.",
-      "unrealized_pnl": -231.48,
-      "unrealized_pct": -9.44
+      "unrealized_pnl": null,
+      "unrealized_pct": null
     },
     {
       "symbol": "AVGO",
@@ -572,8 +561,8 @@
       "urgency": "MEDIUM",
       "reason": "5.17% unrealized loss with MEDIUM urgency at midday. Stop-tighten recommendation not reflected in any recovery. Friday EOD close preferred to eliminate weekend gap risk in high-vol environment (VIX 27).",
       "overnight_risk": "No confirmed thesis break, but 5%+ drawdown + high-vol + Friday gap risk exceeds overnight hold tolerance under REDUCE_ONLY posture.",
-      "unrealized_pnl": -16.5,
-      "unrealized_pct": -4.83
+      "unrealized_pnl": null,
+      "unrealized_pct": null
     },
     {
       "symbol": "ORCL",
@@ -581,8 +570,8 @@
       "urgency": "MEDIUM",
       "reason": "4.0% unrealized loss with MEDIUM urgency and stop-tighten recommendation at midday. Friday EOD close preferred over weekend gap exposure in elevated volatility.",
       "overnight_risk": "No thesis break confirmed, but 4% drawdown in VIX 27 environment exceeds comfortable overnight hold threshold for a Friday under REDUCE_ONLY posture.",
-      "unrealized_pnl": -302.639998,
-      "unrealized_pct": -3.23
+      "unrealized_pnl": null,
+      "unrealized_pct": null
     }
   ],
   "tunables": {
