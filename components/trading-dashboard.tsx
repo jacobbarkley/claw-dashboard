@@ -1820,22 +1820,24 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           <section>
             <div className="flex items-center justify-between mb-3">
               <span className="cb-label">Options · Active Trades</span>
-              {data.bps?.as_of && (
+              {(data.options?.as_of || data.bps?.as_of) && (
                 <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-                  {data.bps.as_of.slice(0, 10)}
+                  {(data.options?.as_of ?? data.bps?.as_of ?? "").slice(0, 10)}
                 </span>
               )}
             </div>
-            {data.bps
-              ? <BpsPanel bps={data.bps} />
-              : (
-                <div className="py-6 text-center space-y-1">
-                  <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>No active setups</div>
-                  <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-                    BPS screener runs weekday mornings at 08:30 ET
+            {data.options && (data.options.active_trades.length > 0 || data.options.gate.csp_slots_used > 0)
+              ? <OptionsPanel options={data.options} />
+              : data.bps
+                ? <BpsPanel bps={data.bps} />
+                : (
+                  <div className="py-6 text-center space-y-1">
+                    <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>No active setups</div>
+                    <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+                      Options data refreshes on each live poll
+                    </div>
                   </div>
-                </div>
-              )
+                )
             }
           </section>
         </>
