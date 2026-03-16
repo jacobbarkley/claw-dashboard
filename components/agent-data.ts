@@ -1,3 +1,6 @@
+export type AgentModel = "Opus" | "Sonnet" | "Haiku" | "Script"
+export type AgentStatus = "active" | "disabled"
+
 export interface Agent {
   id: string
   label: string
@@ -7,7 +10,9 @@ export interface Agent {
   role: string
   inputs: string[]
   output: string
-  group: "research" | "risk" | "options" | "execution" | "audit"
+  group: "research" | "risk" | "options" | "bps" | "execution" | "audit"
+  model: AgentModel
+  status?: AgentStatus   // defaults to "active"
 }
 
 export const AGENTS: Agent[] = [
@@ -18,6 +23,7 @@ export const AGENTS: Agent[] = [
     time: "07:35 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Opens the trading day by checking whether the market is actually tradeable. Fetches VIX from Yahoo Finance and market calendar from Finnhub to determine the opening risk regime — Normal, Reduce-Only, or Halt. Every downstream agent inherits this verdict.",
     inputs: ["Finnhub market calendar", "Yahoo Finance VIX"],
     output: "market_status.json",
@@ -29,6 +35,7 @@ export const AGENTS: Agent[] = [
     time: "07:38 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Scans the market and picks 8–15 candidate tickers worth investigating today. Sources earnings calendars, pre-market movers, and sector signals to produce a shortlist. Think of it as the morning scout — it decides what the rest of the pipeline focuses on.",
     inputs: ["Finnhub earnings/news", "Yahoo Finance pre-market movers"],
     output: "universe_candidates.json",
@@ -40,6 +47,7 @@ export const AGENTS: Agent[] = [
     time: "07:40 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Deep-dives each candidate ticker. Builds a structured research packet covering 3–10 day price action, upcoming catalysts, analyst sentiment, and explicit bull/bear cases. This is the factual foundation everything else builds on.",
     inputs: ["universe_candidates.json", "Finnhub/Yahoo/FRED live data"],
     output: "research_packet.json",
@@ -51,6 +59,7 @@ export const AGENTS: Agent[] = [
     time: "07:44 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Layers retail narrative sentiment on top of the research. Monitors social sources (Reddit, StockTwits, X) for mention velocity, narrative classification (squeeze play, earnings play, macro fear), and authenticity scoring to filter bots. Adds color the fundamentals miss.",
     inputs: ["research_packet.json", "Reddit/StockTwits/X"],
     output: "alt_sentiment_packet.json",
@@ -62,6 +71,7 @@ export const AGENTS: Agent[] = [
     time: "07:47 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Synthesizes research and sentiment into a testable investment thesis per ticker. Produces bull/bear/neutral probability spreads, catalysts, and explicit invalidation conditions — the moment at which the thesis is no longer valid and the trade should be exited.",
     inputs: ["research_packet.json", "alt_sentiment_packet.json"],
     output: "thesis_packet.json",
@@ -73,6 +83,7 @@ export const AGENTS: Agent[] = [
     time: "07:54 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Translates each thesis into an executable trade plan. Specifies exact entry triggers, stop-loss levels, price targets, position sizing, and options alternatives where appropriate. This is the 'how do we actually trade it' layer.",
     inputs: ["thesis_packet.json", "market_status.json"],
     output: "strategy_spec.json",
@@ -84,6 +95,7 @@ export const AGENTS: Agent[] = [
     time: "08:01 ET",
     role: "research",
     group: "research",
+    model: "Sonnet",
     description: "Adversarial quality gate. Scores every strategy across 8 dimensions: overfitting risk, regime sensitivity, tail risk, stop quality, entry specificity, thesis alignment, drawdown exposure, and fragility. Strategies that don't pass don't reach the risk agent.",
     inputs: ["strategy_spec.json", "thesis_packet.json", "market_status.json"],
     output: "validation_report.json",
@@ -95,6 +107,7 @@ export const AGENTS: Agent[] = [
     time: "08:08 ET",
     role: "risk",
     group: "risk",
+    model: "Sonnet",
     description: "Per-trade risk engine. Evaluates each validated trade against hard policy limits, portfolio-level constraints, and historical KPI benchmarks. Renders APPROVE, REDUCE_SIZE, or REJECT decisions per symbol. Does not issue final approval — that comes after the health check.",
     inputs: ["validation_report.json", "market_status.json", "risk_policy.json", "pipeline_kpis_v1.json"],
     output: "risk_evaluation.json",
@@ -106,6 +119,7 @@ export const AGENTS: Agent[] = [
     time: "08:12 ET",
     role: "risk",
     group: "risk",
+    model: "Sonnet",
     description: "Pipeline integrity auditor. Verifies that every stage artifact is present, coherent, and within expected bounds. Issues a health verdict — NORMAL, REDUCE_ONLY, or HALT — that the approval gate will read before authorizing any trades.",
     inputs: ["market_status.json → risk_evaluation.json", "prior remediation_summary.json"],
     output: "pipeline_health_report.json",
@@ -117,6 +131,7 @@ export const AGENTS: Agent[] = [
     time: "08:15 ET",
     role: "risk",
     group: "risk",
+    model: "Sonnet",
     description: "Issue lifecycle manager. Tracks every critical, high, medium, and low issue across the pipeline with carry-forward logic and escalation paths. Produces a structured remediation summary the approval gate reads to determine whether prior issues have been acknowledged.",
     inputs: ["pipeline_health_report.json", "risk_evaluation.json", "prior remediation_summary.json"],
     output: "remediation_summary.json",
@@ -128,10 +143,12 @@ export const AGENTS: Agent[] = [
     time: "08:20 ET",
     role: "risk",
     group: "risk",
+    model: "Opus",
     description: "Final approval gate. Now that health and remediation data exist, this agent runs the full 7-check approval path and issues the definitive trading authorization — AUTO_APPROVED_PAPER, REJECTED, or PENDING. Nothing executes without this artifact.",
     inputs: ["risk_evaluation.json", "remediation_summary.json", "session_close.json", "broker_auth_ok.json"],
     output: "risk_decision.json",
   },
+  // ── Wheel / CSP strategy — DISABLED (replaced by BPS) ───────────────────────
   {
     id: "17",
     label: "Agent-17",
@@ -139,7 +156,9 @@ export const AGENTS: Agent[] = [
     time: "08:22 ET",
     role: "options",
     group: "options",
-    description: "Options pipeline entry point. Screens the universe for wheel-strategy candidates — stocks with high IV rank, strong fundamentals, and liquid options chains. Evaluates each ticker for CSP (cash-secured put) suitability, filters by strike distance, expiry, and premium-to-risk ratio. Produces a ranked shortlist for Agent-18.",
+    model: "Sonnet",
+    status: "disabled",
+    description: "Wheel strategy screener — DISABLED. Was the options pipeline entry point, screening for CSP candidates with high IV rank, strong fundamentals, and liquid chains. Replaced by the BPS module (Agent-20).",
     inputs: ["options_candidates.json", "risk_decision.json", "market_status.json"],
     output: "options_screened.json",
   },
@@ -150,10 +169,74 @@ export const AGENTS: Agent[] = [
     time: "08:28 ET",
     role: "options",
     group: "options",
-    description: "Options execution planner. Takes the screened candidates and builds a concrete trade spec per contract: strike, expiry, target premium, max loss, and position sizing. Applies the wheel strategy logic — CSP on new positions, covered calls on assigned shares. Output feeds the execution gate.",
+    model: "Sonnet",
+    status: "disabled",
+    description: "Wheel strategy planner — DISABLED. Built CSP/covered call trade specs for the wheel strategy. Replaced by the BPS module (Agent-21).",
     inputs: ["options_screened.json", "risk_decision.json", "market_status.json"],
     output: "options_strategy.json",
   },
+  // ── BPS module — active ──────────────────────────────────────────────────────
+  {
+    id: "bps-pm",
+    label: "BPS-PM",
+    shortName: "Position Mgr",
+    time: "08:25 ET",
+    role: "bps",
+    group: "bps",
+    model: "Script",
+    description: "Python script (bps_position_manager.py). Fetches all open BPS spread positions from Alpaca, checks each against DTE and profit-target exit rules, and calculates available capital for new positions. Writes bps_position_status.json which gates the screener.",
+    inputs: ["Alpaca paper positions", "bps_config.json"],
+    output: "bps_position_status.json",
+  },
+  {
+    id: "20",
+    label: "Agent-20",
+    shortName: "BPS Screener",
+    time: "08:30 ET",
+    role: "bps",
+    group: "bps",
+    model: "Haiku",
+    description: "BPS candidate qualitative review. The Python screener has already fetched options chains, found spread legs near target delta, and verified the 40% credit/width floor. Agent-20 adds the judgment layer: is the thesis intact, are there hidden news risks, is the elevated IV justified?",
+    inputs: ["bps_universe.json", "bps_position_status.json", "bps_config.json"],
+    output: "bps_screened.json",
+  },
+  {
+    id: "21",
+    label: "Agent-21",
+    shortName: "BPS Strategy",
+    time: "08:40 ET",
+    role: "bps",
+    group: "bps",
+    model: "Haiku",
+    description: "Final BPS position selection. Receives Agent-20-approved candidates and selects up to new_positions_possible spreads, enforcing sector diversification (max 2 per sector), capital limits, and contract sizing. Outputs exact order parameters for the executor.",
+    inputs: ["bps_screened.json", "bps_position_status.json", "bps_config.json"],
+    output: "bps_strategy.json",
+  },
+  {
+    id: "bps-ex",
+    label: "BPS-EX",
+    shortName: "BPS Executor",
+    time: "09:40 ET",
+    role: "bps",
+    group: "bps",
+    model: "Script",
+    description: "Python script (bps_executor.py). Exits flagged positions first (DTE or profit target), then submits new bull put spreads as two-leg limit orders via Alpaca paper API. Runs 10 minutes after equity execution to avoid opening bell congestion. Fires Telegram alerts per execution.",
+    inputs: ["bps_strategy.json", "bps_position_status.json"],
+    output: "bps_execution_log.json",
+  },
+  {
+    id: "22",
+    label: "Agent-22",
+    shortName: "BPS Reporter",
+    time: "Fri 16:15 ET",
+    role: "bps",
+    group: "bps",
+    model: "Haiku",
+    description: "Weekly performance analyst. Computes win rate, P&L, profit-target vs DTE-exit rates, and sector/symbol breakdown for the past 7 days. Flags symbols with 2+ consecutive losses for review and symbols with 2+ consecutive wins as high-confidence. Produces a human-readable markdown report with parameter suggestions (all require human approval).",
+    inputs: ["bps_execution_log.json (7-day window)", "bps_config.json"],
+    output: "bps_performance_report_YYYY-MM-DD.md + .json",
+  },
+  // ── Execution ─────────────────────────────────────────────────────────────────
   {
     id: "19",
     label: "Agent-19",
@@ -161,6 +244,7 @@ export const AGENTS: Agent[] = [
     time: "08:32 ET",
     role: "execution",
     group: "execution",
+    model: "Sonnet",
     description: "Pre-open position health check. Runs Brave Search (freshness=past day) and StockTwits for every open position to surface overnight news, earnings surprises, or thesis-breaking developments. Issues per-position signals — SELL_AT_OPEN, SELL_BEFORE_CLOSE, or HOLD — before the market opens. SELL_AT_OPEN positions are actioned at 9:32 by the Morning Closer; SELL_BEFORE_CLOSE hints flow to Agent-14 EOD.",
     inputs: ["Alpaca live positions", "Brave Search (freshness=pd)", "StockTwits"],
     output: "morning_exit_signals.json + morning_eod_hints.json",
@@ -172,6 +256,7 @@ export const AGENTS: Agent[] = [
     time: "09:20 ET",
     role: "execution",
     group: "execution",
+    model: "Sonnet",
     description: "Last check before market open. Re-validates every approved trade at current live prices to catch anything that changed since 08:20. If a signal is stale (>60 min) it re-evaluates at current price and cancels if the edge is gone. Hard blocks execution if signals are >3 hours old.",
     inputs: ["risk_decision.json", "market_status.json", "strategy_spec.json", "remediation_summary.json"],
     output: "preopen_refresh.json",
@@ -183,6 +268,7 @@ export const AGENTS: Agent[] = [
     time: "09:30 ET",
     role: "execution",
     group: "execution",
+    model: "Sonnet",
     description: "Execution gate and order dispatcher. Runs final pre-flight checks, then hands confirmed trades to order_submitter.py which submits them to the Alpaca paper API. The only agent that touches real (paper) money. Live trading requires explicit policy flag.",
     inputs: ["preopen_refresh.json", "risk_decision.json", "market_status.json", "broker_auth_ok.json"],
     output: "execution_log.json",
@@ -194,6 +280,7 @@ export const AGENTS: Agent[] = [
     time: "09:32 ET",
     role: "execution",
     group: "execution",
+    model: "Script",
     description: "Post-open position closer. Reads morning_exit_signals.json and submits market SELL orders for any SELL_AT_OPEN positions via Alpaca. Runs 2 minutes after open to avoid opening bell spreads. SELL_BEFORE_CLOSE signals are intentionally skipped here — they flow to Agent-14 EOD. Logs all fills and broker rejects, fires Telegram alerts on execution.",
     inputs: ["morning_exit_signals.json", "Alpaca live positions"],
     output: "morning_execution_log.json",
@@ -205,6 +292,7 @@ export const AGENTS: Agent[] = [
     time: "12:00 ET",
     role: "execution",
     group: "execution",
+    model: "Sonnet",
     description: "Intraday position monitor. Reviews all open positions at midday against current price action, volatility, and the original thesis. Issues hold, tighten stop, trim, or exit recommendations for each position based on how the trade is developing. Also reads morning exit signals for context on positions flagged pre-open.",
     inputs: ["execution_log.json", "positions_snapshot.json", "volatility_snapshot.json", "morning_exit_signals.json"],
     output: "midday_check.json",
@@ -216,10 +304,12 @@ export const AGENTS: Agent[] = [
     time: "15:30 ET",
     role: "execution",
     group: "execution",
+    model: "Sonnet",
     description: "End-of-day decision gate. With 30 minutes to close, decides whether each open position should hold overnight, be closed before the bell, or be urgently closed immediately. Weighs overnight risk against the trade thesis and current P&L. Reads morning_eod_hints.json so SELL_BEFORE_CLOSE signals from 8:32 AM are factored into EOD decisions.",
     inputs: ["midday_check.json", "positions_snapshot.json", "volatility_snapshot.json", "morning_eod_hints.json"],
     output: "eod_decision.json",
   },
+  // ── Audit ─────────────────────────────────────────────────────────────────────
   {
     id: "15",
     label: "Agent-15",
@@ -227,6 +317,7 @@ export const AGENTS: Agent[] = [
     time: "16:05 ET",
     role: "audit",
     group: "audit",
+    model: "Sonnet",
     description: "Post-market reconciliation. Compares what was planned vs what was executed vs what the EOD decision called for. Classifies any variances with a taxonomy and extracts lessons — the feedback loop that improves the pipeline over time. Now includes morning execution log for full intraday P&L accounting.",
     inputs: ["execution_log.json", "eod_decision.json", "positions_snapshot.json", "morning_execution_log.json"],
     output: "postclose_recap.json",
@@ -238,16 +329,25 @@ export const AGENTS: Agent[] = [
     time: "16:20 ET",
     role: "audit",
     group: "audit",
+    model: "Opus",
     description: "The authoritative end-of-day governor. Audits the entire day's pipeline for chain coherence, approval path integrity, and compliance. Writes session_close.json which sets the next-day gate — OPEN, RESTRICTED, or BLOCKED — that Agent-08 reads tomorrow morning.",
     inputs: ["All 15 prior stage artifacts", "pipeline_kpis_v1.json"],
     output: "daily_audit_state.json + session_close.json",
   },
 ]
 
-export const GROUP_COLORS = {
-  research:  { bg: "bg-blue-950",   border: "border-blue-700",   text: "text-blue-300",   label: "Research & Analysis" },
-  risk:      { bg: "bg-orange-950", border: "border-orange-700", text: "text-orange-300", label: "Risk & Approval" },
-  options:   { bg: "bg-teal-950",   border: "border-teal-700",   text: "text-teal-300",   label: "Options / Wheel" },
-  execution: { bg: "bg-emerald-950",border: "border-emerald-700",text: "text-emerald-300",label: "Execution" },
-  audit:     { bg: "bg-purple-950", border: "border-purple-700", text: "text-purple-300", label: "Audit & Governance" },
+export const GROUP_COLORS: Record<string, { bg: string; border: string; text: string; label: string }> = {
+  research:  { bg: "bg-blue-950",    border: "border-blue-700",    text: "text-blue-300",    label: "Research & Analysis" },
+  risk:      { bg: "bg-orange-950",  border: "border-orange-700",  text: "text-orange-300",  label: "Risk & Approval" },
+  options:   { bg: "bg-zinc-900",    border: "border-zinc-700",    text: "text-zinc-500",    label: "Options / Wheel (off)" },
+  bps:       { bg: "bg-violet-950",  border: "border-violet-700",  text: "text-violet-300",  label: "BPS Module" },
+  execution: { bg: "bg-emerald-950", border: "border-emerald-700", text: "text-emerald-300", label: "Execution" },
+  audit:     { bg: "bg-purple-950",  border: "border-purple-700",  text: "text-purple-300",  label: "Audit & Governance" },
+}
+
+export const MODEL_COLORS: Record<AgentModel, { text: string; border: string }> = {
+  Opus:   { text: "text-amber-400",  border: "border-amber-700"  },
+  Sonnet: { text: "text-blue-400",   border: "border-blue-800"   },
+  Haiku:  { text: "text-teal-400",   border: "border-teal-800"   },
+  Script: { text: "text-zinc-500",   border: "border-zinc-700"   },
 }
