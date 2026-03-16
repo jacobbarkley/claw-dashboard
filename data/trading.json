@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-16T16:15:03.298187+00:00",
+  "generated_at": "2026-03-16T16:23:30.021572+00:00",
   "as_of_date": "2026-03-16",
   "account": {
     "equity": 99354.74,
@@ -562,7 +562,7 @@
   "options": {
     "gate": {
       "status": "PASS",
-      "checked_at": "2026-03-16T15:56:32.023496+00:00",
+      "checked_at": "2026-03-16T16:22:12.739621+00:00",
       "csp_slots_used": 0,
       "available_capital": 50000.0,
       "cash_buffer_pct": 100.0,
@@ -765,7 +765,7 @@
       {
         "symbol": "AMD",
         "type": null,
-        "strike": 185.0,
+        "strike": 190.0,
         "expiry": "2026-04-10",
         "dte": null,
         "contracts": 1,
