@@ -333,7 +333,7 @@ function CommandStrip({
       className="px-6 py-2 flex items-center justify-between gap-4 backdrop-blur-md sticky top-[52px] z-30"
       style={{
         borderBottom: "1px solid rgba(90, 70, 160, 0.14)",
-        background: "rgba(3, 1, 12, 0.92)",
+        background: "rgba(3, 1, 12, 0.72)",
       }}
     >
       {/* Left: mode */}

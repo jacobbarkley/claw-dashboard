@@ -13,39 +13,39 @@ interface Particle {
 function initParticles(w: number, h: number): Particle[] {
   const particles: Particle[] = []
 
-  // Tier 1: fine dust — 32 tiny, very faint, extremely slow
-  for (let i = 0; i < 32; i++) {
+  // Tier 1: fine dust — 180 tiny, faint, extremely slow
+  for (let i = 0; i < 180; i++) {
     particles.push({
       x: Math.random() * w,
       y: Math.pow(Math.random(), 1.6) * h, // bias toward top
       vx: (Math.random() - 0.5) * 0.10,
       vy: (Math.random() - 0.5) * 0.07,
-      radius: Math.random() * 0.35 + 0.18,
-      opacity: Math.random() * 0.09 + 0.03,
+      radius: Math.random() * 0.45 + 0.20,
+      opacity: Math.random() * 0.18 + 0.07,
     })
   }
 
-  // Tier 2: mid-field — 16 medium, moderate opacity, moderate speed
-  for (let i = 0; i < 16; i++) {
+  // Tier 2: mid-field — 70 medium, moderate opacity, moderate speed
+  for (let i = 0; i < 70; i++) {
     particles.push({
       x: Math.random() * w,
       y: Math.pow(Math.random(), 1.3) * h,
       vx: (Math.random() - 0.5) * 0.15,
       vy: (Math.random() - 0.5) * 0.10,
-      radius: Math.random() * 0.45 + 0.55,
-      opacity: Math.random() * 0.12 + 0.05,
+      radius: Math.random() * 0.5 + 0.6,
+      opacity: Math.random() * 0.22 + 0.12,
     })
   }
 
-  // Tier 3: depth anchors — 5 slightly larger, sparse
-  for (let i = 0; i < 5; i++) {
+  // Tier 3: depth anchors — 25 slightly larger, sparse
+  for (let i = 0; i < 25; i++) {
     particles.push({
       x: Math.random() * w,
-      y: Math.random() * h * 0.6, // upper 60% only
+      y: Math.random() * h * 0.7, // upper 70%
       vx: (Math.random() - 0.5) * 0.08,
       vy: (Math.random() - 0.5) * 0.06,
-      radius: Math.random() * 0.5 + 1.0,
-      opacity: Math.random() * 0.10 + 0.04,
+      radius: Math.random() * 0.6 + 1.1,
+      opacity: Math.random() * 0.20 + 0.15,
     })
   }
 
@@ -120,7 +120,7 @@ export function AmbientField() {
 
       ctx.beginPath()
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-      ctx.fillStyle = `rgba(150, 130, 220, ${p.opacity * 0.7})`
+      ctx.fillStyle = `rgba(190, 170, 255, ${p.opacity})`
       ctx.fill()
     }
 
