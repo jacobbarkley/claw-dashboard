@@ -190,8 +190,8 @@ def build_exit_candidates(eod: dict, positions: list) -> list:
     for item in items:
         sym = item.get("symbol")
         decision = item.get("decision", "")
-        if decision in ("URGENT_CLOSE", "CLOSE_BEFORE_BELL") and sym:
-            pos = held.get(sym, {})
+        if decision in ("URGENT_CLOSE", "CLOSE_BEFORE_BELL") and sym and sym in held:
+            pos = held[sym]
             candidates.append({
                 "symbol":   sym,
                 "decision": decision,

@@ -126,9 +126,9 @@
 
   /* ── ClawBoy semantic tokens ── */
   --cb-void:          #03010c;
-  --cb-surface-0:     rgba(6, 4, 15, 0.78);
-  --cb-surface-1:     rgba(11, 9, 32, 0.85);
-  --cb-surface-2:     rgba(17, 14, 42, 0.90);
+  --cb-surface-0:     #06040f;
+  --cb-surface-1:     #0b0920;
+  --cb-surface-2:     #110e2a;
 
   /* Borders: slightly higher contrast, less saturated violet */
   --cb-border-dim:    rgba(100, 80, 180, 0.10);

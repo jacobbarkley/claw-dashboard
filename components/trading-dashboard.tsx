@@ -333,7 +333,7 @@ function CommandStrip({
       className="px-6 py-2 flex items-center justify-between gap-4 backdrop-blur-md sticky top-[52px] z-30"
       style={{
         borderBottom: "1px solid rgba(90, 70, 160, 0.14)",
-        background: "rgba(3, 1, 12, 0.72)",
+        background: "rgba(3, 1, 12, 0.92)",
       }}
     >
       {/* Left: mode */}
@@ -1603,9 +1603,68 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
   const refresh = useCallback(async () => {
     setRefreshing(true)
     try {
-      const res = await fetch("/api/trading", { cache: "no-store" })
-      if (res.ok) {
-        const json = await res.json()
+      const [staticRes, liveRes] = await Promise.all([
+        fetch("/api/trading", { cache: "no-store" }),
+        fetch("/api/trading/live", { cache: "no-store" }).catch(() => null),
+      ])
+      if (staticRes.ok) {
+        const json = await staticRes.json()
+        // Merge live Alpaca data if available
+        if (liveRes?.ok) {
+          try {
+            const live = await liveRes.json()
+            if (live.positions && !live.error) {
+              // Replace positions with live data
+              json.positions = live.positions.map((lp: Record<string, unknown>) => ({
+                symbol: lp.symbol,
+                qty: lp.qty,
+                side: lp.side,
+                entry_price: lp.avg_entry,
+                current_price: lp.current_price,
+                market_value: lp.market_value,
+                unrealized_pnl: lp.unrealized_pnl,
+                unrealized_pct: lp.unrealized_pct,
+                change_today_pct: lp.change_today_pct ?? 0,
+              }))
+              // Update account with live values
+              if (live.account) {
+                json.account = {
+                  ...json.account,
+                  equity: live.account.equity,
+                  cash: live.account.cash,
+                  buying_power: live.account.buying_power,
+                  positions_value: live.account.positions_value,
+                  total_pnl: live.account.equity - (json.account.base_value ?? 100000),
+                  total_pnl_pct: ((live.account.equity - (json.account.base_value ?? 100000)) / (json.account.base_value ?? 100000)) * 100,
+                }
+                // Append today's equity to the curve if not already there
+                const today = new Date().toISOString().slice(0, 10)
+                const curve = json.equity_curve ?? []
+                const lastEntry = curve[curve.length - 1]
+                if (lastEntry && lastEntry.date !== today) {
+                  curve.push({
+                    date: today,
+                    equity: live.account.equity,
+                    profit_loss: live.account.equity - (lastEntry?.equity ?? live.account.equity),
+                    profit_loss_pct: lastEntry?.equity ? ((live.account.equity - lastEntry.equity) / lastEntry.equity) * 100 : 0,
+                  })
+                  json.equity_curve = curve
+                } else if (lastEntry && lastEntry.date === today) {
+                  lastEntry.equity = live.account.equity
+                }
+              }
+              // Filter exit candidates to only held positions
+              if (json.exit_candidates) {
+                const heldSymbols = new Set(live.positions.map((p: Record<string, unknown>) => p.symbol))
+                json.exit_candidates = json.exit_candidates.filter(
+                  (e: { symbol: string }) => heldSymbols.has(e.symbol)
+                )
+              }
+            }
+          } catch {
+            // live merge failed — use static data as-is
+          }
+        }
         setData(json)
         setLastFetched(new Date())
       }
