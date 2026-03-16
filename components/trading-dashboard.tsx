@@ -247,6 +247,12 @@ interface TradingData {
 const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 2) =>
   n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
 
+// Accounting notation: negatives in (parens), positives with optional +
+const fmtAcct = (n: number | null | undefined, prefix = "", suffix = "", decimals = 2, showPlus = false) =>
+  n == null ? "—" : n < 0
+    ? `(${prefix}${Math.abs(n).toFixed(decimals)}${suffix})`
+    : `${showPlus && n > 0 ? "+" : ""}${prefix}${n.toFixed(decimals)}${suffix}`
+
 const pnlColor = (n: number | null | undefined) =>
   n == null ? "text-[var(--cb-text-secondary)]"
   : n >= 0 ? "text-[var(--cb-green)]"
@@ -392,9 +398,9 @@ function CapitalHero({
           {todayPnl != null && (
             <div className="text-right">
               <div className={`cb-number ${pnlColor(todayPnl)}`} style={{ fontSize: "1.6rem", fontWeight: 200, lineHeight: 1, letterSpacing: "-0.01em" }}>
-                {todayPnl >= 0 ? "+" : ""}{fmt(todayPnl, "$")}
+                {fmtAcct(todayPnl, "$", "", 2, true)}
               </div>
-              <div className="cb-label mt-1.5">{fmt(todayPct, "", "%", 2)} today</div>
+              <div className="cb-label mt-1.5">{fmtAcct(todayPct, "", "%", 2)} today</div>
             </div>
           )}
         </div>
@@ -423,8 +429,8 @@ function CapitalHero({
             <div>
               <div className="cb-label mb-1">Unrealized</div>
               <div className={`text-sm font-medium cb-number ${pnlColor(account.unrealized_pnl)}`}>
-                {account.unrealized_pnl >= 0 ? "+" : ""}{fmt(account.unrealized_pnl, "$")}
-                <span className="text-xs ml-1 opacity-60">({fmt(account.unrealized_pnl_pct, "", "%", 2)})</span>
+                {fmtAcct(account.unrealized_pnl, "$", "", 2, true)}
+                <span className="text-xs ml-1 opacity-60">{fmtAcct(account.unrealized_pnl_pct, "", "%", 2)}</span>
               </div>
             </div>
           )}
@@ -432,8 +438,8 @@ function CapitalHero({
             <div>
               <div className="cb-label mb-1">Total return{baseValue ? ` · from $${baseValue.toLocaleString()}` : ""}</div>
               <div className={`text-sm font-medium cb-number ${pnlColor(totalPnl)}`}>
-                {totalPnl >= 0 ? "+" : ""}{fmt(totalPnl, "$")}
-                <span className="text-xs ml-1 opacity-60">({fmt(totalPct, "", "%", 2)})</span>
+                {fmtAcct(totalPnl, "$", "", 2, true)}
+                <span className="text-xs ml-1 opacity-60">{fmtAcct(totalPct, "", "%", 2)}</span>
               </div>
             </div>
           )}
@@ -829,8 +835,8 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
               ${p.current_price?.toFixed(2) ?? "—"}
             </div>
             <div className={`text-xs font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
-              {p.unrealized_pnl >= 0 ? "+" : ""}{fmt(p.unrealized_pnl, "$")}
-              <span className="opacity-70 ml-1">({fmt(p.unrealized_pct, "", "%", 1)})</span>
+              {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
+              <span className="opacity-70 ml-1">{fmtAcct(p.unrealized_pct, "", "%", 1)}</span>
             </div>
           </div>
           {open
@@ -856,7 +862,7 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
           <div>
             <div style={{ color: "var(--cb-text-tertiary)" }}>Today</div>
             <div className={`font-medium cb-number ${pnlColor(p.change_today_pct)}`}>
-              {fmt(p.change_today_pct, "", "%", 2)}
+              {fmtAcct(p.change_today_pct, "", "%", 2)}
             </div>
           </div>
           <div>
@@ -932,6 +938,8 @@ function QualifiedSetups({
   source: string
 }) {
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [showAll, setShowAll] = useState(false)
+  const visibleItems = showAll ? items : items.slice(0, 5)
   if (!items.length) return (
     <div className="py-6 text-center space-y-1">
       <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
@@ -944,7 +952,7 @@ function QualifiedSetups({
   )
   return (
     <div className="space-y-2">
-      {items.map(item => (
+      {visibleItems.map(item => (
         <div key={item.symbol} className="cb-card-t2">
           <button
             onClick={() => setExpanded(e => e === item.symbol ? null : item.symbol)}
@@ -998,11 +1006,26 @@ function QualifiedSetups({
           )}
         </div>
       ))}
-      {as_of && (
-        <div className="pt-1 text-[10px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          {source === "weekly" ? "Weekly watchlist" : "Strategy spec"} · as of {as_of}
-        </div>
+
+      {items.length > 5 && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className="w-full py-2 text-[11px] hover:opacity-80 transition-opacity"
+          style={{ color: "var(--cb-brand-soft)" }}
+        >
+          {showAll ? `Show less` : `Show ${items.length - 5} more`}
+        </button>
       )}
+
+      <div className="pt-1 flex items-center justify-between text-[10px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.5 }}>
+        {as_of && (
+          <span>{source === "weekly" ? "Weekly watchlist" : "Strategy spec"} · as of {as_of}</span>
+        )}
+        <span className="ml-auto">
+          <span style={{ color: "var(--cb-brand)" }}>FULL</span> full size ·{" "}
+          <span style={{ color: "var(--cb-amber)" }}>HALF</span> / <span style={{ color: "var(--cb-amber)" }}>SMALL</span> reduced
+        </span>
+      </div>
     </div>
   )
 }
@@ -1670,9 +1693,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
               ? <BpsPanel bps={data.bps} />
               : (
                 <div className="py-6 text-center space-y-1">
-                  <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>BPS module initializing</div>
+                  <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>No active setups</div>
                   <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-                    Screener runs weekday mornings at 08:30 ET
+                    BPS screener runs weekday mornings at 08:30 ET
                   </div>
                 </div>
               )
