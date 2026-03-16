@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-16T02:37:51.392260+00:00",
+  "generated_at": "2026-03-16T02:42:39.648519+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -680,7 +680,7 @@
     "available_capital": null,
     "free_capital": null,
     "current_open_positions": 0,
-    "new_positions_possible": 0,
+    "new_positions_possible": 10,
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],

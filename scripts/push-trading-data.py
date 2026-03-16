@@ -405,14 +405,18 @@ def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list, 
             "earnings_blackout": c.get("earnings_blackout", False),
         })
 
+    max_positions = 10
+    current_open  = pos_status.get("current_open_positions", 0)
+    new_possible  = pos_status.get("new_positions_possible", max_positions - current_open)
+
     return {
         "as_of":                 pos_status.get("generated_at", screened.get("generated_at")),
         "account_equity":        safe_float(pos_status.get("account_equity")),
         "available_capital":     safe_float(pos_status.get("available_capital")),
         "free_capital":          safe_float(pos_status.get("free_capital")),
-        "current_open_positions": pos_status.get("current_open_positions", 0),
-        "new_positions_possible": pos_status.get("new_positions_possible", 0),
-        "max_active_positions":  10,
+        "current_open_positions": current_open,
+        "new_positions_possible": new_possible,
+        "max_active_positions":  max_positions,
         "exits_needed":          pos_status.get("exits_needed", []),
         "positions":             positions,
         "targets":               targets,
