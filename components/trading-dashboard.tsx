@@ -93,6 +93,14 @@ interface BpsFill {
   exit_reasons: string[]
 }
 
+interface BpsUniverseItem {
+  symbol: string
+  sector: string
+  final_score: number | null
+  rsi_14: number | null
+  earnings_blackout: boolean
+}
+
 interface BpsData {
   as_of: string | null
   account_equity: number | null
@@ -108,6 +116,8 @@ interface BpsData {
   screener_status: string | null
   scanned: number | null
   approved: number | null
+  universe_watch: BpsUniverseItem[]
+  universe_date: string | null
 }
 
 interface Tunables {
@@ -1237,9 +1247,48 @@ function BpsPanel({ bps }: { bps: BpsData }) {
         </div>
       )}
 
-      {!hasTargets && !hasPositions && !hasFills && (
-        <div className="text-sm py-2 text-center" style={{ color: "var(--cb-text-tertiary)" }}>
-          BPS screener runs weekday mornings at 08:30 ET
+      {/* Universe on watch — shown only when screener hasn't run yet */}
+      {!hasTargets && bps.universe_watch.length > 0 && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <div className="cb-label">Universe · On Watch</div>
+            {bps.universe_date && (
+              <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                screened {bps.universe_date}
+              </span>
+            )}
+          </div>
+          <div className="cb-card-t3 divide-y" style={{ borderColor: "var(--cb-border-dim)" }}>
+            {bps.universe_watch.map(c => (
+              <div key={c.symbol} className="px-4 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono font-semibold text-sm text-[var(--cb-text-primary)]">{c.symbol}</span>
+                  <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>{c.sector}</span>
+                  {c.earnings_blackout && (
+                    <span style={{ fontSize: 9, color: "var(--cb-amber)", fontWeight: 500 }}>earnings</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {c.rsi_14 != null && (
+                    <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)", fontFamily: "monospace" }}>
+                      RSI {c.rsi_14.toFixed(0)}
+                    </span>
+                  )}
+                  {c.final_score != null && (
+                    <span
+                      className="font-mono text-xs font-medium"
+                      style={{ color: c.final_score >= 8 ? "var(--cb-brand)" : c.final_score >= 6.5 ? "var(--cb-amber)" : "var(--cb-text-tertiary)" }}
+                    >
+                      {c.final_score.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[10px] pt-1" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+            Spreads priced weekday mornings at 08:30 ET
+          </div>
         </div>
       )}
     </div>

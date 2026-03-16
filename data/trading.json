@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-16T00:42:58.797431+00:00",
+  "generated_at": "2026-03-16T02:37:51.392260+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -674,5 +674,58 @@
     },
     "as_of": "2026-03-14T00:08:38.132061-04:00"
   },
-  "bps": null
+  "bps": {
+    "as_of": null,
+    "account_equity": null,
+    "available_capital": null,
+    "free_capital": null,
+    "current_open_positions": 0,
+    "new_positions_possible": 0,
+    "max_active_positions": 10,
+    "exits_needed": [],
+    "positions": [],
+    "targets": [],
+    "recent_fills": [],
+    "screener_status": null,
+    "scanned": null,
+    "approved": null,
+    "universe_watch": [
+      {
+        "symbol": "ORCL",
+        "sector": "Technology",
+        "final_score": 9.0,
+        "rsi_14": 63.6,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "BX",
+        "sector": "Financial Services",
+        "final_score": 8.9,
+        "rsi_14": 41.1,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "DASH",
+        "sector": "Consumer Cyclical",
+        "final_score": 8.9,
+        "rsi_14": 46.8,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "WDAY",
+        "sector": "Technology",
+        "final_score": 8.9,
+        "rsi_14": 53.8,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "COF",
+        "sector": "Financial Services",
+        "final_score": 8.8,
+        "rsi_14": 40.9,
+        "earnings_blackout": false
+      }
+    ],
+    "universe_date": "2026-03-15"
+  }
 }

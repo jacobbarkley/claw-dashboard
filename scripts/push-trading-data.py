@@ -319,9 +319,9 @@ def build_options(candidates_raw: dict, screened_raw: dict, strategy_raw: dict,
     }
 
 
-def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list) -> dict | None:
+def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list, universe: dict) -> dict | None:
     """Build BPS module summary. Returns None if no BPS data exists."""
-    if not pos_status and not screened and not strategy:
+    if not pos_status and not screened and not strategy and not universe:
         return None
 
     # Active open spread positions
@@ -391,6 +391,20 @@ def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list) 
                 "exit_reasons": r.get("exit_reasons", []),
             })
 
+    # Top 5 universe candidates ("on watch") — only shown when no screened targets yet
+    universe_watch = []
+    for c in universe.get("candidates", [])[:5]:
+        sym = c.get("symbol")
+        if not sym:
+            continue
+        universe_watch.append({
+            "symbol":      sym,
+            "sector":      c.get("sector", ""),
+            "final_score": c.get("final_score"),
+            "rsi_14":      c.get("rsi_14"),
+            "earnings_blackout": c.get("earnings_blackout", False),
+        })
+
     return {
         "as_of":                 pos_status.get("generated_at", screened.get("generated_at")),
         "account_equity":        safe_float(pos_status.get("account_equity")),
@@ -406,6 +420,8 @@ def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list) 
         "screener_status":       screened.get("status"),
         "scanned":               screened.get("scanned"),
         "approved":              screened.get("approved"),
+        "universe_watch":        universe_watch,
+        "universe_date":         universe.get("date"),
     }
 
 
@@ -446,6 +462,7 @@ def main():
     bps_pos_status = load(BPS_WORKSPACE / "state/bps_position_status.json")
     bps_screened   = load(BPS_WORKSPACE / "state/bps_screened.json")
     bps_strategy   = load(BPS_WORKSPACE / "state/bps_strategy.json")
+    bps_universe   = load(BPS_WORKSPACE / "state/bps_universe.json")
     bps_exec_raw   = BPS_WORKSPACE / "state/bps_execution_log.json"
     bps_exec_log: list = []
     try:
@@ -469,7 +486,7 @@ def main():
     perf_kpis   = kpis.get("performance_kpis", {})
     pipeline    = build_pipeline_status(audit, session)
     options     = build_options(opt_candidates, opt_screened, opt_strategy, opt_gate, opt_exec)
-    bps         = build_bps(bps_pos_status, bps_screened, bps_strategy, bps_exec_log)
+    bps         = build_bps(bps_pos_status, bps_screened, bps_strategy, bps_exec_log, bps_universe)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
