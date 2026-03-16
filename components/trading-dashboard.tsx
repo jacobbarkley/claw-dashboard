@@ -1614,7 +1614,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           try {
             const live = await liveRes.json()
             if (live.positions && !live.error) {
-              // Replace positions with live data
+              // Replace equity positions with live data (options separated)
               json.positions = live.positions.map((lp: Record<string, unknown>) => ({
                 symbol: lp.symbol,
                 qty: lp.qty,
@@ -1626,6 +1626,30 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                 unrealized_pct: lp.unrealized_pct,
                 change_today_pct: lp.change_today_pct ?? 0,
               }))
+              // Merge live options positions into the options section
+              if (live.options_positions?.length > 0) {
+                if (!json.options) {
+                  json.options = { gate: { status: "PASS", checked_at: null, csp_slots_used: 0, csp_slots_max: 2, available_capital: null, cash_buffer_pct: null }, candidates: [], screened: [], active_trades: [], executions: [], scan_summary: null, as_of: null }
+                }
+                json.options.active_trades = live.options_positions.map((op: Record<string, unknown>) => ({
+                  symbol: op.symbol as string,
+                  type: op.strategy as string,
+                  strike: op.strike as number,
+                  expiry: op.expiry as string,
+                  dte: op.dte as number,
+                  contracts: op.contracts as number,
+                  limit_price: op.avg_entry as number,
+                  wheel_state: "OPEN",
+                  status: "FILLED",
+                  current_price: op.current_price as number,
+                  unrealized_pnl: op.unrealized_pnl as number,
+                  unrealized_pct: op.unrealized_pct as number,
+                  side: op.side as string,
+                }))
+                json.options.gate.csp_slots_used = live.options_positions.filter(
+                  (op: Record<string, unknown>) => op.strategy === "CSP"
+                ).length
+              }
               // Update account with live values
               if (live.account) {
                 json.account = {
@@ -1652,6 +1676,10 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                 } else if (lastEntry && lastEntry.date === today) {
                   lastEntry.equity = live.account.equity
                 }
+              }
+              // Update KPIs with live data
+              if (live.kpis) {
+                json.kpis = { ...json.kpis, ...live.kpis }
               }
               // Filter exit candidates to only held positions
               if (json.exit_candidates) {
