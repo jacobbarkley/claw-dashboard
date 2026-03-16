@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T00:09:25.108609-04:00",
+  "generated_at": "2026-03-15T22:47:47.448560-04:00",
   "queued": [
     {
       "id": "Q-024",
@@ -17,80 +17,6 @@
         "ops-console",
         "bps",
         "strategy-management"
-      ]
-    },
-    {
-      "id": "Q-023",
-      "category": "trading",
-      "title": "Trading pipeline Phase 5 \u2014 state machine, vocab cleanup, integration tests",
-      "what": "Pipeline state machine (state/pipeline_state.json) representing INIT \u2192 SESSION_READY \u2192 ARTIFACTS_READY \u2192 POLICY_READY \u2192 RISK_APPROVED \u2192 EXECUTION_ALLOWED \u2192 EXECUTED|HALTED. Status vocab enforcement across all prompts and Python scripts \u2014 no more EXECUTION_FAILED for gated non-execution, consistent SKIPPED_GATED and ERROR_INTERNAL. Integration test suite covering clean happy path, stale artifact contamination, invalid policy, upstream risk halt. See refactor plan Phase 5A-D.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Phases 2-4 complete",
-      "priority": "low",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "state-machine",
-        "testing",
-        "vocab-cleanup",
-        "phase-5"
-      ]
-    },
-    {
-      "id": "Q-022",
-      "category": "trading",
-      "title": "Trading pipeline Phase 4 \u2014 run-scoped artifact migration",
-      "what": "Migrate all stage artifact writes into state/runs/<date>/<run_id>/. Update Python scripts: order_submitter.py, broker_reconciler.py, preflight_auth.py, performance_aggregator.py, positions_fetcher.py, volatility_fetcher.py. Update all agent prompt output paths. Write dual (run-scoped primary + legacy root-state compatibility mirror) until migration complete. Add bin/run_paths.py helper with get_run_dir() and get_artifact_path(). See refactor plan Phase 4A-C.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Phase 3 complete",
-      "priority": "low",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "run-scoped",
-        "artifact-paths",
-        "phase-4"
-      ]
-    },
-    {
-      "id": "Q-021",
-      "category": "trading",
-      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
-      "what": "Create bin/gate_session.py (validates session_context.json), bin/gate_artifacts.py (validates artifact_manifest.json freshness for active run), bin/gate_policy.py (validates normalized_risk_policy.json). Four canonical gates replace scattered check logic across agents. Systems auditor simplification: remove PRECEDENCE_BREACH as standalone critical gate, health verdict only HALTs for unique unsafe conditions not already covered by gates 1-4. Remediation simplification: carry-forward warnings force REDUCE_ONLY not HALT; PRECEDENCE_BREACH from prior runs doesn't cascade as fresh CRITICAL each run. See refactor plan Phase 3A-F.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Phase 2A/2B proven in live trading run",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "gate-scripts",
-        "systems-auditor",
-        "remediation",
-        "phase-3"
-      ]
-    },
-    {
-      "id": "Q-020",
-      "category": "trading",
-      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
-      "what": "Update preflight check scripts to verify session_context.json and normalized_risk_policy.json exist and are fresh before the pipeline proceeds. Gates the morning run on bootstrap (07:30 cron) having completed successfully. Non-blocking for the morning run but hardens the safety contract. See refactor plan Phase 2C.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Phase 2A/2B proven in live trading run (tomorrow)",
-      "priority": "low",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "preflight",
-        "bootstrap",
-        "phase-2c"
       ]
     },
     {
@@ -113,27 +39,6 @@
       ]
     },
     {
-      "id": "Q-018",
-      "category": "project",
-      "title": "Persistent story agent \u2014 continuously generates YouTube scripts from the real journey",
-      "what": "A background agent that runs on a schedule (nightly or on git push to OpenClaw-s-Brain) and turns the real, ongoing story of building this system into a backlog of staged YouTube scripts. Jacob does not trigger this manually \u2014 it runs whether he thinks about content or not. By the time the recording setup is ready, there should be 30-50 scripts waiting.\n\nSOURCE MATERIAL (what the agent reads):\n- Git commits to OpenClaw-s-Brain (commit messages + diffs \u2014 this is the primary story log)\n- queue.json completed[] section (milestone log \u2014 what shipped and when)\n- trading-bot/state/ files (approvals, rejections, circuit breaker changes, new incidents)\n- runbooks/ (decisions documented, go/no-go assessments)\n- The running story-arc.md doc (see below) \u2014 what has been told, what is next\nDo NOT read raw Claude Code session JSONL files \u2014 they contain API keys and sensitive data.\n\nSTORY ARC DOCUMENT (story-arc.md in the private repo):\nThe agent maintains a living document that tracks: where we are in the journey (days since first paper trade, paper gate progress, key milestones), what has already been scripted (prevents repetition), what narrative threads are open (e.g., 'governance loop introduced ep 3, fix shown ep 5, proof shown ep 7'), and what the next 3 most interesting things to cover are. Every script generation updates this document. This is what makes the scripts feel like a series instead of isolated videos.\n\nSCRIPT OUTPUT FORMAT (one .md file per script):\n```\n---\nepisode: <N>\nseries: building-ai-trading-system\ntopic_tags: [governance, incident, agent-10]\nstatus: DRAFT\ngenerated_at: <ISO date>\nstory_arc_position: <where this fits in the narrative>\ntitle_variants:\n  - <option 1 \u2014 curiosity gap>\n  - <option 2 \u2014 direct/technical>\n  - <option 3 \u2014 result-first>\nthumbnail_brief: <text overlay + emotional direction + visual concept>\ndescription_seo: <first 150 chars must contain primary keyword, full description below>\ntags: [comma, separated, youtube, tags]\nchapters:\n  - 0:00 Hook\n  - 0:30 Context\n  ...\ncommunity_question: <specific question to end the video with>\n---\n\n[HOOK]\n... (first 30 seconds \u2014 most interesting thing first, never 'in this video')\n\n[CONTEXT]\n... (setup, what system is, why this session matters \u2014 assume smart viewer, no prior context)\n\n[CORE]\n... (real content with segment markers)\n[SCREEN:filename] for terminal/code captures\n[DIAGRAM:agent-topology] for architecture visuals\n[CARD:topic] where a future video should be linked\n[BROLL:description] for transition visuals\n[PATTERN_INTERRUPT] every 2-3 min \u2014 flag where pace/visual should shift\n\n[TAKEAWAY]\n... (honest assessment, what comes next in the arc)\n\n[OUTRO]\n... (value-first CTA, cross-link to related episode, community question)\n```\n\nYOUTUBE STRATEGY RULES baked into the agent prompt (not vague instructions \u2014 explicit rules):\n1. Hook rule: open with the most interesting single thing \u2014 the failure, the number, the discovery. Never open with context or setup.\n2. Title rule: curiosity gap + specificity. 'The fake error message my AI generated about itself' > 'Bug fix video'. Numbers always help.\n3. CTA rule: first subscribe ask comes AFTER the first real value delivery, not at the start. Viewers who get value first are 3x more likely to subscribe.\n4. Chapter rule: every script gets timestamps auto-generated from section markers. YouTube actively pushes chaptered videos.\n5. Cross-link rule: plant [CARD:topic] markers where related content should be referenced. Use natural language: 'I go much deeper on X in episode N \u2014 link in the description.' Card library builds as scripts accumulate.\n6. Pattern interrupt rule: flag [PATTERN_INTERRUPT] every 2-3 minutes. Production team changes visual or cuts to screen recording to reset attention.\n7. SEO rule: description first 150 chars contain primary keyword \u2014 that is what appears in search results. Write this line first.\n8. Community rule: every video ends with one specific, answerable question. Not 'let me know what you think.' Something like: 'What would you have done differently when the remediation loop first fired on day 1?'\n9. Series arc rule: every script references at least one prior episode and teases at least one future episode. Builds watch time across the channel.\n10. Honesty rule: this is the differentiator. The script must reference real file names, real error codes, real decisions. Generic descriptions get cut. Vague language gets cut.\n\nREPO STRUCTURE (private GitHub repo: youtube-content):\n```\nscripts/\n  chronological/          # 2026-03-09-governance-loop-incident.md\n  by-topic/\n    trading-pipeline/\n    incidents-post-mortems/\n    architecture/\n    build-log/\n  series/\n    building-ai-trading-system/  # episode sequence, numbered\nassets/\n  thumbnail-briefs/       # one per script\n  diagram-specs/          # mermaid specs auto-generated\nmeta/\n  story-arc.md            # living document, updated each run\n  keyword-research.md     # YouTube search term targets, updated monthly\n  content-calendar.md     # what is ready to produce vs. staged\n```\n\nRUN SCHEDULE: Nightly cron via OpenClaw (low priority, runs after midnight ET). Also triggered on git push to OpenClaw-s-Brain when commit message contains significant keywords (fix, incident, proof, complete, approved). Generates 1-3 scripts per run depending on how much happened. Never generates more than 3 per run \u2014 quality over volume.\n\nBRAND VOICE embedded in agent prompt: Jacob Barkley \u2014 developer building a real AI trading system in public. Not a trading tips channel. Not a generic AI tutorial. A transparent engineering journal with a financial edge. Tone: direct, technically honest, occasionally self-deprecating about failures, never polished or corporate. The audience is developers and technically curious people, not retail traders looking for stock tips.\n\nFIRST SCRIPTS TO GENERATE (day 1 backlog already exists from 2026-03-09):\n1. Architecture explainer \u2014 the 16-agent pipeline, how it works, why it is built this way\n2. Governance loop incident post-mortem \u2014 the fake error that blocked 3 days of paper trades\n3. Basket quality fix \u2014 why XOM+CVX was a redundant bet and how we fixed the selector\n4. The paper vs. live governance calibration problem \u2014 why the system was too safe for its own good",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Private GitHub repo created (youtube-content). Channel name and brand identity decided \u2014 brand voice must be baked into agent prompt before first run. story-arc.md initialized with current journey state (day 1, paper trading, 16 agents live). Q-016 content trigger agent optional \u2014 this agent is the autonomous version of the same concept.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "youtube",
-        "content",
-        "story-agent",
-        "automation",
-        "brand",
-        "build-in-public",
-        "script-generation",
-        "monetization"
-      ]
-    },
-    {
       "id": "Q-017",
       "category": "project",
       "title": "YouTube video production pipeline \u2014 ElevenLabs \u2192 video \u2192 captions \u2192 thumbnail \u2192 upload",
@@ -151,26 +56,6 @@
         "automation",
         "monetization",
         "content"
-      ]
-    },
-    {
-      "id": "Q-016",
-      "category": "project",
-      "title": "YouTube content trigger agent \u2014 5 bullets in, publish-ready script out",
-      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience \u2014 this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity \u2014 the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing \u2014 the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident \u2192 root cause \u2192 fix \u2192 lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' \u2014 lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions \u2014 not generic descriptions\n- Honest about failures and limitations \u2014 this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley \u2014 developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "YouTube channel created with clear series concept. A few real incidents/sessions documented to use as first video content (today's governance loop incident + the basket quality improvements are both strong first videos). Decide on channel name/identity before building the agent so brand voice can be baked into the prompt.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "youtube",
-        "content",
-        "script-generation",
-        "brand",
-        "build-in-public",
-        "monetization",
-        "elevenlabs"
       ]
     },
     {
@@ -232,82 +117,6 @@
       ]
     },
     {
-      "id": "Q-012",
-      "category": "trading",
-      "title": "Harden options_regime contract for live options sleeve (Phase 2)",
-      "what": "Agent-06 and Agent-07 currently default to IV_ELEVATED when options_regime is missing or invalid (TICKET-018 conservative default). When the options sleeve activates in Phase 2, this default must become a hard fail with code MISSING_CONTRACT_INPUT: options_regime. Update both prompts: remove the IV_ELEVATED fallback, enforce hard fail on missing/invalid field, and remove the 'options sleeve inactive' conditional comment. Do not make this change before the options sleeve is live \u2014 silent defaulting is safer than hard failing in paper-only mode.",
-      "blocker": "Options sleeve not yet active. Do not harden until Phase 2 options trading is enabled.",
-      "blocker_type": "internal",
-      "prereq": "60-day paper gate passed. Options sleeve enabled in risk_policy.json. Agent-06 and Agent-07 prompts updated to v1.3+.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "agent-06",
-        "agent-07",
-        "options-regime",
-        "contract-hardening",
-        "phase-2",
-        "options-sleeve"
-      ]
-    },
-    {
-      "id": "Q-004",
-      "category": "trading",
-      "title": "Agent-04 Reddit Pipeline v2",
-      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer \u2014 not three independent data pulls.",
-      "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
-      "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
-      "blocker_type": "internal",
-      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps \u2014 script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
-      "priority": "low",
-      "ticket": "TICKET-021",
-      "tags": [
-        "agent-04",
-        "reddit",
-        "signals",
-        "intelligence",
-        "post-paper-gate"
-      ]
-    },
-    {
-      "id": "Q-005",
-      "category": "trading",
-      "title": "ApeWisdom integration \u2014 retail sentiment layer",
-      "what": "Integrate ApeWisdom free API into the intelligence layer. Returns ticker mention counts, rank, and 24h trend direction across WSB and finance subreddits. No auth required. Evaluate whether this replaces or supplements the full Reddit PRAW build in Q-004. Agent integration: feed mention rank and acceleration into Agent-04 or a new Agent-04b as a pre-processed retail sentiment signal. Must align with existing signal hierarchy \u2014 corroborating input only, never a standalone trade trigger. Cross-reference against Agent-01 (news), Agent-05 (technical), and options flow before any weight is assigned.",
-      "blocker": "60-day paper gate not yet reached.",
-      "blocker_type": "internal",
-      "prereq": "None \u2014 public API, no key required. Endpoint: https://apewisdom.io/api/v1.0/filter/all-stocks/",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "agent-04",
-        "apewisdom",
-        "reddit-sentiment",
-        "signals",
-        "intelligence",
-        "post-paper-gate"
-      ]
-    },
-    {
-      "id": "Q-006",
-      "category": "trading",
-      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
-      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score \u2014 not three independent signals. Must not override options flow, news, or technical analysis.",
-      "blocker": "60-day paper gate not yet reached.",
-      "blocker_type": "internal",
-      "prereq": "None \u2014 public API. Review Stocktwits API docs for rate limits before building.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "agent-04",
-        "stocktwits",
-        "sentiment",
-        "signals",
-        "intelligence",
-        "post-paper-gate"
-      ]
-    },
-    {
       "id": "Q-010",
       "category": "trading",
       "title": "Profit path \u2014 trading system product",
@@ -363,24 +172,6 @@
       ]
     },
     {
-      "id": "Q-008",
-      "category": "project",
-      "title": "YouTube / content + tools",
-      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell \u2014 audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity and branding.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "youtube",
-        "content",
-        "monetization",
-        "brand",
-        "audience"
-      ]
-    },
-    {
       "id": "Q-009",
       "category": "project",
       "title": "AI automation consulting / agency",
@@ -400,6 +191,237 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-023",
+      "category": "trading",
+      "title": "Trading pipeline Phase 5 \u2014 state machine, vocab cleanup, integration tests",
+      "what": "Pipeline state machine (state/pipeline_state.json) representing INIT \u2192 SESSION_READY \u2192 ARTIFACTS_READY \u2192 POLICY_READY \u2192 RISK_APPROVED \u2192 EXECUTION_ALLOWED \u2192 EXECUTED|HALTED. Status vocab enforcement across all prompts and Python scripts \u2014 no more EXECUTION_FAILED for gated non-execution, consistent SKIPPED_GATED and ERROR_INTERNAL. Integration test suite covering clean happy path, stale artifact contamination, invalid policy, upstream risk halt. See refactor plan Phase 5A-D.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phases 2-4 complete",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "state-machine",
+        "testing",
+        "vocab-cleanup",
+        "phase-5"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+    },
+    {
+      "id": "Q-022",
+      "category": "trading",
+      "title": "Trading pipeline Phase 4 \u2014 run-scoped artifact migration",
+      "what": "Migrate all stage artifact writes into state/runs/<date>/<run_id>/. Update Python scripts: order_submitter.py, broker_reconciler.py, preflight_auth.py, performance_aggregator.py, positions_fetcher.py, volatility_fetcher.py. Update all agent prompt output paths. Write dual (run-scoped primary + legacy root-state compatibility mirror) until migration complete. Add bin/run_paths.py helper with get_run_dir() and get_artifact_path(). See refactor plan Phase 4A-C.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 3 complete",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "run-scoped",
+        "artifact-paths",
+        "phase-4"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+    },
+    {
+      "id": "Q-021",
+      "category": "trading",
+      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
+      "what": "Create bin/gate_session.py (validates session_context.json), bin/gate_artifacts.py (validates artifact_manifest.json freshness for active run), bin/gate_policy.py (validates normalized_risk_policy.json). Four canonical gates replace scattered check logic across agents. Systems auditor simplification: remove PRECEDENCE_BREACH as standalone critical gate, health verdict only HALTs for unique unsafe conditions not already covered by gates 1-4. Remediation simplification: carry-forward warnings force REDUCE_ONLY not HALT; PRECEDENCE_BREACH from prior runs doesn't cascade as fresh CRITICAL each run. See refactor plan Phase 3A-F.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 2A/2B proven in live trading run",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "gate-scripts",
+        "systems-auditor",
+        "remediation",
+        "phase-3"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+    },
+    {
+      "id": "Q-020",
+      "category": "trading",
+      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
+      "what": "Update preflight check scripts to verify session_context.json and normalized_risk_policy.json exist and are fresh before the pipeline proceeds. Gates the morning run on bootstrap (07:30 cron) having completed successfully. Non-blocking for the morning run but hardens the safety contract. See refactor plan Phase 2C.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Phase 2A/2B proven in live trading run (tomorrow)",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "preflight",
+        "bootstrap",
+        "phase-2c"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+    },
+    {
+      "id": "Q-018",
+      "category": "project",
+      "title": "Persistent story agent \u2014 continuously generates YouTube scripts from the real journey",
+      "what": "A background agent that runs on a schedule (nightly or on git push to OpenClaw-s-Brain) and turns the real, ongoing story of building this system into a backlog of staged YouTube scripts. Jacob does not trigger this manually \u2014 it runs whether he thinks about content or not. By the time the recording setup is ready, there should be 30-50 scripts waiting.\n\nSOURCE MATERIAL (what the agent reads):\n- Git commits to OpenClaw-s-Brain (commit messages + diffs \u2014 this is the primary story log)\n- queue.json completed[] section (milestone log \u2014 what shipped and when)\n- trading-bot/state/ files (approvals, rejections, circuit breaker changes, new incidents)\n- runbooks/ (decisions documented, go/no-go assessments)\n- The running story-arc.md doc (see below) \u2014 what has been told, what is next\nDo NOT read raw Claude Code session JSONL files \u2014 they contain API keys and sensitive data.\n\nSTORY ARC DOCUMENT (story-arc.md in the private repo):\nThe agent maintains a living document that tracks: where we are in the journey (days since first paper trade, paper gate progress, key milestones), what has already been scripted (prevents repetition), what narrative threads are open (e.g., 'governance loop introduced ep 3, fix shown ep 5, proof shown ep 7'), and what the next 3 most interesting things to cover are. Every script generation updates this document. This is what makes the scripts feel like a series instead of isolated videos.\n\nSCRIPT OUTPUT FORMAT (one .md file per script):\n```\n---\nepisode: <N>\nseries: building-ai-trading-system\ntopic_tags: [governance, incident, agent-10]\nstatus: DRAFT\ngenerated_at: <ISO date>\nstory_arc_position: <where this fits in the narrative>\ntitle_variants:\n  - <option 1 \u2014 curiosity gap>\n  - <option 2 \u2014 direct/technical>\n  - <option 3 \u2014 result-first>\nthumbnail_brief: <text overlay + emotional direction + visual concept>\ndescription_seo: <first 150 chars must contain primary keyword, full description below>\ntags: [comma, separated, youtube, tags]\nchapters:\n  - 0:00 Hook\n  - 0:30 Context\n  ...\ncommunity_question: <specific question to end the video with>\n---\n\n[HOOK]\n... (first 30 seconds \u2014 most interesting thing first, never 'in this video')\n\n[CONTEXT]\n... (setup, what system is, why this session matters \u2014 assume smart viewer, no prior context)\n\n[CORE]\n... (real content with segment markers)\n[SCREEN:filename] for terminal/code captures\n[DIAGRAM:agent-topology] for architecture visuals\n[CARD:topic] where a future video should be linked\n[BROLL:description] for transition visuals\n[PATTERN_INTERRUPT] every 2-3 min \u2014 flag where pace/visual should shift\n\n[TAKEAWAY]\n... (honest assessment, what comes next in the arc)\n\n[OUTRO]\n... (value-first CTA, cross-link to related episode, community question)\n```\n\nYOUTUBE STRATEGY RULES baked into the agent prompt (not vague instructions \u2014 explicit rules):\n1. Hook rule: open with the most interesting single thing \u2014 the failure, the number, the discovery. Never open with context or setup.\n2. Title rule: curiosity gap + specificity. 'The fake error message my AI generated about itself' > 'Bug fix video'. Numbers always help.\n3. CTA rule: first subscribe ask comes AFTER the first real value delivery, not at the start. Viewers who get value first are 3x more likely to subscribe.\n4. Chapter rule: every script gets timestamps auto-generated from section markers. YouTube actively pushes chaptered videos.\n5. Cross-link rule: plant [CARD:topic] markers where related content should be referenced. Use natural language: 'I go much deeper on X in episode N \u2014 link in the description.' Card library builds as scripts accumulate.\n6. Pattern interrupt rule: flag [PATTERN_INTERRUPT] every 2-3 minutes. Production team changes visual or cuts to screen recording to reset attention.\n7. SEO rule: description first 150 chars contain primary keyword \u2014 that is what appears in search results. Write this line first.\n8. Community rule: every video ends with one specific, answerable question. Not 'let me know what you think.' Something like: 'What would you have done differently when the remediation loop first fired on day 1?'\n9. Series arc rule: every script references at least one prior episode and teases at least one future episode. Builds watch time across the channel.\n10. Honesty rule: this is the differentiator. The script must reference real file names, real error codes, real decisions. Generic descriptions get cut. Vague language gets cut.\n\nREPO STRUCTURE (private GitHub repo: youtube-content):\n```\nscripts/\n  chronological/          # 2026-03-09-governance-loop-incident.md\n  by-topic/\n    trading-pipeline/\n    incidents-post-mortems/\n    architecture/\n    build-log/\n  series/\n    building-ai-trading-system/  # episode sequence, numbered\nassets/\n  thumbnail-briefs/       # one per script\n  diagram-specs/          # mermaid specs auto-generated\nmeta/\n  story-arc.md            # living document, updated each run\n  keyword-research.md     # YouTube search term targets, updated monthly\n  content-calendar.md     # what is ready to produce vs. staged\n```\n\nRUN SCHEDULE: Nightly cron via OpenClaw (low priority, runs after midnight ET). Also triggered on git push to OpenClaw-s-Brain when commit message contains significant keywords (fix, incident, proof, complete, approved). Generates 1-3 scripts per run depending on how much happened. Never generates more than 3 per run \u2014 quality over volume.\n\nBRAND VOICE embedded in agent prompt: Jacob Barkley \u2014 developer building a real AI trading system in public. Not a trading tips channel. Not a generic AI tutorial. A transparent engineering journal with a financial edge. Tone: direct, technically honest, occasionally self-deprecating about failures, never polished or corporate. The audience is developers and technically curious people, not retail traders looking for stock tips.\n\nFIRST SCRIPTS TO GENERATE (day 1 backlog already exists from 2026-03-09):\n1. Architecture explainer \u2014 the 16-agent pipeline, how it works, why it is built this way\n2. Governance loop incident post-mortem \u2014 the fake error that blocked 3 days of paper trades\n3. Basket quality fix \u2014 why XOM+CVX was a redundant bet and how we fixed the selector\n4. The paper vs. live governance calibration problem \u2014 why the system was too safe for its own good",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Private GitHub repo created (youtube-content). Channel name and brand identity decided \u2014 brand voice must be baked into agent prompt before first run. story-arc.md initialized with current journey state (day 1, paper trading, 16 agents live). Q-016 content trigger agent optional \u2014 this agent is the autonomous version of the same concept.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "youtube",
+        "content",
+        "story-agent",
+        "automation",
+        "brand",
+        "build-in-public",
+        "script-generation",
+        "monetization"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 done, nightly story agent cron running at 02:00 ET"
+    },
+    {
+      "id": "Q-016",
+      "category": "project",
+      "title": "YouTube content trigger agent \u2014 5 bullets in, publish-ready script out",
+      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience \u2014 this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity \u2014 the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing \u2014 the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident \u2192 root cause \u2192 fix \u2192 lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' \u2014 lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions \u2014 not generic descriptions\n- Honest about failures and limitations \u2014 this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley \u2014 developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "YouTube channel created with clear series concept. A few real incidents/sessions documented to use as first video content (today's governance loop incident + the basket quality improvements are both strong first videos). Decide on channel name/identity before building the agent so brand voice can be baked into the prompt.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "youtube",
+        "content",
+        "script-generation",
+        "brand",
+        "build-in-public",
+        "monetization",
+        "elevenlabs"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 superseded by Q-018 (autonomous story agent)"
+    },
+    {
+      "id": "Q-012",
+      "category": "trading",
+      "title": "Harden options_regime contract for live options sleeve (Phase 2)",
+      "what": "Agent-06 and Agent-07 currently default to IV_ELEVATED when options_regime is missing or invalid (TICKET-018 conservative default). When the options sleeve activates in Phase 2, this default must become a hard fail with code MISSING_CONTRACT_INPUT: options_regime. Update both prompts: remove the IV_ELEVATED fallback, enforce hard fail on missing/invalid field, and remove the 'options sleeve inactive' conditional comment. Do not make this change before the options sleeve is live \u2014 silent defaulting is safer than hard failing in paper-only mode.",
+      "blocker": "Options sleeve not yet active. Do not harden until Phase 2 options trading is enabled.",
+      "blocker_type": "internal",
+      "prereq": "60-day paper gate passed. Options sleeve enabled in risk_policy.json. Agent-06 and Agent-07 prompts updated to v1.3+.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "options-regime",
+        "contract-hardening",
+        "phase-2",
+        "options-sleeve"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 obsolete, BPS replaced wheel strategy entirely"
+    },
+    {
+      "id": "Q-004",
+      "category": "trading",
+      "title": "Agent-04 Reddit Pipeline v2",
+      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer \u2014 not three independent data pulls.",
+      "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
+      "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
+      "blocker_type": "internal",
+      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps \u2014 script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
+      "priority": "low",
+      "ticket": "TICKET-021",
+      "tags": [
+        "agent-04",
+        "reddit",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 won't do, Reddit API policy too restrictive"
+    },
+    {
+      "id": "Q-005",
+      "category": "trading",
+      "title": "ApeWisdom integration \u2014 retail sentiment layer",
+      "what": "Integrate ApeWisdom free API into the intelligence layer. Returns ticker mention counts, rank, and 24h trend direction across WSB and finance subreddits. No auth required. Evaluate whether this replaces or supplements the full Reddit PRAW build in Q-004. Agent integration: feed mention rank and acceleration into Agent-04 or a new Agent-04b as a pre-processed retail sentiment signal. Must align with existing signal hierarchy \u2014 corroborating input only, never a standalone trade trigger. Cross-reference against Agent-01 (news), Agent-05 (technical), and options flow before any weight is assigned.",
+      "blocker": "60-day paper gate not yet reached.",
+      "blocker_type": "internal",
+      "prereq": "None \u2014 public API, no key required. Endpoint: https://apewisdom.io/api/v1.0/filter/all-stocks/",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "apewisdom",
+        "reddit-sentiment",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 ApeWisdom integrated into OpenClaw pipeline"
+    },
+    {
+      "id": "Q-006",
+      "category": "trading",
+      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
+      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score \u2014 not three independent signals. Must not override options flow, news, or technical analysis.",
+      "blocker": "60-day paper gate not yet reached.",
+      "blocker_type": "internal",
+      "prereq": "None \u2014 public API. Review Stocktwits API docs for rate limits before building.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "stocktwits",
+        "sentiment",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 Stocktwits integrated into OpenClaw pipeline"
+    },
+    {
+      "id": "Q-008",
+      "category": "project",
+      "title": "YouTube / content + tools",
+      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell \u2014 audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity and branding.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "youtube",
+        "content",
+        "monetization",
+        "brand",
+        "audience"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 superseded by Q-017 and Q-018 (specific YouTube items)"
+    },
     {
       "id": "W-005",
       "category": "trading",
