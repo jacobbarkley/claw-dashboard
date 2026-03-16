@@ -1655,22 +1655,30 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         </section>
 
         {/* Options — Bull Put Spreads */}
-        {data.bps && (
-          <>
-            <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <span className="cb-label">Options · Bull Put Spreads</span>
-                {data.bps.as_of && (
-                  <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-                    {data.bps.as_of.slice(0, 10)}
-                  </span>
-                )}
-              </div>
-              <BpsPanel bps={data.bps} />
-            </section>
-          </>
-        )}
+        <>
+          <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <span className="cb-label">Options · Bull Put Spreads</span>
+              {data.bps?.as_of && (
+                <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                  {data.bps.as_of.slice(0, 10)}
+                </span>
+              )}
+            </div>
+            {data.bps
+              ? <BpsPanel bps={data.bps} />
+              : (
+                <div className="py-6 text-center space-y-1">
+                  <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>BPS module initializing</div>
+                  <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+                    Screener runs weekday mornings at 08:30 ET
+                  </div>
+                </div>
+              )
+            }
+          </section>
+        </>
 
       </div>
     </div>

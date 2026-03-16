@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-16T00:34:24.848545+00:00",
+  "generated_at": "2026-03-16T00:42:58.797431+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -411,9 +411,145 @@
     }
   ],
   "watchlist": {
-    "items": [],
-    "as_of": "2026-03-13",
-    "source": "strategy_spec"
+    "items": [
+      {
+        "symbol": "ORCL",
+        "trigger": "Price pullback or breakout setup \u2014 score 9.0",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 64, Rev +22%",
+        "in_position": true
+      },
+      {
+        "symbol": "BX",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 41, Rev +51%",
+        "in_position": false
+      },
+      {
+        "symbol": "DASH",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 47, Rev +38%",
+        "in_position": false
+      },
+      {
+        "symbol": "WDAY",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 54, Rev +14%",
+        "in_position": false
+      },
+      {
+        "symbol": "COF",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.8",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 41, Rev +52%",
+        "in_position": false
+      },
+      {
+        "symbol": "KKR",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.8",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 41, Rev +76%",
+        "in_position": false
+      },
+      {
+        "symbol": "DTE",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.7",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 62, Rev +29%",
+        "in_position": false
+      },
+      {
+        "symbol": "TTD",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.7",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 63, Rev +14%",
+        "in_position": false
+      },
+      {
+        "symbol": "ADBE",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 52, Rev +12%",
+        "in_position": true
+      },
+      {
+        "symbol": "GDDY",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 43, Rev +7%",
+        "in_position": false
+      },
+      {
+        "symbol": "PGR",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 52, Rev +12%",
+        "in_position": false
+      },
+      {
+        "symbol": "SMCI",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 50, Rev +123%",
+        "in_position": false
+      },
+      {
+        "symbol": "GEN",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 38, Rev +26%",
+        "in_position": false
+      },
+      {
+        "symbol": "PTC",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 60, Rev +21%",
+        "in_position": false
+      },
+      {
+        "symbol": "AON",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 55, Rev +4%",
+        "in_position": false
+      }
+    ],
+    "as_of": "2026-03-15",
+    "source": "weekly"
   },
   "exit_candidates": [
     {
