@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-03-16T03:12:32.377295+00:00",
+  "generated_at": "2026-03-16T03:18:47.130129+00:00",
   "summary": {
     "total": 10,
     "blockers": 0,
-    "active": 4,
-    "done": 6
+    "active": 3,
+    "done": 7
   },
   "phases": [
     {
@@ -32,8 +32,8 @@
       "phase": 6,
       "label": "Phase 6",
       "total": 3,
-      "done": 0,
-      "pct": 0
+      "done": 1,
+      "pct": 33
     }
   ],
   "by_status": {
@@ -186,28 +186,6 @@
         "file": "TICKET-021.md"
       },
       {
-        "ticket_id": "TICKET-023",
-        "phase": 6,
-        "priority": "P1",
-        "severity": "SEV2",
-        "status": "READY",
-        "created_at": "2026-03-15T19:40:00-04:00",
-        "last_updated": "2026-03-15T19:40:00-04:00",
-        "timebox_minutes": 600,
-        "dependencies": [],
-        "tags": [
-          "options",
-          "bull-put-spread",
-          "new-strategy",
-          "agent-20",
-          "agent-21",
-          "screener",
-          "open-universe"
-        ],
-        "title": "Bull Put Spread Module \u2014 Replace Active Options Strategy (Wheel \u2192 BPS)",
-        "file": "TICKET-023.md"
-      },
-      {
         "ticket_id": "TICKET-024",
         "phase": 6,
         "priority": "P3",
@@ -254,6 +232,30 @@
         ],
         "title": "Crypto Day Trading Module \u2014 BTC 5-min Candle Quant Strategy",
         "file": "TICKET-022.md"
+      }
+    ],
+    "DONE": [
+      {
+        "ticket_id": "TICKET-023",
+        "phase": 6,
+        "priority": "P1",
+        "severity": "SEV2",
+        "status": "DONE",
+        "created_at": "2026-03-15T19:40:00-04:00",
+        "last_updated": "2026-03-15T23:18:00-04:00",
+        "timebox_minutes": 600,
+        "dependencies": [],
+        "tags": [
+          "options",
+          "bull-put-spread",
+          "new-strategy",
+          "agent-20",
+          "agent-21",
+          "screener",
+          "open-universe"
+        ],
+        "title": "Bull Put Spread Module \u2014 Replace Active Options Strategy (Wheel \u2192 BPS)",
+        "file": "TICKET-023.md"
       }
     ]
   },
@@ -431,9 +433,9 @@
       "phase": 6,
       "priority": "P1",
       "severity": "SEV2",
-      "status": "READY",
+      "status": "DONE",
       "created_at": "2026-03-15T19:40:00-04:00",
-      "last_updated": "2026-03-15T19:40:00-04:00",
+      "last_updated": "2026-03-15T23:18:00-04:00",
       "timebox_minutes": 600,
       "dependencies": [],
       "tags": [
