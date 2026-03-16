@@ -2,6 +2,24 @@
   "generated_at": "2026-03-14T00:09:25.108609-04:00",
   "queued": [
     {
+      "id": "Q-024",
+      "category": "dashboard",
+      "title": "Systems tab \u2014 strategy toggles, performance reports, parameter history",
+      "what": "New first-class tab in the Vercel trading app. Strategy on/off toggles (equity execution, options wheel, options BPS) with confirmation UX. Weekly BPS performance report viewer (rendered from bps_performance_report_YYYY-MM-DD.md). Parameter change history timeline. Sector/symbol win rate heatmap. Tunables tab may merge into this. Premium design consistent with art-direction pass. Build after BPS has 1-2 weeks of real data.",
+      "blocker": "BPS module needs 1-2 weeks of data first",
+      "blocker_type": "data",
+      "prereq": "BPS module running in production (crons active, weekly reports generating)",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "dashboard",
+        "ux",
+        "ops-console",
+        "bps",
+        "strategy-management"
+      ]
+    },
+    {
       "id": "Q-023",
       "category": "trading",
       "title": "Trading pipeline Phase 5 \u2014 state machine, vocab cleanup, integration tests",
