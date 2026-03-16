@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-14T04:52:28.285262+00:00",
+  "generated_at": "2026-03-16T00:34:24.848545+00:00",
   "as_of_date": "2026-03-14",
   "account": {
     "equity": 99232.01,
@@ -410,7 +410,11 @@
       "profit_loss": -218.46
     }
   ],
-  "watchlist": [],
+  "watchlist": {
+    "items": [],
+    "as_of": "2026-03-13",
+    "source": "strategy_spec"
+  },
   "exit_candidates": [
     {
       "symbol": "ADBE",
@@ -533,5 +537,6 @@
       "filtered_error": 2
     },
     "as_of": "2026-03-14T00:08:38.132061-04:00"
-  }
+  },
+  "bps": null
 }

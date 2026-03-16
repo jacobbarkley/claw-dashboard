@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 WORKSPACE        = Path.home() / ".openclaw/workspace/trading-bot"
 OPTIONS_WORKSPACE = WORKSPACE / "options"
+BPS_WORKSPACE    = OPTIONS_WORKSPACE / "bps"
 OUTPUT           = Path(__file__).parent.parent / "data/trading.json"
 
 
@@ -130,9 +131,36 @@ def build_equity_curve(snapshot: dict, daily_series: list) -> list:
     return curve
 
 
-def build_watchlist(strategy: dict, positions: list) -> list:
-    """Items in strategy_spec that are NOT currently held."""
+def build_watchlist(strategy: dict, positions: list, weekly_watchlist: dict) -> dict:
+    """
+    Watchlist with staleness metadata.
+    Primary: weekly_watchlist.json (nightly generator, always populated).
+    Fallback: strategy_spec items not currently held (weekday mornings only).
+    """
     held = {p["symbol"] for p in positions}
+
+    # Primary: persistent weekly watchlist (survives weekends + nights)
+    if weekly_watchlist.get("setups"):
+        items = []
+        for item in weekly_watchlist["setups"]:
+            sym = item.get("symbol")
+            if sym:
+                items.append({
+                    "symbol":  sym,
+                    "trigger": item.get("entry_trigger", ""),
+                    "stop":    item.get("stop_loss", ""),
+                    "target":  item.get("target", ""),
+                    "modifier":item.get("conviction", ""),
+                    "note":    item.get("note", ""),
+                    "in_position": sym in held,
+                })
+        return {
+            "items":    items,
+            "as_of":    weekly_watchlist.get("generated_at", "")[:10],
+            "source":   "weekly",
+        }
+
+    # Fallback: today's strategy_spec (weekday mornings only)
     items = (strategy.get("payload") or {}).get("items", [])
     watchlist = []
     for item in items:
@@ -145,8 +173,14 @@ def build_watchlist(strategy: dict, positions: list) -> list:
                 "target":  item.get("primary_target", ""),
                 "modifier":item.get("position_size_modifier", ""),
                 "note":    item.get("fragility_note", ""),
+                "in_position": False,
             })
-    return watchlist
+    strategy_date = strategy.get("pipeline_date", "") or ""
+    return {
+        "items":  watchlist,
+        "as_of":  strategy_date[:10] if strategy_date else None,
+        "source": "strategy_spec",
+    }
 
 
 def build_exit_candidates(eod: dict, positions: list) -> list:
@@ -285,6 +319,96 @@ def build_options(candidates_raw: dict, screened_raw: dict, strategy_raw: dict,
     }
 
 
+def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list) -> dict | None:
+    """Build BPS module summary. Returns None if no BPS data exists."""
+    if not pos_status and not screened and not strategy:
+        return None
+
+    # Active open spread positions
+    positions = []
+    for p in pos_status.get("positions", []):
+        positions.append({
+            "spread_id":          p.get("spread_id"),
+            "symbol":             p.get("symbol"),
+            "expiry":             p.get("expiry"),
+            "short_strike":       safe_float(p.get("short_strike")),
+            "long_strike":        safe_float(p.get("long_strike")),
+            "width":              safe_float(p.get("width")),
+            "contracts":          p.get("contracts", 1),
+            "collateral":         safe_float(p.get("collateral")),
+            "net_credit":         safe_float(p.get("net_credit_per_share")),
+            "max_profit":         safe_float(p.get("max_profit")),
+            "max_loss":           safe_float(p.get("max_loss")),
+            "current_pl":         safe_float(p.get("current_pl")),
+            "profit_pct_of_max":  safe_float(p.get("profit_pct_of_max")),
+            "dte":                p.get("dte"),
+            "exit_reasons":       p.get("exit_reasons", []),
+        })
+
+    # Today's targets: approved screened candidates
+    targets = []
+    for c in screened.get("candidates", []):
+        if c.get("agent_20_decision") not in ("APPROVE", "CONDITIONAL"):
+            continue
+        targets.append({
+            "symbol":             c.get("symbol"),
+            "price":              safe_float(c.get("price")),
+            "sector":             c.get("sector", ""),
+            "expiry":             c.get("expiry"),
+            "dte":                c.get("dte"),
+            "short_strike":       safe_float(c.get("short_strike")),
+            "long_strike":        safe_float(c.get("long_strike")),
+            "spread_width":       safe_float(c.get("spread_width")),
+            "net_credit":         safe_float(c.get("net_credit")),
+            "credit_width_ratio": safe_float(c.get("credit_width_ratio")),
+            "annualized_yield_pct": safe_float(c.get("annualized_yield_pct")),
+            "max_loss_per_contract": safe_float(c.get("max_loss_per_contract")),
+            "iv_rank_proxy":      safe_float(c.get("iv_rank_proxy")),
+            "decision":           c.get("agent_20_decision"),
+            "rationale":          c.get("agent_20_rationale", ""),
+            "selected":           False,  # will be updated below
+        })
+
+    # Mark selected targets from strategy
+    selected_syms = {p.get("symbol") for p in strategy.get("positions", [])}
+    for t in targets:
+        if t["symbol"] in selected_syms:
+            t["selected"] = True
+
+    # Recent execution entries (last 5 from flattened log)
+    recent_fills = []
+    for entry in exec_log[-5:]:
+        for r in entry.get("results", []):
+            recent_fills.append({
+                "symbol":   r.get("symbol", r.get("spread_id", "")),
+                "action":   r.get("action"),
+                "status":   r.get("status"),
+                "expiry":   r.get("expiry"),
+                "short_strike": safe_float(r.get("short_strike")),
+                "long_strike":  safe_float(r.get("long_strike")),
+                "contracts": r.get("contracts"),
+                "limit_credit": safe_float(r.get("limit_credit")),
+                "exit_reasons": r.get("exit_reasons", []),
+            })
+
+    return {
+        "as_of":                 pos_status.get("generated_at", screened.get("generated_at")),
+        "account_equity":        safe_float(pos_status.get("account_equity")),
+        "available_capital":     safe_float(pos_status.get("available_capital")),
+        "free_capital":          safe_float(pos_status.get("free_capital")),
+        "current_open_positions": pos_status.get("current_open_positions", 0),
+        "new_positions_possible": pos_status.get("new_positions_possible", 0),
+        "max_active_positions":  10,
+        "exits_needed":          pos_status.get("exits_needed", []),
+        "positions":             positions,
+        "targets":               targets,
+        "recent_fills":          recent_fills,
+        "screener_status":       screened.get("status"),
+        "scanned":               screened.get("scanned"),
+        "approved":              screened.get("approved"),
+    }
+
+
 def build_pipeline_status(audit: dict, session: dict) -> dict:
     payload = audit.get("payload", {})
     return {
@@ -311,12 +435,27 @@ def main():
     audit    = load(WORKSPACE / "state/daily_audit_state.json")
     session  = load(WORKSPACE / "state/session_context.json")
 
-    # Options module (gracefully absent on weekends / before first run)
+    # Wheel/CSP options (disabled but preserved — gracefully absent)
     opt_candidates = load(OPTIONS_WORKSPACE / "state/options_candidates.json")
     opt_screened   = load(OPTIONS_WORKSPACE / "state/options_screened.json")
     opt_strategy   = load(OPTIONS_WORKSPACE / "state/options_strategy.json")
     opt_gate       = load(OPTIONS_WORKSPACE / "state/gate_options_risk.json")
     opt_exec       = load(OPTIONS_WORKSPACE / "state/options_execution_log.json")
+
+    # BPS module (gracefully absent before first run)
+    bps_pos_status = load(BPS_WORKSPACE / "state/bps_position_status.json")
+    bps_screened   = load(BPS_WORKSPACE / "state/bps_screened.json")
+    bps_strategy   = load(BPS_WORKSPACE / "state/bps_strategy.json")
+    bps_exec_raw   = BPS_WORKSPACE / "state/bps_execution_log.json"
+    bps_exec_log: list = []
+    try:
+        raw = json.loads(bps_exec_raw.read_text())
+        bps_exec_log = raw if isinstance(raw, list) else [raw]
+    except Exception:
+        pass
+
+    # Weekly persistent watchlist (nightly generator)
+    weekly_watchlist = load(WORKSPACE / "state/weekly_watchlist.json")
 
     perf_dir = WORKSPACE / "data/daily-performance"
 
@@ -324,12 +463,13 @@ def main():
     account     = build_account(positions, snapshot)
     daily       = build_daily_series(perf_dir)
     equity      = build_equity_curve(snapshot, daily)
-    watchlist   = build_watchlist(strategy, positions)
+    watchlist   = build_watchlist(strategy, positions, weekly_watchlist)
     exits       = build_exit_candidates(eod, positions)
     tunables    = build_tunables(policy)
     perf_kpis   = kpis.get("performance_kpis", {})
     pipeline    = build_pipeline_status(audit, session)
     options     = build_options(opt_candidates, opt_screened, opt_strategy, opt_gate, opt_exec)
+    bps         = build_bps(bps_pos_status, bps_screened, bps_strategy, bps_exec_log)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -356,12 +496,15 @@ def main():
         "exit_candidates":   exits,
         "tunables":          tunables,
         "options":           options,
+        "bps":               bps,
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, indent=2, default=str))
+    n_wl  = len(watchlist.get("items", []))
+    n_bps = len(bps.get("positions", [])) if bps else 0
     n_opts = len(options.get("candidates", []))
-    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {len(watchlist)} watchlist, {len(exits)} exit candidates, {n_opts} options candidates")
+    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {n_wl} watchlist, {len(exits)} exits, {n_opts} wheel candidates, {n_bps} BPS positions")
 
 
 if __name__ == "__main__":

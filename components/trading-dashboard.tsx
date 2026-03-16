@@ -41,6 +41,73 @@ interface WatchlistItem {
   target: string
   modifier: string
   note: string
+  in_position?: boolean
+}
+
+interface BpsPosition {
+  spread_id: string | null
+  symbol: string
+  expiry: string
+  short_strike: number
+  long_strike: number
+  width: number
+  contracts: number
+  collateral: number
+  net_credit: number
+  max_profit: number
+  max_loss: number
+  current_pl: number | null
+  profit_pct_of_max: number | null
+  dte: number
+  exit_reasons: string[]
+}
+
+interface BpsTarget {
+  symbol: string
+  price: number | null
+  sector: string
+  expiry: string | null
+  dte: number | null
+  short_strike: number | null
+  long_strike: number | null
+  spread_width: number | null
+  net_credit: number | null
+  credit_width_ratio: number | null
+  annualized_yield_pct: number | null
+  max_loss_per_contract: number | null
+  iv_rank_proxy: number | null
+  decision: "APPROVE" | "CONDITIONAL"
+  rationale: string
+  selected: boolean
+}
+
+interface BpsFill {
+  symbol: string
+  action: string | null
+  status: string | null
+  expiry: string | null
+  short_strike: number | null
+  long_strike: number | null
+  contracts: number | null
+  limit_credit: number | null
+  exit_reasons: string[]
+}
+
+interface BpsData {
+  as_of: string | null
+  account_equity: number | null
+  available_capital: number | null
+  free_capital: number | null
+  current_open_positions: number
+  new_positions_possible: number
+  max_active_positions: number
+  exits_needed: string[]
+  positions: BpsPosition[]
+  targets: BpsTarget[]
+  recent_fills: BpsFill[]
+  screener_status: string | null
+  scanned: number | null
+  approved: number | null
 }
 
 interface Tunables {
@@ -170,9 +237,10 @@ interface TradingData {
   }
   daily_performance: Array<{ date: string; net_pnl: number; trades: number; winners: number; losers: number }>
   equity_curve: Array<{ date: string; equity: number; profit_loss?: number | null }>
-  watchlist: WatchlistItem[]
+  watchlist: { items: WatchlistItem[]; as_of: string | null; source: string }
   exit_candidates: ExitCandidate[]
   tunables: Tunables
+  bps?: BpsData | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -854,10 +922,25 @@ function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; pos
 }
 
 // ─── Qualified Setups (Watchlist) ──────────────────────────────────────────────
-function QualifiedSetups({ items }: { items: WatchlistItem[] }) {
+function QualifiedSetups({
+  items,
+  as_of,
+  source,
+}: {
+  items: WatchlistItem[]
+  as_of: string | null
+  source: string
+}) {
   const [expanded, setExpanded] = useState<string | null>(null)
   if (!items.length) return (
-    <div className="text-sm py-4 text-center" style={{ color: "var(--cb-text-tertiary)" }}>No qualified setups</div>
+    <div className="py-6 text-center space-y-1">
+      <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+        No qualified setups
+      </div>
+      <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+        Nightly watchlist generator runs at 11 PM ET
+      </div>
+    </div>
   )
   return (
     <div className="space-y-2">
@@ -868,12 +951,17 @@ function QualifiedSetups({ items }: { items: WatchlistItem[] }) {
             className="w-full flex items-center justify-between px-3 py-2.5 text-left"
           >
             <div className="flex items-center gap-3">
-              <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{item.symbol}</span>
+              <span className={`font-mono font-semibold ${item.in_position ? "text-[var(--cb-text-tertiary)]" : "text-[var(--cb-text-primary)]"}`}>
+                {item.symbol}
+              </span>
+              {item.in_position && (
+                <span style={{ fontSize: 9, color: "var(--cb-green)", fontWeight: 500, letterSpacing: "0.04em" }}>HELD</span>
+              )}
               {item.modifier === "FULL" ? (
                 <span style={{ fontSize: 10, color: "var(--cb-brand)", fontWeight: 500 }}>{item.modifier}</span>
-              ) : (
+              ) : item.modifier ? (
                 <span style={{ fontSize: 10, color: "var(--cb-amber)", fontWeight: 500 }}>{item.modifier}</span>
-              )}
+              ) : null}
             </div>
             <Eye className="w-3.5 h-3.5" style={{ color: "var(--cb-brand-soft)", opacity: 0.7 }} />
           </button>
@@ -882,18 +970,24 @@ function QualifiedSetups({ items }: { items: WatchlistItem[] }) {
               className="px-3 pb-3 space-y-1.5 text-xs pt-2"
               style={{ borderTop: "1px solid var(--cb-border-dim)" }}
             >
-              <div>
-                <span style={{ color: "var(--cb-text-tertiary)" }}>Entry: </span>
-                <span style={{ color: "var(--cb-text-secondary)" }}>{item.trigger}</span>
-              </div>
-              <div>
-                <span style={{ color: "var(--cb-text-tertiary)" }}>Stop: </span>
-                <span style={{ color: "var(--cb-text-secondary)" }}>{item.stop}</span>
-              </div>
-              <div>
-                <span style={{ color: "var(--cb-text-tertiary)" }}>Target: </span>
-                <span style={{ color: "var(--cb-text-secondary)" }}>{item.target}</span>
-              </div>
+              {item.trigger && (
+                <div>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>Entry: </span>
+                  <span style={{ color: "var(--cb-text-secondary)" }}>{item.trigger}</span>
+                </div>
+              )}
+              {item.stop && (
+                <div>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>Stop: </span>
+                  <span style={{ color: "var(--cb-text-secondary)" }}>{item.stop}</span>
+                </div>
+              )}
+              {item.target && (
+                <div>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>Target: </span>
+                  <span style={{ color: "var(--cb-text-secondary)" }}>{item.target}</span>
+                </div>
+              )}
               {item.note && (
                 <div>
                   <span style={{ color: "var(--cb-text-tertiary)" }}>Note: </span>
@@ -904,11 +998,232 @@ function QualifiedSetups({ items }: { items: WatchlistItem[] }) {
           )}
         </div>
       ))}
+      {as_of && (
+        <div className="pt-1 text-[10px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+          {source === "weekly" ? "Weekly watchlist" : "Strategy spec"} · as of {as_of}
+        </div>
+      )}
     </div>
   )
 }
 
-// ─── Premium Yield (Options) ───────────────────────────────────────────────────
+// ─── BPS Panel ────────────────────────────────────────────────────────────────
+function BpsSpreadRow({ p }: { p: BpsPosition }) {
+  const [open, setOpen] = useState(false)
+  const plColor = p.current_pl == null
+    ? "var(--cb-text-tertiary)"
+    : p.current_pl >= 0 ? "var(--cb-green)" : "var(--cb-steel)"
+  const profitPct = p.profit_pct_of_max
+
+  return (
+    <div className="cb-card-t2 cursor-pointer hover:opacity-90 transition-opacity" onClick={() => setOpen(o => !o)}>
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{p.symbol}</span>
+            <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace" }}>BPS</span>
+            <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)", fontFamily: "monospace" }}>
+              ${p.short_strike}/${p.long_strike}P
+            </span>
+            {p.exit_reasons.length > 0 && p.exit_reasons.map((r, i) => (
+              <span key={i} style={{ fontSize: 9, color: "var(--cb-amber)", fontWeight: 500 }}>{r}</span>
+            ))}
+          </div>
+          <div className="mt-0.5" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+            exp {p.expiry} · {p.dte}d · {p.contracts} contract{p.contracts !== 1 ? "s" : ""} · width ${p.width}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-base font-medium cb-number" style={{ color: plColor }}>
+            {p.current_pl != null ? `${p.current_pl >= 0 ? "+" : ""}$${p.current_pl.toFixed(2)}` : "—"}
+          </div>
+          <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+            {profitPct != null ? `${profitPct.toFixed(0)}% of max` : `max $${p.max_profit.toFixed(2)}`}
+          </div>
+        </div>
+      </div>
+      {open && (
+        <div
+          className="px-4 pb-3 pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs"
+          style={{ borderTop: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}
+        >
+          <div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Net Credit</div>
+            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.net_credit.toFixed(2)}/sh</div>
+          </div>
+          <div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Collateral</div>
+            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.collateral.toLocaleString()}</div>
+          </div>
+          <div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Max Profit</div>
+            <div className="font-medium" style={{ color: "var(--cb-green)" }}>${p.max_profit.toFixed(2)}</div>
+          </div>
+          <div>
+            <div style={{ color: "var(--cb-text-tertiary)" }}>Max Loss</div>
+            <div className="font-medium" style={{ color: "var(--cb-steel)" }}>${p.max_loss.toFixed(2)}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BpsTargetRow({ t }: { t: BpsTarget }) {
+  const [open, setOpen] = useState(false)
+  const decisionColor = t.decision === "APPROVE" ? "var(--cb-green)" : "var(--cb-amber)"
+  const ratioColor =
+    (t.credit_width_ratio ?? 0) >= 0.45 ? "var(--cb-green)"
+    : (t.credit_width_ratio ?? 0) >= 0.40 ? "var(--cb-amber)"
+    : "var(--cb-text-secondary)"
+
+  return (
+    <div className="cb-card-t2 cursor-pointer hover:opacity-90 transition-opacity" onClick={() => setOpen(o => !o)}>
+      <div className="px-4 py-3 flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{t.symbol}</span>
+            <span style={{ fontSize: 10, color: decisionColor, fontWeight: 600 }}>{t.decision}</span>
+            {t.selected && (
+              <span style={{ fontSize: 9, color: "var(--cb-brand)", fontWeight: 500, letterSpacing: "0.04em" }}>SELECTED</span>
+            )}
+            {t.sector && (
+              <span style={{ fontSize: 9, color: "var(--cb-text-tertiary)" }}>{t.sector}</span>
+            )}
+          </div>
+          <div className="mt-0.5" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+            {t.short_strike != null && t.long_strike != null
+              ? `$${t.short_strike}/$${t.long_strike}P · `
+              : ""}
+            {t.expiry ?? "—"} · {t.dte != null ? `${t.dte}d` : "—"}
+          </div>
+        </div>
+        <div className="text-right">
+          {t.credit_width_ratio != null ? (
+            <>
+              <div className="text-base font-medium cb-number" style={{ color: ratioColor }}>
+                {(t.credit_width_ratio * 100).toFixed(0)}%
+                <span className="text-xs ml-1 font-normal" style={{ color: "var(--cb-text-tertiary)" }}>c/w</span>
+              </div>
+              <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+                {t.net_credit != null ? `$${t.net_credit.toFixed(2)} credit` : ""}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontSize: 12, color: "var(--cb-text-tertiary)" }}>pending</div>
+          )}
+        </div>
+      </div>
+      {open && t.rationale && (
+        <div
+          className="px-4 pb-3 pt-2 text-xs leading-snug"
+          style={{ borderTop: "1px solid var(--cb-border-dim)", color: "var(--cb-text-secondary)" }}
+        >
+          <span style={{ color: "var(--cb-text-tertiary)" }}>Agent-20: </span>
+          {t.rationale}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BpsPanel({ bps }: { bps: BpsData }) {
+  const hasPositions = bps.positions.length > 0
+  const hasTargets = bps.targets.length > 0
+  const hasFills = bps.recent_fills.length > 0
+
+  return (
+    <div className="space-y-5">
+      {/* Capacity row */}
+      <div className="cb-card-t3 px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div>
+          <div className="cb-label mb-1">Active Spreads</div>
+          <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-text-primary)" }}>
+            {bps.current_open_positions}
+            <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}> / {bps.max_active_positions}</span>
+          </div>
+        </div>
+        <div>
+          <div className="cb-label mb-1">Slots Available</div>
+          <div className="text-sm font-medium cb-number" style={{ color: bps.new_positions_possible > 0 ? "var(--cb-green)" : "var(--cb-text-tertiary)" }}>
+            {bps.new_positions_possible}
+          </div>
+        </div>
+        {bps.free_capital != null && (
+          <div>
+            <div className="cb-label mb-1">Free Capital</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-steel)" }}>
+              ${bps.free_capital.toLocaleString()}
+            </div>
+          </div>
+        )}
+        {bps.scanned != null && (
+          <div>
+            <div className="cb-label mb-1">Screened</div>
+            <div className="text-sm font-medium cb-number" style={{ color: "var(--cb-text-primary)" }}>
+              {bps.approved ?? 0}
+              <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}> / {bps.scanned}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Active spreads */}
+      {hasPositions ? (
+        <div className="space-y-2">
+          <div className="cb-label">Active Positions · {bps.positions.length}</div>
+          {bps.positions.map((p, i) => <BpsSpreadRow key={p.spread_id ?? i} p={p} />)}
+        </div>
+      ) : (
+        <div className="py-3 text-sm text-center" style={{ color: "var(--cb-text-tertiary)" }}>
+          No open spread positions
+        </div>
+      )}
+
+      {/* Today's targets */}
+      {hasTargets && (
+        <div className="space-y-2">
+          <div className="cb-label">
+            Today&apos;s Targets · {bps.targets.filter(t => t.selected).length} selected / {bps.targets.length} approved
+          </div>
+          {bps.targets.map((t, i) => <BpsTargetRow key={t.symbol ?? i} t={t} />)}
+        </div>
+      )}
+
+      {/* Recent fills */}
+      {hasFills && (
+        <div className="space-y-1">
+          <div className="cb-label mb-1">Recent Fills</div>
+          {bps.recent_fills.map((f, i) => (
+            <div key={i} className="text-xs flex items-center gap-3 px-1 flex-wrap" style={{ color: "var(--cb-text-secondary)" }}>
+              <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{f.symbol}</span>
+              <span style={{ color: f.action === "OPEN" ? "var(--cb-green)" : "var(--cb-steel)" }}>{f.action}</span>
+              {f.short_strike != null && f.long_strike != null && (
+                <span>${f.short_strike}/${f.long_strike}P</span>
+              )}
+              {f.expiry && <span>{f.expiry}</span>}
+              {f.limit_credit != null && (
+                <span style={{ color: "var(--cb-green)" }}>+${f.limit_credit.toFixed(2)}</span>
+              )}
+              {f.exit_reasons.length > 0 && (
+                <span style={{ color: "var(--cb-amber)" }}>{f.exit_reasons.join(", ")}</span>
+              )}
+              <span className="ml-auto" style={{ color: "var(--cb-text-tertiary)" }}>{f.status}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!hasTargets && !hasPositions && !hasFills && (
+        <div className="text-sm py-2 text-center" style={{ color: "var(--cb-text-tertiary)" }}>
+          BPS screener runs weekday mornings at 08:30 ET
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Premium Yield (Options — Wheel, archived) ─────────────────────────────────
 function OptionsCandidateRow({ c, screened }: { c: OptionsCandidate; screened?: OptionsScreened }) {
   const [open, setOpen] = useState(false)
   const yieldColor =
@@ -1272,7 +1587,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* System caption */}
         <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          Autonomous · Paper · OpenClaw × Alpaca · 16-agent pipeline
+          Autonomous · Paper · OpenClaw × Alpaca · 22-agent pipeline
         </p>
 
         {/* Capital Hero */}
@@ -1327,23 +1642,32 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         <section>
           <div className="flex items-center justify-between mb-3">
             <span className="cb-label">
-              {data.watchlist.length > 0
-                ? `Qualified Setups · ${data.watchlist.length}`
-                : "No qualified setups"}
+              {data.watchlist.items.length > 0
+                ? `Qualified Setups · ${data.watchlist.items.length}`
+                : "Qualified Setups"}
             </span>
           </div>
-          <QualifiedSetups items={data.watchlist} />
+          <QualifiedSetups
+            items={data.watchlist.items}
+            as_of={data.watchlist.as_of}
+            source={data.watchlist.source}
+          />
         </section>
 
-        {/* Premium Yield / Options */}
-        {data.options && (
+        {/* Options — Bull Put Spreads */}
+        {data.bps && (
           <>
             <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
             <section>
               <div className="flex items-center justify-between mb-3">
-                <span className="cb-label">Premium Yield · Wheel Strategy</span>
+                <span className="cb-label">Options · Bull Put Spreads</span>
+                {data.bps.as_of && (
+                  <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                    {data.bps.as_of.slice(0, 10)}
+                  </span>
+                )}
               </div>
-              <OptionsPanel options={data.options} />
+              <BpsPanel bps={data.bps} />
             </section>
           </>
         )}
