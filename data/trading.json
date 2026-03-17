@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-17T20:15:01.425677+00:00",
+  "generated_at": "2026-03-17T20:30:01.451204+00:00",
   "as_of_date": "2026-03-17",
   "account": {
     "equity": 99621.5,
@@ -67,11 +67,11 @@
     "verdict": "FAIL",
     "critical_issues": 1,
     "high_issues": 3,
-    "medium_issues": 1,
+    "medium_issues": 3,
     "chain_ok": false,
-    "approval_path": "NOT_REACHED",
+    "approval_path": "AUTO_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-03-17T07:49:00+00:00"
+    "audit_written_at": "2026-03-17T20:20:00+00:00"
   },
   "kpis": {
     "total_trades": 11,
