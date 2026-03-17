@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-17T23:30:01.885465+00:00",
+  "generated_at": "2026-03-17T23:41:01.927208+00:00",
   "as_of_date": "2026-03-17",
   "account": {
     "equity": 99621.5,
@@ -326,6 +326,14 @@
       "winners": 0,
       "losers": 1,
       "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-17",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
