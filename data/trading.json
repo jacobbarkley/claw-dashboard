@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-03-19T19:15:01.083949+00:00",
+  "generated_at": "2026-03-19T19:30:01.204664+00:00",
   "as_of_date": "2026-03-19",
   "account": {
-    "equity": 99708.4,
+    "equity": 99981.52,
     "cash": 92643.49,
-    "buying_power": 154986.89,
+    "buying_power": 155105.01,
     "base_value": 100000.0,
-    "total_pnl": -291.6,
-    "total_pnl_pct": -0.2916,
-    "today_pnl": -144.07,
-    "today_pnl_pct": -0.1443,
-    "positions_value": 7064.91,
-    "unrealized_pnl": 323.17,
-    "unrealized_pnl_pct": 4.79
+    "total_pnl": -18.48,
+    "total_pnl_pct": -0.0185,
+    "today_pnl": 129.05,
+    "today_pnl_pct": 0.1292,
+    "positions_value": 7338.02,
+    "unrealized_pnl": 596.27,
+    "unrealized_pnl_pct": 8.84
   },
   "positions": [
     {
@@ -20,44 +20,44 @@
       "qty": -1.0,
       "side": "short",
       "entry_price": 6.95,
-      "current_price": 6.35,
-      "market_value": -635.0,
-      "unrealized_pnl": 60.0,
-      "unrealized_pct": 8.63,
-      "change_today_pct": 3.25
+      "current_price": 4.8,
+      "market_value": -480.0,
+      "unrealized_pnl": 215.0,
+      "unrealized_pct": 30.94,
+      "change_today_pct": -21.95
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 111.005,
-      "market_value": 3663.165,
-      "unrealized_pnl": 126.555,
-      "unrealized_pct": 3.58,
-      "change_today_pct": -2.22
+      "current_price": 113.435,
+      "market_value": 3743.355,
+      "unrealized_pnl": 206.745,
+      "unrealized_pct": 5.85,
+      "change_today_pct": -0.08
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 89.74,
-      "market_value": 3858.82,
-      "unrealized_pnl": 140.61,
-      "unrealized_pct": 3.78,
-      "change_today_pct": -0.98
+      "current_price": 90.59,
+      "market_value": 3895.37,
+      "unrealized_pnl": 177.16,
+      "unrealized_pct": 4.76,
+      "change_today_pct": -0.04
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 177.93,
-      "market_value": 177.93,
-      "unrealized_pnl": -4.0,
-      "unrealized_pct": -2.2,
-      "change_today_pct": -1.37
+      "current_price": 179.3,
+      "market_value": 179.3,
+      "unrealized_pnl": -2.63,
+      "unrealized_pct": -1.45,
+      "change_today_pct": -0.61
     }
   ],
   "pipeline_status": {
