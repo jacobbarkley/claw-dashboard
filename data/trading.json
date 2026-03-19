@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-03-18T23:45:01.772014+00:00",
-  "as_of_date": "2026-03-17",
+  "generated_at": "2026-03-19T16:00:01.683445+00:00",
+  "as_of_date": "2026-03-19",
   "account": {
-    "equity": 99621.5,
+    "equity": 99708.4,
     "cash": 92643.49,
-    "buying_power": 154989.99,
+    "buying_power": 154986.89,
     "base_value": 100000.0,
-    "total_pnl": -378.5,
-    "total_pnl_pct": -0.3785,
-    "today_pnl": 353.53,
-    "today_pnl_pct": 0.3561,
-    "positions_value": 6978.01,
-    "unrealized_pnl": 236.26,
-    "unrealized_pnl_pct": 3.5
+    "total_pnl": -291.6,
+    "total_pnl_pct": -0.2916,
+    "today_pnl": -144.07,
+    "today_pnl_pct": -0.1443,
+    "positions_value": 7064.91,
+    "unrealized_pnl": 323.17,
+    "unrealized_pnl_pct": 4.79
   },
   "positions": [
     {
@@ -20,58 +20,58 @@
       "qty": -1.0,
       "side": "short",
       "entry_price": 6.95,
-      "current_price": 7.25,
-      "market_value": -725.0,
-      "unrealized_pnl": -30.0,
-      "unrealized_pct": -4.32,
-      "change_today_pct": -8.92
+      "current_price": 6.35,
+      "market_value": -635.0,
+      "unrealized_pnl": 60.0,
+      "unrealized_pct": 8.63,
+      "change_today_pct": 3.25
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 111.98,
-      "market_value": 3695.34,
-      "unrealized_pnl": 158.73,
-      "unrealized_pct": 4.49,
-      "change_today_pct": 4.54
+      "current_price": 111.005,
+      "market_value": 3663.165,
+      "unrealized_pnl": 126.555,
+      "unrealized_pct": 3.58,
+      "change_today_pct": -2.22
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 88.97,
-      "market_value": 3825.71,
-      "unrealized_pnl": 107.5,
-      "unrealized_pct": 2.89,
-      "change_today_pct": 3.33
+      "current_price": 89.74,
+      "market_value": 3858.82,
+      "unrealized_pnl": 140.61,
+      "unrealized_pct": 3.78,
+      "change_today_pct": -0.98
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 181.96,
-      "market_value": 181.96,
-      "unrealized_pnl": 0.03,
-      "unrealized_pct": 0.02,
-      "change_today_pct": -0.69
+      "current_price": 177.93,
+      "market_value": 177.93,
+      "unrealized_pnl": -4.0,
+      "unrealized_pct": -2.2,
+      "change_today_pct": -1.37
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-03-18",
-    "run_id": "2026-03-18-preopen-01",
+    "trading_date": "2026-03-19",
+    "run_id": "2026-03-19-preopen-01",
     "circuit_breaker": "HALT",
     "verdict": "FAIL",
-    "critical_issues": 1,
+    "critical_issues": 2,
     "high_issues": 3,
     "medium_issues": 3,
     "chain_ok": false,
     "approval_path": "AUTO_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-03-17T20:20:00+00:00"
+    "audit_written_at": "2026-03-18T23:55:00+00:00"
   },
   "kpis": {
     "total_trades": 11,
@@ -434,6 +434,16 @@
       "date": "2026-03-17",
       "equity": 99267.97,
       "profit_loss": 35.97
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 99637.13,
+      "profit_loss": 369.16
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 99852.47,
+      "profit_loss": 215.34
     }
   ],
   "watchlist": {
@@ -819,10 +829,10 @@
     "as_of": "2026-03-16T11:56:48.304492-04:00"
   },
   "bps": {
-    "as_of": "2026-03-17T05:34:38.531498",
-    "account_equity": 99296.66,
-    "available_capital": 84402.16,
-    "free_capital": 84402.16,
+    "as_of": "2026-03-19T05:50:04.473092",
+    "account_equity": 99763.68,
+    "available_capital": 84799.13,
+    "free_capital": 84799.13,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
