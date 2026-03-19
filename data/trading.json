@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-19T23:30:01.581737+00:00",
+  "generated_at": "2026-03-19T23:41:02.141039+00:00",
   "as_of_date": "2026-03-19",
   "account": {
     "equity": 100002.08,
@@ -337,6 +337,14 @@
     },
     {
       "date": "2026-03-18",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-19",
       "net_pnl": 0.0,
       "trades": 0,
       "winners": 0,
