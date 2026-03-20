@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-03-20T16:44:41.493941+00:00",
+  "generated_at": "2026-03-20T16:47:27.010145+00:00",
   "summary": {
-    "total": 10,
+    "total": 11,
     "blockers": 0,
-    "active": 3,
+    "active": 4,
     "done": 7
   },
   "phases": [
@@ -257,6 +257,13 @@
         "title": "Bull Put Spread Module \u2014 Replace Active Options Strategy (Wheel \u2192 BPS)",
         "file": "TICKET-023.md"
       }
+    ],
+    "UNKNOWN": [
+      {
+        "ticket_id": "TICKET-025",
+        "title": "TICKET-025: Event-Driven Pipeline Orchestrator",
+        "file": "TICKET-025.md"
+      }
     ]
   },
   "tickets": [
@@ -472,6 +479,11 @@
       ],
       "title": "Vercel Dashboard \u2014 New Options/BPS Performance Tab",
       "file": "TICKET-024.md"
+    },
+    {
+      "ticket_id": "TICKET-025",
+      "title": "TICKET-025: Event-Driven Pipeline Orchestrator",
+      "file": "TICKET-025.md"
     }
   ]
 }
