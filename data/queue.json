@@ -2,6 +2,46 @@
   "generated_at": "2026-03-15T22:47:47.448560-04:00",
   "queued": [
     {
+      "id": "Q-027",
+      "category": "trading",
+      "title": "Bull/Bear adversarial debate in Thesis agent",
+      "what": "Add a two-pass adversarial debate pattern to Agent-06 (Thesis). After forming the initial thesis, run a second pass that argues against it — forces explicit bear case argumentation before finalizing conviction. If the bear case is stronger, downgrade conviction. Inspired by TauricResearch/TradingAgents bull/bear researcher pattern. Implementation: two-pass prompt within existing Agent-06 (not a new agent). Pass 1 forms thesis as today. Pass 2 receives the thesis and constructs the strongest bear case. Final output includes both arguments and adjusted conviction. Reduces confirmation bias in stock selection.",
+      "blocker": "Need 1+ week of paper trading data to compare thesis quality before/after.",
+      "blocker_type": "data",
+      "prereq": "Research v2 stable. Pipeline producing daily thesis_packet.json with real data. Validate with pipeline-validate.sh before deploy.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "agent-06",
+        "thesis",
+        "adversarial-debate",
+        "bull-bear",
+        "quality"
+      ]
+    },
+    {
+      "id": "Q-026",
+      "category": "trading",
+      "title": "Reflection memory \u2014 narrative-indexed decision history with P&L feedback",
+      "what": "Store per-symbol per-day reflection records that capture the full decision context: thesis narrative, alt-sentiment snapshot (crowd mood, urgency signals), key technicals at decision time (RSI, relative strength), the decision made + conviction level, and outcome (P&L at +1/3/5 days). Index on narrative regime, not just numbers \u2014 BM25 text search on narrative fields naturally surfaces emotional regime matches (FOMO squeeze, fear-driven oversell, earnings euphoria). At thesis time, Thesis agent retrieves 3 most similar past situations and their outcomes. One-line lesson-learned field generated after outcome is known. Records built from artifacts already produced (research_packet, alt_sentiment_packet, thesis_packet, execution_log, trade_journal). No new data sources needed \u2014 just persistence of what's currently consumed and discarded.",
+      "blocker": "Need 1-2 weeks of paper trading data to populate reflection records. No value without historical decisions to retrieve.",
+      "blocker_type": "data",
+      "prereq": "Pipeline executing trades daily. trade_journal.py producing P&L data. Research v2 + Alt-Sentiment producing rich narrative data. BM25 library (rank_bm25 pip package).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "reflection-memory",
+        "narrative",
+        "sentiment",
+        "bm25",
+        "learning",
+        "thesis",
+        "emotional-regime"
+      ]
+    },
+    {
       "id": "Q-025",
       "category": "trading",
       "title": "Autonomous strategy backtester \u2014 autoresearch pattern for trading",
