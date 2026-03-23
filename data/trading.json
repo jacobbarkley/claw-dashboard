@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-23T20:15:01.629333+00:00",
+  "generated_at": "2026-03-23T20:30:01.544600+00:00",
   "as_of_date": "2026-03-23",
   "account": {
     "equity": 99868.97,
@@ -65,13 +65,13 @@
     "run_id": "2026-03-23-preopen-01",
     "circuit_breaker": "HALT",
     "verdict": "FAIL",
-    "critical_issues": 1,
-    "high_issues": 3,
-    "medium_issues": 3,
+    "critical_issues": 12,
+    "high_issues": 4,
+    "medium_issues": 2,
     "chain_ok": false,
-    "approval_path": "AUTO_PAPER",
+    "approval_path": "MANUAL",
     "paper_compliant": true,
-    "audit_written_at": "2026-03-20T20:20:00+00:00"
+    "audit_written_at": "2026-03-23T20:20:00+00:00"
   },
   "kpis": {
     "total_trades": 11,
