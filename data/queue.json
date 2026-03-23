@@ -2,6 +2,25 @@
   "generated_at": "2026-03-15T22:47:47.448560-04:00",
   "queued": [
     {
+      "id": "Q-025",
+      "category": "trading",
+      "title": "Autonomous strategy backtester \u2014 autoresearch pattern for trading",
+      "what": "Autonomous strategy optimization loop inspired by Karpathy's autoresearch. Agent proposes strategy parameter changes, runs backtest on historical data (walk-forward, no future sight), measures Sharpe/profit factor, keeps improvements, discards regressions, loops forever. 3-file architecture: prepare.py (download historical OHLCV via yfinance, split train/test windows), strategy.py (the file the agent modifies \u2014 entry/exit rules, position sizing, risk parameters), program.md (agent instructions defining the optimization loop + results tracking). Walk-forward validation prevents overfitting to one market regime. No GPU needed \u2014 backtesting is CPU-only.",
+      "blocker": "Need stable pipeline + enough paper trading data to validate backtested strategies against real performance.",
+      "blocker_type": "data",
+      "prereq": "Stable pipeline (orchestrator proven). yfinance installed (done). Historical OHLCV corpus downloaded.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "backtesting",
+        "autoresearch",
+        "strategy-optimization",
+        "autonomous",
+        "walk-forward"
+      ]
+    },
+    {
       "id": "Q-024",
       "category": "dashboard",
       "title": "Systems tab \u2014 strategy toggles, performance reports, parameter history",
