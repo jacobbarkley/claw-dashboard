@@ -1,63 +1,107 @@
 {
-  "generated_at": "2026-03-24T15:45:01.806777+00:00",
-  "as_of_date": "2026-03-23",
+  "generated_at": "2026-03-24T16:00:01.431432+00:00",
+  "as_of_date": "2026-03-24",
   "account": {
-    "equity": 99868.97,
-    "cash": 92643.49,
-    "buying_power": 154977.46,
+    "equity": 99861.19,
+    "cash": 91834.5,
+    "buying_power": 154120.69,
     "base_value": 100000.0,
-    "total_pnl": -131.03,
-    "total_pnl_pct": -0.131,
-    "today_pnl": 93.59,
-    "today_pnl_pct": 0.0938,
-    "positions_value": 7225.48,
-    "unrealized_pnl": 483.73,
-    "unrealized_pnl_pct": 7.18
+    "total_pnl": -138.81,
+    "total_pnl_pct": -0.1388,
+    "today_pnl": -72.61,
+    "today_pnl_pct": -0.0727,
+    "positions_value": 8026.68,
+    "unrealized_pnl": 475.94,
+    "unrealized_pnl_pct": 6.3
   },
   "positions": [
+    {
+      "symbol": "AAOI",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 102.64,
+      "current_price": 109.835,
+      "market_value": 109.835,
+      "unrealized_pnl": 7.195,
+      "unrealized_pct": 7.01,
+      "change_today_pct": 14.7
+    },
     {
       "symbol": "AMD260410P00190000",
       "qty": -1.0,
       "side": "short",
       "entry_price": 6.95,
-      "current_price": 4.65,
-      "market_value": -465.0,
-      "unrealized_pnl": 230.0,
-      "unrealized_pct": 33.09,
-      "change_today_pct": -16.22
+      "current_price": 4.25,
+      "market_value": -425.0,
+      "unrealized_pnl": 270.0,
+      "unrealized_pct": 38.85,
+      "change_today_pct": 6.25
+    },
+    {
+      "symbol": "AVGO",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 316.56,
+      "current_price": 319.34,
+      "market_value": 319.34,
+      "unrealized_pnl": 2.78,
+      "unrealized_pct": 0.88,
+      "change_today_pct": -0.98
+    },
+    {
+      "symbol": "BCRX",
+      "qty": 19.0,
+      "side": "long",
+      "entry_price": 9.54,
+      "current_price": 9.65,
+      "market_value": 183.35,
+      "unrealized_pnl": 2.09,
+      "unrealized_pct": 1.15,
+      "change_today_pct": -1.53
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 109.355,
-      "market_value": 3608.715,
-      "unrealized_pnl": 72.105,
-      "unrealized_pct": 2.04,
-      "change_today_pct": -0.97
+      "current_price": 108.03,
+      "market_value": 3564.99,
+      "unrealized_pnl": 28.38,
+      "unrealized_pct": 0.8,
+      "change_today_pct": -1.21
+    },
+    {
+      "symbol": "CVX",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 208.53,
+      "current_price": 209.12,
+      "market_value": 209.12,
+      "unrealized_pnl": 0.59,
+      "unrealized_pct": 0.28,
+      "change_today_pct": 1.91
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 90.84,
-      "market_value": 3906.12,
-      "unrealized_pnl": 187.91,
-      "unrealized_pct": 5.05,
-      "change_today_pct": 0.93
+      "current_price": 90.45,
+      "market_value": 3889.35,
+      "unrealized_pnl": 171.14,
+      "unrealized_pct": 4.6,
+      "change_today_pct": -0.43
     },
     {
       "symbol": "NVDA",
       "qty": 1.0,
       "side": "long",
       "entry_price": 181.93,
-      "current_price": 175.64,
-      "market_value": 175.64,
-      "unrealized_pnl": -6.29,
-      "unrealized_pct": -3.46,
-      "change_today_pct": 1.7
+      "current_price": 175.7,
+      "market_value": 175.7,
+      "unrealized_pnl": -6.23,
+      "unrealized_pct": -3.42,
+      "change_today_pct": 0.03
     }
   ],
   "pipeline_status": {
@@ -478,6 +522,11 @@
       "date": "2026-03-21",
       "equity": 99775.38,
       "profit_loss": -229.98
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 99933.8,
+      "profit_loss": 158.42
     }
   ],
   "watchlist": {
