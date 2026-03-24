@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-24T13:45:01.218660+00:00",
+  "generated_at": "2026-03-24T14:00:01.085855+00:00",
   "as_of_date": "2026-03-23",
   "account": {
     "equity": 99868.97,
@@ -63,7 +63,7 @@
   "pipeline_status": {
     "trading_date": "2026-03-24",
     "run_id": "2026-03-24-preopen-01",
-    "circuit_breaker": "HALT",
+    "circuit_breaker": "NORMAL",
     "verdict": "FAIL",
     "critical_issues": 12,
     "high_issues": 4,
