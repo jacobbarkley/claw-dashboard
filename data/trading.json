@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-25T20:30:02.111079+00:00",
+  "generated_at": "2026-03-25T20:41:01.340858+00:00",
   "as_of_date": "2026-03-25",
   "account": {
     "equity": 100099.58,
@@ -151,9 +151,9 @@
     "audit_written_at": "2026-03-25T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 16,
+    "total_trades": 20,
     "closed_trades": 5,
-    "open_trades": 11,
+    "open_trades": 15,
     "win_rate_pct": 20.0,
     "profit_factor": 0.051,
     "expectancy": -34.76,
@@ -451,6 +451,14 @@
       "winners": 0,
       "losers": 1,
       "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-25",
+      "net_pnl": 0.0,
+      "trades": 4,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
