@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-24T20:45:01.468913+00:00",
+  "generated_at": "2026-03-25T13:00:02.056384+00:00",
   "as_of_date": "2026-03-24",
   "account": {
     "equity": 99899.58,
@@ -94,8 +94,8 @@
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-03-24",
-    "run_id": "2026-03-24-preopen-01",
+    "trading_date": "2026-03-25",
+    "run_id": "2026-03-25-preopen-01",
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
@@ -529,142 +529,43 @@
   "watchlist": {
     "items": [
       {
-        "symbol": "ORCL",
-        "trigger": "Price pullback or breakout setup \u2014 score 9.0",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 64, Rev +22%",
-        "in_position": false
-      },
-      {
-        "symbol": "BX",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 41, Rev +51%",
+        "symbol": "AVGO",
+        "trigger": "Price reclaims SMA20 ($325.78) on intraday 30-min candle close with volume >= 1.0x average. Acceptable entry range: $322.00\u2013$326.00. Confirmation: RSI holds above 48 on 30-min timeframe concurrent with SMA20 touch or cross. Do not chase gap-ups above $330 without SMA20 reclaim validation first.",
+        "stop": "$310.00 \u2014 structural break below recent consolidation base; represents technical deterioration independent of Bernstein upgrade thesis. Rationale: SMA20 reclaim failure plus break of $310 confirms downtrend continuation, not reversal.",
+        "target": "$340.00 \u2014 prior consolidation resistance zone; ~5.4% upside from SMA20 entry. Rationale: First meaningful supply zone aligned with partial institutional absorption of Bernstein upgrade.",
+        "modifier": "QUARTER",
+        "note": "REDUCE_ONLY regime active \u2014 QUARTER sizing enforced per patch. Entire bull thesis predicated on Bernstein $20+ EPS by 2027 materializing; forward P/E 18.15 only cheap on projected earnings (trailing P/E 62.87 expensive on current-year earnings). Entering against negative 10-day price momentum (-5.86%). ApeWisdom velocity -50% signals fading retail tailwind. TSMC supply chain risk unresolved. No binary earnings risk until June 3, 2026 (valid multi-week window exists). SMA20 reclaim required as entry confirmation to avoid adding to a losing position in REDUCE_ONLY.",
         "in_position": true
       },
       {
-        "symbol": "DASH",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 47, Rev +38%",
-        "in_position": false
-      },
-      {
-        "symbol": "WDAY",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.9",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 54, Rev +14%",
-        "in_position": false
-      },
-      {
-        "symbol": "COF",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.8",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 41, Rev +52%",
-        "in_position": false
-      },
-      {
-        "symbol": "KKR",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.8",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 41, Rev +76%",
+        "symbol": "AAOI",
+        "trigger": "Price holding above SMA20 ($93.30) at open confirmed. Preferred entry: intraday dip to $93.50\u2013$95.50 range on pullback with volume stabilizing above 0.8x average. Alternative entry: momentum continuation above $97.50 on volume >= 1.2x confirming catalyst-day buyers returning. Do not enter if opening print is below SMA20 ($93.30) and price fails to reclaim within first 30 minutes.",
+        "stop": "$90.00 hard stop \u2014 below post-catalyst consolidation zone and SMA20 buffer. Structural signal: closing price below SMA20 ($93.30) triggers immediate position review; intraday breach of $90.00 triggers immediate exit. Rationale: SMA20 loss on close = catalyst buyers have retreated; thesis invalidated.",
+        "target": "$107.00 \u2014 ~12% upside from $95.76 base; aligns with prior resistance zone above $100. Rationale: First meaningful supply level where early hyperscale order announcement buyers may take profit.",
+        "modifier": "QUARTER",
+        "note": "REDUCE_ONLY regime active \u2014 QUARTER sizing enforced per patch. ATR% 14.77% is extreme \u2014 intraday swings of 10\u201315% are within normal distribution for this name. Recovery volume on catalyst day was 0.78x average \u2014 below average, institutional discovery not yet confirmed. Company unprofitable (EPS TTM -$0.64) with no fundamental floor support if catalyst fades. Insider Form 4 filed by Kuo David C on March 23 (same day as catalyst) is an unresolved yellow flag \u2014 direction unconfirmed. Entire thesis is catalyst-momentum driven; without sustained institutional publicity of $253M orders, momentum will fade quickly. SHORT duration window appropriate given absence of fundamental earnings support.",
         "in_position": true
       },
       {
-        "symbol": "DTE",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.7",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 62, Rev +29%",
-        "in_position": false
+        "symbol": "BCRX",
+        "trigger": "Preferred entry on intraday pullback to $9.40\u2013$9.65 range (partial RSI cooling from 74.43) with volume stabilizing and RSI declining toward 60\u201365 zone. Alternative entry: momentum continuation above $10.00 on volume >= 1.2x with RSI maintaining above 65 \u2014 confirms institutional buyers not retreating despite 'losing altitude' headline. Do not enter if RSI exceeds 82 at open without volume surge > 1.5x average (extreme overbought chasing condition disqualifies entry).",
+        "stop": "$8.50 hard stop \u2014 below SMA20 ($8.71) with buffer. Structural signal: closing price below SMA20 ($8.71) triggers immediate position review; intraday breach of $8.50 triggers immediate exit. Rationale: SMA20 loss signals M&A premium fully unwound and momentum broken; fundamental support zone reverts to $7.00\u2013$8.00.",
+        "target": "$11.00 \u2014 ~12% upside from $9.80 base; near-term momentum extension at first round-number resistance above current price.",
+        "modifier": "QUARTER",
+        "note": "REDUCE_ONLY regime active \u2014 QUARTER sizing enforced per patch. RSI 74.43 and Bollinger %B 0.935 are statistically overbought \u2014 mean reversion risk elevated at current entry. 'Suddenly losing altitude' March 24 AM headline signals M&A speculation is already fading at session open. Fundamental thesis (P/E 8.10, 30.2% profit margins, 209.1% revenue growth) is genuinely strong but may not independently sustain price at current premium (+12.51% above SMA20) in REDUCE_ONLY without M&A narrative. 4 same-day insider Form 4s (March 3: CEO Milano, McKee, Frank, Milne) \u2014 direction unconfirmed, likely RSU vesting but warrants monitoring during hold window. Entering an overbought name with fading narrative catalyst in REDUCE_ONLY carries dual reversion risk.",
+        "in_position": true
       },
       {
-        "symbol": "TTD",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.7",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 63, Rev +14%",
-        "in_position": false
-      },
-      {
-        "symbol": "ADBE",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 52, Rev +12%",
-        "in_position": false
-      },
-      {
-        "symbol": "GDDY",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 43, Rev +7%",
-        "in_position": false
-      },
-      {
-        "symbol": "PGR",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 52, Rev +12%",
-        "in_position": false
-      },
-      {
-        "symbol": "SMCI",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.6",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 50, Rev +123%",
-        "in_position": false
-      },
-      {
-        "symbol": "GEN",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 38, Rev +26%",
-        "in_position": false
-      },
-      {
-        "symbol": "PTC",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 60, Rev +21%",
-        "in_position": false
-      },
-      {
-        "symbol": "AON",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.5",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 55, Rev +4%",
-        "in_position": false
+        "symbol": "CVX",
+        "trigger": "Price holds above prior 52-week high reference ($205.21) at open. Preferred entry: intraday consolidation or shallow pullback to $202.00\u2013$204.50 range with Brent crude holding >= $115 at time of entry. Alternative entry: continuation print above $206.50 on volume >= 1.0x confirming geopolitical premium not deflating post-open. Monitor Brent crude tick-for-tick \u2014 CVX entry only valid if Brent >= $115. Pre-open: screen for Iran diplomatic developments or ceasefire announcements before establishing position.",
+        "stop": "$198.00 intermediate stop \u2014 prior support and round-number reference below new-high breakout zone. Hard structural stop: close below SMA20 ($192.39) on volume > 1.5x average confirms extreme overbought mean reversion, geopolitical premium evaporating. Rationale: $198 protects gap-fill of 52-week high breakout without prematurely triggering SMA20 structural exit.",
+        "target": "$215.00 \u2014 ~4.8% upside from $205.21 base; near-term momentum extension at 52-week high. Rationale: Round-number resistance at extended RSI overbought zone; likely take-profit level for momentum traders.",
+        "modifier": "QUARTER",
+        "note": "REDUCE_ONLY regime active \u2014 QUARTER sizing enforced per patch. RSI 82.53 and Bollinger %B 1.007 represent statistically extreme overbought \u2014 mean reversion risk elevated independent of geopolitical thesis. Revenue declining -8.2% TTM; underlying business fundamentals deteriorating \u2014 thesis is 100% dependent on sustained Brent >= $115. P/E 30.95 is expensive for an oil major with declining revenue. Geopolitical resolution (Iran deal or military de-escalation) would rapidly deflate $15\u201325/bbl risk premium, creating 8\u201312% downside gap risk. CVX CEO CNBC statement (March 23: 'Iran war impact not fully priced into oil market') is primary near-term catalyst anchor \u2014 monitor for contradictory statements or retraction. Entering at new 52-week high with extreme RSI in REDUCE_ONLY is dual-risk.",
+        "in_position": true
       }
     ],
-    "as_of": "2026-03-15",
+    "as_of": "2026-03-24",
     "source": "weekly"
   },
   "exit_candidates": [],
@@ -672,14 +573,14 @@
     "trading_mode": "PAPER",
     "live_trading_enabled": false,
     "paper_autopilot_enabled": true,
-    "max_daily_loss_pct": 1.0,
-    "max_risk_per_trade_pct": 0.75,
-    "max_aggregate_open_risk_pct": 2.25,
+    "max_daily_loss_pct": 3.0,
+    "max_risk_per_trade_pct": 2.0,
+    "max_aggregate_open_risk_pct": 6.0,
     "max_concurrent_positions": 4,
     "consecutive_loss_limit": 3,
     "consecutive_loss_size_modifier": "HALF",
     "reduce_only_size_cap": "QUARTER",
-    "updated_at": "2026-03-12T09:20:00-05:00"
+    "updated_at": "2026-03-24T22:00:00-04:00"
   },
   "options": {
     "gate": {
@@ -909,10 +810,10 @@
     "as_of": "2026-03-16T11:56:48.304492-04:00"
   },
   "bps": {
-    "as_of": "2026-03-24T08:51:04.497681",
-    "account_equity": 99678.22,
-    "available_capital": 84726.49,
-    "free_capital": 84726.49,
+    "as_of": "2026-03-25T08:50:04.389252",
+    "account_equity": 100007.53,
+    "available_capital": 85006.4,
+    "free_capital": 85006.4,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
