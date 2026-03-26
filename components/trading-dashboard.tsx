@@ -785,9 +785,30 @@ function PerformanceGrid({ kpis }: { kpis: TradingData["kpis"] }) {
   )
 }
 
+// ─── Option symbol parser ──────────────────────────────────────────────────────
+// Parses Alpaca OCC-style option tickers: {SYMBOL}{YYMMDD}{P|C}{STRIKE*1000, 8 digits}
+// e.g. AMD260410P00190000 → underlying=AMD, expiry=2026-04-10, type=P, strike=190
+function parseOptionSymbol(symbol: string) {
+  const m = symbol.match(/^([A-Z]+)(\d{6})([PC])(\d{8})$/)
+  if (!m) return null
+  const [, underlying, dateStr, type, strikePad] = m
+  const expiry = `20${dateStr.slice(0,2)}-${dateStr.slice(2,4)}-${dateStr.slice(4,6)}`
+  const strike = parseInt(strikePad, 10) / 1000
+  const expiryDate = new Date(`${expiry}T00:00:00`)
+  const today = new Date(); today.setHours(0,0,0,0)
+  const dte = Math.round((expiryDate.getTime() - today.getTime()) / 86400000)
+  const expiryLabel = expiryDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  return { underlying, expiry, expiryLabel, type: type as "P" | "C", strike, dte }
+}
+
 // ─── Position Row ─────────────────────────────────────────────────────────────
-function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCandidate }) {
+function PositionRow({ p, exitDecision, underlyingChangePct }: {
+  p: Position
+  exitDecision?: ExitCandidate
+  underlyingChangePct?: number   // today's % move of the underlying stock (for option positions)
+}) {
   const [open, setOpen] = useState(false)
+  const opt = parseOptionSymbol(p.symbol)
 
   // Severity border class
   let severityClass = ""
@@ -818,6 +839,20 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
     }
   }
 
+  // Option-specific derived values
+  // For short options: a negative change_today_pct means the option lost value = profit
+  const isShort = p.qty < 0
+  const optBadge = opt
+    ? (isShort && opt.type === "P" ? "CSP" : isShort && opt.type === "C" ? "CC" : opt.type === "P" ? "LP" : "LC")
+    : null
+  const optPctOfMax = opt && p.entry_price > 0
+    ? Math.min(100, (p.unrealized_pnl / (Math.abs(p.qty) * p.entry_price * 100)) * 100)
+    : null
+  // For short options: today's option price move is inverted from P&L direction
+  const optTodayColor = opt && isShort
+    ? (p.change_today_pct <= 0 ? "var(--cb-green)" : "var(--cb-red)")
+    : undefined
+
   return (
     <div
       className={`cb-card-t2 hover:opacity-90 transition-opacity cursor-pointer ${severityClass}`}
@@ -827,13 +862,32 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
       <div className="px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
-            <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">{p.symbol}</span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-                {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
+            <div className="flex items-center gap-2">
+              <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">
+                {opt ? `${opt.underlying} $${opt.strike}${opt.type}` : p.symbol}
               </span>
-              {exitLabel && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
-              {exitLabel}
+              {optBadge && (
+                <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace", fontWeight: 600 }}>{optBadge}</span>
+              )}
+              {exitLabel && !opt && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
+              {!opt && exitLabel}
+            </div>
+            <div className="flex items-center gap-2 mt-0.5">
+              {opt ? (
+                <>
+                  <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+                    {opt.expiryLabel} · {opt.dte}d · {isShort ? "short" : "long"} {opt.type === "P" ? "put" : "call"}
+                  </span>
+                  {exitLabel && <><span style={{ color: "var(--cb-border-std)" }}>·</span>{exitLabel}</>}
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+                    {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
+                  </span>
+                  {exitLabel && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -841,13 +895,26 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
         {/* Right: price + pnl + chevron */}
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-base font-medium text-[var(--cb-text-primary)]">
-              ${p.current_price?.toFixed(2) ?? "—"}
-            </div>
-            <div className={`text-xs font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
-              {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
-              <span className="opacity-70 ml-1">{fmtAcct(p.unrealized_pct, "", "%", 1)}</span>
-            </div>
+            {opt ? (
+              <>
+                <div className={`text-base font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
+                  {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
+                </div>
+                <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+                  {optPctOfMax != null ? `${optPctOfMax.toFixed(0)}% of max` : `${fmtAcct(p.unrealized_pct, "", "%", 1)} unrealized`}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-base font-medium text-[var(--cb-text-primary)]">
+                  ${p.current_price?.toFixed(2) ?? "—"}
+                </div>
+                <div className={`text-xs font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
+                  {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
+                  <span className="opacity-70 ml-1">{fmtAcct(p.unrealized_pct, "", "%", 1)}</span>
+                </div>
+              </>
+            )}
           </div>
           {open
             ? <ChevronUp className="w-4 h-4 shrink-0" style={{ color: "var(--cb-text-tertiary)" }} />
@@ -865,24 +932,74 @@ function PositionRow({ p, exitDecision }: { p: Position; exitDecision?: ExitCand
             background: "var(--cb-surface-1)",
           }}
         >
-          <div>
-            <div style={{ color: "var(--cb-text-tertiary)" }}>Market Value</div>
-            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.market_value?.toFixed(2) ?? "—"}</div>
-          </div>
-          <div>
-            <div style={{ color: "var(--cb-text-tertiary)" }}>Today</div>
-            <div className={`font-medium cb-number ${pnlColor(p.change_today_pct)}`}>
-              {fmtAcct(p.change_today_pct, "", "%", 2)}
-            </div>
-          </div>
-          <div>
-            <div style={{ color: "var(--cb-text-tertiary)" }}>Entry</div>
-            <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2) ?? "—"}</div>
-          </div>
-          <div>
-            <div style={{ color: "var(--cb-text-tertiary)" }}>Side</div>
-            <div className="font-medium capitalize" style={{ color: "var(--cb-text-primary)" }}>{p.side}</div>
-          </div>
+          {opt ? (
+            <>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Strike</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${opt.strike} {opt.type === "P" ? "put" : "call"}</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Expiry</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{opt.expiryLabel} · {opt.dte}d</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Premium sold</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2)}/sh</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Current value</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.current_price?.toFixed(2)}/sh</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Option today</div>
+                <div className="font-medium cb-number" style={{ color: optTodayColor }}>
+                  {fmtAcct(p.change_today_pct, "", "%", 2)}
+                  {isShort && p.change_today_pct < 0 && (
+                    <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}> (premium decay)</span>
+                  )}
+                </div>
+              </div>
+              {underlyingChangePct != null && (
+                <div>
+                  <div style={{ color: "var(--cb-text-tertiary)" }}>{opt.underlying} today</div>
+                  <div className={`font-medium cb-number ${pnlColor(underlyingChangePct)}`}>
+                    {fmtAcct(underlyingChangePct, "", "%", 2)}
+                    {isShort && opt.type === "P" && underlyingChangePct > 0 && (
+                      <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}> → put OTM</span>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>P&L</div>
+                <div className={`font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
+                  {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
+                  {optPctOfMax != null && <span style={{ color: "var(--cb-text-tertiary)", fontWeight: 400 }}> ({optPctOfMax.toFixed(0)}% of max)</span>}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Market Value</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.market_value?.toFixed(2) ?? "—"}</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Today</div>
+                <div className={`font-medium cb-number ${pnlColor(p.change_today_pct)}`}>
+                  {fmtAcct(p.change_today_pct, "", "%", 2)}
+                </div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Entry</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2) ?? "—"}</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--cb-text-tertiary)" }}>Side</div>
+                <div className="font-medium capitalize" style={{ color: "var(--cb-text-primary)" }}>{p.side}</div>
+              </div>
+            </>
+          )}
           {exitDecision?.reason && (
             <div className="col-span-2 sm:col-span-4">
               <p style={{ color: "var(--cb-text-secondary)" }} className="leading-snug">{exitDecision.reason}</p>
@@ -899,11 +1016,25 @@ function PositionsList({ positions, exitCandidates }: { positions: Position[]; e
     <div className="text-sm py-6 text-center" style={{ color: "var(--cb-text-tertiary)" }}>No open positions</div>
   )
   const exitMap = Object.fromEntries(exitCandidates.map(e => [e.symbol, e]))
+  // Build a map of underlying stock changes so option rows can show context
+  const stockChanges = Object.fromEntries(
+    positions
+      .filter(p => !parseOptionSymbol(p.symbol))
+      .map(p => [p.symbol, p.change_today_pct])
+  )
   return (
     <div className="space-y-2">
-      {positions.map(p => (
-        <PositionRow key={p.symbol} p={p} exitDecision={exitMap[p.symbol]} />
-      ))}
+      {positions.map(p => {
+        const opt = parseOptionSymbol(p.symbol)
+        return (
+          <PositionRow
+            key={p.symbol}
+            p={p}
+            exitDecision={exitMap[p.symbol]}
+            underlyingChangePct={opt ? stockChanges[opt.underlying] : undefined}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -1594,6 +1725,77 @@ export function TunablesPanel({ tunables }: { tunables: Tunables }) {
   )
 }
 
+// ─── Options Section (Strategy Tabs) ────────────────────────────────────────
+function OptionsSection({ options, bps }: { options?: OptionsData; bps?: BpsData | null }) {
+  const [tab, setTab] = useState<"spreads" | "wheel">("spreads")
+
+  // Dot indicators: does each strategy have live positions?
+  const spreadsHasPositions = (bps?.positions?.length ?? 0) > 0
+  const wheelHasPositions = (options?.active_trades?.length ?? 0) > 0
+
+  const asOf = tab === "spreads"
+    ? bps?.as_of?.slice(0, 10)
+    : options?.as_of?.slice(0, 10)
+
+  return (
+    <>
+      <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1">
+            <span className="cb-label mr-2">Options</span>
+            {(["spreads", "wheel"] as const).map(t => {
+              const active = tab === t
+              const hasPos = t === "spreads" ? spreadsHasPositions : wheelHasPositions
+              return (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className="px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
+                  style={{
+                    background: active ? "var(--cb-surface-2)" : "transparent",
+                    color: active ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
+                    border: active ? "1px solid var(--cb-border-std)" : "1px solid transparent",
+                  }}
+                >
+                  {t === "spreads" ? "Spreads" : "Wheel"}
+                  {hasPos && (
+                    <span
+                      className="inline-block ml-1.5 rounded-full"
+                      style={{
+                        width: 6, height: 6,
+                        background: "var(--cb-green)",
+                        verticalAlign: "middle",
+                      }}
+                    />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+          {asOf && (
+            <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>{asOf}</span>
+          )}
+        </div>
+
+        {tab === "spreads" ? (
+          bps ? <BpsPanel bps={bps} /> : (
+            <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+              No spread data yet
+            </div>
+          )
+        ) : (
+          options ? <OptionsPanel options={options} /> : (
+            <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+              Wheel pipeline paused
+            </div>
+          )
+        )}
+      </section>
+    </>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function TradingDashboard({ initialData }: { initialData: TradingData | null }) {
   const [data, setData] = useState<TradingData | null>(initialData)
@@ -1814,33 +2016,8 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           />
         </section>
 
-        {/* Options — Active Trades */}
-        <>
-          <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <span className="cb-label">Options · Active Trades</span>
-              {(data.options?.as_of || data.bps?.as_of) && (
-                <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-                  {(data.options?.as_of ?? data.bps?.as_of ?? "").slice(0, 10)}
-                </span>
-              )}
-            </div>
-            {data.options && (data.options.active_trades.length > 0 || data.options.gate.csp_slots_used > 0)
-              ? <OptionsPanel options={data.options} />
-              : data.bps
-                ? <BpsPanel bps={data.bps} />
-                : (
-                  <div className="py-6 text-center space-y-1">
-                    <div className="text-sm" style={{ color: "var(--cb-text-tertiary)" }}>No active setups</div>
-                    <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-                      Options data refreshes on each live poll
-                    </div>
-                  </div>
-                )
-            }
-          </section>
-        </>
+        {/* Options — Strategy Tabs */}
+        <OptionsSection options={data.options} bps={data.bps} />
 
       </div>
     </div>
