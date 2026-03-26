@@ -429,6 +429,48 @@ def build_bps(pos_status: dict, screened: dict, strategy: dict, exec_log: list, 
     }
 
 
+def build_hedges(protective_puts: dict, options_routing: dict) -> dict | None:
+    """Build hedges summary from protective put screener + regime routing."""
+    if not protective_puts and not options_routing:
+        return None
+
+    regime = options_routing.get("regime") or protective_puts.get("regime") or {}
+    routing_reason = options_routing.get("routing_reason", "")
+    status = protective_puts.get("status", "unknown")
+
+    candidates = []
+    for c in protective_puts.get("candidates", []):
+        candidates.append({
+            "symbol":               c.get("symbol"),
+            "strike":               safe_float(c.get("strike")),
+            "expiry":               c.get("expiry"),
+            "dte":                  c.get("dte"),
+            "bid":                  safe_float(c.get("bid")),
+            "ask":                  safe_float(c.get("ask")),
+            "mid":                  safe_float(c.get("mid")),
+            "otm_pct":              safe_float(c.get("otm_pct")),
+            "protection_cost_pct":  safe_float(c.get("protection_cost_pct")),
+            "total_hedge_cost":     safe_float(c.get("total_hedge_cost")),
+            "oi":                   c.get("oi"),
+            "volume":               c.get("volume"),
+        })
+
+    return {
+        "status":              status,
+        "regime": {
+            "vix_level":       safe_float(regime.get("vix_level")),
+            "vix_regime":      regime.get("vix_regime"),
+            "cb_state":        regime.get("cb_state"),
+            "active":          regime.get("active", False),
+        },
+        "routing_reason":      routing_reason,
+        "positions_screened":  protective_puts.get("positions_screened", 0),
+        "candidates_found":   protective_puts.get("candidates_found", 0),
+        "candidates":         candidates,
+        "as_of":              protective_puts.get("generated_at") or options_routing.get("written_at"),
+    }
+
+
 def build_pipeline_status(audit: dict, session: dict) -> dict:
     payload = audit.get("payload", {})
     return {
@@ -462,6 +504,10 @@ def main():
     opt_gate       = load(OPTIONS_WORKSPACE / "state/gate_options_risk.json")
     opt_exec       = load(OPTIONS_WORKSPACE / "state/options_execution_log.json")
 
+    # Protective puts / regime routing (gracefully absent before first run)
+    protective_puts = load(OPTIONS_WORKSPACE / "state/protective_put_candidates.json")
+    options_routing = load(OPTIONS_WORKSPACE / "state/options_screening_result.json")
+
     # BPS module (gracefully absent before first run)
     bps_pos_status = load(BPS_WORKSPACE / "state/bps_position_status.json")
     bps_screened   = load(BPS_WORKSPACE / "state/bps_screened.json")
@@ -491,6 +537,7 @@ def main():
     pipeline    = build_pipeline_status(audit, session)
     options     = build_options(opt_candidates, opt_screened, opt_strategy, opt_gate, opt_exec)
     bps         = build_bps(bps_pos_status, bps_screened, bps_strategy, bps_exec_log, bps_universe)
+    hedges      = build_hedges(protective_puts, options_routing)
 
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -518,6 +565,7 @@ def main():
         "tunables":          tunables,
         "options":           options,
         "bps":               bps,
+        "hedges":            hedges,
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -525,7 +573,8 @@ def main():
     n_wl  = len(watchlist.get("items", []))
     n_bps = len(bps.get("positions", [])) if bps else 0
     n_opts = len(options.get("candidates", []))
-    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {n_wl} watchlist, {len(exits)} exits, {n_opts} wheel candidates, {n_bps} BPS positions")
+    n_hedges = hedges.get("candidates_found", 0) if hedges else 0
+    print(f"Wrote trading.json — {len(positions)} positions, {len(daily)} days, {n_wl} watchlist, {len(exits)} exits, {n_opts} wheel candidates, {n_bps} BPS positions, {n_hedges} hedge candidates")
 
 
 if __name__ == "__main__":

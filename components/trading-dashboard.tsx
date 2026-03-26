@@ -211,10 +211,41 @@ interface OptionsData {
   as_of: string | null
 }
 
+interface HedgeCandidate {
+  symbol: string
+  strike: number | null
+  expiry: string | null
+  dte: number | null
+  bid: number | null
+  ask: number | null
+  mid: number | null
+  otm_pct: number | null
+  protection_cost_pct: number | null
+  total_hedge_cost: number | null
+  oi: number | null
+  volume: number | null
+}
+
+interface HedgesData {
+  status: string
+  regime: {
+    vix_level: number | null
+    vix_regime: string | null
+    cb_state: string | null
+    active: boolean
+  }
+  routing_reason: string
+  positions_screened: number
+  candidates_found: number
+  candidates: HedgeCandidate[]
+  as_of: string | null
+}
+
 interface TradingData {
   generated_at: string
   as_of_date: string
   options?: OptionsData
+  hedges?: HedgesData | null
   account: {
     // True account values from Alpaca
     equity: number | null
@@ -1726,15 +1757,118 @@ export function TunablesPanel({ tunables }: { tunables: Tunables }) {
 }
 
 // ─── Options Section (Strategy Tabs) ────────────────────────────────────────
-function OptionsSection({ options, bps }: { options?: OptionsData; bps?: BpsData | null }) {
-  const [tab, setTab] = useState<"spreads" | "wheel">("spreads")
+function HedgesPanel({ hedges }: { hedges: HedgesData }) {
+  const { regime, candidates, positions_screened, candidates_found } = hedges
 
-  // Dot indicators: does each strategy have live positions?
+  if (!regime.active) {
+    return (
+      <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+        Bearish regime not active — hedging screener idle
+        <div className="mt-1 text-[10px]">
+          VIX {regime.vix_level ?? "?"} ({regime.vix_regime ?? "?"}) / CB: {regime.cb_state ?? "?"}
+        </div>
+      </div>
+    )
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+        Regime active but no protective puts found
+        <div className="mt-1 text-[10px]">
+          VIX {regime.vix_level} ({regime.vix_regime}) — screened {positions_screened} positions
+        </div>
+      </div>
+    )
+  }
+
+  // Group candidates by symbol, show best (cheapest) per symbol
+  const bySymbol = new Map<string, HedgeCandidate[]>()
+  for (const c of candidates) {
+    const list = bySymbol.get(c.symbol) || []
+    list.push(c)
+    bySymbol.set(c.symbol, list)
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Regime banner */}
+      <div className="rounded px-3 py-2 text-[11px]" style={{
+        background: "rgba(239,68,68,0.08)",
+        border: "1px solid rgba(239,68,68,0.2)",
+        color: "var(--cb-text-secondary)",
+      }}>
+        <span className="font-semibold" style={{ color: "var(--cb-red)" }}>
+          VIX {regime.vix_level?.toFixed(1)} ({regime.vix_regime})
+        </span>
+        {regime.cb_state && regime.cb_state !== "NORMAL" && (
+          <span className="ml-2 font-semibold" style={{ color: "var(--cb-yellow)" }}>
+            CB: {regime.cb_state}
+          </span>
+        )}
+        <span className="ml-2">
+          {candidates_found} puts across {positions_screened} positions
+        </span>
+      </div>
+
+      {/* Per-symbol cards */}
+      {Array.from(bySymbol.entries()).map(([symbol, puts]) => {
+        const best = puts[0] // already sorted by cost
+        return (
+          <div key={symbol} className="rounded px-3 py-2" style={{
+            background: "var(--cb-surface-1)",
+            border: "1px solid var(--cb-border-dim)",
+          }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono font-semibold text-[13px]" style={{ color: "var(--cb-text-primary)" }}>
+                  {symbol}
+                </span>
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{
+                  background: "rgba(239,68,68,0.1)",
+                  color: "var(--cb-red)",
+                }}>PUT</span>
+              </div>
+              <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                {puts.length} option{puts.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            {/* Best candidate detail */}
+            <div className="mt-1 flex gap-4 text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+              <span>${best.strike} {best.expiry?.slice(5)} ({best.dte}d)</span>
+              <span>mid ${best.mid?.toFixed(2)}</span>
+              <span>{best.otm_pct?.toFixed(1)}% OTM</span>
+              <span style={{ color: "var(--cb-yellow)" }}>
+                cost {best.protection_cost_pct?.toFixed(1)}%
+              </span>
+            </div>
+            {/* Additional options as subtle list */}
+            {puts.length > 1 && (
+              <div className="mt-1 text-[10px] flex flex-wrap gap-x-3" style={{ color: "var(--cb-text-tertiary)" }}>
+                {puts.slice(1, 3).map((p, i) => (
+                  <span key={i}>${p.strike} {p.expiry?.slice(5)} — {p.protection_cost_pct?.toFixed(1)}%</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function OptionsSection({ options, bps, hedges }: { options?: OptionsData; bps?: BpsData | null; hedges?: HedgesData | null }) {
+  const [tab, setTab] = useState<"spreads" | "wheel" | "hedges">("spreads")
+
+  // Dot indicators: does each strategy have live data?
   const spreadsHasPositions = (bps?.positions?.length ?? 0) > 0
   const wheelHasPositions = (options?.active_trades?.length ?? 0) > 0
+  const hedgesActive = hedges?.regime?.active ?? false
 
   const asOf = tab === "spreads"
     ? bps?.as_of?.slice(0, 10)
+    : tab === "hedges"
+    ? hedges?.as_of?.slice(0, 10)
     : options?.as_of?.slice(0, 10)
 
   return (
@@ -1744,9 +1878,12 @@ function OptionsSection({ options, bps }: { options?: OptionsData; bps?: BpsData
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">
             <span className="cb-label mr-2">Options</span>
-            {(["spreads", "wheel"] as const).map(t => {
+            {(["spreads", "wheel", "hedges"] as const).map(t => {
               const active = tab === t
-              const hasPos = t === "spreads" ? spreadsHasPositions : wheelHasPositions
+              const hasIndicator = t === "spreads" ? spreadsHasPositions
+                : t === "wheel" ? wheelHasPositions
+                : hedgesActive
+              const indicatorColor = t === "hedges" ? "var(--cb-red)" : "var(--cb-green)"
               return (
                 <button
                   key={t}
@@ -1758,13 +1895,13 @@ function OptionsSection({ options, bps }: { options?: OptionsData; bps?: BpsData
                     border: active ? "1px solid var(--cb-border-std)" : "1px solid transparent",
                   }}
                 >
-                  {t === "spreads" ? "Spreads" : "Wheel"}
-                  {hasPos && (
+                  {t === "spreads" ? "Spreads" : t === "wheel" ? "Wheel" : "Hedges"}
+                  {hasIndicator && (
                     <span
                       className="inline-block ml-1.5 rounded-full"
                       style={{
                         width: 6, height: 6,
-                        background: "var(--cb-green)",
+                        background: indicatorColor,
                         verticalAlign: "middle",
                       }}
                     />
@@ -1782,6 +1919,12 @@ function OptionsSection({ options, bps }: { options?: OptionsData; bps?: BpsData
           bps ? <BpsPanel bps={bps} /> : (
             <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
               No spread data yet
+            </div>
+          )
+        ) : tab === "hedges" ? (
+          hedges ? <HedgesPanel hedges={hedges} /> : (
+            <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
+              No hedge data yet
             </div>
           )
         ) : (
@@ -2017,7 +2160,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         </section>
 
         {/* Options — Strategy Tabs */}
-        <OptionsSection options={data.options} bps={data.bps} />
+        <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
 
       </div>
     </div>

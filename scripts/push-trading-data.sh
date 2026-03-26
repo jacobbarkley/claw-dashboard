@@ -7,13 +7,13 @@ set -e
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_DIR"
 
-# Refresh options candidates before building trading.json.
-# The screener fetches live chains via yfinance; non-fatal if it fails.
-SCREENER="$HOME/.openclaw/workspace/trading-bot/options/bin/options_screener.py"
+# Refresh options via regime router (routes to BPS or protective puts based on VIX/CB).
+# Non-fatal if it fails — push-trading-data.py will use last known data.
+ROUTER="$HOME/.openclaw/workspace/trading-bot/options/bin/options_regime_router.py"
 PY_TRADING="$HOME/.openclaw/workspace/.venv-trading/bin/python"
-if [ -f "$SCREENER" ] && [ -x "$PY_TRADING" ]; then
-    echo "Refreshing options candidates..."
-    "$PY_TRADING" "$SCREENER" && echo "Options screener OK" || echo "Options screener failed (non-fatal — using last known data)"
+if [ -f "$ROUTER" ] && [ -x "$PY_TRADING" ]; then
+    echo "Running options regime router..."
+    "$PY_TRADING" "$ROUTER" && echo "Options regime router OK" || echo "Options regime router failed (non-fatal — using last known data)"
 fi
 
 python3 scripts/push-trading-data.py
