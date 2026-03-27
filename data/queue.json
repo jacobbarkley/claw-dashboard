@@ -504,6 +504,23 @@
       ]
     },
     {
+      "id": "Q-043",
+      "category": "trading",
+      "title": "Governance: distinguish pipeline stall from risk breach",
+      "what": "New PIPELINE_STALL status code for days with no execution (infra failure, not risk event). Audit currently escalates CB to HALT on stalls, generating false risk noise. If no orders submitted and no positions modified, CB should not escalate. Prompt changes to Agent-16 (Daily Audit) and Agent-10 (Session Close).",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None — prompt-only changes.",
+      "priority": "MEDIUM-HIGH",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "governance",
+        "audit",
+        "circuit-breaker"
+      ]
+    },
+    {
       "id": "Q-042",
       "category": "trading",
       "title": "Pre-market macro signal (SPY + VIX + DXY + TLT)",
