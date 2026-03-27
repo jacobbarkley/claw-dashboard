@@ -502,6 +502,22 @@
         "monetization",
         "services"
       ]
+    },
+    {
+      "id": "Q-041",
+      "category": "infrastructure",
+      "title": "Revive fast model path for thesis agent",
+      "what": "Fix openai-codex OAuth or test Gemini 2.5 Flash as fast thesis model. Current Sonnet path works but is slow (5-8 min). Fast path would be under 2 min.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Gemini API key configured. openai-codex auth needs diagnosis.",
+      "priority": "HIGH",
+      "ticket": null,
+      "tags": [
+        "pipeline",
+        "performance",
+        "model-routing"
+      ]
     }
   ],
   "completed": [
