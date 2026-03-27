@@ -504,6 +504,23 @@
       ]
     },
     {
+      "id": "Q-042",
+      "category": "trading",
+      "title": "Pre-market macro signal (SPY + VIX + DXY + TLT)",
+      "what": "Lightweight 7:25 ET script fetching SPY pre-market change, VIX, DXY, TLT via yfinance. Writes premarket_macro.json with spy_premarket_change_pct and derived premarket_regime (RISK_ON/RISK_OFF/NEUTRAL). Non-blocking — pipeline continues if it fails. Primary consumer: Thesis agent.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "yfinance already installed. No new dependencies.",
+      "priority": "HIGH",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "regime-detection",
+        "pre-market",
+        "data-fetcher"
+      ]
+    },
+    {
       "id": "Q-041",
       "category": "infrastructure",
       "title": "Revive fast model path for thesis agent",
