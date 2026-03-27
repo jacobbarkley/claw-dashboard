@@ -1,11 +1,266 @@
 {
-  "generated_at": "2026-03-15T22:47:47.448560-04:00",
+  "generated_at": "2026-03-27T00:04:08.702993-04:00",
   "queued": [
+    {
+      "id": "Q-028",
+      "category": "trading",
+      "title": "HMM Regime Classifier \u2014 probabilistic regime detection",
+      "what": "Replace static VIX thresholds (HIGH/MEDIUM/LOW) with a 2-state Gaussian HMM trained on rolling 100-day SPY returns. Outputs regime probabilities (bull_prob, bear_prob) instead of binary states. Uses hmmlearn library. Feeds market_status.json. Touches: orchestrator, Agent-01, Agent-08b, Agent-19, order_submitter.py, options_regime_router, protective_put_screener, dashboard. v1: basic 2-state HMM. v2: semi-Markov duration tracking, model persistence, confidence bands, dashboard gauge.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "pip install hmmlearn in .venv-trading. yfinance for SPY OHLC data.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "regime-detection",
+        "hmm",
+        "paper-6",
+        "paper-2",
+        "tier-0"
+      ]
+    },
+    {
+      "id": "Q-029",
+      "category": "trading",
+      "title": "Sector Correlation Monitor \u2014 dual-signal hedge timing",
+      "what": "EWMA correlation matrix (lambda=0.94) across sector ETFs. Flag when 3+ inter-sector correlation z-scores drop below -2 (sector decoupling = crash warning). Uses robust MAD-based z-scores. Combined with PE z-scores > 2.5 for dual-signal hedge trigger. Touches: new state file, options_regime_router, protective_put_screener, market_status, Agent-01, dashboard. v1: correlation monitor + alert. v2: add PE z-scores, historical heatmap, signal accuracy tracking.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "yfinance for sector ETF data (XLK, XLF, XLE, XLV, XLI, XLC, XLY, XLP, XLU, XLRE, XLB).",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "correlation",
+        "hedging",
+        "paper-1",
+        "tier-0"
+      ]
+    },
+    {
+      "id": "Q-030",
+      "category": "trading",
+      "title": "No-Trade Zone \u2014 prevent value-destroying over-trading",
+      "what": "Compute no-trade zone width for each position based on alpha, volatility, and transaction costs. Position adjustments below threshold are skipped (hedged instead of traded). Prevents overtrading which mathematically destroys value per Paper #5. v1: simplified 5% threshold adjustable by regime. v2: proper C* formula with per-position alpha/beta/sigma.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-028 (HMM regime) for regime-adaptive threshold.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "position-management",
+        "transaction-costs",
+        "paper-5",
+        "tier-1"
+      ]
+    },
+    {
+      "id": "Q-031",
+      "category": "trading",
+      "title": "VIX Contrarian Opportunity Flag",
+      "what": "When VIX > 30 AND declining from peak, flag high-conviction longs as having elevated expected returns. Research shows VIX is a contrarian indicator \u2014 reducing equity when VIX > 30 underperforms buy-and-hold. Don't block longs, highlight the opportunity. Touches: market_status, Agent-01, Agent-06, Agent-08b, order_submitter, dashboard. v1: VIX direction tracking + contrarian flag. v2: correlate with HMM transitions, historical backtest.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "VIX historical data in volatility_fetcher.py.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "vix",
+        "contrarian",
+        "paper-3",
+        "tier-1"
+      ]
+    },
+    {
+      "id": "Q-032",
+      "category": "trading",
+      "title": "Regime-Adaptive Hedge Parameters",
+      "what": "Adjust protective put screener parameters (OTM%, max cost, DTE range) based on HMM regime state. HIGH vol = wider strikes, higher cost tolerance. LOW vol = tighter, cheaper. Currently uses fixed parameters regardless of regime. Also: don't over-rebalance hedges (rough vol research shows diminishing returns from frequent adjustment). v1: 3-tier parameter table keyed to regime. v2: optimal hedge ratio from risk-minimizing framework, semi-Markov duration adjustment.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-028 (HMM regime classifier) for regime input.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "options",
+        "hedging",
+        "paper-2",
+        "paper-4",
+        "tier-1"
+      ]
+    },
+    {
+      "id": "Q-033",
+      "category": "trading",
+      "title": "Per-Trade Quality Score \u2014 5-dimension assessment",
+      "what": "Score each trade across Data freshness (D), Model confidence (M), Robustness (R), Performance risk/reward (P), Interpretability (I). Each 0-2, max 10. Added to Agent-07 validation. Agent-08b rejects trades scoring < 5. Inspired by Paper #7's quality assessment framework. v1: prompt-based scoring. v2: weighted dimensions, score-vs-P&L correlation tracking, auto-weight adjustment.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None \u2014 purely prompt + schema change.",
+      "priority": "medium-high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "quality",
+        "validation",
+        "paper-7",
+        "tier-2"
+      ]
+    },
+    {
+      "id": "Q-034",
+      "category": "trading",
+      "title": "CVaR Risk Metric \u2014 tail-risk aware position sizing",
+      "what": "Conditional Value at Risk: expected loss in worst X% of outcomes. Upgrade from max-loss thresholds to proper tail-risk metric. Compute historical CVaR at 95% and 99% from portfolio returns. Warn when exposure exceeds CVaR budget. v1: daily post-close calculation, feed to Agent-08b. v2: per-position CVaR contribution, regime-conditional CVaR, Monte Carlo simulation.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Alpaca portfolio history for return series.",
+      "priority": "medium-high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "risk",
+        "cvar",
+        "tail-risk",
+        "paper-7",
+        "paper-2",
+        "tier-2"
+      ]
+    },
+    {
+      "id": "Q-035",
+      "category": "trading",
+      "title": "Hedge-vs-Rebalance Decision Framework",
+      "what": "When pipeline suggests reducing a position, compare cost-to-sell vs cost-to-hedge-with-puts. High alpha + cheap puts = hedge instead of sell. Low alpha or expensive puts = sell. Implements Paper #5's no-trade zone concept for sell decisions. v1: simple cost comparison in morning_position_reviewer.py. v2: full model with transaction costs, market impact, time decay, asymmetric shock response.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-030 (no-trade zone), protective_put_screener single-symbol mode.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "hedging",
+        "position-management",
+        "paper-5",
+        "paper-4",
+        "tier-2"
+      ]
+    },
+    {
+      "id": "Q-036",
+      "category": "trading",
+      "title": "GSADF Bubble Detection \u2014 explosive price early warning",
+      "what": "Generalized Supremum ADF test on SPY, QQQ, and held sector ETFs. Detects explosive price behavior (bubbles) before they burst. When bubble detected, proactively tighten circuit breaker thresholds. Weekly diagnostic. v1: GSADF test via arch package. v2: combine with EXCF, track contagion lag, auto-tighten circuit breaker.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "arch Python package or custom GSADF implementation.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "bubble-detection",
+        "gsadf",
+        "paper-8",
+        "tier-3"
+      ]
+    },
+    {
+      "id": "Q-037",
+      "category": "trading",
+      "title": "Deflated Sharpe Ratio for performance evaluation",
+      "what": "Apply DSR correction (Bailey & Lopez De Prado, 2014) when evaluating strategy performance. Corrects for multiple testing, non-normal returns, data snooping. Probability that observed Sharpe is genuine. Flag when DSR < 0.5. v1: add to performance_aggregator.py. v2: per-strategy DSR for backtester (Q-025), walk-forward DSR, dashboard comparison chart.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "performance_aggregator.py producing Sharpe. Enough trading days for meaningful statistics.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "performance",
+        "sharpe",
+        "overfitting",
+        "paper-7",
+        "tier-3"
+      ]
+    },
+    {
+      "id": "Q-038",
+      "category": "trading",
+      "title": "Cross-Market Contagion Monitor",
+      "what": "ARDL-style monitoring of cross-index correlation dynamics. Track whether shocks to S&P 500, Nasdaq, international indices propagate to our sectors with measurable lag. When contagion risk elevated, flag for defensive posture. Extends sector_correlation_monitor.py. v1: add SPY/QQQ/EFA/EEM to correlation matrix with lagged correlations. v2: full ARDL model, regime-conditional contagion.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-029 (sector correlation monitor) as base.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "contagion",
+        "cross-market",
+        "paper-8",
+        "paper-1",
+        "tier-3"
+      ]
+    },
+    {
+      "id": "Q-039",
+      "category": "trading",
+      "title": "Automated Research Signal Accuracy Tracking",
+      "what": "Every research signal (HMM regime, correlation breakdown, VIX contrarian, bubble detection, quality score) gets a feedback loop. Log when signals fire, what we did, backfill 5-day outcomes. Weekly summary of signal prediction accuracy. Over time: Bayesian updating of signal weights, demote noise signals, promote accurate ones. v1: append-only signal log + post-close backfill. v2: Bayesian weight updates, signal performance leaderboard.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "At least Q-028 (HMM) shipping signals to log.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "automation",
+        "self-improvement",
+        "feedback-loop",
+        "tier-1"
+      ]
+    },
+    {
+      "id": "Q-040",
+      "category": "trading",
+      "title": "LSTM Regime Classifier (R&D)",
+      "what": "Upgrade from HMM (Markovian, memoryless) to LSTM-based regime detection capturing path dependency. The fRNN insight from Paper #4: decisions should consider the full price PATH, not just current state. Only begin after HMM has 30+ days of data to benchmark against. v1: train LSTM on same data, compare accuracy. v2: replace HMM if meaningfully better.",
+      "blocker": "Need 30+ days of HMM regime data to benchmark against.",
+      "blocker_type": "data",
+      "prereq": "Q-028 (HMM) running 30+ days. PyTorch or TensorFlow for LSTM training.",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "regime-detection",
+        "lstm",
+        "deep-learning",
+        "paper-4",
+        "tier-4"
+      ]
+    },
     {
       "id": "Q-027",
       "category": "trading",
       "title": "Bull/Bear adversarial debate in Thesis agent",
-      "what": "Add a two-pass adversarial debate pattern to Agent-06 (Thesis). After forming the initial thesis, run a second pass that argues against it — forces explicit bear case argumentation before finalizing conviction. If the bear case is stronger, downgrade conviction. Inspired by TauricResearch/TradingAgents bull/bear researcher pattern. Implementation: two-pass prompt within existing Agent-06 (not a new agent). Pass 1 forms thesis as today. Pass 2 receives the thesis and constructs the strongest bear case. Final output includes both arguments and adjusted conviction. Reduces confirmation bias in stock selection.",
+      "what": "Add a two-pass adversarial debate pattern to Agent-06 (Thesis). After forming the initial thesis, run a second pass that argues against it \u2014 forces explicit bear case argumentation before finalizing conviction. If the bear case is stronger, downgrade conviction. Inspired by TauricResearch/TradingAgents bull/bear researcher pattern. Implementation: two-pass prompt within existing Agent-06 (not a new agent). Pass 1 forms thesis as today. Pass 2 receives the thesis and constructs the strongest bear case. Final output includes both arguments and adjusted conviction. Reduces confirmation bias in stock selection.",
       "blocker": "Need 1+ week of paper trading data to compare thesis quality before/after.",
       "blocker_type": "data",
       "prereq": "Research v2 stable. Pipeline producing daily thesis_packet.json with real data. Validate with pipeline-validate.sh before deploy.",
