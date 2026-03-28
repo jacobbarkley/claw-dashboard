@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-28T01:10:06.074701-04:00",
+  "generated_at": "2026-03-28T01:11:43.569997-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -16,103 +16,6 @@
         "options",
         "execution",
         "strategy"
-      ]
-    },
-    {
-      "id": "Q-028",
-      "category": "trading",
-      "title": "HMM Regime Classifier \u2014 probabilistic regime detection",
-      "what": "Replace static VIX thresholds (HIGH/MEDIUM/LOW) with a 2-state Gaussian HMM trained on rolling 100-day SPY returns. Outputs regime probabilities (bull_prob, bear_prob) instead of binary states. Uses hmmlearn library. Feeds market_status.json. Touches: orchestrator, Agent-01, Agent-08b, Agent-19, order_submitter.py, options_regime_router, protective_put_screener, dashboard. v1: basic 2-state HMM. v2: semi-Markov duration tracking, model persistence, confidence bands, dashboard gauge.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "pip install hmmlearn in .venv-trading. yfinance for SPY OHLC data.",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "regime-detection",
-        "hmm",
-        "paper-6",
-        "paper-2",
-        "tier-0"
-      ]
-    },
-    {
-      "id": "Q-029",
-      "category": "trading",
-      "title": "Sector Correlation Monitor \u2014 dual-signal hedge timing",
-      "what": "EWMA correlation matrix (lambda=0.94) across sector ETFs. Flag when 3+ inter-sector correlation z-scores drop below -2 (sector decoupling = crash warning). Uses robust MAD-based z-scores. Combined with PE z-scores > 2.5 for dual-signal hedge trigger. Touches: new state file, options_regime_router, protective_put_screener, market_status, Agent-01, dashboard. v1: correlation monitor + alert. v2: add PE z-scores, historical heatmap, signal accuracy tracking.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "yfinance for sector ETF data (XLK, XLF, XLE, XLV, XLI, XLC, XLY, XLP, XLU, XLRE, XLB).",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "correlation",
-        "hedging",
-        "paper-1",
-        "tier-0"
-      ]
-    },
-    {
-      "id": "Q-030",
-      "category": "trading",
-      "title": "No-Trade Zone \u2014 prevent value-destroying over-trading",
-      "what": "Compute no-trade zone width for each position based on alpha, volatility, and transaction costs. Position adjustments below threshold are skipped (hedged instead of traded). Prevents overtrading which mathematically destroys value per Paper #5. v1: simplified 5% threshold adjustable by regime. v2: proper C* formula with per-position alpha/beta/sigma.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-028 (HMM regime) for regime-adaptive threshold.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "position-management",
-        "transaction-costs",
-        "paper-5",
-        "tier-1"
-      ]
-    },
-    {
-      "id": "Q-031",
-      "category": "trading",
-      "title": "VIX Contrarian Opportunity Flag",
-      "what": "When VIX > 30 AND declining from peak, flag high-conviction longs as having elevated expected returns. Research shows VIX is a contrarian indicator \u2014 reducing equity when VIX > 30 underperforms buy-and-hold. Don't block longs, highlight the opportunity. Touches: market_status, Agent-01, Agent-06, Agent-08b, order_submitter, dashboard. v1: VIX direction tracking + contrarian flag. v2: correlate with HMM transitions, historical backtest.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "VIX historical data in volatility_fetcher.py.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "vix",
-        "contrarian",
-        "paper-3",
-        "tier-1"
-      ]
-    },
-    {
-      "id": "Q-032",
-      "category": "trading",
-      "title": "Regime-Adaptive Hedge Parameters",
-      "what": "Adjust protective put screener parameters (OTM%, max cost, DTE range) based on HMM regime state. HIGH vol = wider strikes, higher cost tolerance. LOW vol = tighter, cheaper. Currently uses fixed parameters regardless of regime. Also: don't over-rebalance hedges (rough vol research shows diminishing returns from frequent adjustment). v1: 3-tier parameter table keyed to regime. v2: optimal hedge ratio from risk-minimizing framework, semi-Markov duration adjustment.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-028 (HMM regime classifier) for regime input.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "options",
-        "hedging",
-        "paper-2",
-        "paper-4",
-        "tier-1"
       ]
     },
     {
@@ -232,25 +135,6 @@
         "paper-8",
         "paper-1",
         "tier-3"
-      ]
-    },
-    {
-      "id": "Q-039",
-      "category": "trading",
-      "title": "Automated Research Signal Accuracy Tracking",
-      "what": "Every research signal (HMM regime, correlation breakdown, VIX contrarian, bubble detection, quality score) gets a feedback loop. Log when signals fire, what we did, backfill 5-day outcomes. Weekly summary of signal prediction accuracy. Over time: Bayesian updating of signal weights, demote noise signals, promote accurate ones. v1: append-only signal log + post-close backfill. v2: Bayesian weight updates, signal performance leaderboard.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "At least Q-028 (HMM) shipping signals to log.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "automation",
-        "self-improvement",
-        "feedback-loop",
-        "tier-1"
       ]
     },
     {
@@ -518,40 +402,6 @@
         "ai-automation",
         "monetization",
         "services"
-      ]
-    },
-    {
-      "id": "Q-043",
-      "category": "trading",
-      "title": "Governance: distinguish pipeline stall from risk breach",
-      "what": "New PIPELINE_STALL status code for days with no execution (infra failure, not risk event). Audit currently escalates CB to HALT on stalls, generating false risk noise. If no orders submitted and no positions modified, CB should not escalate. Prompt changes to Agent-16 (Daily Audit) and Agent-10 (Session Close).",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "None \u2014 prompt-only changes.",
-      "priority": "MEDIUM-HIGH",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "governance",
-        "audit",
-        "circuit-breaker"
-      ]
-    },
-    {
-      "id": "Q-042",
-      "category": "trading",
-      "title": "Pre-market macro signal (SPY + VIX + DXY + TLT)",
-      "what": "Lightweight 7:25 ET script fetching SPY pre-market change, VIX, DXY, TLT via yfinance. Writes premarket_macro.json with spy_premarket_change_pct and derived premarket_regime (RISK_ON/RISK_OFF/NEUTRAL). Non-blocking \u2014 pipeline continues if it fails. Primary consumer: Thesis agent.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "yfinance already installed. No new dependencies.",
-      "priority": "HIGH",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "regime-detection",
-        "pre-market",
-        "data-fetcher"
       ]
     },
     {
