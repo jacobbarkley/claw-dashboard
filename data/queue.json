@@ -1,6 +1,23 @@
 {
-  "generated_at": "2026-03-27T00:04:08.702993-04:00",
+  "generated_at": "2026-03-28T01:10:06.074701-04:00",
   "queued": [
+    {
+      "id": "Q-044",
+      "category": "trading",
+      "title": "Options strategy expansion \u2014 execution path + directional plays",
+      "what": "AMD put (+$275, 39.6%) outperformed all 13 equity positions combined. Options are currently hedge-only (protective put screener). No execution path exists. Build: (1) options order submitter for Alpaca paper, (2) covered call screener for income in CALM regimes, (3) directional options plays (call/put spreads) as strategy agent alternative to equity entries. Regime detection (HMM + VIX + pre-market macro) is more useful for options than equities \u2014 directly informs whether options are cheap or expensive.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Verify Alpaca paper supports options orders. Protective put screener already producing candidates.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "options",
+        "execution",
+        "strategy"
+      ]
+    },
     {
       "id": "Q-028",
       "category": "trading",
@@ -510,7 +527,7 @@
       "what": "New PIPELINE_STALL status code for days with no execution (infra failure, not risk event). Audit currently escalates CB to HALT on stalls, generating false risk noise. If no orders submitted and no positions modified, CB should not escalate. Prompt changes to Agent-16 (Daily Audit) and Agent-10 (Session Close).",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "None — prompt-only changes.",
+      "prereq": "None \u2014 prompt-only changes.",
       "priority": "MEDIUM-HIGH",
       "ticket": null,
       "tags": [
@@ -524,7 +541,7 @@
       "id": "Q-042",
       "category": "trading",
       "title": "Pre-market macro signal (SPY + VIX + DXY + TLT)",
-      "what": "Lightweight 7:25 ET script fetching SPY pre-market change, VIX, DXY, TLT via yfinance. Writes premarket_macro.json with spy_premarket_change_pct and derived premarket_regime (RISK_ON/RISK_OFF/NEUTRAL). Non-blocking — pipeline continues if it fails. Primary consumer: Thesis agent.",
+      "what": "Lightweight 7:25 ET script fetching SPY pre-market change, VIX, DXY, TLT via yfinance. Writes premarket_macro.json with spy_premarket_change_pct and derived premarket_regime (RISK_ON/RISK_OFF/NEUTRAL). Non-blocking \u2014 pipeline continues if it fails. Primary consumer: Thesis agent.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "yfinance already installed. No new dependencies.",
