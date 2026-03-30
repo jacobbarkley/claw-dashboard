@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-29T22:30:00.000000-04:00",
+  "generated_at": "2026-03-29T23:45:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -362,6 +362,116 @@
         "ai-automation",
         "monetization",
         "services"
+      ]
+    },
+    {
+      "id": "Q-046",
+      "category": "trading",
+      "title": "HMM threshold calibration (Regime Matching paper)",
+      "what": "Current 0.5 smoothed-probability threshold for HMM regime labeling is often suboptimal. Simulate fitted HMM forward, sweep thresholds, maximize regime recovery. Post-fit calibration step on existing Q-028 output. Reduces false regime transitions and whipsaw entries.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-028 HMM running in production with enough data to validate calibration.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "hmm",
+        "regime",
+        "paper-triage-2"
+      ]
+    },
+    {
+      "id": "Q-047",
+      "category": "trading",
+      "title": "Change-point coincidence for correlation monitor",
+      "what": "Assets with low day-to-day correlation can crash simultaneously. Add structural break coincidence (via ruptures library) as secondary filter in Agent-06 basket de-dup and Q-029. Catches the blind spot where Pearson correlation understates co-crash risk.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-029 correlation monitor running.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "correlation",
+        "risk",
+        "paper-triage-2"
+      ]
+    },
+    {
+      "id": "Q-048",
+      "category": "trading",
+      "title": "Robust tail dependence estimator (Gumbel copula)",
+      "what": "Replace/supplement Pearson correlation with Gumbel copula tail dependence (chi) in Agent-07 concentration check and Agent-08b risk. Use Hellinger estimator in stress regimes (stable through crises), MLE in calm. 2x variance cost is acceptable during tail events.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-028 HMM for regime switching between estimators.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "risk",
+        "tail-dependence",
+        "paper-triage-2"
+      ]
+    },
+    {
+      "id": "Q-049",
+      "category": "trading",
+      "title": "Vol persistence indicator (Hurst exponent)",
+      "what": "Add vol_persistence field to market_status.json. Rolling Hurst exponent on realized vol. H > 0.7 = persistent vol (suppress mean-reversion entries, dont sell covered calls). H < 0.6 = transient vol (safe to fade). Phase 2 covered call gate + general pipeline signal.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None — standalone computation from price history.",
+      "priority": "medium-high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "volatility",
+        "options",
+        "phase-2",
+        "paper-triage-2"
+      ]
+    },
+    {
+      "id": "Q-050",
+      "category": "trading",
+      "title": "JV/RV decomposition (jump vs regime volatility)",
+      "what": "Separate jump variation from smooth realized vol via bipower variation. JV spike + high IV rank = best covered call entry (event vol decays fast). RV elevation + high IV rank = worst entry (regime vol persists). Phase 2 covered call signal.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-049 vol persistence indicator (complementary signals).",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "volatility",
+        "options",
+        "phase-2",
+        "paper-triage-2"
+      ]
+    },
+    {
+      "id": "Q-051",
+      "category": "trading",
+      "title": "Asymmetric tail dependence / regime-switching copula",
+      "what": "Downside co-movement is stronger than upside across assets. Upgrade hedge sizing to be asymmetric (heavier puts in high-dependence regime). Future upgrade for Q-029 correlation monitor and protective put screener.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-028 HMM + Q-029 correlation monitor stable.",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "hedging",
+        "copula",
+        "paper-triage-2"
       ]
     }
   ],
