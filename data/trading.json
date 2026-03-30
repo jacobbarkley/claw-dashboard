@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T13:30:10.571228+00:00",
+  "generated_at": "2026-03-30T13:45:09.178662+00:00",
   "as_of_date": "2026-03-27",
   "account": {
     "equity": 99579.73,
@@ -1449,9 +1449,9 @@
       "active": false
     },
     "routing_reason": "CB=REDUCE_ONLY \u2014 protective puts only",
-    "positions_screened": 13,
+    "positions_screened": 10,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-03-30T09:30:10.317575-04:00"
+    "as_of": "2026-03-30T09:45:08.960563-04:00"
   }
 }
