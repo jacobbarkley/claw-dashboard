@@ -39,8 +39,14 @@ def build_account(positions: list, snapshot: dict) -> dict:
     last_equity  = safe_float(alpaca.get("last_equity"))
     buying_power = safe_float(alpaca.get("buying_power"))
 
-    # Positions-derived fallbacks
-    total_market_value = sum(safe_float(p.get("market_value"), 0) for p in positions)
+    # Positions-derived fallbacks — separate equity and options
+    equity_positions = [p for p in positions if len(p.get("symbol", "")) <= 10]
+    options_positions = [p for p in positions if len(p.get("symbol", "")) > 10]
+
+    equity_market_value  = sum(safe_float(p.get("market_value"), 0) for p in equity_positions)
+    options_market_value = sum(abs(safe_float(p.get("market_value"), 0)) for p in options_positions)
+    total_market_value   = equity_market_value + options_market_value
+
     total_unrealized   = sum(safe_float(p.get("unrealized_pnl"), 0) for p in positions)
     entry_value        = total_market_value - total_unrealized
     unrealized_pct     = (total_unrealized / entry_value * 100) if entry_value else None
@@ -71,6 +77,8 @@ def build_account(positions: list, snapshot: dict) -> dict:
         "today_pnl_pct":      today_pnl_pct,
         # Positions breakdown
         "positions_value":    round(total_market_value, 2),
+        "equity_deployed":    round(equity_market_value, 2),
+        "options_deployed":   round(options_market_value, 2),
         "unrealized_pnl":     round(total_unrealized, 2),
         "unrealized_pnl_pct": round(unrealized_pct, 2) if unrealized_pct is not None else None,
     }

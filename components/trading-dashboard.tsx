@@ -258,6 +258,8 @@ interface TradingData {
     today_pnl_pct: number | null
     // Positions breakdown
     positions_value: number
+    equity_deployed: number | null
+    options_deployed: number | null
     unrealized_pnl: number
     unrealized_pnl_pct: number | null
   }
@@ -434,7 +436,14 @@ function CapitalHero({
             >
               ${account.positions_value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="cb-label mt-2">deployed capital</div>
+            <div className="cb-label mt-2">
+              deployed capital
+              {account.equity_deployed != null && account.options_deployed != null && (
+                <span style={{ opacity: 0.6, marginLeft: "0.5rem" }}>
+                  (eq ${account.equity_deployed.toLocaleString("en-US", { maximumFractionDigits: 0 })} / opt ${account.options_deployed.toLocaleString("en-US", { maximumFractionDigits: 0 })})
+                </span>
+              )}
+            </div>
           </div>
           {todayPnl != null && (
             <div className="text-right">
