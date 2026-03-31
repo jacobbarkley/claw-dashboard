@@ -205,6 +205,9 @@ interface OptionsData {
     symbol: string; type: string; strike: number; expiry: string;
     dte: number; contracts: number; limit_price: number | null;
     wheel_state: string; status: string | null;
+    current_price?: number | null; unrealized_pnl?: number | null;
+    unrealized_pct?: number | null; market_value?: number | null;
+    side?: string | null;
   }>
   executions: OptionsExecution[]
   scan_summary: { scanned: number; passed: number } | null
@@ -238,6 +241,7 @@ interface HedgesData {
   positions_screened: number
   candidates_found: number
   candidates: HedgeCandidate[]
+  live_positions?: OptionsData["active_trades"]
   as_of: string | null
 }
 
@@ -1584,33 +1588,40 @@ function OptionsCandidateRow({ c, screened }: { c: OptionsCandidate; screened?: 
 }
 
 function ActiveOptionsRow({ t }: { t: OptionsData["active_trades"][number] }) {
-  const wheelColors: Record<string, string> = {
-    IDLE:      "var(--cb-text-tertiary)",
-    CSP_OPEN:  "var(--cb-steel)",
-    ASSIGNED:  "var(--cb-amber)",
-    CC_OPEN:   "var(--cb-brand)",
-    COMPLETED: "var(--cb-green)",
-  }
+  const pnl = t.unrealized_pnl ?? null
+  const pnlColor = pnl == null ? "var(--cb-text-tertiary)" : pnl >= 0 ? "var(--cb-green)" : "var(--cb-red)"
+  const mv = t.market_value ?? (t.current_price != null && t.contracts ? Math.abs(t.current_price * t.contracts * 100) : null)
+  const typeLabel = t.type === "PUT" ? "P" : t.type === "CALL" ? "C" : t.type
   return (
     <div className="cb-card-t2 px-4 py-3 flex items-center justify-between">
       <div>
         <div className="flex items-center gap-2">
           <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{t.symbol}</span>
           <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace" }}>{t.type}</span>
-          <span style={{ fontSize: 9, color: wheelColors[t.wheel_state] ?? wheelColors.IDLE, fontWeight: 500 }}>
-            {t.wheel_state.replace(/_/g, " ")}
-          </span>
+          {t.side && (
+            <span style={{ fontSize: 9, color: t.side === "short" ? "var(--cb-amber)" : "var(--cb-steel)", fontWeight: 500 }}>
+              {t.side.toUpperCase()}
+            </span>
+          )}
         </div>
         <div className="mt-0.5" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-          ${t.strike}P · {t.expiry} · {t.contracts} contract{t.contracts !== 1 ? "s" : ""} · {t.dte}d
+          ${t.strike}{typeLabel} · {t.expiry} · {t.contracts}x · {t.dte}d
+          {t.limit_price != null && <span> · entry ${t.limit_price.toFixed(2)}</span>}
         </div>
       </div>
-      {t.limit_price != null && (
-        <div className="text-right">
-          <div className="text-sm font-medium cb-number text-[var(--cb-text-primary)]">${t.limit_price.toFixed(2)}</div>
-          <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>limit</div>
-        </div>
-      )}
+      <div className="text-right">
+        {mv != null && (
+          <div className="text-sm font-medium cb-number text-[var(--cb-text-primary)]">
+            ${mv.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </div>
+        )}
+        {pnl != null && (
+          <div style={{ fontSize: 11, color: pnlColor, fontWeight: 500 }}>
+            {pnl >= 0 ? "+" : ""}{pnl.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            {t.unrealized_pct != null && <span> ({t.unrealized_pct >= 0 ? "+" : ""}{t.unrealized_pct.toFixed(1)}%)</span>}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1768,8 +1779,13 @@ export function TunablesPanel({ tunables }: { tunables: Tunables }) {
 // ─── Options Section (Strategy Tabs) ────────────────────────────────────────
 function HedgesPanel({ hedges }: { hedges: HedgesData }) {
   const { regime, candidates, positions_screened, candidates_found } = hedges
+  const livePositions = hedges.live_positions ?? []
+  const hasLive = livePositions.length > 0
+  const totalHedgeValue = livePositions.reduce((s, p) => s + (p.market_value ?? 0), 0)
+  const totalHedgePnl = livePositions.reduce((s, p) => s + (p.unrealized_pnl ?? 0), 0)
 
-  if (!regime.active) {
+  // Show live positions even if regime is not active (we still hold them)
+  if (!regime.active && !hasLive) {
     return (
       <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
         Bearish regime not active — hedging screener idle
@@ -1819,6 +1835,31 @@ function HedgesPanel({ hedges }: { hedges: HedgesData }) {
           {candidates_found} puts across {positions_screened} positions
         </span>
       </div>
+
+      {/* Live hedge positions */}
+      {hasLive && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between px-1">
+            <div className="text-[11px] font-semibold" style={{ color: "var(--cb-text-secondary)" }}>
+              Active Hedges
+            </div>
+            <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+              ${totalHedgeValue.toLocaleString("en-US", { maximumFractionDigits: 0 })} deployed
+              <span className="ml-2" style={{ color: totalHedgePnl >= 0 ? "var(--cb-green)" : "var(--cb-red)" }}>
+                {totalHedgePnl >= 0 ? "+" : ""}${totalHedgePnl.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+              </span>
+            </div>
+          </div>
+          {livePositions.map((t, i) => <ActiveOptionsRow key={`hedge-${i}`} t={t} />)}
+        </div>
+      )}
+
+      {/* Screened candidates */}
+      {candidates.length > 0 && hasLive && (
+        <div className="text-[11px] font-semibold px-1 pt-2" style={{ color: "var(--cb-text-secondary)" }}>
+          Screened Candidates
+        </div>
+      )}
 
       {/* Per-symbol cards */}
       {Array.from(bySymbol.entries()).map(([symbol, puts]) => {
@@ -1980,28 +2021,49 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                 unrealized_pct: lp.unrealized_pct,
                 change_today_pct: lp.change_today_pct ?? 0,
               }))
-              // Merge live options positions into the options section
+              // Merge live options positions — route to Wheel (CSP/sold) or Hedges (long puts)
               if (live.options_positions?.length > 0) {
                 if (!json.options) {
                   json.options = { gate: { status: "PASS", checked_at: null, csp_slots_used: 0, csp_slots_max: 2, available_capital: null, cash_buffer_pct: null }, candidates: [], screened: [], active_trades: [], executions: [], scan_summary: null, as_of: null }
                 }
-                json.options.active_trades = live.options_positions.map((op: Record<string, unknown>) => ({
+
+                const mapPosition = (op: Record<string, unknown>) => ({
                   symbol: op.symbol as string,
-                  type: op.strategy as string,
+                  type: op.type as string,
                   strike: op.strike as number,
                   expiry: op.expiry as string,
                   dte: op.dte as number,
                   contracts: op.contracts as number,
                   limit_price: op.avg_entry as number,
-                  wheel_state: "OPEN",
+                  wheel_state: op.side === "short" ? "CSP_OPEN" : "OPEN",
                   status: "FILLED",
                   current_price: op.current_price as number,
+                  market_value: Math.abs(op.market_value as number),
                   unrealized_pnl: op.unrealized_pnl as number,
                   unrealized_pct: op.unrealized_pct as number,
                   side: op.side as string,
-                }))
-                json.options.gate.csp_slots_used = live.options_positions.filter(
-                  (op: Record<string, unknown>) => op.strategy === "CSP"
+                })
+
+                // Long puts = hedges (protective puts). Short puts = wheel (CSP).
+                const longPuts = live.options_positions.filter(
+                  (op: Record<string, unknown>) => op.side === "long" && op.type === "PUT"
+                )
+                const wheelPositions = live.options_positions.filter(
+                  (op: Record<string, unknown>) => !(op.side === "long" && op.type === "PUT")
+                )
+
+                json.options.active_trades = wheelPositions.map(mapPosition)
+
+                // Merge long puts into hedges as live positions
+                if (longPuts.length > 0) {
+                  if (!json.hedges) {
+                    json.hedges = { status: "live", regime: { vix_level: null, vix_regime: null, cb_state: null, active: true }, routing_reason: "live positions", positions_screened: 0, candidates_found: 0, candidates: [], as_of: live.fetched_at as string }
+                  }
+                  json.hedges.live_positions = longPuts.map(mapPosition)
+                }
+
+                json.options.gate.csp_slots_used = wheelPositions.filter(
+                  (op: Record<string, unknown>) => op.side === "short" && op.type === "PUT"
                 ).length
               }
               // Update account with live values
