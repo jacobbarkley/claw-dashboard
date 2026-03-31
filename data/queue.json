@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T23:45:00.000000-04:00",
+  "generated_at": "2026-03-31T00:00:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -381,9 +381,61 @@
         "copula",
         "paper-triage-2"
       ]
+    },
+    {
+      "id": "Q-052",
+      "category": "trading",
+      "title": "HMM threshold empirical sweep",
+      "what": "Current 35/65 thresholds set by judgment. After 60+ days of HMM output, sweep via Hall & Pagan simulation to find optimal values.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "60+ days of hmm_regime output (~late May 2026)",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "hmm",
+        "research"
+      ]
     }
   ],
   "completed": [
+    {
+      "id": "P0-001",
+      "category": "trading",
+      "title": "Protective put sizing formula fix + idempotency guard",
+      "what": "Fixed contracts_needed from qty to qty//100. Added date-match idempotency check to options_regime_router.py. BX 165-contract overhedge traced to this bug.",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "bugfix",
+        "options"
+      ]
+    },
+    {
+      "id": "P1-001",
+      "category": "trading",
+      "title": "Options concentration gate + dashboard deployed capital",
+      "what": "Max 50% options notional in single underlying (gate_options_risk.py check 5). Dashboard now shows equity_deployed + options_deployed split. Live API fixed to include options in positions_value.",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "risk",
+        "dashboard"
+      ]
+    },
+    {
+      "id": "P2-001",
+      "category": "trading",
+      "title": "Strategy REDUCE_ONLY filter + --force-from orchestrator flag",
+      "what": "Agent-06 skips new longs not in current portfolio during REDUCE_ONLY. Orchestrator --force-from clears failed artifact and resumes in one command.",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "pipeline",
+        "orchestrator"
+      ]
+    },
     {
       "id": "Q-048",
       "category": "trading",
