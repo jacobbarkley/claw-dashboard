@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T20:41:01.842242+00:00",
+  "generated_at": "2026-03-31T20:45:01.466093+00:00",
   "as_of_date": "2026-03-31",
   "account": {
     "equity": 86320.11,
@@ -218,7 +218,7 @@
   ],
   "pipeline_status": {
     "trading_date": "2026-03-31",
-    "run_id": "2026-03-31-preopen-01",
+    "run_id": null,
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "PASS",
     "critical_issues": 0,
