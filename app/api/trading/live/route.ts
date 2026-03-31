@@ -163,6 +163,9 @@ export async function GET() {
     const equityValue = equityPositions.reduce(
       (s: number, p: { market_value: number }) => s + p.market_value, 0
     )
+    const optionsValue = optionsPositions.reduce(
+      (s: number, p: { market_value: number }) => s + Math.abs(p.market_value), 0
+    )
 
     return NextResponse.json({
       fetched_at: new Date().toISOString(),
@@ -174,7 +177,9 @@ export async function GET() {
         cash: Number(account.cash),
         buying_power: Number(account.buying_power),
         portfolio_value: Number(account.portfolio_value),
-        positions_value: equityValue,
+        positions_value: equityValue + optionsValue,
+        equity_deployed: equityValue,
+        options_deployed: optionsValue,
       },
     }, {
       headers: { "Cache-Control": "no-store, max-age=0" },

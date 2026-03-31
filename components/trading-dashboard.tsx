@@ -2012,6 +2012,8 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                   cash: live.account.cash,
                   buying_power: live.account.buying_power,
                   positions_value: live.account.positions_value,
+                  equity_deployed: live.account.equity_deployed ?? null,
+                  options_deployed: live.account.options_deployed ?? null,
                   total_pnl: live.account.equity - (json.account.base_value ?? 100000),
                   total_pnl_pct: ((live.account.equity - (json.account.base_value ?? 100000)) / (json.account.base_value ?? 100000)) * 100,
                 }
