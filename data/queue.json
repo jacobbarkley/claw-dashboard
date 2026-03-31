@@ -1,6 +1,23 @@
 {
-  "generated_at": "2026-03-31T00:15:00.000000-04:00",
+  "generated_at": "2026-03-31T20:00:00.000000-04:00",
   "queued": [
+    {
+      "id": "Q-055",
+      "category": "trading",
+      "title": "Weekly directional options screener (5-7 DTE)",
+      "what": "Short-dated directional plays for faster feedback. CALL when bull_pct > 65%, PUT when bear_pct > 65%. 3-5% OTM, 5-7 DTE (nearest Friday). Max 1-2% portfolio per position. Separate path from protective puts. Liquidity gate: OI > 500, volume > 100. Reuses options_order_submitter.py.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Quality score (Q-033) producing data. Vol persistence (Q-049) and JV/RV (Q-050) for entry timing.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "options",
+        "directional",
+        "weekly"
+      ]
+    },
     {
       "id": "Q-053",
       "category": "documentation",
