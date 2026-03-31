@@ -2097,7 +2097,16 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
               }
               // Update KPIs with live data
               if (live.kpis) {
-                json.kpis = { ...json.kpis, ...live.kpis }
+                // Only merge live KPI fields that have real values.
+                // The live API computes KPIs from a 50-order window which is often
+                // incomplete (no matched buy-sell pairs). Don't overwrite the accurate
+                // static KPIs (from performance_aggregator.py) with nulls/zeros.
+                const liveKpis = live.kpis as Record<string, unknown>
+                for (const [k, v] of Object.entries(liveKpis)) {
+                  if (v != null && v !== 0) {
+                    (json.kpis as Record<string, unknown>)[k] = v
+                  }
+                }
               }
               // Filter exit candidates to only held positions
               if (json.exit_candidates) {
