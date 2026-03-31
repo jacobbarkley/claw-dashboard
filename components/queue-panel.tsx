@@ -530,7 +530,7 @@ export function QueuePanel({ data }: { data: QueueData | null }) {
   // Group items by category
   const categoryGroups = useMemo(() => {
     if (!data) return {}
-    const catOrder = ["trading", "infrastructure", "dashboard", "llc", "governance", "project"]
+    const catOrder = ["trading", "infrastructure", "documentation", "dashboard", "llc", "governance", "content", "project"]
     return catOrder.reduce<Record<string, QueueItem[]>>((acc, cat) => {
       const items = data.queued.filter(i => i.category === cat)
       if (items.length > 0) acc[cat] = items
