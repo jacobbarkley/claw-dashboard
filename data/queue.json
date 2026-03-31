@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T23:00:00.000000-04:00",
+  "generated_at": "2026-03-30T23:30:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -365,24 +365,6 @@
       ]
     },
     {
-      "id": "Q-047",
-      "category": "trading",
-      "title": "Change-point coincidence for correlation monitor",
-      "what": "Assets with low day-to-day correlation can crash simultaneously. Add structural break coincidence (via ruptures library) as secondary filter in Agent-06 basket de-dup and Q-029. Catches the blind spot where Pearson correlation understates co-crash risk.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-029 correlation monitor running.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "correlation",
-        "risk",
-        "paper-triage-2"
-      ]
-    },
-    {
       "id": "Q-048",
       "category": "trading",
       "title": "Robust tail dependence estimator (Gumbel copula)",
@@ -420,6 +402,20 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-047",
+      "category": "trading",
+      "title": "Change-point coincidence for correlation monitor",
+      "what": "PELT-based structural break detection across 11 sector ETFs + SPY. Measures pairwise break coincidence — assets that crash together even with low daily correlation. Enriches sector_correlations.json. Current: SPY/XLC/XLY/XLK all broke simultaneously (100% coincidence). Cron 07:05 ET Monday after correlation monitor. Paper: Semi-Metric Portfolio (James et al. 2023).",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "correlation",
+        "risk",
+        "research",
+        "paper-triage-2"
+      ]
+    },
     {
       "id": "Q-046",
       "category": "trading",
