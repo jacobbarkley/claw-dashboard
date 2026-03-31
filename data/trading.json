@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-31T20:30:02.144048+00:00",
+  "generated_at": "2026-03-31T20:41:01.842242+00:00",
   "as_of_date": "2026-03-31",
   "account": {
     "equity": 86320.11,
@@ -230,17 +230,17 @@
     "audit_written_at": "2026-03-31T20:20:00+00:00"
   },
   "kpis": {
-    "total_trades": 35,
-    "closed_trades": 8,
-    "open_trades": 27,
-    "win_rate_pct": 12.5,
-    "profit_factor": 0.0358,
-    "expectancy": -31.45,
-    "net_pnl": -251.6,
-    "max_drawdown_pct": 0.2609,
-    "max_drawdown_usd": 260.94,
+    "total_trades": 41,
+    "closed_trades": 11,
+    "open_trades": 30,
+    "win_rate_pct": 9.09,
+    "profit_factor": 0.0261,
+    "expectancy": -31.71,
+    "net_pnl": -348.89,
+    "max_drawdown_pct": 0.3582,
+    "max_drawdown_usd": 358.23,
     "max_win_streak": 1,
-    "max_loss_streak": 7
+    "max_loss_streak": 10
   },
   "daily_performance": [
     {
@@ -559,6 +559,14 @@
       "date": "2026-03-30",
       "net_pnl": -77.81,
       "trades": 11,
+      "winners": 0,
+      "losers": 3,
+      "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-31",
+      "net_pnl": -97.29,
+      "trades": 6,
       "winners": 0,
       "losers": 3,
       "win_rate": 0.0
