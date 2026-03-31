@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T23:30:00.000000-04:00",
+  "generated_at": "2026-03-30T23:45:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -365,24 +365,6 @@
       ]
     },
     {
-      "id": "Q-048",
-      "category": "trading",
-      "title": "Robust tail dependence estimator (Gumbel copula)",
-      "what": "Replace/supplement Pearson correlation with Gumbel copula tail dependence (chi) in Agent-07 concentration check and Agent-08b risk. Use Hellinger estimator in stress regimes (stable through crises), MLE in calm. 2x variance cost is acceptable during tail events.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-028 HMM for regime switching between estimators.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "risk",
-        "tail-dependence",
-        "paper-triage-2"
-      ]
-    },
-    {
       "id": "Q-051",
       "category": "trading",
       "title": "Asymmetric tail dependence / regime-switching copula",
@@ -402,6 +384,20 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-048",
+      "category": "trading",
+      "title": "Robust tail dependence estimator (Gumbel copula)",
+      "what": "Dual-estimator tail dependence: MLE in calm regimes, Hellinger in volatile (2x variance but stable through crises). Computes chi for all sector ETF pairs. Enriches sector_correlations.json. Current: SPY/XLK chi=0.77 (77% joint extreme probability). Cron 07:10 ET Monday. Paper: Robust Tail Dependence (Ardakani 2025).",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "risk",
+        "tail-dependence",
+        "research",
+        "paper-triage-2"
+      ]
+    },
     {
       "id": "Q-047",
       "category": "trading",
