@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T22:30:00.000000-04:00",
+  "generated_at": "2026-03-30T23:00:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -365,24 +365,6 @@
       ]
     },
     {
-      "id": "Q-046",
-      "category": "trading",
-      "title": "HMM threshold calibration (Regime Matching paper)",
-      "what": "Current 0.5 smoothed-probability threshold for HMM regime labeling is often suboptimal. Simulate fitted HMM forward, sweep thresholds, maximize regime recovery. Post-fit calibration step on existing Q-028 output. Reduces false regime transitions and whipsaw entries.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-028 HMM running in production with enough data to validate calibration.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "hmm",
-        "regime",
-        "paper-triage-2"
-      ]
-    },
-    {
       "id": "Q-047",
       "category": "trading",
       "title": "Change-point coincidence for correlation monitor",
@@ -438,6 +420,20 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-046",
+      "category": "trading",
+      "title": "HMM threshold calibration (asymmetric hysteresis)",
+      "what": "Replaced Viterbi hard state assignment with probability-based classification using asymmetric hysteresis. VOLATILE entry: calm_prob < 0.35. CALM entry: calm_prob > 0.65. Hysteresis band (0.35-0.65) maintains previous regime to prevent whipsaw. Paper: Hall & Pagan (2025).",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "hmm",
+        "regime",
+        "research",
+        "paper-triage-2"
+      ]
+    },
     {
       "id": "Q-050",
       "category": "trading",
