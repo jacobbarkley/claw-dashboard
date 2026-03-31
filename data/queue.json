@@ -1,6 +1,39 @@
 {
-  "generated_at": "2026-03-31T00:00:00.000000-04:00",
+  "generated_at": "2026-03-31T00:15:00.000000-04:00",
   "queued": [
+    {
+      "id": "Q-053",
+      "category": "documentation",
+      "title": "Pipeline Architecture & Strategy Guide",
+      "what": "Comprehensive 30-40 page technical document covering the entire trading pipeline: signal generation, trade selection, quality scoring, risk management, options strategy, infrastructure, and research paper lineage. Written for Jacob + financial advisors. Lives in Obsidian vault (interlinked) + PDF export. Includes quick reference card.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None — writing project, not code.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "documentation",
+        "architecture",
+        "obsidian"
+      ]
+    },
+    {
+      "id": "Q-054",
+      "category": "infrastructure",
+      "title": "Obsidian vault integration + daily performance reports",
+      "what": "Set up Obsidian vault structure for trading knowledge graph. Daily post-close briefing notes (auto-generated) linking to symbols, agents, papers. Email delivery via SendGrid. Same content in Obsidian + email — evaluate which Jacob prefers.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-053 architecture doc (provides the template and structure).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "obsidian",
+        "email",
+        "reporting"
+      ]
+    },
     {
       "id": "Q-044",
       "category": "trading",
