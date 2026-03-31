@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-30T00:00:00.000000-04:00",
+  "generated_at": "2026-03-30T22:30:00.000000-04:00",
   "queued": [
     {
       "id": "Q-044",
@@ -419,25 +419,6 @@
       ]
     },
     {
-      "id": "Q-050",
-      "category": "trading",
-      "title": "JV/RV decomposition (jump vs regime volatility)",
-      "what": "Separate jump variation from smooth realized vol via bipower variation. JV spike + high IV rank = best covered call entry (event vol decays fast). RV elevation + high IV rank = worst entry (regime vol persists). Phase 2 covered call signal.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-049 vol persistence indicator (complementary signals).",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "volatility",
-        "options",
-        "phase-2",
-        "paper-triage-2"
-      ]
-    },
-    {
       "id": "Q-051",
       "category": "trading",
       "title": "Asymmetric tail dependence / regime-switching copula",
@@ -457,6 +438,20 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-050",
+      "category": "trading",
+      "title": "JV/RV decomposition (jump vs regime volatility)",
+      "what": "Bipower variation decomposes realized vol into jump component (event vol, decays fast) vs smooth diffusive component (regime vol, persists). Enriches market_status.json. Current reading: DIFFUSION_DOMINATED (no jump component, all regime vol). Phase 2 Pass 3 covered call signal.",
+      "completed_date": "2026-03-30",
+      "tags": [
+        "trading",
+        "volatility",
+        "options",
+        "research",
+        "paper-triage-2"
+      ]
+    },
     {
       "id": "Q-049",
       "category": "trading",
