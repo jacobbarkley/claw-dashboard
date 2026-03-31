@@ -1796,7 +1796,7 @@ function HedgesPanel({ hedges }: { hedges: HedgesData }) {
     )
   }
 
-  if (candidates.length === 0) {
+  if (candidates.length === 0 && !hasLive) {
     return (
       <div className="py-6 text-center text-sm" style={{ color: "var(--cb-text-tertiary)" }}>
         Regime active but no protective puts found
