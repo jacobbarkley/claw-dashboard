@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-03-31T20:45:01.466093+00:00",
+  "generated_at": "2026-04-01T13:00:10.749093+00:00",
   "as_of_date": "2026-03-31",
   "account": {
-    "equity": 86320.11,
+    "equity": 86312.29,
     "cash": 65034.01,
-    "buying_power": 137285.12,
+    "buying_power": 140147.3,
     "base_value": 100000.0,
-    "total_pnl": -13679.89,
-    "total_pnl_pct": -13.6799,
-    "today_pnl": -17524.86,
-    "today_pnl_pct": -16.876,
-    "positions_value": 21788.1,
-    "equity_deployed": 11087.1,
+    "total_pnl": -13687.71,
+    "total_pnl_pct": -13.6877,
+    "today_pnl": -17532.68,
+    "today_pnl_pct": -16.8835,
+    "positions_value": 21780.28,
+    "equity_deployed": 11079.28,
     "options_deployed": 10701.0,
-    "unrealized_pnl": -5168.34,
-    "unrealized_pnl_pct": -19.17
+    "unrealized_pnl": -5176.16,
+    "unrealized_pnl_pct": -19.2
   },
   "positions": [
     {
@@ -22,11 +22,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 202.9399,
-      "market_value": 405.8798,
-      "unrealized_pnl": -22.5402,
-      "unrealized_pct": -5.26,
-      "change_today_pct": 3.52
+      "current_price": 202.6864,
+      "market_value": 405.3728,
+      "unrealized_pnl": -23.0472,
+      "unrealized_pct": -5.38,
+      "change_today_pct": 3.39
     },
     {
       "symbol": "AMD260410P00190000",
@@ -66,44 +66,44 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 150.4,
-      "current_price": 151.28,
-      "market_value": 453.84,
-      "unrealized_pnl": 2.64,
-      "unrealized_pct": 0.58,
-      "change_today_pct": 10.46
+      "current_price": 150.95,
+      "market_value": 452.85,
+      "unrealized_pnl": 1.65,
+      "unrealized_pct": 0.37,
+      "change_today_pct": 10.21
     },
     {
       "symbol": "ASML",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1358.85,
-      "current_price": 1320.83,
-      "market_value": 1320.83,
-      "unrealized_pnl": -38.02,
-      "unrealized_pct": -2.8,
-      "change_today_pct": 5.33
+      "current_price": 1320.25,
+      "market_value": 1320.25,
+      "unrealized_pnl": -38.6,
+      "unrealized_pct": -2.84,
+      "change_today_pct": 5.29
     },
     {
       "symbol": "BCRX",
       "qty": 19.0,
       "side": "long",
       "entry_price": 9.54,
-      "current_price": 9.52,
-      "market_value": 180.88,
-      "unrealized_pnl": -0.38,
-      "unrealized_pct": -0.21,
-      "change_today_pct": 0.74
+      "current_price": 9.56,
+      "market_value": 181.64,
+      "unrealized_pnl": 0.38,
+      "unrealized_pct": 0.21,
+      "change_today_pct": 1.16
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 114.99,
-      "market_value": 3794.67,
-      "unrealized_pnl": 258.06,
-      "unrealized_pct": 7.3,
-      "change_today_pct": 3.04
+      "current_price": 114.75,
+      "market_value": 3786.75,
+      "unrealized_pnl": 250.14,
+      "unrealized_pct": 7.07,
+      "change_today_pct": 2.82
     },
     {
       "symbol": "BX260424P00105000",
@@ -121,11 +121,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 206.83,
-      "market_value": 206.83,
-      "unrealized_pnl": -1.7,
-      "unrealized_pct": -0.81,
-      "change_today_pct": -1.84
+      "current_price": 206.085,
+      "market_value": 206.085,
+      "unrealized_pnl": -2.445,
+      "unrealized_pct": -1.17,
+      "change_today_pct": -2.2
     },
     {
       "symbol": "CVX260424P00195000",
@@ -143,22 +143,22 @@
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 92.5,
-      "market_value": 3977.5,
-      "unrealized_pnl": 259.29,
-      "unrealized_pct": 6.97,
-      "change_today_pct": 2.37
+      "current_price": 92.55,
+      "market_value": 3979.65,
+      "unrealized_pnl": 261.44,
+      "unrealized_pct": 7.03,
+      "change_today_pct": 2.42
     },
     {
       "symbol": "PDD",
       "qty": 4.0,
       "side": "long",
       "entry_price": 99.23,
-      "current_price": 102.18,
-      "market_value": 408.72,
-      "unrealized_pnl": 11.8,
-      "unrealized_pct": 2.97,
-      "change_today_pct": 3.82
+      "current_price": 102.32,
+      "market_value": 409.28,
+      "unrealized_pnl": 12.36,
+      "unrealized_pct": 3.11,
+      "change_today_pct": 3.96
     },
     {
       "symbol": "PDD260424P00090000",
@@ -187,11 +187,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 337.95,
-      "market_value": 337.95,
-      "unrealized_pnl": -2.49,
-      "unrealized_pct": -0.73,
-      "change_today_pct": 6.78
+      "current_price": 337.4,
+      "market_value": 337.4,
+      "unrealized_pnl": -3.04,
+      "unrealized_pct": -0.89,
+      "change_today_pct": 6.6
     },
     {
       "symbol": "TSM260424P00285000",
@@ -217,8 +217,8 @@
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-03-31",
-    "run_id": null,
+    "trading_date": "2026-04-01",
+    "run_id": "2026-04-01-preopen-01",
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "PASS",
     "critical_issues": 0,
@@ -852,7 +852,7 @@
         "in_position": false
       }
     ],
-    "as_of": "2026-03-30",
+    "as_of": "2026-03-31",
     "source": "weekly"
   },
   "exit_candidates": [],
@@ -1540,10 +1540,10 @@
     "as_of": "2026-03-26T16:45:48.393231-04:00"
   },
   "bps": {
-    "as_of": "2026-03-31T08:50:06.062060",
-    "account_equity": 92798.68,
-    "available_capital": 78878.88,
-    "free_capital": 78878.88,
+    "as_of": "2026-04-01T08:57:39.055409",
+    "account_equity": 86418.65,
+    "available_capital": 73455.85,
+    "free_capital": 73455.85,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
@@ -1596,15 +1596,15 @@
   "hedges": {
     "status": "regime_not_active",
     "regime": {
-      "vix_level": 30.96,
-      "vix_regime": "HIGH",
-      "cb_state": "REDUCE_ONLY",
+      "vix_level": 24.52,
+      "vix_regime": "MEDIUM",
+      "cb_state": "NORMAL",
       "active": false
     },
-    "routing_reason": "CB=REDUCE_ONLY \u2014 protective puts only",
+    "routing_reason": "VIX=24.52 (MEDIUM) \u2014 both BPS + protective puts",
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-03-30T16:45:01.295239-04:00"
+    "as_of": "2026-04-01T09:00:09.764203-04:00"
   }
 }
