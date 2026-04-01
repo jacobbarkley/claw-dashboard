@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-01T16:15:11.051917+00:00",
+  "generated_at": "2026-04-01T16:30:12.488587+00:00",
   "as_of_date": "2026-04-01",
   "account": {
     "equity": 84336.47,
@@ -1607,24 +1607,6 @@
         "selected": false
       },
       {
-        "symbol": "EIX",
-        "price": 70.3,
-        "sector": "Utilities",
-        "expiry": "2026-04-17",
-        "dte": 16,
-        "short_strike": 75.0,
-        "long_strike": 70.0,
-        "spread_width": 5.0,
-        "net_credit": 2.05,
-        "credit_width_ratio": 0.41,
-        "annualized_yield_pct": 712.6,
-        "max_loss_per_contract": 295.0,
-        "iv_rank_proxy": 0.25,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "EQT",
         "price": 67.55,
         "sector": "Energy",
@@ -1633,10 +1615,10 @@
         "short_strike": 63.0,
         "long_strike": 58.0,
         "spread_width": 5.0,
-        "net_credit": 1.99,
-        "credit_width_ratio": 0.398,
-        "annualized_yield_pct": 691.8,
-        "max_loss_per_contract": 301.0,
+        "net_credit": 1.98,
+        "credit_width_ratio": 0.396,
+        "annualized_yield_pct": 688.3,
+        "max_loss_per_contract": 302.0,
         "iv_rank_proxy": 0.25,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1659,12 +1641,48 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
+      },
+      {
+        "symbol": "EIX",
+        "price": 70.3,
+        "sector": "Utilities",
+        "expiry": "2026-04-17",
+        "dte": 16,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
+        "spread_width": 5.0,
+        "net_credit": 1.8,
+        "credit_width_ratio": 0.36,
+        "annualized_yield_pct": 625.7,
+        "max_loss_per_contract": 320.0,
+        "iv_rank_proxy": 0.25,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "COF",
+        "price": 176.1,
+        "sector": "Financial Services",
+        "expiry": "2026-04-24",
+        "dte": 23,
+        "short_strike": 185.0,
+        "long_strike": 180.0,
+        "spread_width": 5.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
+        "iv_rank_proxy": 0.016,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 4,
+    "approved": 5,
     "universe_watch": [
       {
         "symbol": "DELL",
@@ -1716,6 +1734,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-01T12:15:10.230613-04:00"
+    "as_of": "2026-04-01T12:30:11.716278-04:00"
   }
 }
