@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-01T14:30:10.775818+00:00",
+  "generated_at": "2026-04-01T14:45:11.362955+00:00",
   "as_of_date": "2026-03-31",
   "account": {
     "equity": 86312.29,
@@ -1551,19 +1551,55 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "UHS",
-        "price": 184.04,
-        "sector": "Healthcare",
+        "symbol": "EIX",
+        "price": 70.3,
+        "sector": "Utilities",
         "expiry": "2026-04-17",
         "dte": 16,
-        "short_strike": 200.0,
-        "long_strike": 195.0,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
         "spread_width": 5.0,
-        "net_credit": 2.7,
-        "credit_width_ratio": 0.54,
-        "annualized_yield_pct": 938.6,
-        "max_loss_per_contract": 230.0,
-        "iv_rank_proxy": 0.063,
+        "net_credit": 1.75,
+        "credit_width_ratio": 0.35,
+        "annualized_yield_pct": 608.3,
+        "max_loss_per_contract": 325.0,
+        "iv_rank_proxy": 0.25,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "IP",
+        "price": 35.45,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-04-24",
+        "dte": 23,
+        "short_strike": 37.0,
+        "long_strike": 32.0,
+        "spread_width": 5.0,
+        "net_credit": 1.35,
+        "credit_width_ratio": 0.27,
+        "annualized_yield_pct": 469.3,
+        "max_loss_per_contract": 365.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "FSLR",
+        "price": 190.29,
+        "sector": "Technology",
+        "expiry": "2026-04-24",
+        "dte": 23,
+        "short_strike": 210.0,
+        "long_strike": 205.0,
+        "spread_width": 5.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
+        "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1572,7 +1608,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 1,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "DELL",
@@ -1624,6 +1660,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-01T10:30:10.003446-04:00"
+    "as_of": "2026-04-01T10:45:10.597721-04:00"
   }
 }
