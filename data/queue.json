@@ -1,6 +1,22 @@
 {
-  "generated_at": "2026-03-31T23:00:00.000000-04:00",
+  "generated_at": "2026-04-01T22:30:00.000000-04:00",
   "queued": [
+    {
+      "id": "Q-056",
+      "category": "infrastructure",
+      "title": "Discord server rebuild — primary ops notification hub",
+      "what": "Move all pipeline notifications from Telegram to Discord channels (trading_control, trading_logs, ops_monitoring, ops_incidents, build_changelog). Keep Telegram for morning brief + chat only. Fix Discord 403 delivery issue (missing plugin entry). Update ~15 cron job delivery configs.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Discord plugin entry needs to be added to OpenClaw config first.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "discord",
+        "notifications"
+      ]
+    },
     {
       "id": "Q-053",
       "category": "documentation",
