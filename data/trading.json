@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T20:15:02.960103+00:00",
+  "generated_at": "2026-04-02T20:30:03.123978+00:00",
   "as_of_date": "2026-04-02",
   "account": {
     "equity": 84927.67,
@@ -197,15 +197,15 @@
   "pipeline_status": {
     "trading_date": "2026-04-02",
     "run_id": "2026-04-02-preopen-01",
-    "circuit_breaker": "HALT",
-    "verdict": "FAIL",
-    "critical_issues": 1,
+    "circuit_breaker": "REDUCE_ONLY",
+    "verdict": "WARN",
+    "critical_issues": 0,
     "high_issues": 0,
-    "medium_issues": 8,
-    "chain_ok": false,
-    "approval_path": "AUTO_PAPER_PENDING",
-    "paper_compliant": false,
-    "audit_written_at": "2026-04-01T20:20:00-04:00"
+    "medium_issues": 9,
+    "chain_ok": true,
+    "approval_path": "AUTO_PAPER",
+    "paper_compliant": true,
+    "audit_written_at": "2026-04-02T20:20:00-04:00"
   },
   "kpis": {
     "total_trades": 44,
@@ -556,6 +556,14 @@
       "winners": 0,
       "losers": 0,
       "win_rate": null
+    },
+    {
+      "date": "2026-04-02",
+      "net_pnl": -20.28,
+      "trades": 5,
+      "winners": 1,
+      "losers": 3,
+      "win_rate": 25.0
     }
   ],
   "equity_curve": [
@@ -1601,6 +1609,6 @@
     "positions_screened": 12,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-02T16:15:01.405776-04:00"
+    "as_of": "2026-04-02T16:30:01.586366-04:00"
   }
 }
