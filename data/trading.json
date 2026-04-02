@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T20:30:03.123978+00:00",
+  "generated_at": "2026-04-02T20:41:03.583069+00:00",
   "as_of_date": "2026-04-02",
   "account": {
     "equity": 84927.67,
@@ -208,15 +208,15 @@
     "audit_written_at": "2026-04-02T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 44,
-    "closed_trades": 11,
-    "open_trades": 33,
-    "win_rate_pct": 9.09,
-    "profit_factor": 0.0261,
-    "expectancy": -31.71,
-    "net_pnl": -348.89,
-    "max_drawdown_pct": 0.3582,
-    "max_drawdown_usd": 358.23,
+    "total_trades": 49,
+    "closed_trades": 15,
+    "open_trades": 34,
+    "win_rate_pct": 13.33,
+    "profit_factor": 0.0349,
+    "expectancy": -24.61,
+    "net_pnl": -369.17,
+    "max_drawdown_pct": 0.3785,
+    "max_drawdown_usd": 378.51,
     "max_win_streak": 1,
     "max_loss_streak": 10
   },
@@ -1609,6 +1609,6 @@
     "positions_screened": 12,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-02T16:30:01.586366-04:00"
+    "as_of": "2026-04-02T16:41:01.937466-04:00"
   }
 }
