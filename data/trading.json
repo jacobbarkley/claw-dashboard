@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-03T15:45:08.334274+00:00",
-  "as_of_date": "2026-04-02",
+  "generated_at": "2026-04-03T16:00:12.877801+00:00",
+  "as_of_date": "2026-04-03",
   "account": {
-    "equity": 84939.98,
-    "cash": 68407.21,
-    "buying_power": 149793.19,
+    "equity": 84926.32,
+    "cash": 68406.55,
+    "buying_power": 149778.87,
     "base_value": 100000.0,
-    "total_pnl": -15060.02,
-    "total_pnl_pct": -15.06,
-    "today_pnl": -1403.34,
-    "today_pnl_pct": -1.6253,
-    "positions_value": 16532.77,
-    "equity_deployed": 12978.77,
+    "total_pnl": -15073.68,
+    "total_pnl_pct": -15.0737,
+    "today_pnl": -886.0,
+    "today_pnl_pct": -1.0325,
+    "positions_value": 16519.77,
+    "equity_deployed": 12965.77,
     "options_deployed": 3554.0,
-    "unrealized_pnl": -5014.95,
-    "unrealized_pnl_pct": -23.27
+    "unrealized_pnl": -5027.95,
+    "unrealized_pnl_pct": -23.33
   },
   "positions": [
     {
@@ -22,66 +22,66 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 217.36,
-      "market_value": 434.72,
-      "unrealized_pnl": 6.3,
-      "unrealized_pct": 1.47,
-      "change_today_pct": 3.4
+      "current_price": 217.5,
+      "market_value": 435.0,
+      "unrealized_pnl": 6.58,
+      "unrealized_pct": 1.54,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "AMZN",
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 209.58,
-      "market_value": 419.16,
-      "unrealized_pnl": -1.22,
-      "unrealized_pct": -0.29,
-      "change_today_pct": -0.47
+      "current_price": 209.77,
+      "market_value": 419.54,
+      "unrealized_pnl": -0.84,
+      "unrealized_pct": -0.2,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "ARM",
       "qty": 3.0,
       "side": "long",
       "entry_price": 150.4,
-      "current_price": 149.89,
-      "market_value": 449.67,
-      "unrealized_pnl": -1.53,
-      "unrealized_pct": -0.34,
-      "change_today_pct": -3.34
+      "current_price": 149.11,
+      "market_value": 447.33,
+      "unrealized_pnl": -3.87,
+      "unrealized_pct": -0.86,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "ASML",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1358.85,
-      "current_price": 1321.1134,
-      "market_value": 1321.1134,
-      "unrealized_pnl": -37.7366,
-      "unrealized_pct": -2.78,
-      "change_today_pct": -2.84
+      "current_price": 1317.23,
+      "market_value": 1317.23,
+      "unrealized_pnl": -41.62,
+      "unrealized_pct": -3.06,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "BCRX",
       "qty": 19.0,
       "side": "long",
       "entry_price": 9.54,
-      "current_price": 9.0,
-      "market_value": 171.0,
-      "unrealized_pnl": -10.26,
-      "unrealized_pct": -5.66,
-      "change_today_pct": -4.05
+      "current_price": 9.02,
+      "market_value": 171.38,
+      "unrealized_pnl": -9.88,
+      "unrealized_pct": -5.45,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 113.25,
-      "market_value": 3737.25,
-      "unrealized_pnl": 200.64,
-      "unrealized_pct": 5.67,
-      "change_today_pct": -0.95
+      "current_price": 113.05,
+      "market_value": 3730.65,
+      "unrealized_pnl": 194.04,
+      "unrealized_pct": 5.49,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "BX260424P00105000",
@@ -92,40 +92,40 @@
       "market_value": 1150.0,
       "unrealized_pnl": -525.0,
       "unrealized_pct": -31.34,
-      "change_today_pct": 11.11
+      "change_today_pct": -4.17
     },
     {
       "symbol": "CAT",
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 719.3365,
-      "market_value": 719.3365,
-      "unrealized_pnl": -4.5635,
-      "unrealized_pct": -0.63,
-      "change_today_pct": -1.5
+      "current_price": 717.22,
+      "market_value": 717.22,
+      "unrealized_pnl": -6.68,
+      "unrealized_pct": -0.92,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "CVX",
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 199.0253,
-      "market_value": 199.0253,
-      "unrealized_pnl": -9.5047,
-      "unrealized_pct": -4.56,
-      "change_today_pct": 0.82
+      "current_price": 198.97,
+      "market_value": 198.97,
+      "unrealized_pnl": -9.56,
+      "unrealized_pct": -4.58,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "GS",
       "qty": 1.0,
       "side": "long",
       "entry_price": 863.0,
-      "current_price": 863.0446,
-      "market_value": 863.0446,
-      "unrealized_pnl": 0.0446,
+      "current_price": 863.04,
+      "market_value": 863.04,
+      "unrealized_pnl": 0.04,
       "unrealized_pct": 0.01,
-      "change_today_pct": 0.33
+      "change_today_pct": 0.0
     },
     {
       "symbol": "KKR",
@@ -136,18 +136,18 @@
       "market_value": 3922.89,
       "unrealized_pnl": 204.68,
       "unrealized_pct": 5.5,
-      "change_today_pct": -0.14
+      "change_today_pct": 0.0
     },
     {
       "symbol": "PDD",
       "qty": 4.0,
       "side": "long",
       "entry_price": 99.23,
-      "current_price": 100.62,
-      "market_value": 402.48,
-      "unrealized_pnl": 5.56,
-      "unrealized_pct": 1.4,
-      "change_today_pct": -1.14
+      "current_price": 100.87,
+      "market_value": 403.48,
+      "unrealized_pnl": 6.56,
+      "unrealized_pct": 1.65,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "PDD260424P00090000",
@@ -158,18 +158,18 @@
       "market_value": 624.0,
       "unrealized_pnl": -1816.0008,
       "unrealized_pct": -74.43,
-      "change_today_pct": -48.0
+      "change_today_pct": -50.94
     },
     {
       "symbol": "TSM",
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 339.08,
-      "market_value": 339.08,
-      "unrealized_pnl": -1.36,
-      "unrealized_pct": -0.4,
-      "change_today_pct": -0.71
+      "current_price": 339.04,
+      "market_value": 339.04,
+      "unrealized_pnl": -1.4,
+      "unrealized_pct": -0.41,
+      "change_today_pct": 0.0
     },
     {
       "symbol": "TSM260424P00285000",
@@ -191,7 +191,7 @@
       "market_value": 976.0,
       "unrealized_pnl": -1769.0,
       "unrealized_pct": -64.44,
-      "change_today_pct": 0.41
+      "change_today_pct": -9.63
     }
   ],
   "pipeline_status": {
@@ -716,6 +716,11 @@
       "date": "2026-04-02",
       "equity": 86343.32,
       "profit_loss": -2047.76
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 85812.32,
+      "profit_loss": -531.0
     }
   ],
   "watchlist": {
@@ -1682,6 +1687,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-03T11:45:08.494484-04:00"
+    "as_of": "2026-04-03T12:00:12.098482-04:00"
   }
 }
