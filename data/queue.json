@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-02T23:00:00.000000-04:00",
+  "generated_at": "2026-04-04T00:00:00.000000-04:00",
   "queued": [
     {
       "id": "Q-053",
@@ -375,6 +375,30 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-061",
+      "category": "trading",
+      "title": "CB auto-downstep in nightly validator",
+      "what": "HALT→REDUCE_ONLY after 1 clean validation. REDUCE_ONLY→NORMAL after 3 consecutive clean nights. Counter resets on failure. All transitions reported to Discord #pipeline. Runs at 23:00 ET nightly only.",
+      "completed_date": "2026-04-03",
+      "tags": [
+        "trading",
+        "risk",
+        "infrastructure"
+      ]
+    },
+    {
+      "id": "ITEMS-1-18",
+      "category": "trading",
+      "title": "Good Friday incident remediation (18 items)",
+      "what": "Full sweep: BPS calendar gates, market calendar on all independent crons, Discord migration complete (all delivery configs), dependency-scoped skip propagation with typed reasons, validator timeout thresholds, heartbeat holiday awareness, morning brief cold-lane fix, watchdog removal. 0 items remaining.",
+      "completed_date": "2026-04-03",
+      "tags": [
+        "trading",
+        "infrastructure",
+        "reliability"
+      ]
+    },
     {
       "id": "Q-056",
       "category": "infrastructure",
