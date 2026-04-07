@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-06T19:45:06.780526+00:00",
-  "as_of_date": "2026-04-06",
+  "generated_at": "2026-04-07T17:15:06.364651+00:00",
+  "as_of_date": "2026-04-07",
   "account": {
-    "equity": 84531.06,
-    "cash": 71628.81,
-    "buying_power": 156159.87,
+    "equity": 84459.06,
+    "cash": 71810.07,
+    "buying_power": 156269.13,
     "base_value": 100000.0,
-    "total_pnl": -15468.94,
-    "total_pnl_pct": -15.4689,
-    "today_pnl": -1281.26,
-    "today_pnl_pct": -1.4931,
-    "positions_value": 12902.25,
-    "equity_deployed": 12902.25,
+    "total_pnl": -15540.94,
+    "total_pnl_pct": -15.5409,
+    "today_pnl": -1353.26,
+    "today_pnl_pct": -1.577,
+    "positions_value": 12648.99,
+    "equity_deployed": 12648.99,
     "options_deployed": 0,
-    "unrealized_pnl": 274.53,
-    "unrealized_pnl_pct": 2.17
+    "unrealized_pnl": 202.53,
+    "unrealized_pnl_pct": 1.63
   },
   "positions": [
     {
@@ -22,146 +22,135 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 220.2186,
-      "market_value": 440.4372,
-      "unrealized_pnl": 12.0172,
-      "unrealized_pct": 2.8,
-      "change_today_pct": 1.25
+      "current_price": 218.04,
+      "market_value": 436.08,
+      "unrealized_pnl": 7.66,
+      "unrealized_pct": 1.79,
+      "change_today_pct": -0.97
     },
     {
       "symbol": "AMZN",
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 212.0899,
-      "market_value": 424.1798,
-      "unrealized_pnl": 3.7998,
-      "unrealized_pct": 0.9,
-      "change_today_pct": 1.11
+      "current_price": 211.68,
+      "market_value": 423.36,
+      "unrealized_pnl": 2.98,
+      "unrealized_pct": 0.71,
+      "change_today_pct": -0.52
     },
     {
       "symbol": "ARM",
       "qty": 3.0,
       "side": "long",
       "entry_price": 150.4,
-      "current_price": 149.75,
-      "market_value": 449.25,
-      "unrealized_pnl": -1.95,
-      "unrealized_pct": -0.43,
-      "change_today_pct": 0.43
+      "current_price": 146.38,
+      "market_value": 439.14,
+      "unrealized_pnl": -12.06,
+      "unrealized_pct": -2.67,
+      "change_today_pct": -1.61
     },
     {
       "symbol": "ASML",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1358.85,
-      "current_price": 1302.43,
-      "market_value": 1302.43,
-      "unrealized_pnl": -56.42,
-      "unrealized_pct": -4.15,
-      "change_today_pct": -1.12
-    },
-    {
-      "symbol": "BCRX",
-      "qty": 19.0,
-      "side": "long",
-      "entry_price": 9.54,
-      "current_price": 9.46,
-      "market_value": 179.74,
-      "unrealized_pnl": -1.52,
-      "unrealized_pct": -0.84,
-      "change_today_pct": 4.88
+      "current_price": 1291.0,
+      "market_value": 1291.0,
+      "unrealized_pnl": -67.85,
+      "unrealized_pct": -4.99,
+      "change_today_pct": -1.0
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 111.555,
-      "market_value": 3681.315,
-      "unrealized_pnl": 144.705,
-      "unrealized_pct": 4.09,
-      "change_today_pct": -1.32
+      "current_price": 111.84,
+      "market_value": 3690.72,
+      "unrealized_pnl": 154.11,
+      "unrealized_pct": 4.36,
+      "change_today_pct": -0.36
     },
     {
       "symbol": "CAT",
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 718.71,
-      "market_value": 718.71,
-      "unrealized_pnl": -5.19,
-      "unrealized_pct": -0.72,
-      "change_today_pct": 0.21
+      "current_price": 717.8,
+      "market_value": 717.8,
+      "unrealized_pnl": -6.1,
+      "unrealized_pct": -0.84,
+      "change_today_pct": -0.48
     },
     {
       "symbol": "CVX",
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 198.525,
-      "market_value": 198.525,
-      "unrealized_pnl": -10.005,
-      "unrealized_pct": -4.8,
-      "change_today_pct": -0.22
+      "current_price": 200.01,
+      "market_value": 200.01,
+      "unrealized_pnl": -8.52,
+      "unrealized_pct": -4.09,
+      "change_today_pct": 0.58
     },
     {
       "symbol": "GS",
       "qty": 1.0,
       "side": "long",
       "entry_price": 863.0,
-      "current_price": 864.82,
-      "market_value": 864.82,
-      "unrealized_pnl": 1.82,
-      "unrealized_pct": 0.21,
-      "change_today_pct": 0.21
+      "current_price": 863.9,
+      "market_value": 863.9,
+      "unrealized_pnl": 0.9,
+      "unrealized_pct": 0.1,
+      "change_today_pct": -0.25
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 90.68,
-      "market_value": 3899.24,
-      "unrealized_pnl": 181.03,
-      "unrealized_pct": 4.87,
-      "change_today_pct": -0.6
+      "current_price": 89.4,
+      "market_value": 3844.2,
+      "unrealized_pnl": 125.99,
+      "unrealized_pct": 3.39,
+      "change_today_pct": -1.81
     },
     {
       "symbol": "PDD",
       "qty": 4.0,
       "side": "long",
       "entry_price": 99.23,
-      "current_price": 100.86,
-      "market_value": 403.44,
-      "unrealized_pnl": 6.52,
-      "unrealized_pct": 1.64,
-      "change_today_pct": -0.01
+      "current_price": 100.8,
+      "market_value": 403.2,
+      "unrealized_pnl": 6.28,
+      "unrealized_pct": 1.58,
+      "change_today_pct": -0.11
     },
     {
       "symbol": "TSM",
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 340.1596,
-      "market_value": 340.1596,
-      "unrealized_pnl": -0.2804,
-      "unrealized_pct": -0.08,
-      "change_today_pct": 0.33
+      "current_price": 339.58,
+      "market_value": 339.58,
+      "unrealized_pnl": -0.86,
+      "unrealized_pct": -0.25,
+      "change_today_pct": -0.64
     }
   ],
   "pipeline_status": {
     "trading_date": "2026-04-06",
     "run_id": "2026-04-06-preopen-01",
-    "circuit_breaker": "HALT",
-    "verdict": "WARN",
+    "circuit_breaker": "REDUCE_ONLY",
+    "verdict": "PASS",
     "critical_issues": 0,
-    "high_issues": 1,
-    "medium_issues": 0,
+    "high_issues": 0,
+    "medium_issues": 1,
     "chain_ok": true,
     "approval_path": "AUTO_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-03T20:20:00-04:00"
+    "audit_written_at": "2026-04-07T04:55:00Z"
   },
   "kpis": {
     "total_trades": 49,
@@ -1513,20 +1502,39 @@
     "as_of": "2026-03-26T16:45:48.393231-04:00"
   },
   "bps": {
-    "as_of": "2026-04-06T08:50:04.709137",
-    "account_equity": 84933.95,
-    "available_capital": 72193.86,
-    "free_capital": 72193.86,
+    "as_of": "2026-04-07T12:45:26.552814",
+    "account_equity": 84522.81,
+    "available_capital": 71844.39,
+    "free_capital": 71844.39,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "ADBE",
+        "price": 242.92,
+        "sector": "Technology",
+        "expiry": "2026-05-01",
+        "dte": 24,
+        "short_strike": 255.0,
+        "long_strike": 250.0,
+        "spread_width": 5.0,
+        "net_credit": 2.75,
+        "credit_width_ratio": 0.55,
+        "annualized_yield_pct": 956.0,
+        "max_loss_per_contract": 225.0,
+        "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Strong fundamental score (9.6) with no earnings blackout within 24-day window. Elevated IV (0.361) is justified by sector volatility; the 55% credit-to-width ratio and ATM short delta (0.5) provide solid risk/reward for a neutral-to-bullish stance. Technical weakness (5.2) is minor relative to fundamentals.",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1575,9 +1583,9 @@
       "active": false
     },
     "routing_reason": "CB=REDUCE_ONLY \u2014 protective puts only",
-    "positions_screened": 12,
+    "positions_screened": 11,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-06T15:45:05.885900-04:00"
+    "as_of": "2026-04-07T13:15:04.555580-04:00"
   }
 }
