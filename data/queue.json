@@ -26,6 +26,18 @@
       "tags": ["architecture", "rebuild", "contracts", "critical"]
     },
     {
+      "id": "Q-072",
+      "category": "validation",
+      "title": "🚨 Prove One Edge — walk-forward backtest of single signal family before rebuild commit",
+      "what": "Parallel track to Q-068/069/070. From Codex audit action #10: 'Reframe the project for the next month as prove one edge rather than improve the platform.' Pick ONE signal family. Strip the indicator stack — bare signal only, no HMM, vol persistence, jump var, tail dep, conviction gates, or other layers. Build minimal walk-forward backtest harness over 2-3 years across bull/bear/choppy regimes. Report standalone expectancy, Sharpe, max DD, regime sensitivity. Decision gate: yes → rebuild has a target worth aiming at, proceed with Q-070. No → reframe project as decision-support not full automation, scope down rebuild accordingly. Codex verdict: 'system looks more like an ambitious research/automation platform than a demonstrated alpha engine.' Platform work and strategy validation are different projects we've been treating as one. Splitting them is the highest-leverage move available.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Codex rebuild blueprint will recommend which signal family to backtest first. Concurrent with Q-068, blocks Q-070 commit.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": ["validation", "backtest", "strategy", "critical", "parallel-track"]
+    },
+    {
       "id": "Q-071",
       "category": "infrastructure",
       "title": "OpenClaw 2026.4.5 upgrade — cron auto-replay, prompt cache improvements, Claude CLI hardening",
