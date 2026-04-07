@@ -1,6 +1,42 @@
 {
-  "generated_at": "2026-04-04T00:00:00.000000-04:00",
+  "generated_at": "2026-04-07T02:30:00.000000-04:00",
   "queued": [
+    {
+      "id": "Q-068",
+      "category": "audit",
+      "title": "🚨 Full system audit — canonical/workspace drift, contract mismatches, dead gates",
+      "what": "Read-only catalog of every silent failure in the pipeline. Per-agent prompt source matrix (canonical vs workspace, all 16 agents). End-to-end JSON contract field name matrix (every producer/consumer pair). Gate/filter trace: live, dead, or contradicted upstream? Indicator backtest audit (HMM, vol persistence, jump var, tail dep — backtested in isolation? standalone edge?). LLM cost vs deterministic alternatives. Dead code catalog. CRITICAL: read-only, no fixes during audit phase. Triggered by 2026-04-07 discovery of conviction gate silently broken since 2026-03-26 (field name mismatch + upstream filter neuter).",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None. Codex audit running in parallel — findings to be merged.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": ["audit", "architecture", "critical", "drift", "contracts"]
+    },
+    {
+      "id": "Q-069",
+      "category": "architecture",
+      "title": "🚨 Architectural proposal — simplified target + Pydantic contracts + single source of truth",
+      "what": "Based on Q-068 + Codex findings, propose simplified target architecture. Likely 4-6 agents (down from 16). Pydantic schemas for every JSON contract — schema is the contract, write-time validation. Single source of truth policy for prompts (canonical OR workspace, never both, with sync verification). Integration test framework with synthetic fixtures and end-to-end chains. Migration plan from current to target. Pressure-tested by OpenClaw + Codex + Claude before commitment.",
+      "blocker": "Q-068 must complete first",
+      "blocker_type": "dependency",
+      "prereq": "Q-068 audit catalog complete",
+      "priority": "critical",
+      "ticket": null,
+      "tags": ["architecture", "rebuild", "contracts", "critical"]
+    },
+    {
+      "id": "Q-070",
+      "category": "rebuild",
+      "title": "🚨 Pipeline rebuild on simplified architecture",
+      "what": "Migrate to the Q-069 target architecture. New core pipeline with Pydantic contracts. Integration tests that fail on field name drift. Single prompt source of truth with sync verification. One signal layer rigorously backtested before any features re-add. Old pipeline runs in parallel for N days for comparison. Cutover only after parallel comparison shows new pipeline matches or improves. NO new features re-added until baseline edge is demonstrated.",
+      "blocker": "Q-069 proposal must be approved",
+      "blocker_type": "dependency",
+      "prereq": "Q-069 complete",
+      "priority": "critical",
+      "ticket": null,
+      "tags": ["rebuild", "pipeline", "critical"]
+    },
     {
       "id": "Q-053",
       "category": "documentation",
