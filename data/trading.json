@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T16:30:12.431737+00:00",
+  "generated_at": "2026-04-08T16:45:13.694896+00:00",
   "as_of_date": "2026-04-08",
   "account": {
     "equity": 84920.02,
@@ -1506,11 +1506,29 @@
         "short_strike": 205.0,
         "long_strike": 200.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.5,
+        "credit_width_ratio": 0.3,
+        "annualized_yield_pct": 521.4,
+        "max_loss_per_contract": 350.0,
         "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "CVNA",
+        "price": 313.91,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-01",
+        "dte": 23,
+        "short_strike": 345.0,
+        "long_strike": 340.0,
+        "spread_width": 5.0,
+        "net_credit": 1.45,
+        "credit_width_ratio": 0.29,
+        "annualized_yield_pct": 504.0,
+        "max_loss_per_contract": 355.0,
+        "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1519,7 +1537,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 1,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1571,6 +1589,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T12:30:10.860310-04:00"
+    "as_of": "2026-04-08T12:45:11.573263-04:00"
   }
 }
