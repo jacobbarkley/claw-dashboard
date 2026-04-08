@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T20:15:10.734899+00:00",
+  "generated_at": "2026-04-08T20:30:10.614584+00:00",
   "as_of_date": "2026-04-08",
   "account": {
     "equity": 84982.0,
@@ -112,12 +112,12 @@
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
-    "high_issues": 0,
-    "medium_issues": 1,
+    "high_issues": 1,
+    "medium_issues": 4,
     "chain_ok": true,
     "approval_path": "AUTO_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-07T20:20:00-04:00"
+    "audit_written_at": "2026-04-08T20:20:00-04:00"
   },
   "kpis": {
     "total_trades": 52,
@@ -492,6 +492,14 @@
       "winners": 1,
       "losers": 1,
       "win_rate": 33.33
+    },
+    {
+      "date": "2026-04-08",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
@@ -1496,30 +1504,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "ADBE",
-        "price": 242.92,
-        "sector": "Technology",
-        "expiry": "2026-05-01",
-        "dte": 23,
-        "short_strike": 240.0,
-        "long_strike": 235.0,
-        "spread_width": 5.0,
-        "net_credit": 1.35,
-        "credit_width_ratio": 0.27,
-        "annualized_yield_pct": 469.3,
-        "max_loss_per_contract": 365.0,
-        "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1571,6 +1560,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T16:15:09.569371-04:00"
+    "as_of": "2026-04-08T16:30:09.352513-04:00"
   }
 }
