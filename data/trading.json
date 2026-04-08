@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T15:30:10.989366+00:00",
+  "generated_at": "2026-04-08T15:45:10.696782+00:00",
   "as_of_date": "2026-04-07",
   "account": {
     "equity": 84896.02,
@@ -1511,24 +1511,6 @@
         "selected": false
       },
       {
-        "symbol": "DELL",
-        "price": 174.37,
-        "sector": "Technology",
-        "expiry": "2026-05-01",
-        "dte": 23,
-        "short_strike": 175.0,
-        "long_strike": 170.0,
-        "spread_width": 5.0,
-        "net_credit": 1.3,
-        "credit_width_ratio": 0.26,
-        "annualized_yield_pct": 451.9,
-        "max_loss_per_contract": 370.0,
-        "iv_rank_proxy": 0.5,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "ADBE",
         "price": 242.92,
         "sector": "Technology",
@@ -1537,11 +1519,47 @@
         "short_strike": 240.0,
         "long_strike": 235.0,
         "spread_width": 5.0,
+        "net_credit": 1.4,
+        "credit_width_ratio": 0.28,
+        "annualized_yield_pct": 486.7,
+        "max_loss_per_contract": 360.0,
+        "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "COF",
+        "price": 181.92,
+        "sector": "Financial Services",
+        "expiry": "2026-05-01",
+        "dte": 23,
+        "short_strike": 185.0,
+        "long_strike": 180.0,
+        "spread_width": 5.0,
         "net_credit": 1.3,
         "credit_width_ratio": 0.26,
         "annualized_yield_pct": 451.9,
         "max_loss_per_contract": 370.0,
-        "iv_rank_proxy": 0.031,
+        "iv_rank_proxy": 0.047,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "DELL",
+        "price": 174.37,
+        "sector": "Technology",
+        "expiry": "2026-05-01",
+        "dte": 23,
+        "short_strike": 175.0,
+        "long_strike": 170.0,
+        "spread_width": 5.0,
+        "net_credit": 1.25,
+        "credit_width_ratio": 0.25,
+        "annualized_yield_pct": 434.5,
+        "max_loss_per_contract": 375.0,
+        "iv_rank_proxy": 0.5,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1550,7 +1568,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1602,6 +1620,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T11:30:09.790347-04:00"
+    "as_of": "2026-04-08T11:45:09.452515-04:00"
   }
 }
