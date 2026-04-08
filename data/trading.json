@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T18:15:10.998521+00:00",
+  "generated_at": "2026-04-08T18:30:11.734836+00:00",
   "as_of_date": "2026-04-08",
   "account": {
     "equity": 84920.02,
@@ -1506,10 +1506,10 @@
         "short_strike": 205.0,
         "long_strike": 200.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.85,
+        "credit_width_ratio": 0.37,
+        "annualized_yield_pct": 643.1,
+        "max_loss_per_contract": 315.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1524,29 +1524,11 @@
         "short_strike": 240.0,
         "long_strike": 235.0,
         "spread_width": 5.0,
-        "net_credit": 1.55,
-        "credit_width_ratio": 0.31,
-        "annualized_yield_pct": 538.8,
-        "max_loss_per_contract": 345.0,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
         "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "CVNA",
-        "price": 313.91,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-01",
-        "dte": 23,
-        "short_strike": 345.0,
-        "long_strike": 340.0,
-        "spread_width": 5.0,
-        "net_credit": 1.3,
-        "credit_width_ratio": 0.26,
-        "annualized_yield_pct": 451.9,
-        "max_loss_per_contract": 370.0,
-        "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1555,7 +1537,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1607,6 +1589,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T14:15:09.823620-04:00"
+    "as_of": "2026-04-08T14:30:10.563373-04:00"
   }
 }
