@@ -301,14 +301,25 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
     approval_items = approval_queue.get('items', []) if isinstance(approval_queue, dict) else []
     approval_summary = None
     if approval_items:
+        first_item = approval_items[0]
         latest_expiry = max((item.get('expires_at') for item in approval_items if item.get('expires_at')), default=None)
-        latest_status = approval_items[0].get('status')
+        latest_status = first_item.get('status')
         pending_count = sum(1 for item in approval_items if item.get('status') == 'PENDING')
         approval_summary = {
             'active_count': len(approval_items),
             'pending_count': pending_count,
             'latest_status': latest_status,
             'latest_expiry': latest_expiry,
+            'scope': first_item.get('scope'),
+            'plan_id': first_item.get('plan_id'),
+            'trade_count': first_item.get('trade_count'),
+            'symbols': first_item.get('symbols', []),
+            'gross_risk_pct': safe_float((first_item.get('summary') or {}).get('gross_risk_pct')),
+            'entry_mode': (first_item.get('summary') or {}).get('entry_mode'),
+            'blocked_reasons': (first_item.get('summary') or {}).get('blocked_reasons', []),
+            'status_note': 'Decision-support queue is awaiting operator action.'
+            if pending_count > 0
+            else 'Decision-support queue is present with no pending approvals.',
         }
     return {
         'mode': {

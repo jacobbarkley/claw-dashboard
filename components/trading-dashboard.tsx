@@ -253,6 +253,14 @@ interface OperatorData {
     pending_count?: number
     latest_status?: string | null
     latest_expiry?: string | null
+    scope?: string | null
+    plan_id?: string | null
+    trade_count?: number | null
+    symbols?: string[]
+    gross_risk_pct?: number | null
+    entry_mode?: string | null
+    blocked_reasons?: string[]
+    status_note?: string | null
   } | null
   incident_flags?: string[]
   notes?: string[]
@@ -588,6 +596,11 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const allowedTransitions = mode?.allowed_transitions ?? []
   const latestModeEvent = modeHistory?.latest_event
   const topThesis = research?.top_theses?.[0]
+  const approvalModeReady = mode?.target_live_mode === "DECISION_SUPPORT"
+  const approvalIdleNote =
+    mode?.current_mode === "DECISION_SUPPORT"
+      ? "Decision-support is active, but no approval queue is open right now."
+      : "Decision-support queue is idle until this sleeve is promoted into DECISION_SUPPORT."
   const regimeSummary = !regime?.populated
     ? "Regime unavailable"
     : [
@@ -714,10 +727,33 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Why: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(plan?.suppression_cause)}</span>
             </div>
-            {approval && (
+            {approval ? (
+              <>
+                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                  Approval queue: <span style={{ color: "var(--cb-text-primary)" }}>{approval.pending_count ?? approval.active_count ?? 0}</span>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}> pending item(s)</span>
+                </div>
+                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                  Review: <span style={{ color: "var(--cb-text-primary)" }}>{(approval.symbols ?? []).join(", ") || "No symbols"}</span>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>
+                    {approval.gross_risk_pct != null ? ` · ${approval.gross_risk_pct.toFixed(2)}% gross risk` : ""}
+                  </span>
+                </div>
+                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                  Status: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(approval.latest_status)}</span>
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>
+                    {approval.latest_expiry ? ` · expires ${formatEventTimestamp(approval.latest_expiry)}` : ""}
+                  </span>
+                </div>
+              </>
+            ) : approvalModeReady ? (
               <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                Approval queue: <span style={{ color: "var(--cb-text-primary)" }}>{approval.pending_count ?? approval.active_count ?? 0}</span>
-                <span style={{ color: "var(--cb-text-tertiary)" }}> pending item(s)</span>
+                Decision support: <span style={{ color: "var(--cb-text-primary)" }}>{approvalIdleNote}</span>
+              </div>
+            ) : null}
+            {approval?.status_note && (
+              <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                {approval.status_note}
               </div>
             )}
           </div>
