@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-08T17:24:15.718274+00:00",
+  "generated_at": "2026-04-08T19:50:05.818071+00:00",
   "as_of_date": "2026-04-08",
   "account": {
     "equity": 84920.02,
@@ -23,11 +23,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 232.1201,
+      "current_price": 230.76,
       "market_value": 464.2402,
       "unrealized_pnl": 35.8202,
       "unrealized_pct": 8.36,
-      "change_today_pct": 4.78,
+      "change_today_pct": 4.17,
       "asset_type": "EQUITY"
     },
     {
@@ -35,11 +35,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 221.54,
+      "current_price": 220.575,
       "market_value": 443.08,
       "unrealized_pnl": 22.7,
       "unrealized_pct": 5.4,
-      "change_today_pct": 3.64,
+      "change_today_pct": 3.18,
       "asset_type": "EQUITY"
     },
     {
@@ -47,11 +47,11 @@
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 116.65,
+      "current_price": 116.94,
       "market_value": 3849.45,
       "unrealized_pnl": 312.84,
       "unrealized_pct": 8.85,
-      "change_today_pct": 3.48,
+      "change_today_pct": 3.74,
       "asset_type": "EQUITY"
     },
     {
@@ -59,11 +59,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 767.27,
+      "current_price": 769.09,
       "market_value": 767.27,
       "unrealized_pnl": 43.37,
       "unrealized_pct": 5.99,
-      "change_today_pct": 5.91,
+      "change_today_pct": 6.16,
       "asset_type": "EQUITY"
     },
     {
@@ -71,11 +71,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 190.89,
+      "current_price": 192.5,
       "market_value": 190.89,
       "unrealized_pnl": -17.64,
       "unrealized_pct": -8.46,
-      "change_today_pct": -5.28,
+      "change_today_pct": -4.49,
       "asset_type": "EQUITY"
     },
     {
@@ -83,11 +83,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 863.0,
-      "current_price": 899.49,
+      "current_price": 899.57,
       "market_value": 899.49,
       "unrealized_pnl": 36.49,
       "unrealized_pct": 4.23,
-      "change_today_pct": 4.09,
+      "change_today_pct": 4.1,
       "asset_type": "EQUITY"
     },
     {
@@ -95,11 +95,11 @@
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 93.17,
+      "current_price": 93.67,
       "market_value": 4006.31,
       "unrealized_pnl": 288.1,
       "unrealized_pct": 7.75,
-      "change_today_pct": 2.67,
+      "change_today_pct": 3.22,
       "asset_type": "EQUITY"
     },
     {
@@ -107,11 +107,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 365.645,
+      "current_price": 363.8,
       "market_value": 365.645,
       "unrealized_pnl": 25.205,
       "unrealized_pct": 7.4,
-      "change_today_pct": 5.89,
+      "change_today_pct": 5.35,
       "asset_type": "EQUITY"
     }
   ],
@@ -126,7 +126,7 @@
     "chain_ok": true,
     "approval_path": "SHADOW",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-08T17:24:15.718387+00:00"
+    "audit_written_at": "2026-04-08T19:50:05.818174+00:00"
   },
   "kpis": {
     "total_trades": 52,
@@ -889,6 +889,13 @@
       "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/2026-04-08-checkpoint05-132354-pregate-report.json"
     },
     "approval": null,
+    "mode_history": {
+      "history_window": 20,
+      "event_count": 0,
+      "latest_event": null,
+      "recent_events": [],
+      "note": "No governed mode-change events recorded yet."
+    },
     "incident_flags": [],
     "notes": [
       "shadow_slice_read_only",

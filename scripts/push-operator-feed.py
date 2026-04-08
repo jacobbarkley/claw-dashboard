@@ -4,16 +4,19 @@
 Writes: data/operator-feed.json
 """
 
+from collections import deque
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 WORKSPACE = Path.home() / '.openclaw/workspace/trading-bot'
 REBUILD_LATEST = WORKSPACE / 'state/rebuild_latest'
+REBUILD_HISTORY = WORKSPACE / 'state/rebuild_history'
 CHECKPOINT05 = WORKSPACE / 'state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json'
 PERF_DIR = WORKSPACE / 'data/daily-performance'
 POLICY_PATH = WORKSPACE / 'config/rebuild_policy.json'
 MODE_STATE_PATH = REBUILD_LATEST / 'operator_mode_state.json'
+MODE_HISTORY_PATH = REBUILD_HISTORY / 'mode_transition_events.jsonl'
 APPROVAL_QUEUE_PATH = REBUILD_LATEST / 'approval_queue.json'
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 
@@ -30,6 +33,30 @@ def safe_float(value, default=None):
         return float(value) if value is not None else default
     except (TypeError, ValueError):
         return default
+
+
+def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
+    if not path.exists():
+        return []
+    tail: deque[str] = deque(maxlen=limit)
+    try:
+        with path.open() as handle:
+            for line in handle:
+                line = line.strip()
+                if line:
+                    tail.append(line)
+    except Exception:
+        return []
+
+    items: list[dict] = []
+    for line in tail:
+        try:
+            value = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(value, dict):
+            items.append(value)
+    return items
 
 
 def build_positions(market: dict, legacy_snapshot: dict) -> list[dict]:
@@ -231,7 +258,36 @@ def build_mode_note(mode_state: dict, checkpoint05: dict) -> str:
     return 'LIVE_AUTONOMOUS remains out of phase-1 scope.'
 
 
-def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict, trade_plan: dict, gate_attr: dict, daily_eval: dict, checkpoint05: dict, mode_state: dict, approval_queue: dict) -> dict:
+def build_mode_history(events: list[dict]) -> dict:
+    latest = events[-1] if events else None
+    recent_events = [
+        {
+            'event_type': item.get('event_type'),
+            'from_mode': item.get('from_mode'),
+            'to_mode': item.get('to_mode'),
+            'requested_by': item.get('requested_by'),
+            'reason': item.get('reason'),
+            'timestamp': item.get('timestamp'),
+        }
+        for item in reversed(events[-3:])
+    ]
+    return {
+        'history_window': 20,
+        'event_count': len(events),
+        'latest_event': {
+            'event_type': latest.get('event_type'),
+            'from_mode': latest.get('from_mode'),
+            'to_mode': latest.get('to_mode'),
+            'requested_by': latest.get('requested_by'),
+            'reason': latest.get('reason'),
+            'timestamp': latest.get('timestamp'),
+        } if latest else None,
+        'recent_events': recent_events,
+        'note': 'No governed mode-change events recorded yet.' if latest is None else 'Showing the latest governed mode-control events from rebuild history.',
+    }
+
+
+def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict, trade_plan: dict, gate_attr: dict, daily_eval: dict, checkpoint05: dict, mode_state: dict, mode_history: dict, approval_queue: dict) -> dict:
     theses = thesis_set.get('items', [])
     regime = market.get('regime', {})
     vix_level = safe_float(regime.get('vix_level'))
@@ -329,6 +385,7 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
             'pregate_report': checkpoint05.get('pregate_report_path'),
         },
         'approval': approval_summary,
+        'mode_history': mode_history,
         'incident_flags': daily_eval.get('incident_flags', []),
         'notes': daily_eval.get('notes', []),
     }
@@ -344,6 +401,7 @@ def main():
     daily_eval = load(REBUILD_LATEST / 'daily_evaluation.json')
     checkpoint05 = load(CHECKPOINT05)
     mode_state = load(MODE_STATE_PATH)
+    mode_history = build_mode_history(load_jsonl_tail(MODE_HISTORY_PATH))
     approval_queue = load(APPROVAL_QUEUE_PATH)
     legacy_positions = load(WORKSPACE / 'state/positions_snapshot.json')
     legacy_kpis = load(WORKSPACE / 'state/pipeline_kpis_v1.json')
@@ -367,7 +425,7 @@ def main():
         'options': None,
         'hedges': None,
         'bps': None,
-        'operator': build_operator(session, market, thesis_set, pre_gate, trade_plan, gate_attr, daily_eval, checkpoint05, mode_state, approval_queue),
+        'operator': build_operator(session, market, thesis_set, pre_gate, trade_plan, gate_attr, daily_eval, checkpoint05, mode_state, mode_history, approval_queue),
     }
     output['kpis']['positions_count'] = len(positions)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

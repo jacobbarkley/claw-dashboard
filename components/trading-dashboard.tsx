@@ -170,6 +170,23 @@ interface OperatorMode {
   note?: string
 }
 
+interface OperatorModeHistoryEvent {
+  event_type?: string | null
+  from_mode?: string | null
+  to_mode?: string | null
+  requested_by?: string | null
+  reason?: string | null
+  timestamp?: string | null
+}
+
+interface OperatorModeHistory {
+  history_window?: number
+  event_count?: number
+  latest_event?: OperatorModeHistoryEvent | null
+  recent_events?: OperatorModeHistoryEvent[]
+  note?: string | null
+}
+
 interface OperatorSession {
   run_id?: string
   phase?: string
@@ -225,6 +242,7 @@ interface OperatorRegime {
 
 interface OperatorData {
   mode?: OperatorMode
+  mode_history?: OperatorModeHistory | null
   session?: OperatorSession
   checkpoint05?: OperatorCheckpoint
   plan?: OperatorPlan
@@ -420,6 +438,18 @@ function titleizeToken(value: string | null | undefined): string {
     .join(" ")
 }
 
+function formatEventTimestamp(value: string | null | undefined): string {
+  if (!value) return "Not recorded"
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return "Not recorded"
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
+}
+
 // ─── Command Strip ─────────────────────────────────────────────────────────────
 function CommandStrip({
   tunables,
@@ -551,10 +581,12 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const research = operator.research
   const regime = operator.regime
   const approval = operator.approval
+  const modeHistory = operator.mode_history
   const incidents = operator.incident_flags ?? []
   const blockingNotes = checkpoint?.blocking_notes ?? []
   const gateBlockers = mode?.gate_state?.blocking_incidents ?? []
   const allowedTransitions = mode?.allowed_transitions ?? []
+  const latestModeEvent = modeHistory?.latest_event
   const topThesis = research?.top_theses?.[0]
   const regimeSummary = !regime?.populated
     ? "Regime unavailable"
@@ -630,6 +662,18 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Execution: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.execution_enabled ? "Enabled" : "Disabled"}</span>
               <span style={{ color: "var(--cb-text-tertiary)" }}> · {mode?.approval_required ? "approval required" : "no approval gate"}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Audit: <span style={{ color: "var(--cb-text-primary)" }}>
+                {latestModeEvent
+                  ? `${titleizeToken(latestModeEvent.event_type)} ${titleizeToken(latestModeEvent.from_mode)} -> ${titleizeToken(latestModeEvent.to_mode)}`
+                  : "No governed mode changes yet"}
+              </span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Latest event: <span style={{ color: "var(--cb-text-primary)" }}>
+                {latestModeEvent ? formatEventTimestamp(latestModeEvent.timestamp) : modeHistory?.note ?? "History not loaded"}
+              </span>
             </div>
           </div>
 
@@ -716,6 +760,9 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </span>
           <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
             Allowed next {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(" / ") : "none"}
+          </span>
+          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+            Mode events {modeHistory?.event_count ?? 0}
           </span>
           {incidents.length > 0 && (
             <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(245,158,11,0.2)", color: "var(--cb-amber)" }}>
