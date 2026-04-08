@@ -7,17 +7,23 @@ Writes: data/operator-feed.json
 from collections import deque
 import json
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 
-WORKSPACE = Path.home() / '.openclaw/workspace/trading-bot'
-REBUILD_LATEST = WORKSPACE / 'state/rebuild_latest'
-REBUILD_HISTORY = WORKSPACE / 'state/rebuild_history'
-CHECKPOINT05 = WORKSPACE / 'state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json'
-PERF_DIR = WORKSPACE / 'data/daily-performance'
-POLICY_PATH = WORKSPACE / 'config/rebuild_policy.json'
-MODE_STATE_PATH = REBUILD_LATEST / 'operator_mode_state.json'
-MODE_HISTORY_PATH = REBUILD_HISTORY / 'mode_transition_events.jsonl'
-APPROVAL_QUEUE_PATH = REBUILD_LATEST / 'approval_queue.json'
+WORKSPACE = Path(os.environ.get('OPENCLAW_WORKSPACE', str(Path.home() / '.openclaw/workspace/trading-bot')))
+REBUILD_LATEST = Path(os.environ.get('OPENCLAW_REBUILD_LATEST', str(WORKSPACE / 'state/rebuild_latest')))
+REBUILD_HISTORY = Path(os.environ.get('OPENCLAW_REBUILD_HISTORY', str(WORKSPACE / 'state/rebuild_history')))
+CHECKPOINT05 = Path(
+    os.environ.get(
+        'OPENCLAW_CHECKPOINT05_PATH',
+        str(WORKSPACE / 'state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json'),
+    )
+)
+PERF_DIR = Path(os.environ.get('OPENCLAW_PERF_DIR', str(WORKSPACE / 'data/daily-performance')))
+POLICY_PATH = Path(os.environ.get('OPENCLAW_POLICY_PATH', str(WORKSPACE / 'config/rebuild_policy.json')))
+MODE_STATE_PATH = Path(os.environ.get('OPENCLAW_MODE_STATE_PATH', str(REBUILD_LATEST / 'operator_mode_state.json')))
+MODE_HISTORY_PATH = Path(os.environ.get('OPENCLAW_MODE_HISTORY_PATH', str(REBUILD_HISTORY / 'mode_transition_events.jsonl')))
+APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(REBUILD_LATEST / 'approval_queue.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 
 
