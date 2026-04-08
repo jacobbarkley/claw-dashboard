@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T14:15:11.052253+00:00",
+  "generated_at": "2026-04-08T14:30:11.314458+00:00",
   "as_of_date": "2026-04-07",
   "account": {
     "equity": 84896.02,
@@ -1491,11 +1491,30 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "CRM",
+        "price": 187.18,
+        "sector": "Technology",
+        "expiry": "2026-05-01",
+        "dte": 23,
+        "short_strike": 205.0,
+        "long_strike": 200.0,
+        "spread_width": 5.0,
+        "net_credit": 1.4,
+        "credit_width_ratio": 0.28,
+        "annualized_yield_pct": 486.7,
+        "max_loss_per_contract": 360.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1547,6 +1566,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T10:15:09.758865-04:00"
+    "as_of": "2026-04-08T10:30:10.007172-04:00"
   }
 }
