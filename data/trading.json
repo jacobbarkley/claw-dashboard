@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T15:15:10.924698+00:00",
+  "generated_at": "2026-04-08T15:30:10.989366+00:00",
   "as_of_date": "2026-04-07",
   "account": {
     "equity": 84896.02,
@@ -1511,19 +1511,19 @@
         "selected": false
       },
       {
-        "symbol": "CVNA",
-        "price": 313.91,
-        "sector": "Consumer Cyclical",
+        "symbol": "DELL",
+        "price": 174.37,
+        "sector": "Technology",
         "expiry": "2026-05-01",
         "dte": 23,
-        "short_strike": 345.0,
-        "long_strike": 340.0,
+        "short_strike": 175.0,
+        "long_strike": 170.0,
         "spread_width": 5.0,
-        "net_credit": 1.45,
-        "credit_width_ratio": 0.29,
-        "annualized_yield_pct": 504.0,
-        "max_loss_per_contract": 355.0,
-        "iv_rank_proxy": 0.125,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
+        "iv_rank_proxy": 0.5,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1602,6 +1602,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T11:15:09.622387-04:00"
+    "as_of": "2026-04-08T11:30:09.790347-04:00"
   }
 }
