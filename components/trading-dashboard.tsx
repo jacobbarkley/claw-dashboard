@@ -148,6 +148,98 @@ interface PipelineStatus {
   audit_written_at: string | null
 }
 
+interface OperatorMode {
+  current_mode?: string
+  effective_mode?: string
+  requested_mode?: string | null
+  target_paper_mode?: string
+  target_live_mode?: string
+  broker_environment?: string
+  execution_enabled?: boolean
+  approval_required?: boolean
+  live_autonomous_available?: boolean
+  allowed_transitions?: string[]
+  last_transition_reason?: string
+  applied_at?: string | null
+  requested_at?: string | null
+  gate_state?: {
+    checkpoint05_passed?: boolean
+    live_capital_enabled?: boolean
+    blocking_incidents?: string[]
+  }
+  note?: string
+}
+
+interface OperatorSession {
+  run_id?: string
+  phase?: string
+  entry_mode?: string
+  policy_version?: string
+}
+
+interface OperatorCheckpoint {
+  checkpoint_status?: string
+  evidence_sufficient?: boolean | null
+  total_shadow_days?: number
+  substantive_shadow_days?: number
+  substantive_pregate_days?: number
+  one_sided_days?: number
+  trivial_days?: number
+  avg_substantive_match?: number | null
+  latest_suppression_cause?: string | null
+  blocking_notes?: string[]
+}
+
+interface OperatorPlan {
+  pre_gate_status?: string
+  pre_gate_candidate_count?: number
+  trade_plan_status?: string
+  trade_plan_count?: number
+  blocked_reasons?: string[]
+  suppression_cause?: string | null
+}
+
+interface OperatorResearch {
+  tradable_symbol_count?: number
+  research_item_count?: number
+  thesis_item_count?: number
+  long_bias_count?: number
+  short_bias_count?: number
+  neutral_count?: number
+  top_theses?: Array<{
+    symbol?: string
+    side_bias?: string
+    confidence?: string
+    catalyst_label?: string
+  }>
+}
+
+interface OperatorRegime {
+  vix_level?: number | null
+  vix_regime?: string | null
+  hmm_regime?: string | null
+  jump_variation_pctile?: number | null
+  notes?: string[]
+  populated?: boolean
+}
+
+interface OperatorData {
+  mode?: OperatorMode
+  session?: OperatorSession
+  checkpoint05?: OperatorCheckpoint
+  plan?: OperatorPlan
+  research?: OperatorResearch
+  regime?: OperatorRegime
+  approval?: {
+    active_count?: number
+    pending_count?: number
+    latest_status?: string | null
+    latest_expiry?: string | null
+  } | null
+  incident_flags?: string[]
+  notes?: string[]
+}
+
 interface OptionsCandidate {
   symbol: string
   current_price: number
@@ -246,6 +338,7 @@ interface HedgesData {
 }
 
 interface TradingData {
+  contract_version?: string
   generated_at: string
   as_of_date: string
   options?: OptionsData
@@ -288,6 +381,7 @@ interface TradingData {
   exit_candidates: ExitCandidate[]
   tunables: Tunables
   bps?: BpsData | null
+  operator?: OperatorData
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -316,16 +410,28 @@ function timeAgo(iso: string): string {
   return `${Math.floor(diff / 3600)}h ago`
 }
 
+function titleizeToken(value: string | null | undefined): string {
+  if (!value) return "Unknown"
+  return value
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
 // ─── Command Strip ─────────────────────────────────────────────────────────────
 function CommandStrip({
   tunables,
   pipeline,
+  operator,
   lastFetched,
   refreshing,
   onRefresh,
 }: {
   tunables: Tunables
   pipeline?: PipelineStatus
+  operator?: OperatorData
   lastFetched: Date
   refreshing: boolean
   onRefresh: () => void
@@ -338,32 +444,40 @@ function CommandStrip({
 
   const isLive = tunables.trading_mode !== "PAPER"
   const modeColor = isLive ? "text-[var(--cb-red)]" : "text-[var(--cb-steel)]"
+  const currentMode = operator?.mode?.current_mode ?? tunables.trading_mode
+  const brokerEnvironment = operator?.mode?.broker_environment ?? tunables.trading_mode
+  const checkpoint = operator?.checkpoint05
+  const plan = operator?.plan
 
   // Pipeline verdict display
-  let verdictColor = "color: var(--cb-text-tertiary)"
   let verdictDotColor = "var(--cb-text-tertiary)"
   let verdictText = "Pipeline · —"
   if (pipeline) {
     const v = pipeline.verdict
     if (v === "PASS") {
       verdictDotColor = "var(--cb-green)"
-      verdictColor = "color: var(--cb-green)"
       verdictText = "Pipeline · PASS"
     } else if (v === "WARN") {
       verdictDotColor = "var(--cb-amber)"
-      verdictColor = "color: var(--cb-amber)"
       const parts = ["Pipeline · WARN"]
       if (pipeline.critical_issues > 0) parts.push(`${pipeline.critical_issues} critical`)
       if (pipeline.high_issues > 0) parts.push(`${pipeline.high_issues} high`)
       verdictText = parts.join(" — ")
     } else if (v === "FAIL") {
       verdictDotColor = "var(--cb-red)"
-      verdictColor = "color: var(--cb-red)"
       verdictText = "Pipeline · FAIL"
     } else {
       verdictText = "Pipeline · " + v
     }
   }
+
+  const checkpointText = checkpoint
+    ? `Checkpoint 05 · ${checkpoint.substantive_shadow_days ?? 0} post-gate · ${checkpoint.substantive_pregate_days ?? 0} pre-gate`
+    : verdictText
+
+  const planText = plan
+    ? `${titleizeToken(plan.trade_plan_status)} · ${plan.trade_plan_count ?? 0} tradable`
+    : "Legacy compatibility view"
 
   return (
     <div
@@ -374,15 +488,26 @@ function CommandStrip({
       }}
     >
       {/* Left: mode */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
         <span className="cb-live-dot" />
-        <span className={`text-[11px] font-semibold tracking-wide ${modeColor}`}>
-          {tunables.trading_mode}
-        </span>
+        <div className="min-w-0">
+          <div className={`text-[11px] font-semibold tracking-wide ${modeColor}`}>
+            {currentMode}
+          </div>
+          <div className="text-[10px] truncate" style={{ color: "var(--cb-text-tertiary)" }}>
+            {brokerEnvironment} broker
+          </div>
+        </div>
       </div>
 
-      {/* Center: pipeline */}
-      <div className="flex items-center gap-1.5 text-[11px]">
+      {/* Center: checkpoint */}
+      <div className="hidden md:flex flex-col items-center text-[11px] text-center min-w-0">
+        <span style={{ color: "var(--cb-text-secondary)" }}>{checkpointText}</span>
+        <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>{planText}</span>
+      </div>
+
+      {/* Right: pipeline + refresh */}
+      <div className="flex items-center gap-3 text-[11px]">
         <span
           style={{
             width: 6,
@@ -394,24 +519,225 @@ function CommandStrip({
           }}
         />
         <span style={{ color: verdictDotColor }}>{verdictText}</span>
-      </div>
-
-      {/* Right: refresh */}
-      <button
-        onClick={onRefresh}
-        disabled={refreshing}
-        className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity"
-        style={{ color: "var(--cb-text-tertiary)" }}
-      >
-        <span style={{ color: "var(--cb-text-tertiary)" }}>
-          Updated {timeAgo(lastFetched.toISOString())}
-        </span>
-        <RefreshCw
-          className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
+        <button
+          onClick={onRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity"
           style={{ color: "var(--cb-text-tertiary)" }}
-        />
-      </button>
+        >
+          <span style={{ color: "var(--cb-text-tertiary)" }}>
+            Updated {timeAgo(lastFetched.toISOString())}
+          </span>
+          <RefreshCw
+            className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`}
+            style={{ color: "var(--cb-text-tertiary)" }}
+          />
+        </button>
+      </div>
     </div>
+  )
+}
+
+function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tunables }) {
+  const operator = data.operator
+  const pipeline = data.pipeline_status
+
+  if (!operator || !pipeline) return null
+
+  const checkpoint = operator.checkpoint05
+  const plan = operator.plan
+  const mode = operator.mode
+  const session = operator.session
+  const research = operator.research
+  const regime = operator.regime
+  const approval = operator.approval
+  const incidents = operator.incident_flags ?? []
+  const blockingNotes = checkpoint?.blocking_notes ?? []
+  const gateBlockers = mode?.gate_state?.blocking_incidents ?? []
+  const allowedTransitions = mode?.allowed_transitions ?? []
+  const topThesis = research?.top_theses?.[0]
+  const regimeSummary = !regime?.populated
+    ? "Regime unavailable"
+    : [
+        regime?.vix_level != null ? `VIX ${regime.vix_level.toFixed(1)}` : null,
+        regime?.vix_regime ? titleizeToken(regime.vix_regime) : null,
+        regime?.hmm_regime ? `HMM ${titleizeToken(regime.hmm_regime)}` : null,
+      ].filter(Boolean).join(" · ")
+
+  return (
+    <section className="space-y-3">
+      <div
+        className="rounded-[22px] border px-5 py-5 space-y-4"
+        style={{
+          borderColor: "rgba(90, 70, 160, 0.18)",
+          background:
+            "radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 28%), radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 28%), linear-gradient(180deg, rgba(6, 4, 16, 0.98), rgba(5, 3, 14, 0.96))",
+          boxShadow: "0 14px 40px rgba(3, 1, 12, 0.35)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1.5">
+            <div className="cb-label">Operator Layer</div>
+            <div className="text-[1.2rem] cb-number" style={{ color: "var(--cb-text-primary)", fontWeight: 300, letterSpacing: "-0.02em" }}>
+              {mode?.effective_mode ?? mode?.current_mode ?? "UNKNOWN"} live now, {allowedTransitions[0] ?? mode?.target_paper_mode ?? "NONE"} available next
+            </div>
+            <p className="text-sm max-w-2xl" style={{ color: "var(--cb-text-secondary)" }}>
+              {mode?.note ?? "Trading page is now reading the rebuild operator contract instead of a legacy-only dashboard snapshot."}
+            </p>
+          </div>
+          <div
+            className="rounded-full border px-3 py-1.5 text-[11px] font-medium"
+            style={{
+              borderColor:
+                pipeline.verdict === "PASS"
+                  ? "rgba(34,197,94,0.28)"
+                  : pipeline.verdict === "FAIL"
+                    ? "rgba(239,68,68,0.28)"
+                    : "rgba(245,158,11,0.28)",
+              color:
+                pipeline.verdict === "PASS"
+                  ? "var(--cb-green)"
+                  : pipeline.verdict === "FAIL"
+                    ? "var(--cb-red)"
+                    : "var(--cb-amber)",
+              background:
+                pipeline.verdict === "PASS"
+                  ? "rgba(34,197,94,0.08)"
+                  : pipeline.verdict === "FAIL"
+                    ? "rgba(239,68,68,0.08)"
+                    : "rgba(245,158,11,0.08)",
+            }}
+          >
+            {pipeline.verdict ?? "WARN"}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5">
+            <div className="cb-label">Mode & Session</div>
+            <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+              {mode?.effective_mode ?? mode?.current_mode ?? "UNKNOWN"}
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Broker: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.broker_environment ?? tunables.trading_mode}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Phase: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(session?.phase)}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Entry mode: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(session?.entry_mode ?? pipeline.circuit_breaker)}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Execution: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.execution_enabled ? "Enabled" : "Disabled"}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> · {mode?.approval_required ? "approval required" : "no approval gate"}</span>
+            </div>
+          </div>
+
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5">
+            <div className="cb-label">Checkpoint 05</div>
+            <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+              {titleizeToken(checkpoint?.checkpoint_status)}
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Post-gate: <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_shadow_days ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> / {checkpoint?.total_shadow_days ?? 0} days</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Pre-gate: <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_pregate_days ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> substantive</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Latest suppression: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(checkpoint?.latest_suppression_cause)}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Transition gate: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.gate_state?.checkpoint05_passed ? "Checkpoint ready" : "Checkpoint accumulating"}</span>
+            </div>
+          </div>
+
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5">
+            <div className="cb-label">Today&apos;s Plan</div>
+            <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+              {titleizeToken(plan?.trade_plan_status)}
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Candidates: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.pre_gate_candidate_count ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> pre-gate</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Tradable: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.trade_plan_count ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> post-gate</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Why: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(plan?.suppression_cause)}</span>
+            </div>
+            {approval && (
+              <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                Approval queue: <span style={{ color: "var(--cb-text-primary)" }}>{approval.pending_count ?? approval.active_count ?? 0}</span>
+                <span style={{ color: "var(--cb-text-tertiary)" }}> pending item(s)</span>
+              </div>
+            )}
+          </div>
+
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5">
+            <div className="cb-label">Research & Regime</div>
+            <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+              {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Universe: <span style={{ color: "var(--cb-text-primary)" }}>{research?.tradable_symbol_count ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> tradable symbols</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Regime: <span style={{ color: "var(--cb-text-primary)" }}>{regimeSummary}</span>
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              {topThesis?.symbol
+                ? `Top thesis: ${topThesis.symbol} ${titleizeToken(topThesis.side_bias)}`
+                : "Top thesis: not populated yet"}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 text-[11px]">
+          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+            Contract v{data.contract_version ?? "legacy"}
+          </span>
+          <span
+            className="rounded-full border px-2.5 py-1"
+            style={{
+              borderColor: pipeline.chain_ok ? "rgba(34,197,94,0.2)" : "rgba(245,158,11,0.2)",
+              color: pipeline.chain_ok ? "var(--cb-green)" : "var(--cb-amber)",
+            }}
+          >
+            {pipeline.chain_ok ? "Chain healthy" : "Chain has incidents"}
+          </span>
+          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+            Approval path {pipeline.approval_path ?? "UNKNOWN"}
+          </span>
+          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+            Allowed next {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(" / ") : "none"}
+          </span>
+          {incidents.length > 0 && (
+            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(245,158,11,0.2)", color: "var(--cb-amber)" }}>
+              {incidents.length} incident flag{incidents.length === 1 ? "" : "s"}
+            </span>
+          )}
+          {gateBlockers.length > 0 && (
+            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(245,158,11,0.2)", color: "var(--cb-amber)" }}>
+              {gateBlockers.length} mode blocker{gateBlockers.length === 1 ? "" : "s"}
+            </span>
+          )}
+          {blockingNotes.length > 0 && (
+            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(239,68,68,0.2)", color: "var(--cb-red)" }}>
+              {blockingNotes.length} blocking note{blockingNotes.length === 1 ? "" : "s"}
+            </span>
+          )}
+          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+            As of {data.as_of_date}
+          </span>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -2165,6 +2491,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
       <CommandStrip
         tunables={data.tunables}
         pipeline={data.pipeline_status}
+        operator={data.operator}
         lastFetched={lastFetched}
         refreshing={refreshing}
         onRefresh={refresh}
@@ -2174,8 +2501,10 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* System caption */}
         <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          Autonomous · Paper · OpenClaw × Alpaca · 22-agent pipeline
+          Phase 1 equities sleeve · operator-feed contract · {data.operator?.mode?.current_mode ?? data.pipeline_status?.approval_path ?? data.tunables.trading_mode} mode
         </p>
+
+        <OperatorOverview data={data} tunables={data.tunables} />
 
         {/* Capital Hero */}
         <section>

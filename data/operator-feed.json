@@ -1,0 +1,899 @@
+{
+  "contract_version": "1",
+  "generated_at": "2026-04-08T17:24:15.718274+00:00",
+  "as_of_date": "2026-04-08",
+  "account": {
+    "equity": 84920.02,
+    "cash": 73933.63,
+    "buying_power": 158853.65,
+    "base_value": 100000.0,
+    "total_pnl": -15079.98,
+    "total_pnl_pct": -15.08,
+    "today_pnl": 358.0,
+    "today_pnl_pct": 0.4234,
+    "positions_value": 10986.38,
+    "equity_deployed": 10986.38,
+    "options_deployed": 0,
+    "unrealized_pnl": 746.89,
+    "unrealized_pnl_pct": 7.29
+  },
+  "positions": [
+    {
+      "symbol": "AMD",
+      "qty": 2.0,
+      "side": "long",
+      "entry_price": 214.21,
+      "current_price": 232.1201,
+      "market_value": 464.2402,
+      "unrealized_pnl": 35.8202,
+      "unrealized_pct": 8.36,
+      "change_today_pct": 4.78,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "AMZN",
+      "qty": 2.0,
+      "side": "long",
+      "entry_price": 210.19,
+      "current_price": 221.54,
+      "market_value": 443.08,
+      "unrealized_pnl": 22.7,
+      "unrealized_pct": 5.4,
+      "change_today_pct": 3.64,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "BX",
+      "qty": 33.0,
+      "side": "long",
+      "entry_price": 107.17,
+      "current_price": 116.65,
+      "market_value": 3849.45,
+      "unrealized_pnl": 312.84,
+      "unrealized_pct": 8.85,
+      "change_today_pct": 3.48,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "CAT",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 723.9,
+      "current_price": 767.27,
+      "market_value": 767.27,
+      "unrealized_pnl": 43.37,
+      "unrealized_pct": 5.99,
+      "change_today_pct": 5.91,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "CVX",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 208.53,
+      "current_price": 190.89,
+      "market_value": 190.89,
+      "unrealized_pnl": -17.64,
+      "unrealized_pct": -8.46,
+      "change_today_pct": -5.28,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "GS",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 863.0,
+      "current_price": 899.49,
+      "market_value": 899.49,
+      "unrealized_pnl": 36.49,
+      "unrealized_pct": 4.23,
+      "change_today_pct": 4.09,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "KKR",
+      "qty": 43.0,
+      "side": "long",
+      "entry_price": 86.47,
+      "current_price": 93.17,
+      "market_value": 4006.31,
+      "unrealized_pnl": 288.1,
+      "unrealized_pct": 7.75,
+      "change_today_pct": 2.67,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "TSM",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 340.44,
+      "current_price": 365.645,
+      "market_value": 365.645,
+      "unrealized_pnl": 25.205,
+      "unrealized_pct": 7.4,
+      "change_today_pct": 5.89,
+      "asset_type": "EQUITY"
+    }
+  ],
+  "pipeline_status": {
+    "trading_date": "2026-04-08",
+    "run_id": "2026-04-08-shadow-daily-mode-sync",
+    "circuit_breaker": "REDUCE_ONLY",
+    "verdict": "WARN",
+    "critical_issues": 0,
+    "high_issues": 3,
+    "medium_issues": 0,
+    "chain_ok": true,
+    "approval_path": "SHADOW",
+    "paper_compliant": true,
+    "audit_written_at": "2026-04-08T17:24:15.718387+00:00"
+  },
+  "kpis": {
+    "total_trades": 52,
+    "closed_trades": 18,
+    "open_trades": 34,
+    "win_rate_pct": 16.67,
+    "profit_factor": 0.031,
+    "expectancy": -25.59,
+    "net_pnl": -429.07,
+    "max_drawdown_pct": 0.4388,
+    "max_drawdown_usd": 438.81,
+    "max_win_streak": 1,
+    "max_loss_streak": 10,
+    "source": "legacy_pipeline_kpis_v1",
+    "positions_count": 8
+  },
+  "daily_performance": [
+    {
+      "date": "2026-02-02",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-03",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-04",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-05",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-06",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-09",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-10",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-11",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-12",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-13",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-16",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-17",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-18",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-19",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-20",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-23",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-24",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-25",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-26",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-02-27",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-02",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-03",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-04",
+      "net_pnl": 0.0,
+      "trades": 1,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-05",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-06",
+      "net_pnl": 0.0,
+      "trades": 4,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-09",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-10",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-11",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-12",
+      "net_pnl": -4.14,
+      "trades": 5,
+      "winners": 1,
+      "losers": 2,
+      "win_rate": 33.33
+    },
+    {
+      "date": "2026-03-13",
+      "net_pnl": -162.8,
+      "trades": 1,
+      "winners": 0,
+      "losers": 1,
+      "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-17",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-18",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-19",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-20",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-23",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-24",
+      "net_pnl": -6.85,
+      "trades": 5,
+      "winners": 0,
+      "losers": 1,
+      "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-25",
+      "net_pnl": 0.0,
+      "trades": 4,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-26",
+      "net_pnl": 0.0,
+      "trades": 4,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-27",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-03-30",
+      "net_pnl": -77.81,
+      "trades": 11,
+      "winners": 0,
+      "losers": 3,
+      "win_rate": 0.0
+    },
+    {
+      "date": "2026-03-31",
+      "net_pnl": -97.29,
+      "trades": 6,
+      "winners": 0,
+      "losers": 3,
+      "win_rate": 0.0
+    },
+    {
+      "date": "2026-04-01",
+      "net_pnl": 0.0,
+      "trades": 3,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-04-02",
+      "net_pnl": -20.28,
+      "trades": 5,
+      "winners": 1,
+      "losers": 3,
+      "win_rate": 25.0
+    },
+    {
+      "date": "2026-04-03",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-04-07",
+      "net_pnl": -59.9,
+      "trades": 3,
+      "winners": 1,
+      "losers": 1,
+      "win_rate": 33.33
+    }
+  ],
+  "equity_curve": [
+    {
+      "date": "2026-02-20",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-21",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-02-28",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 100000.0,
+      "profit_loss": 0.0,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 99997.32,
+      "profit_loss": -2.68,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 99995.09,
+      "profit_loss": -2.23,
+      "profit_loss_pct": 0.0
+    },
+    {
+      "date": "2026-03-07",
+      "equity": 99955.74,
+      "profit_loss": -39.35,
+      "profit_loss_pct": -0.04
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 100000.36,
+      "profit_loss": 44.62,
+      "profit_loss_pct": 0.04
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 100014.7,
+      "profit_loss": 14.34,
+      "profit_loss_pct": 0.01
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 100027.65,
+      "profit_loss": 12.95,
+      "profit_loss_pct": 0.01
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 99809.19,
+      "profit_loss": -218.46,
+      "profit_loss_pct": -0.22
+    },
+    {
+      "date": "2026-03-14",
+      "equity": 99232.0,
+      "profit_loss": -577.19,
+      "profit_loss_pct": -0.58
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 99267.97,
+      "profit_loss": 35.97,
+      "profit_loss_pct": 0.04
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 99637.13,
+      "profit_loss": 369.16,
+      "profit_loss_pct": 0.37
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 99852.47,
+      "profit_loss": 215.34,
+      "profit_loss_pct": 0.22
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 100005.36,
+      "profit_loss": 152.89,
+      "profit_loss_pct": 0.15
+    },
+    {
+      "date": "2026-03-21",
+      "equity": 99775.38,
+      "profit_loss": -229.98,
+      "profit_loss_pct": -0.23
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 99933.8,
+      "profit_loss": 158.42,
+      "profit_loss_pct": 0.16
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 99900.56,
+      "profit_loss": -33.24,
+      "profit_loss_pct": -0.03
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 100106.5,
+      "profit_loss": 205.94,
+      "profit_loss_pct": 0.21
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 99829.97,
+      "profit_loss": -276.53,
+      "profit_loss_pct": -0.28
+    },
+    {
+      "date": "2026-03-28",
+      "equity": 99584.65,
+      "profit_loss": -245.32,
+      "profit_loss_pct": -0.25
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 103844.97,
+      "profit_loss": 4260.32,
+      "profit_loss_pct": 4.28
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 88391.08,
+      "profit_loss": -15453.89,
+      "profit_loss_pct": -14.88
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 86343.32,
+      "profit_loss": -2047.76,
+      "profit_loss_pct": -2.32
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 85812.32,
+      "profit_loss": -531.0,
+      "profit_loss_pct": -0.61
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 84575.83,
+      "profit_loss": -1236.49,
+      "profit_loss_pct": -1.44
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 84562.02,
+      "profit_loss": -13.81,
+      "profit_loss_pct": -0.02
+    }
+  ],
+  "watchlist": {
+    "items": [
+      {
+        "symbol": "COST",
+        "trigger": "GENERAL",
+        "stop": "982.81",
+        "target": "1074.00",
+        "modifier": "HIGH",
+        "note": "Revenue growth 21.5% is the highest in the pool. RSI 62.85 and %B 0.848 show technical strength without overbought conditions. +3.12% RS vs SPY with no earnings catalyst for 50 days \u2014 the longest clean technical runway in the universe. Consumer Staples RISK_OFF positioning supports category. 23 buy/strongbuy consensus.",
+        "in_position": false
+      },
+      {
+        "symbol": "UNH",
+        "trigger": "EARNINGS",
+        "stop": "298.50",
+        "target": "326.19",
+        "modifier": "MEDIUM",
+        "note": "CMS finalized 2.48% Medicare Advantage payment increase (~$13B+ additional annual funding) \u2014 a direct multi-year revenue tailwind for UNH's largest segment. Beta 0.408 is genuinely defensive in RISK_OFF. 23 buy/strongbuy analyst consensus. Revenue growth 12.3%. Sentiment ADD weight, retail corroborated, institutional aligned bullish.",
+        "in_position": false
+      },
+      {
+        "symbol": "JPM",
+        "trigger": "EARNINGS",
+        "stop": "288.48",
+        "target": "315.24",
+        "modifier": "MEDIUM",
+        "note": "Forward P/E 12.73x for a large-cap bank with 14 buy/strongbuy analysts is genuinely cheap relative to the S&P. RSI 64 and %B 0.977 show technical momentum. +2.23% 10-day return, +1.31% RS vs SPY demonstrates relative strength ahead of April 14 earnings. Revenue growth 2.5%, profit margin 33.9% are solid fundamentals.",
+        "in_position": false
+      },
+      {
+        "symbol": "LMT",
+        "trigger": "GENERAL",
+        "stop": "608.87",
+        "target": "665.36",
+        "modifier": "MEDIUM",
+        "note": "Iran conflict is a live, confirmed geopolitical catalyst driving SOF and C-130 demand. $200B Pentagon supplemental spending request tied to Iran scenario. Beta 0.24 \u2014 extreme defensive, lowest in the universe. ApeWisdom +300% velocity (rank +90 spots) signals accelerating retail momentum. Earnings April 23 gives 15 days of clean technical runway.",
+        "in_position": false
+      }
+    ],
+    "as_of": "2026-04-08",
+    "source": "rebuild_pregate_intent"
+  },
+  "exit_candidates": [],
+  "tunables": {
+    "trading_mode": "PAPER",
+    "live_trading_enabled": false,
+    "paper_autopilot_enabled": false,
+    "max_daily_loss_pct": null,
+    "max_risk_per_trade_pct": 0.75,
+    "max_aggregate_open_risk_pct": 25.0,
+    "max_concurrent_positions": 4,
+    "consecutive_loss_limit": null,
+    "consecutive_loss_size_modifier": null,
+    "reduce_only_size_cap": "NO_NEW_ENTRIES",
+    "updated_at": "2026-04-08T13:23:54.735169-04:00"
+  },
+  "options": null,
+  "hedges": null,
+  "bps": null,
+  "operator": {
+    "mode": {
+      "current_mode": "SHADOW",
+      "effective_mode": "SHADOW",
+      "requested_mode": null,
+      "target_paper_mode": "AUTONOMOUS_PAPER",
+      "target_live_mode": "DECISION_SUPPORT",
+      "broker_environment": "PAPER",
+      "execution_enabled": false,
+      "approval_required": false,
+      "live_autonomous_available": false,
+      "allowed_transitions": [],
+      "last_transition_reason": "initial_phase1_default",
+      "applied_at": "2026-04-08T13:23:54.854058-04:00",
+      "requested_at": null,
+      "gate_state": {
+        "checkpoint05_passed": false,
+        "live_capital_enabled": false,
+        "blocking_incidents": []
+      },
+      "note": "Checkpoint-05 is still accumulating; operator mode remains SHADOW."
+    },
+    "session": {
+      "run_id": "2026-04-08-shadow-daily-mode-sync",
+      "phase": "PREMARKET",
+      "entry_mode": "REDUCE_ONLY",
+      "policy_version": "0.1.0"
+    },
+    "checkpoint05": {
+      "checkpoint_status": "ACCUMULATING",
+      "evidence_sufficient": null,
+      "total_shadow_days": 12,
+      "substantive_shadow_days": 1,
+      "substantive_pregate_days": 6,
+      "one_sided_days": 5,
+      "trivial_days": 6,
+      "avg_substantive_match": 0.1429,
+      "latest_suppression_cause": "GATE_BLOCKED",
+      "blocking_notes": [
+        "Only 1 substantive post-gate day(s); need at least 10.",
+        "5 one-sided post-gate day(s) remain in the current window.",
+        "Latest live shadow day is still suppressed post-gate (GATE_BLOCKED)."
+      ]
+    },
+    "plan": {
+      "pre_gate_status": "HAS_CANDIDATES",
+      "pre_gate_candidate_count": 4,
+      "trade_plan_status": "BLOCKED",
+      "trade_plan_count": 0,
+      "blocked_reasons": [
+        "entry_mode:REDUCE_ONLY",
+        "checkpoint04_blocks_new_entries_in_reduce_only"
+      ],
+      "suppression_cause": "GATE_BLOCKED"
+    },
+    "research": {
+      "tradable_symbol_count": 12,
+      "research_item_count": 10,
+      "thesis_item_count": 10,
+      "long_bias_count": 7,
+      "short_bias_count": 0,
+      "neutral_count": 3,
+      "top_theses": [
+        {
+          "symbol": "COST",
+          "side_bias": "LONG",
+          "confidence": "HIGH",
+          "bull_prob": 57,
+          "bear_prob": 28,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "Revenue growth 21.5% is the highest in the pool. RSI 62.85 and %B 0.848 show technical strength without overbought conditions. +3.12% RS vs SPY with no earnings catalyst for 50 days \u2014 the longest clean technical runway in the universe. Consumer Staples RISK_OFF positioning supports category. 23 buy/strongbuy consensus."
+        },
+        {
+          "symbol": "UNH",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 63,
+          "bear_prob": 22,
+          "catalyst_label": "EARNINGS",
+          "thesis_summary": "CMS finalized 2.48% Medicare Advantage payment increase (~$13B+ additional annual funding) \u2014 a direct multi-year revenue tailwind for UNH's largest segment. Beta 0.408 is genuinely defensive in RISK_OFF. 23 buy/strongbuy analyst consensus. Revenue growth 12.3%. Sentiment ADD weight, retail corroborated, institutional aligned bullish."
+        },
+        {
+          "symbol": "JPM",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 49,
+          "bear_prob": 36,
+          "catalyst_label": "EARNINGS",
+          "thesis_summary": "Forward P/E 12.73x for a large-cap bank with 14 buy/strongbuy analysts is genuinely cheap relative to the S&P. RSI 64 and %B 0.977 show technical momentum. +2.23% 10-day return, +1.31% RS vs SPY demonstrates relative strength ahead of April 14 earnings. Revenue growth 2.5%, profit margin 33.9% are solid fundamentals."
+        },
+        {
+          "symbol": "LMT",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 64,
+          "bear_prob": 16,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "Iran conflict is a live, confirmed geopolitical catalyst driving SOF and C-130 demand. $200B Pentagon supplemental spending request tied to Iran scenario. Beta 0.24 \u2014 extreme defensive, lowest in the universe. ApeWisdom +300% velocity (rank +90 spots) signals accelerating retail momentum. Earnings April 23 gives 15 days of clean technical runway."
+        },
+        {
+          "symbol": "JNJ",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 48,
+          "bear_prob": 32,
+          "catalyst_label": "EARNINGS",
+          "thesis_summary": "Beta 0.329 and high-quality pharmaceutical fundamentals (28.5% profit margin, 9.1% revenue growth) provide RISK_OFF defensive characteristics. RSI 42.12 near the oversold boundary suggests limited incremental selling pressure. Autoimmune pipeline and R&D partnership represent medium-term optionality. 14 buy/strongbuy analysts vs 0 sells. Stock 5.3% below 52-week high."
+        }
+      ]
+    },
+    "regime": {
+      "vix_level": 20.48,
+      "vix_regime": "MEDIUM",
+      "hmm_regime": "CALM",
+      "jump_variation_pctile": 100.0,
+      "notes": [],
+      "populated": true
+    },
+    "report_paths": {
+      "local_only": true,
+      "checkpoint05_status": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json",
+      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/2026-04-08-checkpoint05-132354-shadow-report.json",
+      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/2026-04-08-checkpoint05-132354-pregate-report.json"
+    },
+    "approval": null,
+    "incident_flags": [],
+    "notes": [
+      "shadow_slice_read_only",
+      "legacy_research_and_thesis_adapters_active",
+      "trade_plan_blocked_by_entry_mode"
+    ]
+  }
+}

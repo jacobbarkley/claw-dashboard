@@ -45,6 +45,50 @@ interface QueueData {
   completed: CompletedItem[]
 }
 
+interface OperatorFeedData {
+  contract_version?: string
+  generated_at?: string
+  as_of_date?: string
+  pipeline_status?: {
+    circuit_breaker?: string
+    verdict?: string
+    approval_path?: string
+    chain_ok?: boolean
+    high_issues?: number
+    medium_issues?: number
+  }
+  operator?: {
+    mode?: {
+      current_mode?: string
+      target_paper_mode?: string
+      target_live_mode?: string
+      note?: string
+    }
+    session?: {
+      entry_mode?: string
+    }
+    checkpoint05?: {
+      checkpoint_status?: string
+      evidence_sufficient?: boolean | null
+      total_shadow_days?: number
+      substantive_shadow_days?: number
+      substantive_pregate_days?: number
+      one_sided_days?: number
+      trivial_days?: number
+      latest_suppression_cause?: string
+      blocking_notes?: string[]
+    }
+    plan?: {
+      pre_gate_candidate_count?: number
+      trade_plan_status?: string
+      trade_plan_count?: number
+      suppression_cause?: string
+      blocked_reasons?: string[]
+    }
+    incident_flags?: string[]
+  }
+}
+
 // ─── Task State System ───────────────────────────────────────────────────────
 // UX: Derived state answers "what can I do with this?" — not just priority level.
 // Ready = actionable now. Blocked = has explicit blocker. Strategic = high priority,
@@ -54,7 +98,7 @@ type TaskState = "ready" | "blocked" | "strategic" | "parked"
 
 function deriveState(item: QueueItem): TaskState {
   if (item.blocker) return "blocked"
-  if (item.priority === "high") return "ready"
+  if (item.priority === "critical" || item.priority === "high") return "ready"
   if (item.priority === "medium") return "strategic"
   return "parked"
 }
@@ -75,6 +119,11 @@ const STATE_CONFIG: Record<TaskState, {
 // ─── Category Config ─────────────────────────────────────────────────────────
 
 const CATEGORIES: Record<string, { label: string; color: string; dot: string; accent: string }> = {
+  audit:          { label: "Audit",            color: "text-rose-400",    dot: "bg-rose-400",    accent: "border-l-rose-500/40" },
+  architecture:   { label: "Architecture",     color: "text-violet-400",  dot: "bg-violet-400",  accent: "border-l-violet-500/40" },
+  validation:     { label: "Validation",       color: "text-cyan-400",    dot: "bg-cyan-400",    accent: "border-l-cyan-500/40" },
+  rebuild:        { label: "Rebuild",          color: "text-emerald-400", dot: "bg-emerald-400", accent: "border-l-emerald-500/40" },
+  documentation:  { label: "Docs",             color: "text-sky-400",     dot: "bg-sky-400",     accent: "border-l-sky-500/40" },
   trading:        { label: "Trading",          color: "text-emerald-400", dot: "bg-emerald-400", accent: "border-l-emerald-500/40" },
   dashboard:      { label: "Dashboard",        color: "text-blue-400",    dot: "bg-blue-400",    accent: "border-l-blue-500/40" },
   infrastructure: { label: "Infrastructure",   color: "text-cyan-400",    dot: "bg-cyan-400",    accent: "border-l-cyan-500/40" },
@@ -84,6 +133,7 @@ const CATEGORIES: Record<string, { label: string; color: string; dot: string; ac
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
+  critical: "text-rose-300 bg-rose-500/12 border-rose-500/35",
   high:   "text-orange-400 bg-orange-500/10 border-orange-500/30",
   medium: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
   low:    "text-zinc-500 bg-zinc-500/8 border-zinc-700",
@@ -108,8 +158,8 @@ function RoadmapStrip({ items }: { items: QueueItem[] }) {
   const blocked  = items.filter(i => deriveState(i) === "blocked").length
   const strategic = items.filter(i => deriveState(i) === "strategic").length
 
-  // Core product = trading + infrastructure + dashboard. Admin = llc + governance. Projects = project.
-  const coreProduct = items.filter(i => ["trading", "infrastructure", "dashboard"].includes(i.category)).length
+  const rebuildTrack = items.filter(i => ["audit", "architecture", "validation", "rebuild", "documentation"].includes(i.category)).length
+  const delivery = items.filter(i => ["trading", "infrastructure", "dashboard"].includes(i.category)).length
   const admin       = items.filter(i => ["llc", "governance"].includes(i.category)).length
 
   return (
@@ -168,17 +218,136 @@ function RoadmapStrip({ items }: { items: QueueItem[] }) {
       {/* Secondary: composition breakdown */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
-          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Core Product</span>
-          <span className="text-sm font-bold text-zinc-300 tabular-nums">{coreProduct}</span>
+          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Rebuild Core</span>
+          <span className="text-sm font-bold text-zinc-300 tabular-nums">{rebuildTrack}</span>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
-          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Admin/Legal</span>
-          <span className="text-sm font-bold text-zinc-300 tabular-nums">{admin}</span>
+          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Delivery</span>
+          <span className="text-sm font-bold text-zinc-300 tabular-nums">{delivery}</span>
         </div>
         <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
-          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Projects</span>
-          <span className="text-sm font-bold text-zinc-300 tabular-nums">{items.length - coreProduct - admin}</span>
+          <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Admin / Other</span>
+          <span className="text-sm font-bold text-zinc-300 tabular-nums">{items.length - rebuildTrack - delivery}</span>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function OperatorPulse({ operatorData }: { operatorData: OperatorFeedData | null }) {
+  if (!operatorData?.operator || !operatorData.pipeline_status) return null
+
+  const mode = operatorData.operator.mode
+  const session = operatorData.operator.session
+  const checkpoint = operatorData.operator.checkpoint05
+  const plan = operatorData.operator.plan
+  const incidentFlags = operatorData.operator.incident_flags ?? []
+  const pipeline = operatorData.pipeline_status
+  const blockingNotes = checkpoint?.blocking_notes ?? []
+
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.18),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.14),_transparent_30%),linear-gradient(180deg,rgba(24,24,27,0.98),rgba(9,9,11,0.98))] p-4 sm:p-5 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <div className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">Operator Pulse</div>
+        <div className="text-lg sm:text-xl font-semibold text-zinc-100">
+            {mode?.current_mode ?? "UNKNOWN"} now, {mode?.target_paper_mode ?? "UNKNOWN"} next
+          </div>
+          <p className="text-sm text-zinc-400 max-w-2xl">
+            {mode?.note ?? "Queue is now anchored to the rebuild operator contract instead of legacy-only backlog context."}
+          </p>
+        </div>
+        <div className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+          pipeline.verdict === "FAIL"
+            ? "border-rose-500/30 bg-rose-500/10 text-rose-300"
+            : pipeline.verdict === "PASS"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+        }`}>
+          {pipeline.verdict ?? "WARN"}
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <Card className="border-zinc-800 bg-zinc-950/70">
+          <CardContent className="pt-4 px-4 pb-4 space-y-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Mode & Gate</div>
+            <div className="text-sm font-medium text-zinc-100">{mode?.current_mode ?? "UNKNOWN"}</div>
+            <div className="text-xs text-zinc-400">Circuit breaker: <span className="text-zinc-200">{pipeline.circuit_breaker ?? "UNKNOWN"}</span></div>
+            <div className="text-xs text-zinc-400">Entry mode: <span className="text-zinc-200">{session?.entry_mode ?? "UNKNOWN"}</span></div>
+            <div className="text-xs text-zinc-400">Approval path: <span className="text-zinc-200">{pipeline.approval_path ?? "UNKNOWN"}</span></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-zinc-800 bg-zinc-950/70">
+          <CardContent className="pt-4 px-4 pb-4 space-y-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Checkpoint 05</div>
+            <div className="text-sm font-medium text-zinc-100">{checkpoint?.checkpoint_status ?? "UNKNOWN"}</div>
+            <div className="flex items-center gap-4 text-xs text-zinc-400">
+              <span>{checkpoint?.substantive_shadow_days ?? 0} post-gate</span>
+              <span>{checkpoint?.substantive_pregate_days ?? 0} pre-gate</span>
+            </div>
+            <div className="text-xs text-zinc-400">Window: <span className="text-zinc-200">{checkpoint?.total_shadow_days ?? 0} days</span></div>
+            <div className="text-xs text-zinc-400">Evidence: <span className="text-zinc-200">{checkpoint?.evidence_sufficient === true ? "sufficient" : checkpoint?.evidence_sufficient === false ? "insufficient" : "not yet determined"}</span></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-zinc-800 bg-zinc-950/70">
+          <CardContent className="pt-4 px-4 pb-4 space-y-2">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold">Today’s Plan</div>
+            <div className="text-sm font-medium text-zinc-100">{plan?.trade_plan_status ?? "UNKNOWN"}</div>
+            <div className="flex items-center gap-4 text-xs text-zinc-400">
+              <span>{plan?.pre_gate_candidate_count ?? 0} candidates</span>
+              <span>{plan?.trade_plan_count ?? 0} tradable</span>
+            </div>
+            <div className="text-xs text-zinc-400">Suppression: <span className="text-zinc-200">{plan?.suppression_cause ?? "UNKNOWN"}</span></div>
+            {!!plan?.blocked_reasons?.length && (
+              <div className="text-xs text-zinc-400">
+                Block reasons: <span className="text-zinc-200">{plan.blocked_reasons.join(", ")}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-wrap gap-2 text-[11px] text-zinc-400">
+        <span className={`rounded-full border px-2 py-1 ${operatorData.contract_version === "1" ? "border-zinc-700 bg-zinc-900/70 text-zinc-300" : "border-rose-500/20 bg-rose-500/10 text-rose-300"}`}>
+          Contract v{operatorData.contract_version ?? "unknown"}
+        </span>
+        <span className={`rounded-full border px-2 py-1 ${pipeline.chain_ok ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300" : "border-amber-500/20 bg-amber-500/10 text-amber-300"}`}>
+          {pipeline.chain_ok ? "Chain healthy" : "Chain has incidents"}
+        </span>
+        {typeof pipeline.high_issues === "number" && (
+          <span className="rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-rose-300">
+            {pipeline.high_issues} high issue{pipeline.high_issues === 1 ? "" : "s"}
+          </span>
+        )}
+        {typeof pipeline.medium_issues === "number" && (
+          <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-1 text-amber-300">
+            {pipeline.medium_issues} medium issue{pipeline.medium_issues === 1 ? "" : "s"}
+          </span>
+        )}
+        {!!incidentFlags.length && (
+          <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-1">
+            {incidentFlags.length} incident flag{incidentFlags.length === 1 ? "" : "s"}
+          </span>
+        )}
+        {checkpoint?.latest_suppression_cause && (
+          <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-1">
+            Latest suppression: {checkpoint.latest_suppression_cause}
+          </span>
+        )}
+        {!!blockingNotes.length && (
+          <span className="rounded-full border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-rose-300">
+            {blockingNotes.length} blocking note{blockingNotes.length === 1 ? "" : "s"}
+          </span>
+        )}
+        {operatorData.as_of_date && (
+          <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-2 py-1 flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            As of {operatorData.as_of_date}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -524,13 +693,13 @@ function CompletedSection({ items }: { items: CompletedItem[] }) {
 
 // ─── Main Panel ──────────────────────────────────────────────────────────────
 
-export function QueuePanel({ data }: { data: QueueData | null }) {
+export function QueuePanel({ data, operatorData }: { data: QueueData | null; operatorData?: OperatorFeedData | null }) {
   const [viewMode, setViewMode] = useState<ViewMode>("category")
 
   // Group items by category
   const categoryGroups = useMemo(() => {
     if (!data) return {}
-    const catOrder = ["trading", "infrastructure", "documentation", "dashboard", "llc", "governance", "content", "project"]
+    const catOrder = ["audit", "architecture", "validation", "rebuild", "trading", "infrastructure", "documentation", "dashboard", "llc", "governance", "content", "project"]
     return catOrder.reduce<Record<string, QueueItem[]>>((acc, cat) => {
       const items = data.queued.filter(i => i.category === cat)
       if (items.length > 0) acc[cat] = items
@@ -541,7 +710,7 @@ export function QueuePanel({ data }: { data: QueueData | null }) {
   // Group items by priority
   const priorityGroups = useMemo(() => {
     if (!data) return {}
-    const priOrder = ["high", "medium", "low"]
+    const priOrder = ["critical", "high", "medium", "low"]
     return priOrder.reduce<Record<string, QueueItem[]>>((acc, pri) => {
       const items = data.queued.filter(i => (i.priority ?? "low") === pri)
       if (items.length > 0) acc[pri] = items
@@ -573,6 +742,8 @@ export function QueuePanel({ data }: { data: QueueData | null }) {
       <Nav active="queue" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        <OperatorPulse operatorData={operatorData ?? null} />
+
         {/* Roadmap Control Strip */}
         <RoadmapStrip items={data.queued} />
 
@@ -598,7 +769,7 @@ export function QueuePanel({ data }: { data: QueueData | null }) {
                 key={pri}
                 priority={pri}
                 items={items}
-                defaultOpen={pri === "high"}
+                defaultOpen={pri === "critical" || pri === "high"}
               />
             ))
           }
