@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-08T20:00:09.805338+00:00",
+  "generated_at": "2026-04-08T20:15:10.734899+00:00",
   "as_of_date": "2026-04-08",
   "account": {
-    "equity": 84948.41,
+    "equity": 84982.0,
     "cash": 73933.63,
-    "buying_power": 158882.04,
+    "buying_power": 158915.63,
     "base_value": 100000.0,
-    "total_pnl": -15051.59,
-    "total_pnl_pct": -15.0516,
-    "today_pnl": 386.39,
-    "today_pnl_pct": 0.4569,
-    "positions_value": 11014.46,
-    "equity_deployed": 11014.46,
+    "total_pnl": -15018.0,
+    "total_pnl_pct": -15.018,
+    "today_pnl": 419.98,
+    "today_pnl_pct": 0.4967,
+    "positions_value": 11048.37,
+    "equity_deployed": 11048.37,
     "options_deployed": 0,
-    "unrealized_pnl": 774.97,
-    "unrealized_pnl_pct": 7.57
+    "unrealized_pnl": 808.88,
+    "unrealized_pnl_pct": 7.9
   },
   "positions": [
     {
@@ -22,88 +22,88 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 230.76,
-      "market_value": 461.52,
-      "unrealized_pnl": 33.1,
-      "unrealized_pct": 7.73,
-      "change_today_pct": 4.17
+      "current_price": 231.8,
+      "market_value": 463.6,
+      "unrealized_pnl": 35.18,
+      "unrealized_pct": 8.21,
+      "change_today_pct": 4.64
     },
     {
       "symbol": "AMZN",
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 220.575,
-      "market_value": 441.15,
-      "unrealized_pnl": 20.77,
-      "unrealized_pct": 4.94,
-      "change_today_pct": 3.18
+      "current_price": 221.25,
+      "market_value": 442.5,
+      "unrealized_pnl": 22.12,
+      "unrealized_pct": 5.26,
+      "change_today_pct": 3.5
     },
     {
       "symbol": "BX",
       "qty": 33.0,
       "side": "long",
       "entry_price": 107.17,
-      "current_price": 116.94,
-      "market_value": 3859.02,
-      "unrealized_pnl": 322.41,
-      "unrealized_pct": 9.12,
-      "change_today_pct": 3.74
+      "current_price": 117.44,
+      "market_value": 3875.52,
+      "unrealized_pnl": 338.91,
+      "unrealized_pct": 9.58,
+      "change_today_pct": 4.18
     },
     {
       "symbol": "CAT",
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 769.09,
-      "market_value": 769.09,
-      "unrealized_pnl": 45.19,
-      "unrealized_pct": 6.24,
-      "change_today_pct": 6.16
+      "current_price": 770.32,
+      "market_value": 770.32,
+      "unrealized_pnl": 46.42,
+      "unrealized_pct": 6.41,
+      "change_today_pct": 6.33
     },
     {
       "symbol": "CVX",
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 192.5,
-      "market_value": 192.5,
-      "unrealized_pnl": -16.03,
-      "unrealized_pct": -7.69,
-      "change_today_pct": -4.49
+      "current_price": 192.89,
+      "market_value": 192.89,
+      "unrealized_pnl": -15.64,
+      "unrealized_pct": -7.5,
+      "change_today_pct": -4.29
     },
     {
       "symbol": "GS",
       "qty": 1.0,
       "side": "long",
       "entry_price": 863.0,
-      "current_price": 899.57,
-      "market_value": 899.57,
-      "unrealized_pnl": 36.57,
-      "unrealized_pct": 4.24,
-      "change_today_pct": 4.1
+      "current_price": 905.0,
+      "market_value": 905.0,
+      "unrealized_pnl": 42.0,
+      "unrealized_pct": 4.87,
+      "change_today_pct": 4.73
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 93.67,
-      "market_value": 4027.81,
-      "unrealized_pnl": 309.6,
-      "unrealized_pct": 8.33,
-      "change_today_pct": 3.22
+      "current_price": 93.78,
+      "market_value": 4032.54,
+      "unrealized_pnl": 314.33,
+      "unrealized_pct": 8.45,
+      "change_today_pct": 3.34
     },
     {
       "symbol": "TSM",
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 363.8,
-      "market_value": 363.8,
-      "unrealized_pnl": 23.36,
-      "unrealized_pct": 6.86,
-      "change_today_pct": 5.35
+      "current_price": 366.0,
+      "market_value": 366.0,
+      "unrealized_pnl": 25.56,
+      "unrealized_pct": 7.51,
+      "change_today_pct": 5.99
     }
   ],
   "pipeline_status": {
@@ -1506,10 +1506,10 @@
         "short_strike": 240.0,
         "long_strike": 235.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.35,
+        "credit_width_ratio": 0.27,
+        "annualized_yield_pct": 469.3,
+        "max_loss_per_contract": 365.0,
         "iv_rank_proxy": 0.031,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1571,6 +1571,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T16:00:08.497447-04:00"
+    "as_of": "2026-04-08T16:15:09.569371-04:00"
   }
 }
