@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-08T15:00:10.542598+00:00",
+  "generated_at": "2026-04-08T15:15:10.924698+00:00",
   "as_of_date": "2026-04-07",
   "account": {
     "equity": 84896.02,
@@ -1511,6 +1511,24 @@
         "selected": false
       },
       {
+        "symbol": "CVNA",
+        "price": 313.91,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-01",
+        "dte": 23,
+        "short_strike": 345.0,
+        "long_strike": 340.0,
+        "spread_width": 5.0,
+        "net_credit": 1.45,
+        "credit_width_ratio": 0.29,
+        "annualized_yield_pct": 504.0,
+        "max_loss_per_contract": 355.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "ADBE",
         "price": 242.92,
         "sector": "Technology",
@@ -1519,10 +1537,10 @@
         "short_strike": 240.0,
         "long_strike": 235.0,
         "spread_width": 5.0,
-        "net_credit": 1.35,
-        "credit_width_ratio": 0.27,
-        "annualized_yield_pct": 469.3,
-        "max_loss_per_contract": 365.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
         "iv_rank_proxy": 0.031,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1532,7 +1550,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1584,6 +1602,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-08T11:00:09.175978-04:00"
+    "as_of": "2026-04-08T11:15:09.622387-04:00"
   }
 }
