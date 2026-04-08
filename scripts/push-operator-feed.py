@@ -25,6 +25,17 @@ MODE_STATE_PATH = Path(os.environ.get('OPENCLAW_MODE_STATE_PATH', str(REBUILD_LA
 MODE_HISTORY_PATH = Path(os.environ.get('OPENCLAW_MODE_HISTORY_PATH', str(REBUILD_HISTORY / 'mode_transition_events.jsonl')))
 APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(REBUILD_LATEST / 'approval_queue.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
+OVERRIDE_ENV_KEYS = [
+    'OPENCLAW_WORKSPACE',
+    'OPENCLAW_REBUILD_LATEST',
+    'OPENCLAW_REBUILD_HISTORY',
+    'OPENCLAW_CHECKPOINT05_PATH',
+    'OPENCLAW_PERF_DIR',
+    'OPENCLAW_POLICY_PATH',
+    'OPENCLAW_MODE_STATE_PATH',
+    'OPENCLAW_MODE_HISTORY_PATH',
+    'OPENCLAW_APPROVAL_QUEUE_PATH',
+]
 
 
 def load(path: Path):
@@ -32,6 +43,25 @@ def load(path: Path):
         return json.loads(path.read_text())
     except Exception:
         return {}
+
+
+def build_source_context() -> dict:
+    override_values = {key: os.environ[key] for key in OVERRIDE_ENV_KEYS if os.environ.get(key)}
+    override_active = bool(override_values)
+    label = os.environ.get('OPENCLAW_FEED_SOURCE_LABEL')
+    if not label:
+        label = 'preview_override' if override_active else 'canonical'
+    return {
+        'mode': 'override' if override_active else 'canonical',
+        'label': label,
+        'override_active': override_active,
+        'override_keys': sorted(override_values.keys()),
+        'note': (
+            'Feed generated from override artifact roots. Treat as preview/demo data until regenerated canonically.'
+            if override_active
+            else 'Feed generated from canonical rebuild artifacts.'
+        ),
+    }
 
 
 def safe_float(value, default=None):
@@ -430,6 +460,7 @@ def main():
         'contract_version': '1',
         'generated_at': datetime.now(timezone.utc).isoformat(),
         'as_of_date': session.get('trading_date') or datetime.now(timezone.utc).date().isoformat(),
+        'source_context': build_source_context(),
         'account': build_account(market, legacy_positions, positions),
         'positions': positions,
         'pipeline_status': build_pipeline_status(session, checkpoint05, daily_eval, policy, mode_state),

@@ -367,6 +367,13 @@ interface TradingData {
   contract_version?: string
   generated_at: string
   as_of_date: string
+  source_context?: {
+    mode?: string
+    label?: string
+    override_active?: boolean
+    override_keys?: string[]
+    note?: string | null
+  }
   options?: OptionsData
   hedges?: HedgesData | null
   account: {
@@ -2586,6 +2593,29 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
           Phase 1 equities sleeve · operator-feed contract · {data.operator?.mode?.current_mode ?? data.pipeline_status?.approval_path ?? data.tunables.trading_mode} mode
         </p>
+
+        {data.source_context?.mode !== "canonical" && (
+          <section
+            className="rounded-[18px] border px-4 py-3 space-y-1.5"
+            style={{
+              borderColor: "rgba(245,158,11,0.28)",
+              background:
+                "linear-gradient(180deg, rgba(45, 28, 6, 0.92), rgba(24, 14, 4, 0.96))",
+              boxShadow: "0 12px 30px rgba(10, 6, 2, 0.28)",
+            }}
+          >
+            <div className="cb-label" style={{ color: "var(--cb-amber)" }}>Preview Feed</div>
+            <div className="text-sm" style={{ color: "var(--cb-text-primary)" }}>
+              {data.source_context?.note ?? "This operator feed was generated from non-canonical artifacts."}
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              Label: <span style={{ color: "var(--cb-text-primary)" }}>{data.source_context?.label ?? "override"}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}>
+                {data.source_context?.override_keys?.length ? ` · ${data.source_context.override_keys.length} override key(s)` : ""}
+              </span>
+            </div>
+          </section>
+        )}
 
         <OperatorOverview data={data} tunables={data.tunables} />
 

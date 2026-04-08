@@ -1,7 +1,18 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-08T21:17:35.571385+00:00",
+  "generated_at": "2026-04-08T21:39:07.671612+00:00",
   "as_of_date": "2026-03-24",
+  "source_context": {
+    "mode": "override",
+    "label": "decision_support_preview",
+    "override_active": true,
+    "override_keys": [
+      "OPENCLAW_CHECKPOINT05_PATH",
+      "OPENCLAW_REBUILD_HISTORY",
+      "OPENCLAW_REBUILD_LATEST"
+    ],
+    "note": "Feed generated from override artifact roots. Treat as preview/demo data until regenerated canonically."
+  },
   "account": {
     "equity": 99899.58,
     "cash": 92009.58,
@@ -114,7 +125,7 @@
     "chain_ok": false,
     "approval_path": "DECISION_SUPPORT",
     "paper_compliant": false,
-    "audit_written_at": "2026-04-08T21:17:35.571516+00:00"
+    "audit_written_at": "2026-04-08T21:39:07.671839+00:00"
   },
   "kpis": {
     "total_trades": 52,
