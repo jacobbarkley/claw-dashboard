@@ -725,10 +725,10 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
         </div>
 
         {/* Horizontal scroll cards */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-4 pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-4 pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none" style={{ scrollSnapStop: "always" }}>
 
           {/* Card 1: Promotion Readiness */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 min-w-[280px] snap-start flex-shrink-0 md:min-w-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
             <div className="cb-label">Promotion Readiness</div>
             <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(checkpoint?.checkpoint_status)} · {checkpoint?.substantive_shadow_days ?? 0} of {checkpoint?.total_shadow_days ?? 0} days
@@ -756,7 +756,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
 
           {/* Card 2: Today's Plan */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 min-w-[280px] snap-start flex-shrink-0 md:min-w-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
             <div className="cb-label">Today&apos;s Plan</div>
             <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(plan?.trade_plan_status)} · {plan?.trade_plan_count ?? 0} ready
@@ -790,7 +790,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
 
           {/* Card 3: Approval Queue */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 min-w-[280px] snap-start flex-shrink-0 md:min-w-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
             <div className="cb-label">Approval Queue</div>
             {approvalPending ? (
               <>
@@ -825,7 +825,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
 
           {/* Card 4: Research & Regime */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 min-w-[280px] snap-start flex-shrink-0 md:min-w-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
             <div className="cb-label">Research & Regime</div>
             <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses

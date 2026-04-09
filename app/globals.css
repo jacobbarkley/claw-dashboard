@@ -250,6 +250,15 @@
   font-feature-settings: "tnum";
 }
 
+/* Horizontal card scroll — hide scrollbar, smooth snapping */
+.snap-x {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.snap-x::-webkit-scrollbar {
+  display: none;
+}
+
 /* Ambient particle canvas — always behind content */
 .cb-ambient-layer {
   position: fixed;
