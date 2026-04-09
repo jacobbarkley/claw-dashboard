@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-09T02:46:13.766770-04:00",
+  "generated_at": "2026-04-09T03:04:45.169113-04:00",
   "queued": [
     {
       "id": "Q-068",
@@ -74,11 +74,11 @@
     {
       "id": "Q-074",
       "category": "operator",
-      "title": "Execution handoff \u2014 approved plan to broker submission",
-      "what": "Connect an approved plan (from Q-073 Telegram or future Vercel buttons) to broker order submission. Short-term: route through the existing legacy execution path (known to work for paper). Long-term: route through rebuild execution layer when it graduates from read-only. Audit trail: proposed -> approved/rejected -> submitted/not-submitted must be traceable end-to-end. Safety: paper-only until explicit live-capital promotion gate passes.",
+      "title": "Execution bridge \u2014 route rebuild plans through legacy executor",
+      "what": "Build a thin adapter that bridges rebuild trade plans to the proven legacy executor (bin/order_submitter.py), NOT a new execution engine. The legacy executor has 3+ weeks of real Alpaca paper fills, 6+ execution gates (staleness, conviction, stub defense, no-trade zones, circuit breaker, approval state), position sizing, order reconciliation, and a hard live-capital block. Rebuilding this from scratch would be premature and risky. Adapter flow: (1) read operator_mode_state.json to confirm execution_enabled, (2) read trade_plan.json + approval queue status, (3) translate rebuild TradePlan into legacy strategy_spec.json format, (4) call bin/order_submitter.py, (5) parse execution_log.json and mirror into rebuild execution_report.json. Long-term goal: extract the legacy executor into a modular, reusable block that both rebuild and any future pipeline can call. But phase 1 is bridge-only \u2014 no reimplementation of broker plumbing.",
       "blocker": "Q-073 must be proven first (at least one successful dry-run cycle)",
       "blocker_type": "dependency",
-      "prereq": "Q-073 Telegram approval transport working. Legacy execution path verified for paper orders.",
+      "prereq": "Q-073 Telegram approval transport working (at least one dry-run cycle). Legacy executor verified for paper orders. Rebuild trade_plan.json producing valid plans.",
       "priority": "high",
       "ticket": null,
       "tags": [
