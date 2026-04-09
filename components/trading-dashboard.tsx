@@ -547,7 +547,6 @@ function CommandStrip({
   const planDisplayText = plan
     ? `${titleizeToken(plan.trade_plan_status)} · ${plan.trade_plan_count ?? 0} tradable · ${summarizeSymbols(plan.trade_plan_symbols?.length ? plan.trade_plan_symbols : plan.pre_gate_symbols, 3)}`
     : planText
-
   return (
     <div
       className="px-6 py-2 flex items-center justify-between gap-4 backdrop-blur-md sticky top-[52px] z-30"
@@ -627,6 +626,9 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const allowedTransitions = mode?.allowed_transitions ?? []
   const latestModeEvent = modeHistory?.latest_event
   const topThesis = research?.top_theses?.[0]
+  const preGateSymbols = plan?.pre_gate_symbols ?? []
+  const readySymbols = plan?.trade_plan_symbols ?? []
+  const approvalSymbols = approval?.symbols ?? []
   const effectiveModeLabel = titleizeToken(mode?.effective_mode ?? mode?.current_mode)
   const nextModeLabel = allowedTransitions[0]
     ? titleizeToken(allowedTransitions[0])
@@ -645,6 +647,30 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
         regime?.vix_regime ? titleizeToken(regime.vix_regime) : null,
         regime?.hmm_regime ? `HMM ${titleizeToken(regime.hmm_regime)}` : null,
       ].filter(Boolean).join(" · ")
+  const normalizedSymbols = (symbols: string[]) => [...symbols].sort().join("|")
+  const planSymbolsMatch = normalizedSymbols(preGateSymbols) === normalizedSymbols(readySymbols)
+  const approvalMatchesReady = normalizedSymbols(approvalSymbols) === normalizedSymbols(readySymbols)
+  const promotionNarrative =
+    checkpoint?.latest_suppression_cause === "GATE_BLOCKED"
+      ? "The latest comparable day was blocked by the legacy gate, so post-gate evidence did not advance."
+      : checkpoint?.latest_suppression_cause
+        ? `Latest blocker: ${titleizeToken(checkpoint.latest_suppression_cause)}.`
+        : "Promotion evidence is accumulating across live shadow days."
+  const planNarrative =
+    readySymbols.length > 0
+      ? planSymbolsMatch
+        ? `${readySymbols.length} trade(s) are ready today: ${summarizeSymbols(readySymbols, 4)}.`
+        : `${preGateSymbols.length} names surfaced before gating; ${readySymbols.length} remain tradable: ${summarizeSymbols(readySymbols, 4)}.`
+      : preGateSymbols.length > 0
+        ? `${preGateSymbols.length} names surfaced before gating, but none are tradable after the current gate.`
+        : "No candidates are surfaced in the current snapshot."
+  const approvalSummaryCount = approval?.pending_count ?? approval?.active_count ?? 0
+  const approvalNarrative =
+    approvalSummaryCount > 0
+      ? `${approvalSummaryCount} approval packet${approvalSummaryCount === 1 ? "" : "s"} pending${approval?.trade_count ? ` for ${approval.trade_count} trade(s)` : ""}.`
+      : approvalModeReady
+        ? approvalIdleNote
+        : null
 
   return (
     <section className="space-y-3">
@@ -732,19 +758,16 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
             <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(checkpoint?.checkpoint_status)}
             </div>
-            <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
-              Checkpoint 05 gate for autonomous paper
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_shadow_days ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> of {checkpoint?.total_shadow_days ?? 0} comparable days are substantive post-gate</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Post-gate: <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_shadow_days ?? 0}</span>
-              <span style={{ color: "var(--cb-text-tertiary)" }}> / {checkpoint?.total_shadow_days ?? 0} days</span>
+              <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_pregate_days ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> days produced real pre-gate intent</span>
             </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Pre-gate: <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_pregate_days ?? 0}</span>
-              <span style={{ color: "var(--cb-text-tertiary)" }}> substantive</span>
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Latest suppression: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(checkpoint?.latest_suppression_cause)}</span>
+            <div className="text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+              {promotionNarrative}
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Transition gate: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.gate_state?.checkpoint05_passed ? "Checkpoint ready" : "Checkpoint accumulating"}</span>
@@ -757,36 +780,46 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
               {titleizeToken(plan?.trade_plan_status)}
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Candidates: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.pre_gate_candidate_count ?? 0}</span>
-              <span style={{ color: "var(--cb-text-tertiary)" }}> pre-gate</span>
+              Signals found: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.pre_gate_candidate_count ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> before gating</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Tradable: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.trade_plan_count ?? 0}</span>
-              <span style={{ color: "var(--cb-text-tertiary)" }}> post-gate</span>
+              Ready now: <span style={{ color: "var(--cb-text-primary)" }}>{plan?.trade_plan_count ?? 0}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> after gating</span>
             </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Candidate set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(plan?.pre_gate_symbols)}</span>
+            <div className="text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+              {planNarrative}
             </div>
-            {(plan?.trade_plan_symbols?.length ?? 0) > 0 && (
+            {!planSymbolsMatch && preGateSymbols.length > 0 && readySymbols.length > 0 && (
               <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                Ready set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(plan?.trade_plan_symbols)}</span>
+                Candidate set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(preGateSymbols)}</span>
               </div>
             )}
-            <div className="text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
-              {plan?.narrative ?? `Why: ${titleizeToken(plan?.suppression_cause)}`}
-            </div>
+            {!planSymbolsMatch && readySymbols.length > 0 && (
+              <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                Ready set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(readySymbols)}</span>
+              </div>
+            )}
+            {plan?.narrative && plan?.narrative !== planNarrative && (
+              <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                {plan.narrative}
+              </div>
+            )}
             {approval ? (
               <>
-                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                  Approval queue: <span style={{ color: "var(--cb-text-primary)" }}>{approval.pending_count ?? approval.active_count ?? 0}</span>
-                  <span style={{ color: "var(--cb-text-tertiary)" }}> pending item(s)</span>
-                </div>
-                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                  Review: <span style={{ color: "var(--cb-text-primary)" }}>{(approval.symbols ?? []).join(", ") || "No symbols"}</span>
+                {approvalNarrative && (
+                  <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                    Approval queue: <span style={{ color: "var(--cb-text-primary)" }}>{approvalNarrative}</span>
+                  </div>
+                )}
+                {!approvalMatchesReady && approvalSymbols.length > 0 && (
+                  <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                  Under review: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(approvalSymbols)}</span>
                   <span style={{ color: "var(--cb-text-tertiary)" }}>
                     {approval.gross_risk_pct != null ? ` · ${approval.gross_risk_pct.toFixed(2)}% gross risk` : ""}
                   </span>
-                </div>
+                  </div>
+                )}
                 <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
                   Status: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(approval.latest_status)}</span>
                   <span style={{ color: "var(--cb-text-tertiary)" }}>
@@ -812,7 +845,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
               {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Coverage: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(research?.coverage_symbols, 5)}</span>
+              Coverage: <span style={{ color: "var(--cb-text-primary)" }}>{research?.tradable_symbol_count ?? 0} tradable names</span>
               <span style={{ color: "var(--cb-text-tertiary)" }}> · {research?.tradable_symbol_count ?? 0} tradable names</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
