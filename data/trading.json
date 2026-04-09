@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-09T20:15:04.098213+00:00",
+  "generated_at": "2026-04-09T20:30:03.150275+00:00",
   "as_of_date": "2026-04-09",
   "account": {
     "equity": 84967.48,
@@ -113,11 +113,11 @@
     "verdict": "WARN",
     "critical_issues": 0,
     "high_issues": 1,
-    "medium_issues": 4,
+    "medium_issues": 2,
     "chain_ok": true,
     "approval_path": "AUTO_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-08T20:20:00-04:00"
+    "audit_written_at": "2026-04-09T20:20:00-04:00"
   },
   "kpis": {
     "total_trades": 52,
@@ -495,6 +495,14 @@
     },
     {
       "date": "2026-04-08",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-04-09",
       "net_pnl": 0.0,
       "trades": 0,
       "winners": 0,
@@ -1565,6 +1573,6 @@
     "positions_screened": 8,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-09T16:15:02.530600-04:00"
+    "as_of": "2026-04-09T16:30:01.828644-04:00"
   }
 }
