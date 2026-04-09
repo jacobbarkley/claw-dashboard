@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 WORKSPACE = Path(os.environ.get('OPENCLAW_WORKSPACE', str(Path.home() / '.openclaw/workspace/trading-bot')))
 REBUILD_LATEST = Path(os.environ.get('OPENCLAW_REBUILD_LATEST', str(WORKSPACE / 'state/rebuild_latest')))
@@ -26,6 +27,7 @@ MODE_STATE_PATH = Path(os.environ.get('OPENCLAW_MODE_STATE_PATH', str(REBUILD_LA
 MODE_HISTORY_PATH = Path(os.environ.get('OPENCLAW_MODE_HISTORY_PATH', str(REBUILD_HISTORY / 'mode_transition_events.jsonl')))
 APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(REBUILD_LATEST / 'approval_queue.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
+ET = ZoneInfo('America/New_York')
 OVERRIDE_ENV_KEYS = [
     'OPENCLAW_WORKSPACE',
     'OPENCLAW_REBUILD_LATEST',
@@ -227,7 +229,7 @@ def build_positions(market: dict, legacy_snapshot: dict) -> list[dict]:
     return positions
 
 
-def build_account(market: dict, legacy_snapshot: dict, positions: list[dict]) -> dict:
+def build_account(market: dict, legacy_snapshot: dict, positions: list[dict], source_context: dict, as_of_date: str) -> dict:
     account = market.get('account', {})
     legacy_account = legacy_snapshot.get('account', {})
     history = legacy_snapshot.get('portfolio_history', {})
@@ -241,7 +243,10 @@ def build_account(market: dict, legacy_snapshot: dict, positions: list[dict]) ->
     last_equity = safe_float(legacy_account.get('last_equity'))
     total_pnl = round(equity - base_value, 2) if equity is not None and base_value is not None else None
     total_pnl_pct = round(total_pnl / base_value * 100, 4) if total_pnl is not None and base_value else None
-    today_pnl = round(equity - last_equity, 2) if equity is not None and last_equity is not None else None
+    current_et_date = datetime.now(ET).date().isoformat()
+    same_session_day = as_of_date == current_et_date
+    can_trust_today_pnl = source_context.get('mode') == 'canonical' and same_session_day
+    today_pnl = round(equity - last_equity, 2) if can_trust_today_pnl and equity is not None and last_equity is not None else None
     today_pnl_pct = round(today_pnl / last_equity * 100, 4) if today_pnl is not None and last_equity else None
     unrealized_pct = round(unrealized_pnl / entry_basis * 100, 2) if entry_basis else None
     return {
@@ -563,15 +568,17 @@ def main():
     legacy_positions = load(WORKSPACE / 'state/positions_snapshot.json')
     legacy_kpis = load(WORKSPACE / 'state/pipeline_kpis_v1.json')
     policy = load(POLICY_PATH)
+    source_context = build_source_context()
+    as_of_date = session.get('trading_date') or datetime.now(ET).date().isoformat()
 
     held_symbols = {item.get('symbol') for item in market.get('positions', [])}
     positions = build_positions(market, legacy_positions)
     output = {
         'contract_version': '1',
         'generated_at': datetime.now(timezone.utc).isoformat(),
-        'as_of_date': session.get('trading_date') or datetime.now(timezone.utc).date().isoformat(),
-        'source_context': build_source_context(),
-        'account': build_account(market, legacy_positions, positions),
+        'as_of_date': as_of_date,
+        'source_context': source_context,
+        'account': build_account(market, legacy_positions, positions, source_context, as_of_date),
         'positions': positions,
         'pipeline_status': build_pipeline_status(session, checkpoint05, daily_eval, policy, mode_state),
         'kpis': build_kpis(legacy_kpis, len(positions)),
