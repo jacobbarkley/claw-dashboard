@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-09T20:41:03.871531+00:00",
+  "generated_at": "2026-04-09T20:45:03.817357+00:00",
   "as_of_date": "2026-04-09",
   "account": {
     "equity": 84967.48,
@@ -108,7 +108,7 @@
   ],
   "pipeline_status": {
     "trading_date": "2026-04-09",
-    "run_id": "2026-04-09-preopen-01",
+    "run_id": null,
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
@@ -1562,7 +1562,7 @@
     "universe_date": "2026-04-06"
   },
   "hedges": {
-    "status": "no_candidates",
+    "status": "regime_not_active",
     "regime": {
       "vix_level": 21.52,
       "vix_regime": "MEDIUM",
@@ -1570,9 +1570,9 @@
       "active": false
     },
     "routing_reason": "CB=REDUCE_ONLY \u2014 protective puts only",
-    "positions_screened": 8,
+    "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-09T16:41:02.210333-04:00"
+    "as_of": "2026-04-09T16:45:02.093036-04:00"
   }
 }
