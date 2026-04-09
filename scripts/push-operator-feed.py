@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timezone
 import os
 from pathlib import Path
+from typing import Optional
 
 WORKSPACE = Path(os.environ.get('OPENCLAW_WORKSPACE', str(Path.home() / '.openclaw/workspace/trading-bot')))
 REBUILD_LATEST = Path(os.environ.get('OPENCLAW_REBUILD_LATEST', str(WORKSPACE / 'state/rebuild_latest')))
@@ -40,7 +41,7 @@ OVERRIDE_ENV_KEYS = [
 
 def load(path: Path):
     try:
-        return json.loads(path.read_text())
+        return json.loads(path.read_text(encoding='utf-8'))
     except Exception:
         return {}
 
@@ -69,6 +70,109 @@ def safe_float(value, default=None):
         return float(value) if value is not None else default
     except (TypeError, ValueError):
         return default
+
+
+def summarize_symbols(items: list[dict], key: str = 'symbol', limit: int = 5) -> list[str]:
+    symbols: list[str] = []
+    for item in items:
+        symbol = item.get(key)
+        if symbol and symbol not in symbols:
+            symbols.append(symbol)
+        if len(symbols) >= limit:
+            break
+    return symbols
+
+
+def summarize_symbol_text(symbols: list[str], total_count: int) -> str:
+    if not symbols:
+        return 'No names surfaced yet.'
+    if total_count > len(symbols):
+        return f"{', '.join(symbols)} +{total_count - len(symbols)} more"
+    return ', '.join(symbols)
+
+
+def describe_jump_regime(jump_pctile) -> Optional[str]:
+    value = safe_float(jump_pctile)
+    if value is None:
+        return None
+    if value >= 90:
+        return 'jump stress is elevated'
+    if value >= 65:
+        return 'jump activity is running hot'
+    if value <= 20:
+        return 'jump activity is muted'
+    return 'jump activity is mixed'
+
+
+def build_plan_narrative(pre_gate: dict, trade_plan: dict, gate_attr: dict) -> str:
+    pre_gate_items = pre_gate.get('items', [])
+    trade_items = trade_plan.get('items', [])
+    pre_gate_count = pre_gate.get('candidate_count', len(pre_gate_items) or 0)
+    trade_count = len(trade_items)
+    pre_gate_symbols = summarize_symbols(pre_gate_items)
+    trade_symbols = summarize_symbols(trade_items)
+    suppression = gate_attr.get('suppression_cause')
+    entry_mode = gate_attr.get('entry_mode') or trade_plan.get('entry_mode') or pre_gate.get('entry_mode')
+    blocked_reasons = trade_plan.get('blocked_reasons', []) or gate_attr.get('blocked_reasons', [])
+
+    if trade_plan.get('status') == 'READY' and trade_count:
+        return (
+            f"{trade_count} trade(s) are ready to express today: "
+            f"{summarize_symbol_text(trade_symbols, trade_count)}."
+        )
+    if pre_gate_count and suppression == 'GATE_BLOCKED':
+        reasons = ', '.join(blocked_reasons[:2]) if blocked_reasons else 'the current gate state'
+        return (
+            f"{pre_gate_count} candidate(s) cleared research, but the plan stayed blocked by "
+            f"{title_case_token(entry_mode) if entry_mode else 'the active gate'} ({reasons}). "
+            f"Current candidate set: {summarize_symbol_text(pre_gate_symbols, pre_gate_count)}."
+        )
+    if pre_gate_count:
+        return (
+            f"{pre_gate_count} candidate(s) surfaced in research. Current set: "
+            f"{summarize_symbol_text(pre_gate_symbols, pre_gate_count)}."
+        )
+    return 'No candidates surfaced in the current rebuild slice.'
+
+
+def title_case_token(value: Optional[str]) -> str:
+    if not value:
+        return 'Unknown'
+    return ' '.join(part.capitalize() for part in str(value).split('_') if part)
+
+
+def build_research_narrative(market: dict, theses: list[dict]) -> str:
+    tradable_symbols = market.get('tradable_symbols', [])
+    long_bias = sum(1 for item in theses if item.get('side_bias') == 'LONG')
+    short_bias = sum(1 for item in theses if item.get('side_bias') == 'SHORT')
+    lead = theses[0] if theses else None
+    coverage_preview = summarize_symbol_text(tradable_symbols[:5], len(tradable_symbols))
+    bias_text = f'{long_bias} long / {short_bias} short'
+    if lead and lead.get('symbol'):
+        return (
+            f"Coverage spans {len(tradable_symbols)} liquid names ({coverage_preview}). "
+            f"Current thesis mix is {bias_text}. Lead idea is {lead.get('symbol')} "
+            f"{title_case_token(lead.get('side_bias'))} on a {title_case_token(lead.get('catalyst_label'))} setup."
+        )
+    return f"Coverage spans {len(tradable_symbols)} liquid names ({coverage_preview}). No lead thesis is populated yet."
+
+
+def build_regime_narrative(regime: dict, populated: bool) -> str:
+    if not populated:
+        return 'Regime context has not populated yet.'
+    parts: list[str] = []
+    vix_level = safe_float(regime.get('vix_level'))
+    if vix_level is not None and regime.get('vix_regime'):
+        parts.append(f"VIX is {vix_level:.2f} in a {title_case_token(regime.get('vix_regime'))} regime")
+    hmm_regime = regime.get('hmm_regime')
+    if hmm_regime:
+        parts.append(f"HMM reads {title_case_token(hmm_regime)}")
+    jump_text = describe_jump_regime(regime.get('jump_variation_pctile'))
+    if jump_text:
+        parts.append(jump_text)
+    if not parts:
+        return 'Only partial regime context is available right now.'
+    return '. '.join(parts) + '.'
 
 
 def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
@@ -286,12 +390,12 @@ def build_mode_note(mode_state: dict, checkpoint05: dict) -> str:
             return 'Checkpoint-05 is still accumulating; operator mode remains SHADOW.'
         if gate_state.get('blocking_incidents'):
             return 'Checkpoint-05 is ready, but incidents are still blocking a paper promotion.'
-        return 'Checkpoint-05 is review-ready; governed promotion to AUTONOMOUS_PAPER is now eligible.'
+        return 'Checkpoint-05 is review-ready; governed promotion to Autonomous Paper is now eligible.'
     if current_mode == 'AUTONOMOUS_PAPER':
-        return 'Governed AUTONOMOUS_PAPER mode is active; paper execution may run without approval.'
+        return 'Governed Autonomous Paper mode is active; paper execution may run without approval.'
     if current_mode == 'DECISION_SUPPORT':
-        return 'Governed DECISION_SUPPORT mode is active; live plans require human approval before submission.'
-    return 'LIVE_AUTONOMOUS remains out of phase-1 scope.'
+        return 'Governed Decision Support mode is active; live plans require human approval before submission.'
+    return 'Live Autonomous remains out of phase-1 scope.'
 
 
 def build_mode_history(events: list[dict]) -> dict:
@@ -396,13 +500,17 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
         'plan': {
             'pre_gate_status': pre_gate.get('status', 'NO_CANDIDATES'),
             'pre_gate_candidate_count': pre_gate.get('candidate_count', 0),
+            'pre_gate_symbols': summarize_symbols(pre_gate.get('items', [])),
             'trade_plan_status': trade_plan.get('status', 'NO_TRADES'),
             'trade_plan_count': len(trade_plan.get('items', [])),
+            'trade_plan_symbols': summarize_symbols(trade_plan.get('items', [])),
             'blocked_reasons': trade_plan.get('blocked_reasons', []),
             'suppression_cause': gate_attr.get('suppression_cause', 'UNKNOWN'),
+            'narrative': build_plan_narrative(pre_gate, trade_plan, gate_attr),
         },
         'research': {
             'tradable_symbol_count': len(market.get('tradable_symbols', [])),
+            'coverage_symbols': summarize_symbols([{'symbol': symbol} for symbol in market.get('tradable_symbols', [])]),
             'research_item_count': len(load(REBUILD_LATEST / 'research_dataset.json').get('items', [])),
             'thesis_item_count': len(theses),
             'long_bias_count': sum(1 for item in theses if item.get('side_bias') == 'LONG'),
@@ -420,10 +528,12 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
                 }
                 for item in theses[:5]
             ],
+            'narrative': build_research_narrative(market, theses),
         },
         'regime': {
             **regime,
             'populated': regime_populated,
+            'narrative': build_regime_narrative(regime, regime_populated),
         },
         'report_paths': {
             'local_only': True,
@@ -477,7 +587,7 @@ def main():
     }
     output['kpis']['positions_count'] = len(positions)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(output, indent=2, default=str))
+    OUTPUT.write_text(json.dumps(output, indent=2, default=str), encoding='utf-8')
     print(f'Wrote operator-feed.json -> {OUTPUT}')
 
 

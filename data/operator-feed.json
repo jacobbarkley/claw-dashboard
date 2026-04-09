@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-08T21:39:07.671612+00:00",
+  "generated_at": "2026-04-09T04:46:34.977248+00:00",
   "as_of_date": "2026-03-24",
   "source_context": {
     "mode": "override",
@@ -8,8 +8,11 @@
     "override_active": true,
     "override_keys": [
       "OPENCLAW_CHECKPOINT05_PATH",
+      "OPENCLAW_PERF_DIR",
+      "OPENCLAW_POLICY_PATH",
       "OPENCLAW_REBUILD_HISTORY",
-      "OPENCLAW_REBUILD_LATEST"
+      "OPENCLAW_REBUILD_LATEST",
+      "OPENCLAW_WORKSPACE"
     ],
     "note": "Feed generated from override artifact roots. Treat as preview/demo data until regenerated canonically."
   },
@@ -125,7 +128,7 @@
     "chain_ok": false,
     "approval_path": "DECISION_SUPPORT",
     "paper_compliant": false,
-    "audit_written_at": "2026-04-08T21:39:07.671839+00:00"
+    "audit_written_at": "2026-04-09T04:46:34.977248+00:00"
   },
   "kpis": {
     "total_trades": 52,
@@ -793,7 +796,7 @@
         "live_capital_enabled": true,
         "blocking_incidents": []
       },
-      "note": "Governed DECISION_SUPPORT mode is active; live plans require human approval before submission."
+      "note": "Governed Decision Support mode is active; live plans require human approval before submission."
     },
     "session": {
       "run_id": "2026-03-24-shadow-open-replay",
@@ -820,13 +823,33 @@
     "plan": {
       "pre_gate_status": "HAS_CANDIDATES",
       "pre_gate_candidate_count": 4,
+      "pre_gate_symbols": [
+        "NVDA",
+        "GME",
+        "KBH",
+        "AVGO"
+      ],
       "trade_plan_status": "READY",
       "trade_plan_count": 4,
+      "trade_plan_symbols": [
+        "NVDA",
+        "GME",
+        "KBH",
+        "AVGO"
+      ],
       "blocked_reasons": [],
-      "suppression_cause": "NOT_SUPPRESSED"
+      "suppression_cause": "NOT_SUPPRESSED",
+      "narrative": "4 trade(s) are ready to express today: NVDA, GME, KBH, AVGO."
     },
     "research": {
       "tradable_symbol_count": 12,
+      "coverage_symbols": [
+        "NVDA",
+        "GME",
+        "KBH",
+        "AVGO",
+        "META"
+      ],
       "research_item_count": 12,
       "thesis_item_count": 12,
       "long_bias_count": 4,
@@ -878,7 +901,8 @@
           "catalyst_label": "GENERAL",
           "thesis_summary": "RSI 35.62, Bollinger %B 0.098, -5.25% below SMA20 $637.53, -7.57% 10-day trend. Outperforming the market to the downside by -4.61% vs SPY. Detected institutional bearish put flow on March 23 (1-day remaining options on expiring monthly) signals directional institutional hedging or short positioning \u2014 directly contradicts analyst consensus. Metaverse shutdown (Horizon Worlds) represents $80B+ in prior unproductive capex being written off. Price $604.06 is 24.2% below 52-week high $796.25."
         }
-      ]
+      ],
+      "narrative": "Coverage spans 12 liquid names (NVDA, GME, KBH, AVGO, META +7 more). Current thesis mix is 4 long / 7 short. Lead idea is NVDA Short on a General setup."
     },
     "regime": {
       "vix_level": 27.04,
@@ -886,11 +910,12 @@
       "hmm_regime": null,
       "jump_variation_pctile": null,
       "notes": [],
-      "populated": true
+      "populated": true,
+      "narrative": "VIX is 27.04 in a High regime."
     },
     "report_paths": {
       "local_only": true,
-      "checkpoint05_status": "/home/jacobbarkley/.openclaw/tmp/operator-feed-decision-support-preview/reports/checkpoint05/checkpoint05_status_latest.json",
+      "checkpoint05_status": "\\\\wsl.localhost\\Ubuntu-24.04\\home\\jacobbarkley\\.openclaw\\tmp\\operator-feed-decision-support-preview\\reports\\checkpoint05\\checkpoint05_status_latest.json",
       "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/2026-04-08-checkpoint05-132354-shadow-report.json",
       "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/2026-04-08-checkpoint05-132354-pregate-report.json"
     },

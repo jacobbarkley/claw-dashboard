@@ -210,19 +210,24 @@ interface OperatorCheckpoint {
 interface OperatorPlan {
   pre_gate_status?: string
   pre_gate_candidate_count?: number
+  pre_gate_symbols?: string[]
   trade_plan_status?: string
   trade_plan_count?: number
+  trade_plan_symbols?: string[]
   blocked_reasons?: string[]
   suppression_cause?: string | null
+  narrative?: string
 }
 
 interface OperatorResearch {
   tradable_symbol_count?: number
+  coverage_symbols?: string[]
   research_item_count?: number
   thesis_item_count?: number
   long_bias_count?: number
   short_bias_count?: number
   neutral_count?: number
+  narrative?: string
   top_theses?: Array<{
     symbol?: string
     side_bias?: string
@@ -238,6 +243,7 @@ interface OperatorRegime {
   jump_variation_pctile?: number | null
   notes?: string[]
   populated?: boolean
+  narrative?: string
 }
 
 interface OperatorData {
@@ -465,6 +471,16 @@ function formatEventTimestamp(value: string | null | undefined): string {
   })
 }
 
+function summarizeSymbols(symbols: string[] | null | undefined, limit = 4): string {
+  const cleaned = (symbols ?? []).filter(Boolean)
+  if (!cleaned.length) return "None yet"
+  const visible = cleaned.slice(0, limit)
+  if (cleaned.length > limit) {
+    return `${visible.join(", ")} +${cleaned.length - limit} more`
+  }
+  return visible.join(", ")
+}
+
 // ─── Command Strip ─────────────────────────────────────────────────────────────
 function CommandStrip({
   tunables,
@@ -491,6 +507,8 @@ function CommandStrip({
   const modeColor = isLive ? "text-[var(--cb-red)]" : "text-[var(--cb-steel)]"
   const currentMode = operator?.mode?.current_mode ?? tunables.trading_mode
   const brokerEnvironment = operator?.mode?.broker_environment ?? tunables.trading_mode
+  const currentModeLabel = titleizeToken(currentMode)
+  const brokerEnvironmentLabel = titleizeToken(brokerEnvironment)
   const checkpoint = operator?.checkpoint05
   const plan = operator?.plan
 
@@ -523,6 +541,12 @@ function CommandStrip({
   const planText = plan
     ? `${titleizeToken(plan.trade_plan_status)} · ${plan.trade_plan_count ?? 0} tradable`
     : "Legacy compatibility view"
+  const checkpointDisplayText = checkpoint
+    ? `Promotion readiness · ${checkpoint.substantive_shadow_days ?? 0} post-gate · ${checkpoint.substantive_pregate_days ?? 0} pre-gate`
+    : checkpointText
+  const planDisplayText = plan
+    ? `${titleizeToken(plan.trade_plan_status)} · ${plan.trade_plan_count ?? 0} tradable · ${summarizeSymbols(plan.trade_plan_symbols?.length ? plan.trade_plan_symbols : plan.pre_gate_symbols, 3)}`
+    : planText
 
   return (
     <div
@@ -537,18 +561,18 @@ function CommandStrip({
         <span className="cb-live-dot" />
         <div className="min-w-0">
           <div className={`text-[11px] font-semibold tracking-wide ${modeColor}`}>
-            {currentMode}
+            {currentModeLabel}
           </div>
           <div className="text-[10px] truncate" style={{ color: "var(--cb-text-tertiary)" }}>
-            {brokerEnvironment} broker
+            {brokerEnvironmentLabel} broker
           </div>
         </div>
       </div>
 
       {/* Center: checkpoint */}
       <div className="hidden md:flex flex-col items-center text-[11px] text-center min-w-0">
-        <span style={{ color: "var(--cb-text-secondary)" }}>{checkpointText}</span>
-        <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>{planText}</span>
+        <span style={{ color: "var(--cb-text-secondary)" }}>{checkpointDisplayText}</span>
+        <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>{planDisplayText}</span>
       </div>
 
       {/* Right: pipeline + refresh */}
@@ -603,11 +627,17 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const allowedTransitions = mode?.allowed_transitions ?? []
   const latestModeEvent = modeHistory?.latest_event
   const topThesis = research?.top_theses?.[0]
+  const effectiveModeLabel = titleizeToken(mode?.effective_mode ?? mode?.current_mode)
+  const nextModeLabel = allowedTransitions[0]
+    ? titleizeToken(allowedTransitions[0])
+    : mode?.target_paper_mode
+      ? titleizeToken(mode.target_paper_mode)
+      : "No governed transition"
   const approvalModeReady = mode?.target_live_mode === "DECISION_SUPPORT"
   const approvalIdleNote =
     mode?.current_mode === "DECISION_SUPPORT"
       ? "Decision-support is active, but no approval queue is open right now."
-      : "Decision-support queue is idle until this sleeve is promoted into DECISION_SUPPORT."
+      : "Decision-support queue is idle until this sleeve is promoted into Decision Support."
   const regimeSummary = !regime?.populated
     ? "Regime unavailable"
     : [
@@ -631,7 +661,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           <div className="space-y-1.5">
             <div className="cb-label">Operator Layer</div>
             <div className="text-[1.2rem] cb-number" style={{ color: "var(--cb-text-primary)", fontWeight: 300, letterSpacing: "-0.02em" }}>
-              {mode?.effective_mode ?? mode?.current_mode ?? "UNKNOWN"} live now, {allowedTransitions[0] ?? mode?.target_paper_mode ?? "NONE"} available next
+              {effectiveModeLabel} live now, {nextModeLabel} available next
             </div>
             <p className="text-sm max-w-2xl" style={{ color: "var(--cb-text-secondary)" }}>
               {mode?.note ?? "Trading page is now reading the rebuild operator contract instead of a legacy-only dashboard snapshot."}
@@ -668,10 +698,10 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           <div className="cb-card-t3 px-4 py-3 space-y-1.5">
             <div className="cb-label">Mode & Session</div>
             <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
-              {mode?.effective_mode ?? mode?.current_mode ?? "UNKNOWN"}
+              {effectiveModeLabel}
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Broker: <span style={{ color: "var(--cb-text-primary)" }}>{mode?.broker_environment ?? tunables.trading_mode}</span>
+              Broker: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(mode?.broker_environment ?? tunables.trading_mode)}</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Phase: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(session?.phase)}</span>
@@ -698,9 +728,12 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
 
           <div className="cb-card-t3 px-4 py-3 space-y-1.5">
-            <div className="cb-label">Checkpoint 05</div>
+            <div className="cb-label">Promotion Readiness</div>
             <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(checkpoint?.checkpoint_status)}
+            </div>
+            <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+              Checkpoint 05 gate for autonomous paper
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Post-gate: <span style={{ color: "var(--cb-text-primary)" }}>{checkpoint?.substantive_shadow_days ?? 0}</span>
@@ -732,7 +765,15 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
               <span style={{ color: "var(--cb-text-tertiary)" }}> post-gate</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Why: <span style={{ color: "var(--cb-text-primary)" }}>{titleizeToken(plan?.suppression_cause)}</span>
+              Candidate set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(plan?.pre_gate_symbols)}</span>
+            </div>
+            {(plan?.trade_plan_symbols?.length ?? 0) > 0 && (
+              <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+                Ready set: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(plan?.trade_plan_symbols)}</span>
+              </div>
+            )}
+            <div className="text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+              {plan?.narrative ?? `Why: ${titleizeToken(plan?.suppression_cause)}`}
             </div>
             {approval ? (
               <>
@@ -771,15 +812,18 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
               {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Universe: <span style={{ color: "var(--cb-text-primary)" }}>{research?.tradable_symbol_count ?? 0}</span>
-              <span style={{ color: "var(--cb-text-tertiary)" }}> tradable symbols</span>
+              Coverage: <span style={{ color: "var(--cb-text-primary)" }}>{summarizeSymbols(research?.coverage_symbols, 5)}</span>
+              <span style={{ color: "var(--cb-text-tertiary)" }}> · {research?.tradable_symbol_count ?? 0} tradable names</span>
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               Regime: <span style={{ color: "var(--cb-text-primary)" }}>{regimeSummary}</span>
             </div>
+            <div className="text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+              {regime?.narrative ?? research?.narrative ?? "Research and regime context will populate as the rebuild feed matures."}
+            </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               {topThesis?.symbol
-                ? `Top thesis: ${topThesis.symbol} ${titleizeToken(topThesis.side_bias)}`
+                ? `Lead thesis: ${topThesis.symbol} ${titleizeToken(topThesis.side_bias)}`
                 : "Top thesis: not populated yet"}
             </div>
           </div>
@@ -799,7 +843,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
             {pipeline.chain_ok ? "Chain healthy" : "Chain has incidents"}
           </span>
           <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
-            Approval path {pipeline.approval_path ?? "UNKNOWN"}
+            Operator path {titleizeToken(pipeline.approval_path ?? "UNKNOWN")}
           </span>
           <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
             Allowed next {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(" / ") : "none"}
@@ -2667,7 +2711,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
 
-        {/* Qualified Setups */}
+        {/* Candidate Monitor */}
         <section>
           <div className="flex items-center justify-between mb-3">
             <span className="cb-label">
