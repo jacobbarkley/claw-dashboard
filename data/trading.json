@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-10T19:45:10.655225+00:00",
+  "generated_at": "2026-04-10T20:00:11.478901+00:00",
   "as_of_date": "2026-04-10",
   "account": {
-    "equity": 84839.48,
-    "cash": 71979.09,
-    "buying_power": 156818.57,
+    "equity": 84844.04,
+    "cash": 75750.33,
+    "buying_power": 160594.37,
     "base_value": 100000.0,
-    "total_pnl": -15160.52,
-    "total_pnl_pct": -15.1605,
-    "today_pnl": -130.76,
-    "today_pnl_pct": -0.1539,
-    "positions_value": 12860.39,
-    "equity_deployed": 12860.39,
+    "total_pnl": -15155.96,
+    "total_pnl_pct": -15.156,
+    "today_pnl": -126.2,
+    "today_pnl_pct": -0.1485,
+    "positions_value": 9093.71,
+    "equity_deployed": 9093.71,
     "options_deployed": 0,
-    "unrealized_pnl": 666.36,
-    "unrealized_pnl_pct": 5.46
+    "unrealized_pnl": 436.29,
+    "unrealized_pnl_pct": 5.04
   },
   "positions": [
     {
@@ -22,121 +22,110 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 245.8673,
-      "market_value": 491.7346,
-      "unrealized_pnl": 63.3146,
-      "unrealized_pct": 14.78,
-      "change_today_pct": 3.9
+      "current_price": 245.04,
+      "market_value": 490.08,
+      "unrealized_pnl": 61.66,
+      "unrealized_pct": 14.39,
+      "change_today_pct": 3.55
     },
     {
       "symbol": "AMZN",
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 238.435,
-      "market_value": 476.87,
-      "unrealized_pnl": 56.49,
-      "unrealized_pct": 13.44,
-      "change_today_pct": 2.05
-    },
-    {
-      "symbol": "BX",
-      "qty": 33.0,
-      "side": "long",
-      "entry_price": 107.17,
-      "current_price": 114.45,
-      "market_value": 3776.85,
-      "unrealized_pnl": 240.24,
-      "unrealized_pct": 6.79,
-      "change_today_pct": -2.1
+      "current_price": 238.38,
+      "market_value": 476.76,
+      "unrealized_pnl": 56.38,
+      "unrealized_pct": 13.41,
+      "change_today_pct": 2.02
     },
     {
       "symbol": "CAT",
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 792.78,
-      "market_value": 792.78,
-      "unrealized_pnl": 68.88,
-      "unrealized_pct": 9.52,
-      "change_today_pct": 0.73
+      "current_price": 790.66,
+      "market_value": 790.66,
+      "unrealized_pnl": 66.76,
+      "unrealized_pct": 9.22,
+      "change_today_pct": 0.46
     },
     {
       "symbol": "CVX",
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 188.215,
-      "market_value": 188.215,
-      "unrealized_pnl": -20.315,
-      "unrealized_pct": -9.74,
-      "change_today_pct": -1.13
+      "current_price": 188.54,
+      "market_value": 188.54,
+      "unrealized_pnl": -19.99,
+      "unrealized_pct": -9.59,
+      "change_today_pct": -0.96
     },
     {
       "symbol": "GS",
       "qty": 1.0,
       "side": "long",
       "entry_price": 863.0,
-      "current_price": 907.34,
-      "market_value": 907.34,
-      "unrealized_pnl": 44.34,
-      "unrealized_pct": 5.14,
-      "change_today_pct": 0.4
+      "current_price": 907.8,
+      "market_value": 907.8,
+      "unrealized_pnl": 44.8,
+      "unrealized_pct": 5.19,
+      "change_today_pct": 0.45
     },
     {
       "symbol": "KKR",
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 90.94,
-      "market_value": 3910.42,
-      "unrealized_pnl": 192.21,
-      "unrealized_pct": 5.17,
-      "change_today_pct": -2.04
+      "current_price": 91.22,
+      "market_value": 3922.46,
+      "unrealized_pnl": 204.25,
+      "unrealized_pct": 5.49,
+      "change_today_pct": -1.73
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 948.06,
-      "current_price": 936.3,
-      "market_value": 936.3,
-      "unrealized_pnl": -11.76,
-      "unrealized_pct": -1.24,
-      "change_today_pct": -1.98
+      "current_price": 939.47,
+      "market_value": 939.47,
+      "unrealized_pnl": -8.59,
+      "unrealized_pct": -0.91,
+      "change_today_pct": -1.65
     },
     {
       "symbol": "META",
       "qty": 1.0,
       "side": "long",
       "entry_price": 636.32,
-      "current_price": 628.145,
-      "market_value": 628.145,
-      "unrealized_pnl": -8.175,
-      "unrealized_pct": -1.29,
-      "change_today_pct": -0.04
+      "current_price": 629.86,
+      "market_value": 629.86,
+      "unrealized_pnl": -6.46,
+      "unrealized_pct": -1.01,
+      "change_today_pct": 0.23
     },
     {
       "symbol": "NVDA",
       "qty": 2.0,
       "side": "long",
       "entry_price": 185.08,
-      "current_price": 189.465,
-      "market_value": 378.93,
-      "unrealized_pnl": 8.77,
-      "unrealized_pct": 2.37,
-      "change_today_pct": 3.02
+      "current_price": 188.74,
+      "market_value": 377.48,
+      "unrealized_pnl": 7.32,
+      "unrealized_pct": 1.98,
+      "change_today_pct": 2.63
     },
     {
       "symbol": "TSM",
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 372.81,
-      "market_value": 372.81,
-      "unrealized_pnl": 32.37,
-      "unrealized_pct": 9.51,
-      "change_today_pct": 2.0
+      "current_price": 370.6,
+      "market_value": 370.6,
+      "unrealized_pnl": 30.16,
+      "unrealized_pct": 8.86,
+      "change_today_pct": 1.4
     }
   ],
   "pipeline_status": {
@@ -756,7 +745,7 @@
         "target": "",
         "modifier": "FULL",
         "note": "RSI 63, Rev +51%",
-        "in_position": true
+        "in_position": false
       },
       {
         "symbol": "INCY",
@@ -861,17 +850,7 @@
     "as_of": "2026-04-09",
     "source": "weekly"
   },
-  "exit_candidates": [
-    {
-      "symbol": "BX",
-      "decision": "CLOSE_BEFORE_BELL",
-      "urgency": "HIGH",
-      "reason": "Morning thesis-break signal carries forward at HIGH confidence. TD Cowen cut PT $164\u2192$141 (~2h before open), Piper Sandler cut $158\u2192$122 (1d prior); multiple consecutive sell-side downgrades with New Mexico DOJ/PNM deal litigation risk. No midday check exists for 2026-04-10 to confirm thesis recovery. SELL_BEFORE_CLOSE hint is uncontradicted. Position was not closed this morning (morning_execution_log submitted_count=0). Exit before close to avoid compounding downgrade risk into weekend gap.",
-      "overnight_risk": "Weekend gap risk elevated: ongoing sell-side coverage deterioration + unresolved regulatory litigation. No midday regime check to validate thesis recovery. REDUCE_ONLY CB state prohibits carrying deteriorating thesis positions overnight.",
-      "unrealized_pnl": 240.24,
-      "unrealized_pct": 6.79
-    }
-  ],
+  "exit_candidates": [],
   "tunables": {
     "trading_mode": "PAPER",
     "live_trading_enabled": false,
@@ -1621,6 +1600,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T15:45:09.534518-04:00"
+    "as_of": "2026-04-10T16:00:10.332132-04:00"
   }
 }
