@@ -727,38 +727,10 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
         {/* Horizontal scroll cards */}
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-4 pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none" style={{ scrollSnapStop: "always" }}>
 
-          {/* Card 1: Promotion Readiness */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
-            <div className="cb-label">Promotion Readiness</div>
-            <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
-              {titleizeToken(checkpoint?.checkpoint_status)} · {checkpoint?.substantive_shadow_days ?? 0} of {checkpoint?.total_shadow_days ?? 0} days
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {checkpoint?.substantive_shadow_days ?? 0} substantive post-gate · {checkpoint?.substantive_pregate_days ?? 0} pre-gate
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {checkpoint?.latest_suppression_cause === "GATE_BLOCKED"
-                ? "The risk gate blocked the latest comparable day. Normal during shadow evidence collection — no action needed."
-                : checkpoint?.latest_suppression_cause === "NOT_SUPPRESSED"
-                  ? "Latest day would have traded — real evidence accumulating."
-                  : checkpoint?.latest_suppression_cause
-                    ? `${humanizeSuppression(checkpoint.latest_suppression_cause)}. Evidence accumulating.`
-                    : "Promotion evidence accumulating across live shadow days."}
-            </div>
-            <Disclosure label="Details">
-              <div className="space-y-1 text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
-                <div>Transition gate: {mode?.gate_state?.checkpoint05_passed ? "Checkpoint ready" : "Accumulating"}</div>
-                <div>Allowed next: {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(", ") : "none yet"}</div>
-                {blockingNotes.length > 0 && <div className="text-[var(--cb-amber)]">{blockingNotes.length} blocking note{blockingNotes.length !== 1 ? "s" : ""}</div>}
-                {gateBlockers.length > 0 && <div className="text-[var(--cb-amber)]">{gateBlockers.length} gate blocker{gateBlockers.length !== 1 ? "s" : ""}</div>}
-              </div>
-            </Disclosure>
-          </div>
-
-          {/* Card 2: Today's Plan */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
+          {/* Card 1: Today's Plan */}
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
             <div className="cb-label">Today&apos;s Plan</div>
-            <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
+            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(plan?.trade_plan_status)} · {plan?.trade_plan_count ?? 0} ready
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
@@ -771,7 +743,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
                   : "No candidates in current snapshot"}
             </div>
             {readySymbols.length > 0 && (
-              <div className="text-xs" style={{ color: "var(--cb-text-primary)" }}>
+              <div className="text-xs truncate" style={{ color: "var(--cb-text-primary)" }}>
                 {summarizeSymbols(readySymbols, 5)}
               </div>
             )}
@@ -789,8 +761,36 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
             )}
           </div>
 
+          {/* Card 2: Promotion Readiness */}
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
+            <div className="cb-label">Promotion Readiness</div>
+            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
+              {titleizeToken(checkpoint?.checkpoint_status)} · {checkpoint?.substantive_shadow_days ?? 0}/{checkpoint?.total_shadow_days ?? 0} days
+            </div>
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              {checkpoint?.substantive_shadow_days ?? 0} post-gate · {checkpoint?.substantive_pregate_days ?? 0} pre-gate
+            </div>
+            <div className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>
+              {checkpoint?.latest_suppression_cause === "GATE_BLOCKED"
+                ? "Risk gate blocked the latest day. Normal during shadow collection."
+                : checkpoint?.latest_suppression_cause === "NOT_SUPPRESSED"
+                  ? "Latest day would have traded — evidence accumulating."
+                  : checkpoint?.latest_suppression_cause
+                    ? `${humanizeSuppression(checkpoint.latest_suppression_cause)}.`
+                    : "Evidence accumulating across shadow days."}
+            </div>
+            <Disclosure label="Details">
+              <div className="space-y-1 text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
+                <div>Gate: {mode?.gate_state?.checkpoint05_passed ? "Ready" : "Accumulating"}</div>
+                <div>Next: {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(", ") : "none yet"}</div>
+                {blockingNotes.length > 0 && <div className="text-[var(--cb-amber)]">{blockingNotes.length} blocking note{blockingNotes.length !== 1 ? "s" : ""}</div>}
+                {gateBlockers.length > 0 && <div className="text-[var(--cb-amber)]">{gateBlockers.length} blocker{gateBlockers.length !== 1 ? "s" : ""}</div>}
+              </div>
+            </Disclosure>
+          </div>
+
           {/* Card 3: Approval Queue */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
             <div className="cb-label">Approval Queue</div>
             {approvalPending ? (
               <>
@@ -825,7 +825,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
 
           {/* Card 4: Research & Regime */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink">
+          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
             <div className="cb-label">Research & Regime</div>
             <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
               {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses
