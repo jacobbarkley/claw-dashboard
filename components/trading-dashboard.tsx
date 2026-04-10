@@ -502,6 +502,57 @@ function humanizeLabel(label: string | null | undefined): string {
   return map[label] ?? titleizeToken(label)
 }
 
+function humanizeIncident(code: string): { label: string; detail: string; action: string } {
+  const map: Record<string, { label: string; detail: string; action: string }> = {
+    "legacy.direction_defaulted_long": {
+      label: "Direction defaulted",
+      detail: "Legacy pipeline didn't set trade direction explicitly. Rebuild defaults to LONG.",
+      action: "No action needed — safe default.",
+    },
+    "legacy.positions_snapshot_date_mismatch": {
+      label: "Stale position data",
+      detail: "Position snapshot is from a prior trading date, not today.",
+      action: "Resolves automatically on next pipeline run.",
+    },
+    "legacy.market_status_missing": {
+      label: "Market status missing",
+      detail: "Legacy market status artifact not found for today.",
+      action: "Check if the legacy pipeline ran today.",
+    },
+    "legacy.positions_snapshot_missing": {
+      label: "Positions missing",
+      detail: "Legacy positions snapshot not found.",
+      action: "Check Alpaca connection and legacy pipeline health.",
+    },
+    "legacy.market_calendar_date_mismatch": {
+      label: "Calendar date mismatch",
+      detail: "Market calendar date doesn't match the resolved trading date.",
+      action: "Usually resolves on next pipeline run.",
+    },
+    "legacy.market_closed_in_calendar": {
+      label: "Market closed",
+      detail: "Market calendar says the market is closed today.",
+      action: "Expected on holidays/weekends. No action needed.",
+    },
+  }
+  const entry = map[code]
+  if (entry) return entry
+  return {
+    label: titleizeToken(code.replace("legacy.", "")),
+    detail: code,
+    action: "Investigate — this is an unrecognized incident type.",
+  }
+}
+
+function humanizeBlockedReason(reason: string): string {
+  const map: Record<string, string> = {
+    "entry_mode_reduce_only": "Legacy gate set REDUCE_ONLY — only existing positions can trade. Usually caused by a pipeline stall, not market conditions.",
+    "entry_mode_halt": "Legacy gate set HALT — all trading suspended. Check for critical pipeline failures.",
+    "trade_plan_blocked_by_entry_mode": "Today's plan was blocked because the entry mode prevents new positions.",
+  }
+  return map[reason] ?? titleizeToken(reason)
+}
+
 function Disclosure({ label, children }: { label: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
@@ -850,52 +901,64 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
 
         </div>
 
-        {/* Compact status row */}
-        <div className="flex flex-wrap gap-2 text-[11px] mt-3">
-          <span
-            className="rounded-full border px-2.5 py-1"
-            style={{
-              borderColor: pipeline.chain_ok ? "rgba(34,197,94,0.2)" : "rgba(245,158,11,0.2)",
-              color: pipeline.chain_ok ? "var(--cb-green)" : "var(--cb-amber)",
-            }}
-          >
-            {pipeline.chain_ok ? "Chain healthy" : "Chain has incidents"}
-          </span>
-          {allowedTransitions.length > 0 && (
-            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
-              Next: {allowedTransitions.map(titleizeToken).join(" / ")}
-            </span>
-          )}
-          <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
-            {data.as_of_date}
-          </span>
-          {incidents.length > 0 && (
-            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(245,158,11,0.2)", color: "var(--cb-amber)" }}>
-              {incidents.length} incident{incidents.length !== 1 ? "s" : ""}
-            </span>
-          )}
-          {gateBlockers.length > 0 && (
-            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(245,158,11,0.2)", color: "var(--cb-amber)" }}>
-              {gateBlockers.length} blocker{gateBlockers.length !== 1 ? "s" : ""}
-            </span>
-          )}
-          <Disclosure label="Advanced">
-            <div className="flex flex-wrap gap-2 mt-1">
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-tertiary)" }}>
-                Contract v{data.contract_version ?? "legacy"}
-              </span>
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-tertiary)" }}>
-                Mode events {modeHistory?.event_count ?? 0}
-              </span>
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-tertiary)" }}>
-                Path {titleizeToken(pipeline.approval_path ?? "unknown")}
-              </span>
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-tertiary)" }}>
-                Phase {titleizeToken(session?.phase)}
-              </span>
+        {/* Incidents & status */}
+        {(incidents.length > 0 || gateBlockers.length > 0 || !pipeline.chain_ok) ? (
+          <Disclosure label={`${incidents.length + gateBlockers.length} issue${incidents.length + gateBlockers.length !== 1 ? "s" : ""} · ${pipeline.chain_ok ? "chain healthy" : "chain has incidents"} · ${data.as_of_date}`}>
+            <div className="mt-2 space-y-2">
+              {incidents.map((code: string) => {
+                const info = humanizeIncident(code)
+                return (
+                  <div key={code} className="text-xs space-y-0.5">
+                    <div className="font-medium" style={{ color: "var(--cb-amber)" }}>{info.label}</div>
+                    <div style={{ color: "var(--cb-text-secondary)" }}>{info.detail}</div>
+                    <div style={{ color: "var(--cb-text-tertiary)" }}>{info.action}</div>
+                  </div>
+                )
+              })}
+              {gateBlockers.map((code: string) => {
+                const info = humanizeIncident(code)
+                return (
+                  <div key={`blocker-${code}`} className="text-xs space-y-0.5">
+                    <div className="font-medium" style={{ color: "var(--cb-red)" }}>Promotion blocker: {info.label}</div>
+                    <div style={{ color: "var(--cb-text-secondary)" }}>{info.detail}</div>
+                    <div style={{ color: "var(--cb-text-tertiary)" }}>{info.action}</div>
+                  </div>
+                )
+              })}
+              {plan?.blocked_reasons?.map((reason: string) => (
+                <div key={`reason-${reason}`} className="text-xs space-y-0.5">
+                  <div className="font-medium" style={{ color: "var(--cb-amber)" }}>Plan blocked</div>
+                  <div style={{ color: "var(--cb-text-secondary)" }}>{humanizeBlockedReason(reason)}</div>
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
+                  Contract v{data.contract_version ?? "legacy"}
+                </span>
+                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
+                  Events {modeHistory?.event_count ?? 0}
+                </span>
+                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
+                  Phase {titleizeToken(session?.phase)}
+                </span>
+              </div>
             </div>
           </Disclosure>
-        </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2 text-[11px] mt-3">
+            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(34,197,94,0.2)", color: "var(--cb-green)" }}>
+              Chain healthy
+            </span>
+            {allowedTransitions.length > 0 && (
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+                Next: {allowedTransitions.map(titleizeToken).join(" / ")}
+              </span>
+            )}
+            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+              {data.as_of_date}
+            </span>
+          </div>
+        )}
       </div>
     </section>
   )
