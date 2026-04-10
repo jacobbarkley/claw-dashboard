@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T16:30:19.937299+00:00",
+  "generated_at": "2026-04-10T16:45:11.822502+00:00",
   "as_of_date": "2026-04-10",
   "account": {
     "equity": 84768.83,
@@ -1555,30 +1555,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "DELL",
-        "price": 174.37,
-        "sector": "Technology",
-        "expiry": "2026-05-01",
-        "dte": 21,
-        "short_strike": 175.0,
-        "long_strike": 170.0,
-        "spread_width": 5.0,
-        "net_credit": 1.7,
-        "credit_width_ratio": 0.34,
-        "annualized_yield_pct": 591.0,
-        "max_loss_per_contract": 330.0,
-        "iv_rank_proxy": 0.5,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "DTE",
@@ -1630,6 +1611,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T12:30:15.408752-04:00"
+    "as_of": "2026-04-10T12:45:10.245330-04:00"
   }
 }
