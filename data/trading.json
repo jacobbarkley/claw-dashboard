@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T14:30:11.292774+00:00",
+  "generated_at": "2026-04-10T14:45:11.389866+00:00",
   "as_of_date": "2026-04-09",
   "account": {
     "equity": 84967.48,
@@ -1519,19 +1519,19 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "BX",
-        "price": 113.05,
-        "sector": "Financial Services",
+        "symbol": "DELL",
+        "price": 174.37,
+        "sector": "Technology",
         "expiry": "2026-05-01",
         "dte": 21,
-        "short_strike": 120.0,
-        "long_strike": 115.0,
+        "short_strike": 175.0,
+        "long_strike": 170.0,
         "spread_width": 5.0,
-        "net_credit": 1.75,
-        "credit_width_ratio": 0.35,
-        "annualized_yield_pct": 608.3,
-        "max_loss_per_contract": 325.0,
-        "iv_rank_proxy": 0.125,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
+        "iv_rank_proxy": 0.5,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1592,6 +1592,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T10:30:10.117515-04:00"
+    "as_of": "2026-04-10T10:45:10.290034-04:00"
   }
 }
