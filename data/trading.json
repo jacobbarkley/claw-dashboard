@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T19:30:10.766432+00:00",
+  "generated_at": "2026-04-10T19:45:10.655225+00:00",
   "as_of_date": "2026-04-10",
   "account": {
     "equity": 84839.48,
@@ -861,7 +861,17 @@
     "as_of": "2026-04-09",
     "source": "weekly"
   },
-  "exit_candidates": [],
+  "exit_candidates": [
+    {
+      "symbol": "BX",
+      "decision": "CLOSE_BEFORE_BELL",
+      "urgency": "HIGH",
+      "reason": "Morning thesis-break signal carries forward at HIGH confidence. TD Cowen cut PT $164\u2192$141 (~2h before open), Piper Sandler cut $158\u2192$122 (1d prior); multiple consecutive sell-side downgrades with New Mexico DOJ/PNM deal litigation risk. No midday check exists for 2026-04-10 to confirm thesis recovery. SELL_BEFORE_CLOSE hint is uncontradicted. Position was not closed this morning (morning_execution_log submitted_count=0). Exit before close to avoid compounding downgrade risk into weekend gap.",
+      "overnight_risk": "Weekend gap risk elevated: ongoing sell-side coverage deterioration + unresolved regulatory litigation. No midday regime check to validate thesis recovery. REDUCE_ONLY CB state prohibits carrying deteriorating thesis positions overnight.",
+      "unrealized_pnl": 240.24,
+      "unrealized_pct": 6.79
+    }
+  ],
   "tunables": {
     "trading_mode": "PAPER",
     "live_trading_enabled": false,
@@ -1611,6 +1621,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T15:30:09.602072-04:00"
+    "as_of": "2026-04-10T15:45:09.534518-04:00"
   }
 }
