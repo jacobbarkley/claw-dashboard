@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T20:30:10.416091+00:00",
+  "generated_at": "2026-04-10T20:41:10.807204+00:00",
   "as_of_date": "2026-04-10",
   "account": {
     "equity": 84844.04,
@@ -142,12 +142,12 @@
     "audit_written_at": "2026-04-10T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 52,
-    "closed_trades": 18,
-    "open_trades": 34,
-    "win_rate_pct": 16.67,
+    "total_trades": 56,
+    "closed_trades": 19,
+    "open_trades": 37,
+    "win_rate_pct": 15.79,
     "profit_factor": 0.031,
-    "expectancy": -25.59,
+    "expectancy": -25.91,
     "net_pnl": -429.07,
     "max_drawdown_pct": 0.4388,
     "max_drawdown_usd": 438.81,
@@ -1608,6 +1608,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T16:30:09.368620-04:00"
+    "as_of": "2026-04-10T16:41:09.671737-04:00"
   }
 }
