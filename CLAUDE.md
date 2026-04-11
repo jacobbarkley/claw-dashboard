@@ -112,6 +112,10 @@ Key sections top to bottom:
 ## Queued UI work
 
 - Q-075: Vercel approval buttons (after Q-073 Telegram transport is proven)
+- New trading-page card: current promoted strategy + banked promoted
+  strategies, sourced from `operator.strategy_bank` in `data/operator-feed.json`
+  and showing active selection, promotion stage, key validation metrics, notes,
+  and other banked variants available for selection
 - Further visual refinement based on Jacob's mobile feedback
 - Eventually: mode-control display panel (display-only first, then
   governed request UI per doc 16)

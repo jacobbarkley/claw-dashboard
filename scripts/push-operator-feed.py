@@ -26,6 +26,8 @@ POLICY_PATH = Path(os.environ.get('OPENCLAW_POLICY_PATH', str(WORKSPACE / 'confi
 MODE_STATE_PATH = Path(os.environ.get('OPENCLAW_MODE_STATE_PATH', str(REBUILD_LATEST / 'operator_mode_state.json')))
 MODE_HISTORY_PATH = Path(os.environ.get('OPENCLAW_MODE_HISTORY_PATH', str(REBUILD_HISTORY / 'mode_transition_events.jsonl')))
 APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(REBUILD_LATEST / 'approval_queue.json')))
+STRATEGY_BANK_PATH = Path(os.environ.get('OPENCLAW_STRATEGY_BANK_PATH', str(REBUILD_LATEST / 'strategy_bank.json')))
+ACTIVE_STRATEGY_PATH = Path(os.environ.get('OPENCLAW_ACTIVE_STRATEGY_PATH', str(REBUILD_LATEST / 'active_strategy.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
 OVERRIDE_ENV_KEYS = [
@@ -38,6 +40,8 @@ OVERRIDE_ENV_KEYS = [
     'OPENCLAW_MODE_STATE_PATH',
     'OPENCLAW_MODE_HISTORY_PATH',
     'OPENCLAW_APPROVAL_QUEUE_PATH',
+    'OPENCLAW_STRATEGY_BANK_PATH',
+    'OPENCLAW_ACTIVE_STRATEGY_PATH',
 ]
 
 
@@ -175,6 +179,86 @@ def build_regime_narrative(regime: dict, populated: bool) -> str:
     if not parts:
         return 'Only partial regime context is available right now.'
     return '. '.join(parts) + '.'
+
+
+def build_strategy_bank_narrative(active_record: dict | None, strategy_records: list[dict]) -> str:
+    if not strategy_records:
+        return 'No promoted strategies are banked yet.'
+    if active_record is None:
+        return f"{len(strategy_records)} promoted strategy variant(s) are banked, but none is currently active."
+    return (
+        f"Active strategy is {active_record.get('display_name') or active_record.get('record_id')} "
+        f"in stage {title_case_token(active_record.get('promotion_stage'))}. "
+        f"{max(len(strategy_records) - 1, 0)} other banked variant(s) remain available for selection."
+    )
+
+
+def summarize_strategy_record(record: dict, active_record_id: str | None) -> dict:
+    profile = record.get('planning_profile', {}) if isinstance(record, dict) else {}
+    performance = record.get('performance_summary', {}) if isinstance(record, dict) else {}
+    evidence = record.get('evidence', {}) if isinstance(record, dict) else {}
+    return {
+        'record_id': record.get('record_id'),
+        'selected': record.get('record_id') == active_record_id,
+        'strategy_id': record.get('strategy_id'),
+        'variant_id': record.get('variant_id'),
+        'strategy_family': record.get('strategy_family'),
+        'display_name': record.get('display_name'),
+        'description': record.get('description'),
+        'promotion_stage': record.get('promotion_stage'),
+        'signal_source': record.get('signal_source'),
+        'allowed_sides': profile.get('allowed_sides', []),
+        'symbols': profile.get('symbols', []),
+        'max_positions': profile.get('max_positions'),
+        'risk_pct_per_trade': safe_float(profile.get('risk_pct_per_trade')),
+        'stop_loss_pct': safe_float(profile.get('stop_loss_pct')),
+        'target_pct': safe_float(profile.get('target_pct')),
+        'max_hold_days': profile.get('max_hold_days'),
+        'performance_summary': {
+            'verdict_reason': performance.get('verdict_reason'),
+            'total_trades': performance.get('total_trades'),
+            'evaluated_trading_days': performance.get('evaluated_trading_days'),
+            'total_return_pct': safe_float(performance.get('total_return_pct')),
+            'benchmark_return_pct': safe_float(performance.get('benchmark_return_pct')),
+            'excess_return_pct': safe_float(performance.get('excess_return_pct')),
+            'deployment_matched_benchmark_return_pct': safe_float(
+                performance.get('deployment_matched_benchmark_return_pct')
+            ),
+            'deployment_matched_excess_return_pct': safe_float(
+                performance.get('deployment_matched_excess_return_pct')
+            ),
+            'sharpe_ratio': safe_float(performance.get('sharpe_ratio')),
+            'sortino_ratio': safe_float(performance.get('sortino_ratio')),
+            'calmar_ratio': safe_float(performance.get('calmar_ratio')),
+            'max_drawdown_pct': safe_float(performance.get('max_drawdown_pct')),
+            'profit_factor': safe_float(performance.get('profit_factor')),
+            'expectancy_per_trade_usd': safe_float(performance.get('expectancy_per_trade_usd')),
+            'win_rate_pct': safe_float(performance.get('win_rate_pct')),
+            'profitable_fold_pct': safe_float(performance.get('profitable_fold_pct')),
+        },
+        'notes': record.get('notes', []),
+        'evidence': {
+            'campaign_id': evidence.get('campaign_id'),
+            'campaign_run_id': evidence.get('campaign_run_id'),
+            'experiment_id': evidence.get('experiment_id'),
+            'validation_run_id': evidence.get('validation_run_id'),
+        },
+    }
+
+
+def build_strategy_bank(active_strategy: dict, strategy_bank: dict) -> dict:
+    active_record = active_strategy.get('record') if isinstance(active_strategy, dict) else None
+    active_record_id = strategy_bank.get('active_record_id') if isinstance(strategy_bank, dict) else None
+    strategy_records = strategy_bank.get('strategies', []) if isinstance(strategy_bank, dict) else []
+    records = [summarize_strategy_record(record, active_record_id) for record in strategy_records]
+    active_summary = summarize_strategy_record(active_record, active_record_id) if active_record else None
+    return {
+        'active_record_id': active_record_id,
+        'strategy_count': len(records),
+        'active': active_summary,
+        'banked_strategies': records,
+        'narrative': build_strategy_bank_narrative(active_summary, records),
+    }
 
 
 def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
@@ -432,7 +516,7 @@ def build_mode_history(events: list[dict]) -> dict:
     }
 
 
-def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict, trade_plan: dict, gate_attr: dict, daily_eval: dict, checkpoint05: dict, mode_state: dict, mode_history: dict, approval_queue: dict) -> dict:
+def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict, trade_plan: dict, gate_attr: dict, daily_eval: dict, checkpoint05: dict, mode_state: dict, mode_history: dict, approval_queue: dict, active_strategy: dict, strategy_bank: dict) -> dict:
     theses = thesis_set.get('items', [])
     regime = market.get('regime', {})
     vix_level = safe_float(regime.get('vix_level'))
@@ -547,6 +631,7 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
             'pregate_report': checkpoint05.get('pregate_report_path'),
         },
         'approval': approval_summary,
+        'strategy_bank': build_strategy_bank(active_strategy, strategy_bank),
         'mode_history': mode_history,
         'incident_flags': daily_eval.get('incident_flags', []),
         'notes': daily_eval.get('notes', []),
@@ -565,6 +650,8 @@ def main():
     mode_state = load(MODE_STATE_PATH)
     mode_history = build_mode_history(load_jsonl_tail(MODE_HISTORY_PATH))
     approval_queue = load(APPROVAL_QUEUE_PATH)
+    strategy_bank = load(STRATEGY_BANK_PATH)
+    active_strategy = load(ACTIVE_STRATEGY_PATH)
     legacy_positions = load(WORKSPACE / 'state/positions_snapshot.json')
     legacy_kpis = load(WORKSPACE / 'state/pipeline_kpis_v1.json')
     policy = load(POLICY_PATH)
@@ -590,7 +677,7 @@ def main():
         'options': None,
         'hedges': None,
         'bps': None,
-        'operator': build_operator(session, market, thesis_set, pre_gate, trade_plan, gate_attr, daily_eval, checkpoint05, mode_state, mode_history, approval_queue),
+        'operator': build_operator(session, market, thesis_set, pre_gate, trade_plan, gate_attr, daily_eval, checkpoint05, mode_state, mode_history, approval_queue, active_strategy, strategy_bank),
     }
     output['kpis']['positions_count'] = len(positions)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
