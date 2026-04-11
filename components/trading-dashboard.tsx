@@ -246,6 +246,59 @@ interface OperatorRegime {
   narrative?: string
 }
 
+interface StrategyPerformanceSummary {
+  verdict_reason?: string | null
+  total_trades?: number | null
+  evaluated_trading_days?: number | null
+  total_return_pct?: number | null
+  benchmark_return_pct?: number | null
+  excess_return_pct?: number | null
+  deployment_matched_benchmark_return_pct?: number | null
+  deployment_matched_excess_return_pct?: number | null
+  sharpe_ratio?: number | null
+  sortino_ratio?: number | null
+  calmar_ratio?: number | null
+  max_drawdown_pct?: number | null
+  profit_factor?: number | null
+  expectancy_per_trade_usd?: number | null
+  win_rate_pct?: number | null
+  profitable_fold_pct?: number | null
+}
+
+interface StrategyBankRecord {
+  record_id: string
+  selected?: boolean
+  strategy_id?: string
+  variant_id?: string
+  strategy_family?: string
+  display_name?: string
+  description?: string | null
+  promotion_stage?: string | null
+  signal_source?: string | null
+  allowed_sides?: string[]
+  symbols?: string[]
+  max_positions?: number | null
+  risk_pct_per_trade?: number | null
+  stop_loss_pct?: number | null
+  target_pct?: number | null
+  max_hold_days?: number | null
+  performance_summary?: StrategyPerformanceSummary | null
+  notes?: string[]
+  evidence?: {
+    campaign_id?: string | null
+    campaign_run_id?: string | null
+    experiment_id?: string | null
+    validation_run_id?: string | null
+  } | null
+}
+
+interface StrategyBankSection {
+  active_record_id?: string | null
+  strategy_count?: number | null
+  active?: StrategyBankRecord | null
+  banked_strategies?: StrategyBankRecord[]
+}
+
 interface OperatorData {
   mode?: OperatorMode
   mode_history?: OperatorModeHistory | null
@@ -268,6 +321,7 @@ interface OperatorData {
     blocked_reasons?: string[]
     status_note?: string | null
   } | null
+  strategy_bank?: StrategyBankSection | null
   incident_flags?: string[]
   notes?: string[]
 }
@@ -960,6 +1014,296 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
         )}
       </div>
+    </section>
+  )
+}
+
+// ─── Promoted Strategy ────────────────────────────────────────────────────────
+function formatPctSigned(value: number | null | undefined, digits = 2): string {
+  if (value == null || !Number.isFinite(value)) return "—"
+  const sign = value > 0 ? "+" : ""
+  return `${sign}${value.toFixed(digits)}%`
+}
+
+function formatPctPlain(value: number | null | undefined, digits = 2): string {
+  if (value == null || !Number.isFinite(value)) return "—"
+  return `${value.toFixed(digits)}%`
+}
+
+function formatRatio(value: number | null | undefined, digits = 2): string {
+  if (value == null || !Number.isFinite(value)) return "—"
+  return value.toFixed(digits)
+}
+
+function promotionStageColor(stage: string | null | undefined): { color: string; border: string; bg: string } {
+  const s = (stage ?? "").toUpperCase()
+  if (s.includes("ACTIVE") || s.includes("LIVE") || s === "PROMOTED") {
+    return { color: "var(--cb-green)", border: "rgba(34,197,94,0.28)", bg: "rgba(34,197,94,0.08)" }
+  }
+  if (s.includes("FROZEN") || s.includes("CONFIRMATION") || s.includes("PENDING")) {
+    return { color: "var(--cb-amber)", border: "rgba(245,158,11,0.28)", bg: "rgba(245,158,11,0.08)" }
+  }
+  return { color: "var(--cb-text-secondary)", border: "rgba(139,92,246,0.22)", bg: "rgba(139,92,246,0.06)" }
+}
+
+function StrategyMetric({ label, value, tone }: { label: string; value: string; tone?: "pos" | "neg" | "neutral" }) {
+  const color =
+    tone === "pos" ? "var(--cb-green)" :
+    tone === "neg" ? "var(--cb-red)" :
+    "var(--cb-text-primary)"
+  return (
+    <div className="flex-shrink-0 min-w-[88px]">
+      <div className="cb-label">{label}</div>
+      <div className="text-sm font-medium tabular-nums" style={{ color }}>{value}</div>
+    </div>
+  )
+}
+
+function strategyRuleSummary(record: StrategyBankRecord): string {
+  const parts: string[] = []
+  if (record.stop_loss_pct != null) parts.push(`Stop ${record.stop_loss_pct}%`)
+  if (record.target_pct != null) parts.push(`Target ${record.target_pct}%`)
+  if (record.max_hold_days != null) parts.push(`${record.max_hold_days}d hold`)
+  if (record.max_positions != null) parts.push(`${record.max_positions} max pos`)
+  if (record.risk_pct_per_trade != null) parts.push(`${record.risk_pct_per_trade}%/trade`)
+  return parts.join(" · ") || "—"
+}
+
+function PromotedStrategy({ bank }: { bank: StrategyBankSection | null | undefined }) {
+  if (!bank || !bank.active) return null
+  const active = bank.active
+  const banked = (bank.banked_strategies ?? []).filter(r => r.record_id !== active.record_id)
+  const perf = active.performance_summary ?? {}
+  const stageColors = promotionStageColor(active.promotion_stage)
+  const dmExcess = perf.deployment_matched_excess_return_pct
+  const absExcess = perf.excess_return_pct
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-3">
+        <span className="cb-label">
+          Promoted Strategy{bank.strategy_count ? ` · ${bank.strategy_count} banked` : ""}
+        </span>
+        <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+          Active selection governs live runtime
+        </span>
+      </div>
+
+      {/* Active strategy hero */}
+      <div
+        className="rounded-[18px] border px-5 py-4 space-y-4"
+        style={{
+          borderColor: "rgba(90, 70, 160, 0.22)",
+          background:
+            "radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%), linear-gradient(180deg, rgba(6, 4, 16, 0.96), rgba(5, 3, 14, 0.94))",
+          boxShadow: "0 10px 32px rgba(3, 1, 12, 0.32)",
+        }}
+      >
+        {/* Headline row */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="space-y-1 min-w-0 flex-1">
+            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
+              {active.display_name ?? active.record_id}
+            </div>
+            {active.description && (
+              <div className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>
+                {active.description}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5 flex-shrink-0">
+            {active.promotion_stage && (
+              <span
+                className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
+                style={{ borderColor: stageColors.border, color: stageColors.color, background: stageColors.bg }}
+              >
+                {titleizeToken(active.promotion_stage)}
+              </span>
+            )}
+            {active.signal_source && (
+              <span
+                className="rounded-full border px-2.5 py-1 text-[11px]"
+                style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}
+              >
+                Signal: {titleizeToken(active.signal_source)}
+              </span>
+            )}
+            {active.allowed_sides && active.allowed_sides.length > 0 && (
+              <span
+                className="rounded-full border px-2.5 py-1 text-[11px]"
+                style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}
+              >
+                {active.allowed_sides.join("/")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Metrics strip */}
+        <div className="flex gap-5 overflow-x-auto pb-1 -mx-1 px-1">
+          <StrategyMetric
+            label="Return"
+            value={formatPctPlain(perf.total_return_pct)}
+            tone={perf.total_return_pct != null && perf.total_return_pct >= 0 ? "pos" : "neg"}
+          />
+          <StrategyMetric
+            label="Excess SPY"
+            value={formatPctSigned(absExcess)}
+            tone={absExcess != null && absExcess >= 0 ? "pos" : "neg"}
+          />
+          <StrategyMetric
+            label="DM Excess"
+            value={formatPctSigned(dmExcess)}
+            tone={dmExcess != null && dmExcess >= 0 ? "pos" : "neg"}
+          />
+          <StrategyMetric label="Sharpe" value={formatRatio(perf.sharpe_ratio)} />
+          <StrategyMetric
+            label="Max DD"
+            value={formatPctPlain(perf.max_drawdown_pct)}
+            tone="neg"
+          />
+          <StrategyMetric label="Trades" value={perf.total_trades != null ? String(perf.total_trades) : "—"} />
+          <StrategyMetric label="Win Rate" value={formatPctPlain(perf.win_rate_pct, 1)} />
+          <StrategyMetric label="Profit Factor" value={formatRatio(perf.profit_factor)} />
+        </div>
+
+        {/* Symbols + rules */}
+        <div className="space-y-1.5">
+          {active.symbols && active.symbols.length > 0 && (
+            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              <span style={{ color: "var(--cb-text-tertiary)" }}>Universe · </span>
+              <span style={{ color: "var(--cb-text-primary)" }}>{active.symbols.join(", ")}</span>
+            </div>
+          )}
+          <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+            <span style={{ color: "var(--cb-text-tertiary)" }}>Rules · </span>
+            <span style={{ color: "var(--cb-text-primary)" }}>{strategyRuleSummary(active)}</span>
+          </div>
+        </div>
+
+        {/* Research notes */}
+        {active.notes && active.notes.length > 0 && (
+          <Disclosure label={`Research notes (${active.notes.length})`}>
+            <ul className="space-y-1 text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+              {active.notes.map((note, i) => (
+                <li key={i} className="leading-snug">• {note}</li>
+              ))}
+            </ul>
+          </Disclosure>
+        )}
+
+        {/* Evidence */}
+        {active.evidence?.campaign_id && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
+              Campaign: {active.evidence.campaign_id}
+            </span>
+            {active.evidence.validation_run_id && (
+              <span className="rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
+                Run: {active.evidence.validation_run_id}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Bank strip */}
+      {banked.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="cb-label">Bank · {banked.length} other approved</span>
+            <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+              Switch via bin/strategy_bank.py select
+            </span>
+          </div>
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none lg:grid-cols-3">
+            {banked.map((record) => {
+              const rPerf = record.performance_summary ?? {}
+              const rStage = promotionStageColor(record.promotion_stage)
+              const rExcess = rPerf.deployment_matched_excess_return_pct ?? rPerf.excess_return_pct
+              return (
+                <div
+                  key={record.record_id}
+                  className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:flex-shrink overflow-hidden"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
+                      {record.display_name ?? record.record_id}
+                    </div>
+                    {record.promotion_stage && (
+                      <span
+                        className="rounded-full border px-2 py-0.5 text-[10px] flex-shrink-0"
+                        style={{ borderColor: rStage.border, color: rStage.color, background: rStage.bg }}
+                      >
+                        {titleizeToken(record.promotion_stage)}
+                      </span>
+                    )}
+                  </div>
+                  {record.description && (
+                    <div className="text-[11px] leading-snug" style={{ color: "var(--cb-text-tertiary)" }}>
+                      {record.description}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
+                    <span>
+                      <span style={{ color: "var(--cb-text-tertiary)" }}>Ret </span>
+                      <span
+                        className="tabular-nums"
+                        style={{
+                          color: rPerf.total_return_pct != null && rPerf.total_return_pct >= 0
+                            ? "var(--cb-green)"
+                            : "var(--cb-red)",
+                        }}
+                      >
+                        {formatPctPlain(rPerf.total_return_pct)}
+                      </span>
+                    </span>
+                    <span>
+                      <span style={{ color: "var(--cb-text-tertiary)" }}>Excess </span>
+                      <span
+                        className="tabular-nums"
+                        style={{
+                          color: rExcess != null && rExcess >= 0
+                            ? "var(--cb-green)"
+                            : "var(--cb-red)",
+                        }}
+                      >
+                        {formatPctSigned(rExcess)}
+                      </span>
+                    </span>
+                    <span>
+                      <span style={{ color: "var(--cb-text-tertiary)" }}>Sharpe </span>
+                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
+                        {formatRatio(rPerf.sharpe_ratio)}
+                      </span>
+                    </span>
+                    <span>
+                      <span style={{ color: "var(--cb-text-tertiary)" }}>DD </span>
+                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
+                        {formatPctPlain(rPerf.max_drawdown_pct)}
+                      </span>
+                    </span>
+                    <span>
+                      <span style={{ color: "var(--cb-text-tertiary)" }}>Trades </span>
+                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
+                        {rPerf.total_trades ?? "—"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                    {strategyRuleSummary(record)}
+                  </div>
+                  {record.symbols && record.symbols.length > 0 && (
+                    <div className="text-[10px] truncate" style={{ color: "var(--cb-text-tertiary)" }}>
+                      {summarizeSymbols(record.symbols, 6)}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -2758,6 +3102,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         )}
 
         <OperatorOverview data={data} tunables={data.tunables} />
+
+        {/* Promoted Strategy */}
+        <PromotedStrategy bank={data.operator?.strategy_bank} />
 
         {/* Capital Hero */}
         <section>
