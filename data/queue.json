@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T14:12:14.940117-04:00",
+  "generated_at": "2026-04-11T15:57:00.010000-04:00",
   "queued": [
     {
       "id": "Q-068",
@@ -200,6 +200,63 @@
         "crypto",
         "prediction-markets",
         "planning"
+      ]
+    },
+    {
+      "id": "Q-080",
+      "category": "strategy-bank",
+      "title": "Auto-register PASS variants + auto-push operator feed on bank change",
+      "what": "Close the two manual gaps between 'bench produces a PASS variant' and 'dashboard shows it'. (1) Add `--auto-register-pass` flag to `bin/run_validation_campaign.py` so that when a campaign finishes with any PASS variant, the runner automatically calls `bin/strategy_bank.py register-from-campaign` for each passing variant. Must NOT auto-activate \u2014 selection stays governed through Q-078's intent contract when that lands. Current default stays manual for safety during research phase; flag is opt-in per campaign. (2) File-change trigger on `state/rebuild_latest/strategy_bank.json` (and `active_strategy.json`) that runs `bash claw-dashboard/scripts/push-operator-feed.sh`. Either a lightweight inotify/watchman daemon, a post-write hook inside `bin/strategy_bank.py`, or a cron every N minutes that checks file mtime \u2014 Codex's call. Goal: dashboard reflects new bank state within minutes of promotion without manual push.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None \u2014 current strategy bank + push-operator-feed pipeline already works end-to-end manually. Q-078 is not a prereq because auto-activation is explicitly out of scope here.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "strategy-bank",
+        "automation",
+        "operator-feed",
+        "dashboard",
+        "bench-runtime",
+        "papercut"
+      ]
+    },
+    {
+      "id": "Q-081",
+      "category": "dashboard",
+      "title": "Queue dashboard hygiene + auto-close mechanism for completed items",
+      "what": "Current queue.json has 44 completed items alongside 33 queued \u2014 dashboard queue panel is getting cluttered with historical noise and the line between 'queued' and 'done' drifts out of sync with reality. Two deliverables: (1) One-time audit of `data/queue.json` \u2014 archive completed items older than N days to a separate `queue-archive.json` (or a nested `closed_recent` / `closed_archive` split), keep only recent closures visible on the dashboard, and reconcile any queued items whose work is actually done (Q-017 currently has DONE in its title but still sits in queued). (2) Build a reliable auto-close signal that doesn't depend on Claude or Jacob remembering. Options for Codex to evaluate: ticket-file frontmatter (`status: done` in TICKET-*.md picked up by `parse-tickets.py`), git commit trailers (`Closes: Q-075`), a lightweight `openclaw queue close Q-NNN` CLI that writes to queue.json + stages a dashboard push, or a nightly reconciler that reads ticket status from OpenClaw-s-Brain tickets folder. The current flow (manually editing queue.md + queue.json + running push-dashboard-data.sh) is not working \u2014 items accumulate.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None \u2014 touches queue.json + parse-tickets.py + dashboard queue panel only. Should coordinate with Codex since they may add auto-close writes during campaign completion or intent application.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "dashboard",
+        "queue",
+        "hygiene",
+        "automation",
+        "auto-close",
+        "tickets"
+      ]
+    },
+    {
+      "id": "Q-082",
+      "category": "docs",
+      "title": "Rebuild Obsidian vault docs against the new rebuild architecture",
+      "what": "Obsidian vault (`C:\\Users\\jacob\\Desktop\\ClawBoy\\ClawBoy-Vault-REMOTE`) holds pre-audit technical documentation from the legacy 16-agent pipeline era \u2014 agent specs, JSON contract notes, cron manifests, operational runbooks. All of it is now stale: the rebuild is a typed single-core architecture (`src/openclaw_core/`), the operator-feed contract exists (doc 13), the mode-control contract exists (doc 16), the strategy bank contract is live, and Q-072 closed. The docs in Obsidian describe a system that no longer exists as described. Ship: (1) Audit the vault \u2014 identify which notes are stale, which are still accurate, which should be deleted, which should be rewritten. (2) Rebuild the architecture/pipeline/strategy sections of the vault from the current rebuild docs (`docs/architecture-rebuild/08`, `12`, `13`, `16`, `17`, `19`) as source of truth, with Obsidian being the human-readable narrative layer. (3) Establish a single reliable sync pattern going forward so the vault does not drift again \u2014 probably a staging directory in this repo that pushes to the Windows vault path, similar to how other artifacts flow. Must not modify the Windows vault directly from WSL per existing rule; use staging. This also reopens Q-054 (Obsidian vault integration + daily email reports), which was waiting on Q-053 architecture doc to provide structure \u2014 Q-053 is no longer the right anchor because the rebuild is the new source of truth.",
+      "blocker": "Q-072 closed provides the new strategic frame. Rebuild architecture docs (08/12/13/16/17/19) already exist on disk. Not blocked \u2014 can start whenever Jacob has bandwidth.",
+      "blocker_type": null,
+      "prereq": "Access to both rebuild docs on WSL side and Windows vault path. Staging directory convention decided before any write.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "docs",
+        "obsidian",
+        "vault",
+        "rebuild",
+        "architecture",
+        "narrative-layer"
       ]
     },
     {
