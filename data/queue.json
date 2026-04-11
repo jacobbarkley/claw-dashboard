@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-09T16:57:03.676984-04:00",
+  "generated_at": "2026-04-11T14:12:14.940117-04:00",
   "queued": [
     {
       "id": "Q-068",
@@ -157,6 +157,49 @@
         "backtesting",
         "automation",
         "openclaw"
+      ]
+    },
+    {
+      "id": "Q-078",
+      "category": "operator",
+      "title": "Governed strategy-select + mode toggle UI \u2014 operator actions on trading page",
+      "what": "Add operator-action UI to the trading page: (1) a strategy-select control on the Promoted Strategy card letting the operator pick any banked record as the active strategy, and (2) a mode toggle letting the operator request SHADOW / AUTONOMOUS_PAPER / DECISION_SUPPORT transitions. Both must route through a governed request contract, NOT a direct file write. Flow: UI posts an intent -> control plane validates -> writes to approval_queue.json + events log (same control plane as trade approvals per doc 16) -> backend applies (calls bin/strategy_bank.py select --actor <user> or mode-transition handler) -> feed reflects new active record / mode on next push. Depends on Codex landing the governed request path for strategy selection and mode transitions; until then the card stays display-only. Sequenced alongside Q-075 (Vercel approval buttons) because both ride the same request/approval pipe.",
+      "blocker": "Codex must define the governed request contract for strategy-select + mode-transition intents (doc 16 extension). Q-073 Telegram transport proven reduces risk on the shared pipe.",
+      "blocker_type": "dependency",
+      "prereq": "Promoted Strategy display card shipped (this session). Doc 16 request contract extended to cover strategy_bank.select and mode_transition intents. Q-073 control plane proven. push-operator-feed.py surfaces request-status fields so the UI can show pending/applied/failed states.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "operator",
+        "strategy-bank",
+        "mode-control",
+        "governed-request",
+        "ui",
+        "doc-16",
+        "this-week"
+      ]
+    },
+    {
+      "id": "Q-079",
+      "category": "architecture",
+      "title": "Sleeve-segregated operator feed + dashboard \u2014 stocks / options / crypto / predictions",
+      "what": "Design and stage the transition from a single implicit-stocks strategy bank to per-sleeve strategy banks. Sleeves are asset-class containers: stocks, options, crypto, prediction markets. Each sleeve owns its own strategy bank, validation runtime entry points, market-data provider wiring, risk envelope, and promotion criteria. Sub-sleeves live inside each sleeve (e.g. options -> covered-calls / protective-puts / directional-spreads; stocks -> momentum / mean-reversion / defensive). The bench runtime should accept a sleeve descriptor so the same registry/runner can host every asset class without forking. Operator feed v2 shape (proposed): operator.sleeves = { stocks: {strategy_bank, active_record_id, positions_slice, approval_slice}, options: {...}, crypto: {...}, predictions: {...} }. Dashboard becomes a sleeve switcher (segmented control at top of trading page) with each sleeve rendering its own Promoted Strategy card, positions list, approval queue, and bank. Deliverables: (1) Codex-owned design doc proposing the sleeve-shaped contract v2 and the bench-runtime generalization (what stays shared, what forks per sleeve), (2) migration plan keeping contract v1 consumers alive until cutover, (3) Claude-owned UI mockup/plan for the sleeve switcher and per-sleeve page composition, (4) identification of first non-stocks sleeve to stand up end-to-end (likely options given Q-044 Phase 1 path already exists).",
+      "blocker": "Needs design alignment before build. Do not start implementation until sleeve contract v2 is written and reviewed.",
+      "blocker_type": "design",
+      "prereq": "Q-078 governed request contract in flight (so sleeve switcher + per-sleeve actions ride the same governed pipe). Q-076B momentum bank stable as the reference sleeve. Q-044 options execution path sufficient to model a second sleeve.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "architecture",
+        "sleeves",
+        "strategy-bank",
+        "operator-feed",
+        "contract-v2",
+        "dashboard",
+        "options",
+        "crypto",
+        "prediction-markets",
+        "planning"
       ]
     },
     {
