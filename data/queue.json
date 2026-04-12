@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-11T15:57:00.010000-04:00",
+  "generated_at": "2026-04-11T21:38:48.744859-04:00",
   "queued": [
     {
       "id": "Q-068",
@@ -671,219 +671,219 @@
       "category": "trading",
       "title": "CB auto-downstep in nightly validator",
       "what": "HALT\u2192REDUCE_ONLY after 1 clean validation. REDUCE_ONLY\u2192NORMAL after 3 consecutive clean nights. Counter resets on failure. All transitions reported to Discord #pipeline. Runs at 23:00 ET nightly only.",
-      "completed_date": "2026-04-03",
       "tags": [
         "trading",
         "risk",
         "infrastructure"
-      ]
+      ],
+      "closed_at": "2026-04-03"
     },
     {
       "id": "ITEMS-1-18",
       "category": "trading",
       "title": "Good Friday incident remediation (18 items)",
       "what": "Full sweep: BPS calendar gates, market calendar on all independent crons, Discord migration complete (all delivery configs), dependency-scoped skip propagation with typed reasons, validator timeout thresholds, heartbeat holiday awareness, morning brief cold-lane fix, watchdog removal. 0 items remaining.",
-      "completed_date": "2026-04-03",
       "tags": [
         "trading",
         "infrastructure",
         "reliability"
-      ]
+      ],
+      "closed_at": "2026-04-03"
     },
     {
       "id": "Q-056",
       "category": "infrastructure",
       "title": "Discord server rebuild \u2014 primary ops notification hub",
       "what": "6 new channels (#trades, #pipeline, #signals, #daily-recap, #build-log, #incidents). All pipeline agents wired to Discord. Telegram kept for morning brief + chat + critical dual-output. Old channels preserved as safety net.",
-      "completed_date": "2026-04-02",
       "tags": [
         "infrastructure",
         "discord",
         "notifications"
-      ]
+      ],
+      "closed_at": "2026-04-02"
     },
     {
       "id": "Q-025",
       "category": "trading",
       "title": "Backtesting framework infrastructure",
       "what": "Walk-forward backtesting engine: prepare.py (data download + walk-forward windows), backtest.py (strategy execution with stops/targets/position limits), strategy module interface. 502 days, 12 symbols, 17 folds. Momentum baseline: 60.5% WR, 1.85 PF. Ready for strategy-specific backtests.",
-      "completed_date": "2026-03-31",
       "tags": [
         "trading",
         "backtesting",
         "infrastructure"
-      ]
+      ],
+      "closed_at": "2026-03-31"
     },
     {
       "id": "Q-055",
       "category": "trading",
       "title": "Weekly directional options screener (5-7 DTE)",
       "what": "8-gate directional options: CB NORMAL, quality >= 7, conviction > 65%, Hurst < 0.7, DTE 5-7, no earnings, OI > 500, cost 1-2% per position / 5% total. Separate path from protective puts. Writes weekly_directional_strategy.json. Wired into regime router.",
-      "completed_date": "2026-03-31",
       "tags": [
         "trading",
         "options",
         "directional",
         "weekly"
-      ]
+      ],
+      "closed_at": "2026-03-31"
     },
     {
       "id": "Q-015",
       "category": "trading",
       "title": "Paper-mode governance tolerance",
       "what": "Agent-08b severity tier system (SAFETY/GOVERNANCE/CARRYOVER) with paper vs live mode behavior. GOVERNANCE checks warn+continue in paper, hard block in live. Implemented across v1.1-v1.5 of Agent-08b prompt.",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "governance",
         "risk"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "P0-001",
       "category": "trading",
       "title": "Protective put sizing formula fix + idempotency guard",
       "what": "Fixed contracts_needed from qty to qty//100. Added date-match idempotency check to options_regime_router.py. BX 165-contract overhedge traced to this bug.",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "bugfix",
         "options"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "P1-001",
       "category": "trading",
       "title": "Options concentration gate + dashboard deployed capital",
       "what": "Max 50% options notional in single underlying (gate_options_risk.py check 5). Dashboard now shows equity_deployed + options_deployed split. Live API fixed to include options in positions_value.",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "risk",
         "dashboard"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "P2-001",
       "category": "trading",
       "title": "Strategy REDUCE_ONLY filter + --force-from orchestrator flag",
       "what": "Agent-06 skips new longs not in current portfolio during REDUCE_ONLY. Orchestrator --force-from clears failed artifact and resumes in one command.",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "pipeline",
         "orchestrator"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "Q-048",
       "category": "trading",
       "title": "Robust tail dependence estimator (Gumbel copula)",
       "what": "Dual-estimator tail dependence: MLE in calm regimes, Hellinger in volatile (2x variance but stable through crises). Computes chi for all sector ETF pairs. Enriches sector_correlations.json. Current: SPY/XLK chi=0.77 (77% joint extreme probability). Cron 07:10 ET Monday. Paper: Robust Tail Dependence (Ardakani 2025).",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "risk",
         "tail-dependence",
         "research",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "Q-047",
       "category": "trading",
       "title": "Change-point coincidence for correlation monitor",
       "what": "PELT-based structural break detection across 11 sector ETFs + SPY. Measures pairwise break coincidence \u2014 assets that crash together even with low daily correlation. Enriches sector_correlations.json. Current: SPY/XLC/XLY/XLK all broke simultaneously (100% coincidence). Cron 07:05 ET Monday after correlation monitor. Paper: Semi-Metric Portfolio (James et al. 2023).",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "correlation",
         "risk",
         "research",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "Q-046",
       "category": "trading",
       "title": "HMM threshold calibration (asymmetric hysteresis)",
       "what": "Replaced Viterbi hard state assignment with probability-based classification using asymmetric hysteresis. VOLATILE entry: calm_prob < 0.35. CALM entry: calm_prob > 0.65. Hysteresis band (0.35-0.65) maintains previous regime to prevent whipsaw. Paper: Hall & Pagan (2025).",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "hmm",
         "regime",
         "research",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "Q-050",
       "category": "trading",
       "title": "JV/RV decomposition (jump vs regime volatility)",
       "what": "Bipower variation decomposes realized vol into jump component (event vol, decays fast) vs smooth diffusive component (regime vol, persists). Enriches market_status.json. Current reading: DIFFUSION_DOMINATED (no jump component, all regime vol). Phase 2 Pass 3 covered call signal.",
-      "completed_date": "2026-03-30",
       "tags": [
         "trading",
         "volatility",
         "options",
         "research",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-03-30"
     },
     {
       "id": "Q-049",
       "category": "trading",
       "title": "Vol persistence indicator (Hurst exponent)",
       "what": "Rolling Hurst exponent on SPY realized volatility. Enriches market_status.json with vol_persistence field. H > 0.7 = persistent vol (dont fade), H < 0.3 = anti-persistent (safe to fade). Runs as orchestrator post-Market-Status enrichment alongside HMM. Foundation for Phase 2 covered call timing gate. Paper: Long-Memory SV (Chaim & Laurini 2024).",
-      "completed_date": "2026-03-29",
       "tags": [
         "trading",
         "volatility",
         "options",
         "research",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-03-29"
     },
     {
       "id": "Q-034",
       "category": "trading",
       "title": "CVaR Risk Metric \u2014 tail-risk aware sizing",
       "what": "Historical CVaR calculator (95% and 99%) from portfolio equity series. Runs post-close 16:02 ET weekdays. Outputs cvar_metrics.json with tail-risk estimates, budget ratios, and data confidence. Agent-08b v1.5 reads CVaR as informational context (CVAR_BUDGET_WARN when exposure > budget). 25 observations currently \u2014 confidence will improve over time.",
-      "completed_date": "2026-03-29",
       "tags": [
         "trading",
         "risk",
         "cvar",
         "paper-7",
         "paper-2"
-      ]
+      ],
+      "closed_at": "2026-03-29"
     },
     {
       "id": "Q-041",
       "category": "trading",
       "title": "Per-agent model routing + openai-codex retirement",
       "what": "Retired openai-codex (expired OAuth, unsanctioned endpoint). Implemented per-agent model routing: 28 Haiku (gates/rules), 8 Sonnet (reasoning), 3 Gemini Flash (data-heavy). Added kill_running_session() to orchestrator for timeout cleanup. Zombie reaper tightened 30m\u219215m. Routing policy upgraded to v3. Gemini 2.5 Flash live and verified.",
-      "completed_date": "2026-03-29",
       "tags": [
         "trading",
         "model-routing",
         "orchestrator",
         "infrastructure"
-      ]
+      ],
+      "closed_at": "2026-03-29"
     },
     {
       "id": "Q-033",
       "category": "trading",
       "title": "Per-Trade Quality Score \u2014 5-dimension assessment (D/M/R/P/I)",
       "what": "Added quality scoring to Agent-07 (Validation v1.6): Data freshness, Model confidence, Robustness, Risk/Reward, Interpretability. Each 0-2, max 10. Quality gate: total < 5 = FAIL. Agent-08b v1.4 check #8 enforces the gate. Paper #7 inspired.",
-      "completed_date": "2026-03-29",
       "tags": [
         "trading",
         "validation",
         "quality",
         "paper-7"
-      ]
+      ],
+      "closed_at": "2026-03-29"
     },
     {
       "id": "Q-023",
@@ -1117,231 +1117,10 @@
       "close_note": "Closed \u2014 superseded by Q-017 and Q-018 (specific YouTube items)"
     },
     {
-      "id": "W-005",
-      "category": "trading",
-      "title": "Late-session paper validation chain + AUTO_APPROVED_PAPER proven",
-      "what": "Built late_session_paper_validation_v1.md \u2014 compound orchestration prompt that runs a fresh abbreviated chain (universe \u2192 thesis \u2192 strategy \u2192 validation \u2192 risk eval \u2192 approval gate) outside normal market hours. Dispatched via one-shot openclaw cron job. Result: AUTO_APPROVED_PAPER confirmed 2026-03-09 with XOM and ORCL selected. Proves the governance + approval path works after today's fixes. Execution leg not included (tracked as Q-014). Chain writes to standard state paths, stops at risk_decision.json.",
-      "completed_at": "2026-03-09",
-      "ticket": null,
-      "tags": [
-        "late-session",
-        "paper-trading",
-        "approval-gate",
-        "validation",
-        "proof-of-concept"
-      ]
-    },
-    {
-      "id": "W-004",
-      "category": "trading",
-      "title": "Prompt source drift fix \u2014 3 cron jobs corrected to canonical prompts + gpt-5.4",
-      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list \u2014 all three now show gpt-5.4.",
-      "completed_at": "2026-03-09",
-      "ticket": null,
-      "tags": [
-        "cron",
-        "prompt-source",
-        "agent-08",
-        "agent-09",
-        "agent-10",
-        "model-upgrade"
-      ]
-    },
-    {
-      "id": "W-003",
-      "category": "trading",
-      "title": "Agent-09 v1.2 + Agent-10 v1.2 \u2014 governance loop fixes",
-      "what": "Fixed two bugs that caused today's paper session to block on false positives. (1) Agent-09 was applying its own outbound messaging restrictions as a global audit policy against all upstream artifact alerts \u2014 risk_status_ping from Agent-06's strategy_spec alerts was being flagged as MSG_POLICY_VIOLATION (CRITICAL). Fixed by splitting Step 6 into an upstream alert allowlist (risk_status_ping explicitly authorized) and Agent-09's own outbound policy. (2) Agent-10 was not reading session_close.json, so criticals acknowledged at session close were carried forward as OPEN indefinitely. Fixed by adding session_close.json as optional input and resolving carry-forward items that match acknowledged_issues[]. Both prompt changes pushed to OpenClaw-s-Brain. State manually adjudicated: open_critical_count 2 \u2192 0, circuit breaker HALT \u2192 REDUCE_ONLY.",
-      "completed_at": "2026-03-09",
-      "ticket": null,
-      "tags": [
-        "agent-09",
-        "agent-10",
-        "msg-policy-violation",
-        "carry-forward",
-        "governance",
-        "incident-fix"
-      ]
-    },
-    {
-      "id": "W-002",
-      "category": "trading",
-      "title": "Agent-06 v1.3 + Agent-07 v1.3 \u2014 basket quality improvements",
-      "what": "Agent-06 v1.3: added primary_thesis_driver field per strategy item and STEP 3b basket correlation review. Items sharing the same primary_thesis_driver are de-duplicated \u2014 lower-conviction item excluded unless genuinely differentiated by sector, catalyst type, or hold horizon. Would have dropped CVX today (same OIL_REGIME_STRENGTH driver as XOM, no differentiated edge). Agent-07 v1.3: added 9th validation dimension edge_quality (STRONG | ACCEPTABLE | WEAK). WEAK_EDGE rule: thesis_alignment=PARTIAL AND warn_details >= 2 distinct concerns => rating auto-upgraded to FAIL. Would have failed GAP today (PARTIAL alignment + 2 distinct warns). Both changes pushed to OpenClaw-s-Brain commit 5bb4147.",
-      "completed_at": "2026-03-09",
-      "ticket": null,
-      "tags": [
-        "agent-06",
-        "agent-07",
-        "basket-quality",
-        "weak-edge",
-        "correlation",
-        "selection"
-      ]
-    },
-    {
-      "id": "W-001",
-      "category": "trading",
-      "title": "PostToolUse hook \u2014 dashboard auto-sync on file edits",
-      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost \u2014 pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
-      "completed_at": "2026-03-09",
-      "ticket": null,
-      "tags": [
-        "dashboard",
-        "automation",
-        "hooks",
-        "queue",
-        "devops"
-      ]
-    },
-    {
-      "id": "Q-001",
-      "category": "architecture",
-      "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
-      "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
-      "completed_at": "2026-03-09",
-      "ticket": "TICKET-020",
-      "tags": [
-        "openclaw",
-        "claude-bridge",
-        "acp",
-        "live-session",
-        "telegram"
-      ]
-    },
-    {
-      "id": "T-017",
-      "category": "trading",
-      "title": "Fix encoding artifacts in all agent prompts",
-      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts \u2014 em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
-      "completed_at": "2026-03-09",
-      "ticket": "TICKET-017",
-      "tags": [
-        "prompt-quality",
-        "encoding",
-        "all-agents"
-      ]
-    },
-    {
-      "id": "T-018",
-      "category": "trading",
-      "title": "Formalize options_regime contract for Agent-06 and Agent-07",
-      "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
-      "completed_at": "2026-03-09",
-      "ticket": "TICKET-018",
-      "tags": [
-        "agent-06",
-        "agent-07",
-        "options-regime",
-        "contract-hardening"
-      ]
-    },
-    {
-      "id": "T-019",
-      "category": "trading",
-      "title": "Formalize Agent-12 live_trading_enabled contract input",
-      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code \u2014 no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
-      "completed_at": "2026-03-09",
-      "ticket": "TICKET-019",
-      "tags": [
-        "agent-12",
-        "live-trading",
-        "contract-hardening"
-      ]
-    },
-    {
-      "id": "Q-002",
-      "category": "trading",
-      "title": "Stale Signal Guard",
-      "what": "Agent-11 v1.2 + order_submitter.py: mandatory re-evaluation at live price when >60 min late. Hard block at >3h unless stale_signal_max_hours in risk_policy.json.",
-      "completed_at": "2026-03-06",
-      "ticket": null,
-      "tags": [
-        "agent-11",
-        "stale-signal",
-        "risk"
-      ]
-    },
-    {
-      "id": "Q-003",
-      "category": "trading",
-      "title": "Verify trade journal + KPI aggregator (2026-03-06)",
-      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py \u2014 was using UTC date, now uses ET date via ZoneInfo.",
-      "completed_at": "2026-03-06",
-      "ticket": null,
-      "tags": [
-        "trade-journal",
-        "kpi",
-        "data-integrity"
-      ]
-    },
-    {
-      "id": "Q-020",
-      "category": "trading",
-      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
-      "what": "Added --check mode to pipeline_contract_bootstrap.py (verify_bootstrap()). Checks session_context.json, normalized_risk_policy.json, current_run.json freshness. Writes bootstrap_check.json. Agent-01 Market Status cron (07:35 ET) now runs --check as a pre-step gate \u2014 if bootstrap stale, kills the chain and sends Telegram alert before any LLM work. validation_helper.py updated to check bootstrap artifacts exist (BOOTSTRAP_ARTIFACTS list). Preflight check passes. Q-020 complete.",
-      "completed_at": "2026-03-13",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "preflight",
-        "bootstrap",
-        "phase-2c"
-      ]
-    },
-    {
-      "id": "Q-005",
-      "category": "trading",
-      "title": "ApeWisdom integration \u2014 retail sentiment layer",
-      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches all-stocks (3 pages) + WSB (2 pages), extracts mention counts, rank, rank_delta, velocity_pct per symbol. Writes to alt_sentiment_raw.json. Agent-04 cron pre-runs fetcher and passes real data to LLM \u2014 no more hallucinated ApeWisdom data. Both APIs confirmed live. Note: implemented ahead of 60-day paper gate due to signal quality need.",
-      "completed_at": "2026-03-13",
-      "ticket": null,
-      "tags": [
-        "agent-04",
-        "apewisdom",
-        "reddit-sentiment",
-        "signals",
-        "intelligence"
-      ]
-    },
-    {
-      "id": "Q-006",
-      "category": "trading",
-      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
-      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches 30 messages/symbol, computes bullish_count, bearish_count, bullish_ratio, tag_rate, narrative (strongly_bullish|bullish|bearish|strongly_bearish|mixed|insufficient_data), and up to 3 message snippets. Writes to alt_sentiment_raw.json alongside ApeWisdom data. Agent-04 prompt v1.2 updated with per-field interpretation rules (momentum thresholds, manipulation detection). Note: implemented ahead of 60-day paper gate due to signal quality need.",
-      "completed_at": "2026-03-13",
-      "ticket": null,
-      "tags": [
-        "agent-04",
-        "stocktwits",
-        "sentiment",
-        "signals",
-        "intelligence"
-      ]
-    },
-    {
-      "id": "Q-021",
-      "category": "trading",
-      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
-      "what": "Created 4 canonical gate scripts: gate_session.py (session_context validity), gate_artifacts.py (artifact_manifest + contract foundation freshness), gate_policy.py (normalized_risk_policy completeness + bounds, handles semantic labels QUARTER/HALF/FULL), gate_broker.py (broker_auth + soft NOT_YET skip pre-08:10). Orchestrator run_gates.py runs all 4, writes gate_report.json. Premarket preflight cron (06:55) now runs run_gates.py as Step 1. Agent-08b cron updated to read gate_report.json as additional input. pipeline_contract_bootstrap.py updated to resolve semantic labels to floats in normalization. Health simplification: Agent-09 PRECEDENCE_BREACH demoted from CRITICAL/HALT to HIGH/REDUCE_ONLY. Agent-10 PRECEDENCE_BREACH carry-forward capped at HIGH/REDUCE_ONLY \u2014 cannot cascade as CRITICAL or trigger HALT. Phase 3 scheduler gate owns prevention. 4/4 gates PASS on live state.",
-      "completed_at": "2026-03-13",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "gate-scripts",
-        "systems-auditor",
-        "remediation",
-        "phase-3"
-      ]
-    },
-    {
       "id": "Q-012",
       "category": "trading",
       "title": "Options sleeve Phase 2B \u2014 Wheel strategy (CSP + CC)",
       "what": "Built complete options module as independent sidecar (trading-bot/options/). Follows Signal Bus + Module pattern \u2014 reads equity pipeline signals read-only, writes to own namespace. Components: options_screener.py (yfinance chains, IV proxy + snapshot history, earnings blackout, OI/spread/delta/bid filters, equity signal cross-reference), gate_options_risk.py (deterministic capital/concentration gate \u2014 max 20% per CSP, max 2 concurrent, 15% cash buffer), options_order_submitter.py (OCC symbol formatting, Alpaca paper Level 2, 09:35 post-open delay), Agent-17 prompt (qualitative screening), Agent-18 prompt (CSP/CC strategy decisions, position management rules). 3 cron jobs: 08:22 screener, 08:28 strategy, 09:35 execution. Smoke test: AMD $185 CSP 57% ann, NVDA $175 CSP 46% ann, ORCL $150 CSP 65% ann. Q-005/Q-006 ApeWisdom+StockTwits data feeds into screener. Architecture reviewed by Claude Opus.",
-      "completed_at": "2026-03-14",
       "tags": [
         "trading",
         "options",
@@ -1350,7 +1129,230 @@
         "covered-calls",
         "agent-17",
         "agent-18"
-      ]
+      ],
+      "closed_at": "2026-03-14"
+    },
+    {
+      "id": "Q-020",
+      "category": "trading",
+      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
+      "what": "Added --check mode to pipeline_contract_bootstrap.py (verify_bootstrap()). Checks session_context.json, normalized_risk_policy.json, current_run.json freshness. Writes bootstrap_check.json. Agent-01 Market Status cron (07:35 ET) now runs --check as a pre-step gate \u2014 if bootstrap stale, kills the chain and sends Telegram alert before any LLM work. validation_helper.py updated to check bootstrap artifacts exist (BOOTSTRAP_ARTIFACTS list). Preflight check passes. Q-020 complete.",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "preflight",
+        "bootstrap",
+        "phase-2c"
+      ],
+      "closed_at": "2026-03-13"
+    },
+    {
+      "id": "Q-005",
+      "category": "trading",
+      "title": "ApeWisdom integration \u2014 retail sentiment layer",
+      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches all-stocks (3 pages) + WSB (2 pages), extracts mention counts, rank, rank_delta, velocity_pct per symbol. Writes to alt_sentiment_raw.json. Agent-04 cron pre-runs fetcher and passes real data to LLM \u2014 no more hallucinated ApeWisdom data. Both APIs confirmed live. Note: implemented ahead of 60-day paper gate due to signal quality need.",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "apewisdom",
+        "reddit-sentiment",
+        "signals",
+        "intelligence"
+      ],
+      "closed_at": "2026-03-13"
+    },
+    {
+      "id": "Q-006",
+      "category": "trading",
+      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
+      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches 30 messages/symbol, computes bullish_count, bearish_count, bullish_ratio, tag_rate, narrative (strongly_bullish|bullish|bearish|strongly_bearish|mixed|insufficient_data), and up to 3 message snippets. Writes to alt_sentiment_raw.json alongside ApeWisdom data. Agent-04 prompt v1.2 updated with per-field interpretation rules (momentum thresholds, manipulation detection). Note: implemented ahead of 60-day paper gate due to signal quality need.",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "stocktwits",
+        "sentiment",
+        "signals",
+        "intelligence"
+      ],
+      "closed_at": "2026-03-13"
+    },
+    {
+      "id": "Q-021",
+      "category": "trading",
+      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
+      "what": "Created 4 canonical gate scripts: gate_session.py (session_context validity), gate_artifacts.py (artifact_manifest + contract foundation freshness), gate_policy.py (normalized_risk_policy completeness + bounds, handles semantic labels QUARTER/HALF/FULL), gate_broker.py (broker_auth + soft NOT_YET skip pre-08:10). Orchestrator run_gates.py runs all 4, writes gate_report.json. Premarket preflight cron (06:55) now runs run_gates.py as Step 1. Agent-08b cron updated to read gate_report.json as additional input. pipeline_contract_bootstrap.py updated to resolve semantic labels to floats in normalization. Health simplification: Agent-09 PRECEDENCE_BREACH demoted from CRITICAL/HALT to HIGH/REDUCE_ONLY. Agent-10 PRECEDENCE_BREACH carry-forward capped at HIGH/REDUCE_ONLY \u2014 cannot cascade as CRITICAL or trigger HALT. Phase 3 scheduler gate owns prevention. 4/4 gates PASS on live state.",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "pipeline-robustness",
+        "gate-scripts",
+        "systems-auditor",
+        "remediation",
+        "phase-3"
+      ],
+      "closed_at": "2026-03-13"
+    }
+  ],
+  "closed_archive": [
+    {
+      "id": "W-005",
+      "category": "trading",
+      "title": "Late-session paper validation chain + AUTO_APPROVED_PAPER proven",
+      "what": "Built late_session_paper_validation_v1.md \u2014 compound orchestration prompt that runs a fresh abbreviated chain (universe \u2192 thesis \u2192 strategy \u2192 validation \u2192 risk eval \u2192 approval gate) outside normal market hours. Dispatched via one-shot openclaw cron job. Result: AUTO_APPROVED_PAPER confirmed 2026-03-09 with XOM and ORCL selected. Proves the governance + approval path works after today's fixes. Execution leg not included (tracked as Q-014). Chain writes to standard state paths, stops at risk_decision.json.",
+      "ticket": null,
+      "tags": [
+        "late-session",
+        "paper-trading",
+        "approval-gate",
+        "validation",
+        "proof-of-concept"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "W-004",
+      "category": "trading",
+      "title": "Prompt source drift fix \u2014 3 cron jobs corrected to canonical prompts + gpt-5.4",
+      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list \u2014 all three now show gpt-5.4.",
+      "ticket": null,
+      "tags": [
+        "cron",
+        "prompt-source",
+        "agent-08",
+        "agent-09",
+        "agent-10",
+        "model-upgrade"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "W-003",
+      "category": "trading",
+      "title": "Agent-09 v1.2 + Agent-10 v1.2 \u2014 governance loop fixes",
+      "what": "Fixed two bugs that caused today's paper session to block on false positives. (1) Agent-09 was applying its own outbound messaging restrictions as a global audit policy against all upstream artifact alerts \u2014 risk_status_ping from Agent-06's strategy_spec alerts was being flagged as MSG_POLICY_VIOLATION (CRITICAL). Fixed by splitting Step 6 into an upstream alert allowlist (risk_status_ping explicitly authorized) and Agent-09's own outbound policy. (2) Agent-10 was not reading session_close.json, so criticals acknowledged at session close were carried forward as OPEN indefinitely. Fixed by adding session_close.json as optional input and resolving carry-forward items that match acknowledged_issues[]. Both prompt changes pushed to OpenClaw-s-Brain. State manually adjudicated: open_critical_count 2 \u2192 0, circuit breaker HALT \u2192 REDUCE_ONLY.",
+      "ticket": null,
+      "tags": [
+        "agent-09",
+        "agent-10",
+        "msg-policy-violation",
+        "carry-forward",
+        "governance",
+        "incident-fix"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "W-002",
+      "category": "trading",
+      "title": "Agent-06 v1.3 + Agent-07 v1.3 \u2014 basket quality improvements",
+      "what": "Agent-06 v1.3: added primary_thesis_driver field per strategy item and STEP 3b basket correlation review. Items sharing the same primary_thesis_driver are de-duplicated \u2014 lower-conviction item excluded unless genuinely differentiated by sector, catalyst type, or hold horizon. Would have dropped CVX today (same OIL_REGIME_STRENGTH driver as XOM, no differentiated edge). Agent-07 v1.3: added 9th validation dimension edge_quality (STRONG | ACCEPTABLE | WEAK). WEAK_EDGE rule: thesis_alignment=PARTIAL AND warn_details >= 2 distinct concerns => rating auto-upgraded to FAIL. Would have failed GAP today (PARTIAL alignment + 2 distinct warns). Both changes pushed to OpenClaw-s-Brain commit 5bb4147.",
+      "ticket": null,
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "basket-quality",
+        "weak-edge",
+        "correlation",
+        "selection"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "W-001",
+      "category": "trading",
+      "title": "PostToolUse hook \u2014 dashboard auto-sync on file edits",
+      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost \u2014 pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
+      "ticket": null,
+      "tags": [
+        "dashboard",
+        "automation",
+        "hooks",
+        "queue",
+        "devops"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "Q-001",
+      "category": "architecture",
+      "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
+      "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
+      "ticket": "TICKET-020",
+      "tags": [
+        "openclaw",
+        "claude-bridge",
+        "acp",
+        "live-session",
+        "telegram"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "T-017",
+      "category": "trading",
+      "title": "Fix encoding artifacts in all agent prompts",
+      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts \u2014 em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
+      "ticket": "TICKET-017",
+      "tags": [
+        "prompt-quality",
+        "encoding",
+        "all-agents"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "T-018",
+      "category": "trading",
+      "title": "Formalize options_regime contract for Agent-06 and Agent-07",
+      "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
+      "ticket": "TICKET-018",
+      "tags": [
+        "agent-06",
+        "agent-07",
+        "options-regime",
+        "contract-hardening"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "T-019",
+      "category": "trading",
+      "title": "Formalize Agent-12 live_trading_enabled contract input",
+      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code \u2014 no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
+      "ticket": "TICKET-019",
+      "tags": [
+        "agent-12",
+        "live-trading",
+        "contract-hardening"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "Q-002",
+      "category": "trading",
+      "title": "Stale Signal Guard",
+      "what": "Agent-11 v1.2 + order_submitter.py: mandatory re-evaluation at live price when >60 min late. Hard block at >3h unless stale_signal_max_hours in risk_policy.json.",
+      "ticket": null,
+      "tags": [
+        "agent-11",
+        "stale-signal",
+        "risk"
+      ],
+      "closed_at": "2026-03-06"
+    },
+    {
+      "id": "Q-003",
+      "category": "trading",
+      "title": "Verify trade journal + KPI aggregator (2026-03-06)",
+      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py \u2014 was using UTC date, now uses ET date via ZoneInfo.",
+      "ticket": null,
+      "tags": [
+        "trade-journal",
+        "kpi",
+        "data-integrity"
+      ],
+      "closed_at": "2026-03-06"
     }
   ]
 }
