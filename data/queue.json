@@ -1,91 +1,37 @@
 {
-  "generated_at": "2026-04-11T21:38:48.744859-04:00",
+  "generated_at": "2026-04-12T17:04:27.846678-04:00",
   "queued": [
     {
-      "id": "Q-068",
-      "category": "audit",
-      "title": "\ud83d\udea8 Full system audit \u2014 canonical/workspace drift, contract mismatches, dead gates",
-      "what": "Read-only catalog of every silent failure in the pipeline. Per-agent prompt source matrix (canonical vs workspace, all 16 agents). End-to-end JSON contract field name matrix (every producer/consumer pair). Gate/filter trace: live, dead, or contradicted upstream? Indicator backtest audit (HMM, vol persistence, jump var, tail dep \u2014 backtested in isolation? standalone edge?). LLM cost vs deterministic alternatives. Dead code catalog. CRITICAL: read-only, no fixes during audit phase. Triggered by 2026-04-07 discovery of conviction gate silently broken since 2026-03-26 (field name mismatch + upstream filter neuter).",
+      "id": "Q-070",
+      "category": "rebuild",
+      "title": "Rebuild cutover + legacy retirement",
+      "what": "Finish the remaining cutover work that keeps the rebuild from running as the sole equities runtime. Current remaining seams: remove rebuild startup dependence on legacy premarket artifacts where still present, finish stewardship beyond EXIT (ADD/REDUCE), finish the governed operator actions on the app, and retire the last legacy-assist scheduling/execution seams only after the rebuild paths are proven. Checkpoint-05 evidence accumulation continues in parallel and is not the only blocker for finishing the architecture.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "None. Codex audit running in parallel \u2014 findings to be merged.",
+      "prereq": "Existing rebuild core, strategy bank, paper decision-support path, and checkpoint-05 runner already landed.",
       "priority": "critical",
       "ticket": null,
       "tags": [
-        "audit",
-        "architecture",
-        "critical",
-        "drift",
-        "contracts"
-      ]
-    },
-    {
-      "id": "Q-069",
-      "category": "architecture",
-      "title": "\ud83d\udea8 Architectural proposal \u2014 simplified target + Pydantic contracts + single source of truth",
-      "what": "Based on Q-068 + Codex findings, propose simplified target architecture. Likely 4-6 agents (down from 16). Pydantic schemas for every JSON contract \u2014 schema is the contract, write-time validation. Single source of truth policy for prompts (canonical OR workspace, never both, with sync verification). Integration test framework with synthetic fixtures and end-to-end chains. Migration plan from current to target. Pressure-tested by OpenClaw + Codex + Claude before commitment.",
-      "blocker": "Q-068 must complete first",
-      "blocker_type": "dependency",
-      "prereq": "Q-068 audit catalog complete",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "architecture",
         "rebuild",
-        "contracts",
+        "pipeline",
         "critical"
       ]
     },
     {
-      "id": "Q-072",
-      "category": "validation",
-      "title": "\ud83d\udea8 Prove One Edge \u2014 walk-forward backtest of single signal family before rebuild commit",
-      "what": "Parallel track to Q-068/069/070. From Codex audit action #10: 'Reframe the project for the next month as prove one edge rather than improve the platform.' Pick ONE signal family. Strip the indicator stack \u2014 bare signal only, no HMM, vol persistence, jump var, tail dep, conviction gates, or other layers. Build minimal walk-forward backtest harness over 2-3 years across bull/bear/choppy regimes. Report standalone expectancy, Sharpe, max DD, regime sensitivity. Decision gate: yes \u2192 rebuild has a target worth aiming at, proceed with Q-070. No \u2192 reframe project as decision-support not full automation, scope down rebuild accordingly. Codex verdict: 'system looks more like an ambitious research/automation platform than a demonstrated alpha engine.' Platform work and strategy validation are different projects we've been treating as one. Splitting them is the highest-leverage move available.",
+      "id": "Q-071",
+      "category": "infrastructure",
+      "title": "OpenClaw 2026.4.5 upgrade \u2014 cron auto-replay, prompt cache improvements, Claude CLI hardening",
+      "what": "Upgrade to OpenClaw 2026.4.5. Adopts: cron replay interrupted recurring jobs on gateway restart (#60583, fixes 2026-04-06 power-outage manual recovery gap), cron failure notifications via primary delivery channel (#60622), prompt caching improvements (stable system prompt fingerprints, removed duplicate tool inventories, cache reuse in status --verbose \u2014 direct cost reduction given April pricing change), Claude CLI security hardening + dedicated health checks, heartbeat skip-wake when session lane busy, live model switching fix, auto-reply lifecycle fix on gateway restart. Breaking: legacy public config aliases removed (talk.voiceId, sandbox.perSession, channel allow toggles \u2014 doctor --fix migrates), Anthropic Claude CLI backend removed from new onboarding (existing profiles runnable), bundled CLI text-provider backends removed. Plan: Saturday morning backup \u2192 upgrade \u2192 doctor --fix \u2192 verify Claude CLI auth \u2192 single job test \u2192 Saturday afternoon pipeline-validate.sh dry run \u2192 Sunday nightly validator \u2192 Monday live. NOT part of audit-and-rebuild freeze \u2014 infrastructure track, separate from Q-068/069/070.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "Codex rebuild blueprint will recommend which signal family to backtest first. Concurrent with Q-068, blocks Q-070 commit.",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "validation",
-        "backtest",
-        "strategy",
-        "critical",
-        "parallel-track"
-      ]
-    },
-    {
-      "id": "Q-073",
-      "category": "operator",
-      "title": "Telegram approval transport \u2014 Decision Support short-term channel",
-      "what": "Wire OpenClaw Telegram gateway as the first approval interface for Decision Support mode. Reuse the existing Discord server for broadcast and incident fan-out rather than rebuilding that layer. (1) Notification template: when a live-ready plan exists, OpenClaw sends symbols, side, sizing/risk, brief rationale, and expiry timer to Jacob via Telegram DM. (2) Reply parsing: approve, reject, reduce-size mapped to doc-16 approval states (PENDING -> APPROVED/REJECTED/EXPIRED). (3) Decision recording: write to approval_queue.json (status update) and approval_events.jsonl (immutable audit trail). (4) Timeout/expiry: unanswered PENDING items auto-expire after N minutes. (5) Dry-run validation: one full cycle with fake plan data before any real capital touches this path.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "OpenClaw gateway running. approval_queue.json and approval_events.jsonl schemas finalized (doc 16). Rebuild core producing live-ready plans.",
+      "prereq": "Saturday window (markets closed). Backup of ~/.openclaw/openclaw.json and cron list JSON before upgrade.",
       "priority": "high",
       "ticket": null,
       "tags": [
-        "operator",
-        "approval",
-        "telegram",
-        "decision-support"
-      ]
-    },
-    {
-      "id": "Q-074",
-      "category": "operator",
-      "title": "Execution bridge \u2014 route rebuild plans through legacy executor",
-      "what": "Build a thin adapter that bridges rebuild trade plans to the proven legacy executor (bin/order_submitter.py), NOT a new execution engine. The legacy executor has 3+ weeks of real Alpaca paper fills, 6+ execution gates (staleness, conviction, stub defense, no-trade zones, circuit breaker, approval state), position sizing, order reconciliation, and a hard live-capital block. Rebuilding this from scratch would be premature and risky. Adapter flow: (1) read operator_mode_state.json to confirm execution_enabled, (2) read trade_plan.json + approval queue status, (3) translate rebuild TradePlan into legacy strategy_spec.json format, (4) call bin/order_submitter.py, (5) parse execution_log.json and mirror into rebuild execution_report.json. Long-term goal: extract the legacy executor into a modular, reusable block that both rebuild and any future pipeline can call. But phase 1 is bridge-only \u2014 no reimplementation of broker plumbing.",
-      "blocker": "Q-073 must be proven first (at least one successful dry-run cycle)",
-      "blocker_type": "dependency",
-      "prereq": "Q-073 Telegram approval transport working (at least one dry-run cycle). Legacy executor verified for paper orders. Rebuild trade_plan.json producing valid plans.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "operator",
-        "execution",
-        "broker",
-        "decision-support"
+        "infrastructure",
+        "upgrade",
+        "openclaw",
+        "cost-optimization"
       ]
     },
     {
@@ -104,41 +50,6 @@
         "vercel",
         "decision-support",
         "ui"
-      ]
-    },
-    {
-      "id": "Q-076A",
-      "category": "strategy",
-      "title": "Generalize validation runtime beyond Q-072 + doc 10 metrics",
-      "what": "The validation runtime is still Q-072-shaped: hardcoded to one strategy family, one catalyst type, one side (LONG), and a <=3 day hold limit. The data provider only fetches earnings catalysts. The evaluator computes raw benchmark comparison without Sharpe, Sortino, or Calmar. Half the Q-076B strategy candidates (sector rotation, correlation breakout, longer-hold post-earnings drift, mean-reversion) literally cannot be expressed in the current runtime.\n\nThis slice generalizes the foundation:\n1. Strategy registry \u2014 each strategy is a module at src/openclaw_core/strategies/<name>.py implementing init() + evaluate() \u2192 list[StrategySignal]. The CLI discovers strategies by name, not hardcoded import.\n2. Flexible signal contract \u2014 support LONG and SHORT, variable hold periods (1-60 days), multiple entry signal types (catalyst, momentum, mean-reversion, regime-change).\n3. Data provider generalization \u2014 OHLCV is universal, but catalyst data should be pluggable (earnings calendar, sector strength, correlation matrix, regime state). Each strategy declares what data it needs.\n4. Doc 10 metric additions to the evaluator:\n   - Deployment-matched benchmark (SPY only on days strategy was active)\n   - active_day_exposure_pct, average_capital_deployed_pct\n   - Risk-adjusted metrics: annualized return, volatility, Sharpe, Sortino, Calmar\n   - Sample-quality gates: min trade count, profitable-fold threshold, expectancy-decay check\n5. Verdict governance \u2014 PASS/FAIL/INCONCLUSIVE only, benchmark rationale required in experiment config, promotion policy separate from results.\n6. Experiment config expanded \u2014 benchmark_rationale field, strategy_params flexible typing, max_hold_days uncapped (strategy declares its own), time_window presets (full, COVID, bear, bull).\n\nEXIT CRITERIA: A new strategy module (not catalyst_followthrough) can be defined, run through the CLI, and produce a verdict with deployment-matched benchmark and risk-adjusted metrics. The Q-072 artifacts must still work unchanged (backward compat).",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "None \u2014 this is pure infrastructure unblocking everything downstream.",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "strategy",
-        "validation",
-        "backtesting",
-        "infrastructure",
-        "critical"
-      ]
-    },
-    {
-      "id": "Q-076B",
-      "category": "strategy",
-      "title": "First 2-3 strategy skeletons \u2014 manual backtest campaigns",
-      "what": "With Q-076A complete, define and run the first 2-3 strategy skeletons through the generalized runtime. Start with the candidates most likely to produce signal and most aligned with existing infrastructure:\n\nRecommended first batch (pick 2-3, not all):\n1. Regime-aware momentum \u2014 buy when HMM=CALM + price above N-day MA + catalyst. Leverages HMM (Q-028), no-trade zone (Q-030), VIX contrarian flag (Q-031). Most infrastructure already exists.\n2. Post-earnings drift \u2014 the documented multi-week anomaly (NOT Q-072's 1-3 day follow-through). 10-20 day hold, enter on earnings beat, wider universe. Different thesis than Q-072.\n3. Defensive regime filter value test \u2014 compare 'always in market' vs 'regime-gated entry' using the HMM. This tests whether the regime layer ITSELF earns its keep, which informs every other strategy.\n\nEach skeleton:\n- Gets a standalone strategy module implementing the registry interface from Q-076A\n- Gets an experiment config with explicit benchmark rationale\n- Runs across multiple time windows (2018-2026 full, 2020-2022 COVID/recovery, 2022-2023 bear, 2023-2026 bull)\n- Produces a verdict with doc 10 honest metrics\n- Codex runs manually with mid-campaign course correction (bucket splits, parameter tightening)\n\nIf a skeleton PASSES: it becomes the deterministic base the LLM thesis engine wraps. Pipeline becomes: backtested skeleton decides WHEN \u2192 LLM adds conviction \u2192 portfolio builder gates risk \u2192 execution.\nIf all FAIL: that's real information. Expand the candidate list from the remaining Q-076 hypotheses (mean-reversion, VIX contrarian, sector rotation, quality-gated momentum, correlation breakout, breakout on volume).\n\nIMPORTANT: Each campaign must use doc 10 governance. Deployment-matched benchmark. Risk-adjusted metrics. Sample gates. No benchmark framing shortcuts.",
-      "blocker": "Q-076A must be complete (generalized runtime + doc 10 metrics)",
-      "blocker_type": "dependency",
-      "prereq": "Q-076A complete. Strategy registry working. At least one non-Q-072 strategy module can run through the CLI.",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "strategy",
-        "validation",
-        "backtesting",
-        "critical"
       ]
     },
     {
@@ -224,11 +135,11 @@
     {
       "id": "Q-081",
       "category": "dashboard",
-      "title": "Queue dashboard hygiene + auto-close mechanism for completed items",
-      "what": "Current queue.json has 44 completed items alongside 33 queued \u2014 dashboard queue panel is getting cluttered with historical noise and the line between 'queued' and 'done' drifts out of sync with reality. Two deliverables: (1) One-time audit of `data/queue.json` \u2014 archive completed items older than N days to a separate `queue-archive.json` (or a nested `closed_recent` / `closed_archive` split), keep only recent closures visible on the dashboard, and reconcile any queued items whose work is actually done (Q-017 currently has DONE in its title but still sits in queued). (2) Build a reliable auto-close signal that doesn't depend on Claude or Jacob remembering. Options for Codex to evaluate: ticket-file frontmatter (`status: done` in TICKET-*.md picked up by `parse-tickets.py`), git commit trailers (`Closes: Q-075`), a lightweight `openclaw queue close Q-NNN` CLI that writes to queue.json + stages a dashboard push, or a nightly reconciler that reads ticket status from OpenClaw-s-Brain tickets folder. The current flow (manually editing queue.md + queue.json + running push-dashboard-data.sh) is not working \u2014 items accumulate.",
+      "title": "Queue auto-close mechanism - one-time scrub done, automation still needed",
+      "what": "The one-time backlog scrub was completed on 2026-04-12: completed rebuild slices were removed from queued, stale legacy/personal/R&D items were archived, and old completed items were pushed out of the dashboard-facing list. The remaining work is the reliable auto-close path so the queue stays honest without manual cleanup. Candidates remain: ticket frontmatter status, commit trailers (Closes: Q-NNN), or a lightweight queue-close CLI/nightly reconciler.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "None \u2014 touches queue.json + parse-tickets.py + dashboard queue panel only. Should coordinate with Codex since they may add auto-close writes during campaign completion or intent application.",
+      "prereq": "One-time scrub completed. Next step is implementing the close signal, not another manual audit.",
       "priority": "medium",
       "ticket": null,
       "tags": [
@@ -244,10 +155,10 @@
       "id": "Q-082",
       "category": "docs",
       "title": "Rebuild Obsidian vault docs against the new rebuild architecture",
-      "what": "Obsidian vault (`C:\\Users\\jacob\\Desktop\\ClawBoy\\ClawBoy-Vault-REMOTE`) holds pre-audit technical documentation from the legacy 16-agent pipeline era \u2014 agent specs, JSON contract notes, cron manifests, operational runbooks. All of it is now stale: the rebuild is a typed single-core architecture (`src/openclaw_core/`), the operator-feed contract exists (doc 13), the mode-control contract exists (doc 16), the strategy bank contract is live, and Q-072 closed. The docs in Obsidian describe a system that no longer exists as described. Ship: (1) Audit the vault \u2014 identify which notes are stale, which are still accurate, which should be deleted, which should be rewritten. (2) Rebuild the architecture/pipeline/strategy sections of the vault from the current rebuild docs (`docs/architecture-rebuild/08`, `12`, `13`, `16`, `17`, `19`) as source of truth, with Obsidian being the human-readable narrative layer. (3) Establish a single reliable sync pattern going forward so the vault does not drift again \u2014 probably a staging directory in this repo that pushes to the Windows vault path, similar to how other artifacts flow. Must not modify the Windows vault directly from WSL per existing rule; use staging. This also reopens Q-054 (Obsidian vault integration + daily email reports), which was waiting on Q-053 architecture doc to provide structure \u2014 Q-053 is no longer the right anchor because the rebuild is the new source of truth.",
+      "what": "Step 1 vault audit is already done and staging exists. Remaining work: apply the rebuild-era architecture/docs refresh to the real vault through the staging/sync path, keep the daily reports and technical architecture notes current, and finish retiring legacy-era vault pages that still describe the old 16-agent system as current.",
       "blocker": "Q-072 closed provides the new strategic frame. Rebuild architecture docs (08/12/13/16/17/19) already exist on disk. Not blocked \u2014 can start whenever Jacob has bandwidth.",
       "blocker_type": null,
-      "prereq": "Access to both rebuild docs on WSL side and Windows vault path. Staging directory convention decided before any write.",
+      "prereq": "Vault audit complete; staging/sync pattern established; remaining work is curated apply + ongoing maintenance.",
       "priority": "high",
       "ticket": null,
       "tags": [
@@ -257,72 +168,6 @@
         "rebuild",
         "architecture",
         "narrative-layer"
-      ]
-    },
-    {
-      "id": "Q-071",
-      "category": "infrastructure",
-      "title": "OpenClaw 2026.4.5 upgrade \u2014 cron auto-replay, prompt cache improvements, Claude CLI hardening",
-      "what": "Upgrade to OpenClaw 2026.4.5. Adopts: cron replay interrupted recurring jobs on gateway restart (#60583, fixes 2026-04-06 power-outage manual recovery gap), cron failure notifications via primary delivery channel (#60622), prompt caching improvements (stable system prompt fingerprints, removed duplicate tool inventories, cache reuse in status --verbose \u2014 direct cost reduction given April pricing change), Claude CLI security hardening + dedicated health checks, heartbeat skip-wake when session lane busy, live model switching fix, auto-reply lifecycle fix on gateway restart. Breaking: legacy public config aliases removed (talk.voiceId, sandbox.perSession, channel allow toggles \u2014 doctor --fix migrates), Anthropic Claude CLI backend removed from new onboarding (existing profiles runnable), bundled CLI text-provider backends removed. Plan: Saturday morning backup \u2192 upgrade \u2192 doctor --fix \u2192 verify Claude CLI auth \u2192 single job test \u2192 Saturday afternoon pipeline-validate.sh dry run \u2192 Sunday nightly validator \u2192 Monday live. NOT part of audit-and-rebuild freeze \u2014 infrastructure track, separate from Q-068/069/070.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Saturday window (markets closed). Backup of ~/.openclaw/openclaw.json and cron list JSON before upgrade.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "infrastructure",
-        "upgrade",
-        "openclaw",
-        "cost-optimization"
-      ]
-    },
-    {
-      "id": "Q-070",
-      "category": "rebuild",
-      "title": "\ud83d\udea8 Pipeline rebuild on simplified architecture",
-      "what": "Migrate to the Q-069 target architecture. New core pipeline with Pydantic contracts. Integration tests that fail on field name drift. Single prompt source of truth with sync verification. One signal layer rigorously backtested before any features re-add. Old pipeline runs in parallel for N days for comparison. Cutover only after parallel comparison shows new pipeline matches or improves. NO new features re-added until baseline edge is demonstrated.",
-      "blocker": "Q-069 proposal must be approved",
-      "blocker_type": "dependency",
-      "prereq": "Q-069 complete",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "rebuild",
-        "pipeline",
-        "critical"
-      ]
-    },
-    {
-      "id": "Q-053",
-      "category": "documentation",
-      "title": "Pipeline Architecture & Strategy Guide",
-      "what": "Comprehensive 30-40 page technical document covering the entire trading pipeline: signal generation, trade selection, quality scoring, risk management, options strategy, infrastructure, and research paper lineage. Written for Jacob + financial advisors. Lives in Obsidian vault (interlinked) + PDF export. Includes quick reference card.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "None \u2014 writing project, not code.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "documentation",
-        "architecture",
-        "obsidian"
-      ]
-    },
-    {
-      "id": "Q-054",
-      "category": "infrastructure",
-      "title": "Obsidian vault integration + daily performance reports",
-      "what": "Set up Obsidian vault structure for trading knowledge graph. Daily post-close briefing notes (auto-generated) linking to symbols, agents, papers. Email delivery via SendGrid. Same content in Obsidian + email \u2014 evaluate which Jacob prefers.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-053 architecture doc (provides the template and structure).",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "infrastructure",
-        "obsidian",
-        "email",
-        "reporting"
       ]
     },
     {
@@ -341,124 +186,223 @@
         "execution",
         "strategy"
       ]
-    },
+    }
+  ],
+  "completed": [
     {
-      "id": "Q-035",
-      "category": "trading",
-      "title": "Hedge-vs-Rebalance Decision Framework",
-      "what": "When pipeline suggests reducing a position, compare cost-to-sell vs cost-to-hedge-with-puts. High alpha + cheap puts = hedge instead of sell. Low alpha or expensive puts = sell. Implements Paper #5's no-trade zone concept for sell decisions. v1: simple cost comparison in morning_position_reviewer.py. v2: full model with transaction costs, market impact, time decay, asymmetric shock response.",
+      "id": "Q-072",
+      "category": "validation",
+      "title": "\ud83d\udea8 Prove One Edge \u2014 walk-forward backtest of single signal family before rebuild commit",
+      "what": "Parallel track to Q-068/069/070. From Codex audit action #10: 'Reframe the project for the next month as prove one edge rather than improve the platform.' Pick ONE signal family. Strip the indicator stack \u2014 bare signal only, no HMM, vol persistence, jump var, tail dep, conviction gates, or other layers. Build minimal walk-forward backtest harness over 2-3 years across bull/bear/choppy regimes. Report standalone expectancy, Sharpe, max DD, regime sensitivity. Decision gate: yes \u2192 rebuild has a target worth aiming at, proceed with Q-070. No \u2192 reframe project as decision-support not full automation, scope down rebuild accordingly. Codex verdict: 'system looks more like an ambitious research/automation platform than a demonstrated alpha engine.' Platform work and strategy validation are different projects we've been treating as one. Splitting them is the highest-leverage move available.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "Q-030 (no-trade zone), protective_put_screener single-symbol mode.",
+      "prereq": "Codex rebuild blueprint will recommend which signal family to backtest first. Concurrent with Q-068, blocks Q-070 commit.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "validation",
+        "backtest",
+        "strategy",
+        "critical",
+        "parallel-track"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-068",
+      "category": "audit",
+      "title": "\ud83d\udea8 Full system audit \u2014 canonical/workspace drift, contract mismatches, dead gates",
+      "what": "Read-only catalog of every silent failure in the pipeline. Per-agent prompt source matrix (canonical vs workspace, all 16 agents). End-to-end JSON contract field name matrix (every producer/consumer pair). Gate/filter trace: live, dead, or contradicted upstream? Indicator backtest audit (HMM, vol persistence, jump var, tail dep \u2014 backtested in isolation? standalone edge?). LLM cost vs deterministic alternatives. Dead code catalog. CRITICAL: read-only, no fixes during audit phase. Triggered by 2026-04-07 discovery of conviction gate silently broken since 2026-03-26 (field name mismatch + upstream filter neuter).",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None. Codex audit running in parallel \u2014 findings to be merged.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "audit",
+        "architecture",
+        "critical",
+        "drift",
+        "contracts"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-069",
+      "category": "architecture",
+      "title": "\ud83d\udea8 Architectural proposal \u2014 simplified target + Pydantic contracts + single source of truth",
+      "what": "Based on Q-068 + Codex findings, propose simplified target architecture. Likely 4-6 agents (down from 16). Pydantic schemas for every JSON contract \u2014 schema is the contract, write-time validation. Single source of truth policy for prompts (canonical OR workspace, never both, with sync verification). Integration test framework with synthetic fixtures and end-to-end chains. Migration plan from current to target. Pressure-tested by OpenClaw + Codex + Claude before commitment.",
+      "blocker": "Q-068 must complete first",
+      "blocker_type": "dependency",
+      "prereq": "Q-068 audit catalog complete",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "architecture",
+        "rebuild",
+        "contracts",
+        "critical"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-073",
+      "category": "operator",
+      "title": "Telegram approval transport \u2014 Decision Support short-term channel",
+      "what": "Wire OpenClaw Telegram gateway as the first approval interface for Decision Support mode. Reuse the existing Discord server for broadcast and incident fan-out rather than rebuilding that layer. (1) Notification template: when a live-ready plan exists, OpenClaw sends symbols, side, sizing/risk, brief rationale, and expiry timer to Jacob via Telegram DM. (2) Reply parsing: approve, reject, reduce-size mapped to doc-16 approval states (PENDING -> APPROVED/REJECTED/EXPIRED). (3) Decision recording: write to approval_queue.json (status update) and approval_events.jsonl (immutable audit trail). (4) Timeout/expiry: unanswered PENDING items auto-expire after N minutes. (5) Dry-run validation: one full cycle with fake plan data before any real capital touches this path.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "OpenClaw gateway running. approval_queue.json and approval_events.jsonl schemas finalized (doc 16). Rebuild core producing live-ready plans.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "operator",
+        "approval",
+        "telegram",
+        "decision-support"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-076A",
+      "category": "strategy",
+      "title": "Generalize validation runtime beyond Q-072 + doc 10 metrics",
+      "what": "The validation runtime is still Q-072-shaped: hardcoded to one strategy family, one catalyst type, one side (LONG), and a <=3 day hold limit. The data provider only fetches earnings catalysts. The evaluator computes raw benchmark comparison without Sharpe, Sortino, or Calmar. Half the Q-076B strategy candidates (sector rotation, correlation breakout, longer-hold post-earnings drift, mean-reversion) literally cannot be expressed in the current runtime.\n\nThis slice generalizes the foundation:\n1. Strategy registry \u2014 each strategy is a module at src/openclaw_core/strategies/<name>.py implementing init() + evaluate() \u2192 list[StrategySignal]. The CLI discovers strategies by name, not hardcoded import.\n2. Flexible signal contract \u2014 support LONG and SHORT, variable hold periods (1-60 days), multiple entry signal types (catalyst, momentum, mean-reversion, regime-change).\n3. Data provider generalization \u2014 OHLCV is universal, but catalyst data should be pluggable (earnings calendar, sector strength, correlation matrix, regime state). Each strategy declares what data it needs.\n4. Doc 10 metric additions to the evaluator:\n   - Deployment-matched benchmark (SPY only on days strategy was active)\n   - active_day_exposure_pct, average_capital_deployed_pct\n   - Risk-adjusted metrics: annualized return, volatility, Sharpe, Sortino, Calmar\n   - Sample-quality gates: min trade count, profitable-fold threshold, expectancy-decay check\n5. Verdict governance \u2014 PASS/FAIL/INCONCLUSIVE only, benchmark rationale required in experiment config, promotion policy separate from results.\n6. Experiment config expanded \u2014 benchmark_rationale field, strategy_params flexible typing, max_hold_days uncapped (strategy declares its own), time_window presets (full, COVID, bear, bull).\n\nEXIT CRITERIA: A new strategy module (not catalyst_followthrough) can be defined, run through the CLI, and produce a verdict with deployment-matched benchmark and risk-adjusted metrics. The Q-072 artifacts must still work unchanged (backward compat).",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None \u2014 this is pure infrastructure unblocking everything downstream.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "backtesting",
+        "infrastructure",
+        "critical"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-076B",
+      "category": "strategy",
+      "title": "First 2-3 strategy skeletons \u2014 manual backtest campaigns",
+      "what": "With Q-076A complete, define and run the first 2-3 strategy skeletons through the generalized runtime. Start with the candidates most likely to produce signal and most aligned with existing infrastructure:\n\nRecommended first batch (pick 2-3, not all):\n1. Regime-aware momentum \u2014 buy when HMM=CALM + price above N-day MA + catalyst. Leverages HMM (Q-028), no-trade zone (Q-030), VIX contrarian flag (Q-031). Most infrastructure already exists.\n2. Post-earnings drift \u2014 the documented multi-week anomaly (NOT Q-072's 1-3 day follow-through). 10-20 day hold, enter on earnings beat, wider universe. Different thesis than Q-072.\n3. Defensive regime filter value test \u2014 compare 'always in market' vs 'regime-gated entry' using the HMM. This tests whether the regime layer ITSELF earns its keep, which informs every other strategy.\n\nEach skeleton:\n- Gets a standalone strategy module implementing the registry interface from Q-076A\n- Gets an experiment config with explicit benchmark rationale\n- Runs across multiple time windows (2018-2026 full, 2020-2022 COVID/recovery, 2022-2023 bear, 2023-2026 bull)\n- Produces a verdict with doc 10 honest metrics\n- Codex runs manually with mid-campaign course correction (bucket splits, parameter tightening)\n\nIf a skeleton PASSES: it becomes the deterministic base the LLM thesis engine wraps. Pipeline becomes: backtested skeleton decides WHEN \u2192 LLM adds conviction \u2192 portfolio builder gates risk \u2192 execution.\nIf all FAIL: that's real information. Expand the candidate list from the remaining Q-076 hypotheses (mean-reversion, VIX contrarian, sector rotation, quality-gated momentum, correlation breakout, breakout on volume).\n\nIMPORTANT: Each campaign must use doc 10 governance. Deployment-matched benchmark. Risk-adjusted metrics. Sample gates. No benchmark framing shortcuts.",
+      "blocker": "Q-076A must be complete (generalized runtime + doc 10 metrics)",
+      "blocker_type": "dependency",
+      "prereq": "Q-076A complete. Strategy registry working. At least one non-Q-072 strategy module can run through the CLI.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "backtesting",
+        "critical"
+      ],
+      "closed_at": "2026-04-12"
+    },
+    {
+      "id": "Q-074",
+      "category": "operator",
+      "title": "Execution bridge \u2014 route rebuild plans through legacy executor",
+      "what": "Build a thin adapter that bridges rebuild trade plans to the proven legacy executor (bin/order_submitter.py), NOT a new execution engine. The legacy executor has 3+ weeks of real Alpaca paper fills, 6+ execution gates (staleness, conviction, stub defense, no-trade zones, circuit breaker, approval state), position sizing, order reconciliation, and a hard live-capital block. Rebuilding this from scratch would be premature and risky. Adapter flow: (1) read operator_mode_state.json to confirm execution_enabled, (2) read trade_plan.json + approval queue status, (3) translate rebuild TradePlan into legacy strategy_spec.json format, (4) call bin/order_submitter.py, (5) parse execution_log.json and mirror into rebuild execution_report.json. Long-term goal: extract the legacy executor into a modular, reusable block that both rebuild and any future pipeline can call. But phase 1 is bridge-only \u2014 no reimplementation of broker plumbing.",
+      "blocker": "Q-073 must be proven first (at least one successful dry-run cycle)",
+      "blocker_type": "dependency",
+      "prereq": "Q-073 Telegram approval transport working (at least one dry-run cycle). Legacy executor verified for paper orders. Rebuild trade_plan.json producing valid plans.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "operator",
+        "execution",
+        "broker",
+        "decision-support"
+      ],
+      "closed_at": "2026-04-12"
+    }
+  ],
+  "closed_archive": [
+    {
+      "id": "Q-017",
+      "category": "project",
+      "title": "YouTube video production pipeline \u2014 ElevenLabs \u2192 video \u2192 captions \u2192 thumbnail \u2192 upload",
+      "what": "Automated production pipeline that takes a finished script (from Q-016) and outputs a published YouTube video. Human input is already done at this stage \u2014 this is pure production automation.\n\nSTAGE 1 \u2014 VOICE: ElevenLabs Professional Voice Clone. Jacob records 30+ min of clean audio (reading any natural text \u2014 doesn't need to be scripted). Submit via ElevenLabs API to create a persistent voice model. All future voiceover generation uses this model \u2014 one-time setup cost, infinite reuse. API key already configured in OpenClaw. Output: MP3 voiceover file per script segment.\n\nSTAGE 2 \u2014 VISUALS: Three-layer composition.\n(a) Screen recordings: auto-capture from terminal sessions using asciinema or OBS scripted capture. Triggered during actual pipeline runs \u2014 real terminal output, real state files, real code. Not staged.\n(b) Architecture diagrams: generate Mermaid diagrams from the pipeline's agent topology, animate transitions with ffmpeg. These are accurate because they're generated from the actual prompt files and cron jobs.\n(c) B-roll transitions: AI video generation (Runway ML, Pika, or similar) for abstract visual segments between technical sections. Keep to <20% of total runtime \u2014 the real footage is the differentiator.\n\nSTAGE 3 \u2014 ASSEMBLY: ffmpeg pipeline stitches audio + screen recordings + b-roll per script timing cues. Script markdown format includes explicit segment markers: [SCREEN:filename], [BROLL:prompt], [DIAGRAM:agent-topology]. Agent reads markers and assembles accordingly.\n\nSTAGE 4 \u2014 CAPTIONS: OpenAI Whisper transcribes final audio and generates .srt file. Burn captions into video with ffmpeg. Style: clean sans-serif, high contrast, lower-third placement. Not Comic Sans. Not rainbow colors. Minimal and professional.\n\nSTAGE 5 \u2014 THUMBNAIL: AI image generation (DALL-E or Stable Diffusion via API) using a consistent brand template. Template elements: dark background, bold title text overlay, small brand mark. Batch generate 3 variants per video, pick best. Consistent visual identity across all thumbnails is more important than any individual thumbnail being perfect.\n\nSTAGE 6 \u2014 UPLOAD: YouTube Data API v3. Upload video, set title/description/tags from script metadata. Description template: hook paragraph, timestamps (auto-generated from script segment markers), GitHub repo link, Ko-fi/donation link, affiliate links (Alpaca, ElevenLabs, Anthropic API). Schedule publish time rather than immediate upload \u2014 Tuesday/Thursday 9am ET performs well for technical audiences.\n\nPhased build: Stage 1 (voice clone) + Stage 6 (upload) first. Then Stage 4 (captions). Then Stage 5 (thumbnail). Stages 2+3 (visuals) last \u2014 start with screen recordings only before adding AI b-roll.\n\nMonetization hooks baked into every video: GitHub repo link (builds stars/credibility), Ko-fi link ($5 prompt pack access), affiliate links. These go in the description template from day one.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-016 content trigger agent producing well-structured scripts. ElevenLabs Professional Voice Clone recorded (30+ min audio). YouTube channel created. YouTube Data API v3 credentials. Ko-fi or Gumroad account for donation/paid access link.",
       "priority": "medium",
       "ticket": null,
       "tags": [
-        "trading",
-        "research",
-        "hedging",
-        "position-management",
-        "paper-5",
-        "paper-4",
-        "tier-2"
-      ]
+        "youtube",
+        "elevenlabs",
+        "voice-clone",
+        "video-production",
+        "automation",
+        "monetization",
+        "content"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-036",
-      "category": "trading",
-      "title": "GSADF Bubble Detection \u2014 explosive price early warning",
-      "what": "Generalized Supremum ADF test on SPY, QQQ, and held sector ETFs. Detects explosive price behavior (bubbles) before they burst. When bubble detected, proactively tighten circuit breaker thresholds. Weekly diagnostic. v1: GSADF test via arch package. v2: combine with EXCF, track contagion lag, auto-tighten circuit breaker.",
+      "id": "Q-019",
+      "category": "infrastructure",
+      "title": "Trading system isolation \u2014 dedicated agent + on/off switch",
+      "what": "Move all 18 trading cron jobs from the main agent to a new dedicated trading agent with its own isolated workspace. Goal: pause or resume the entire trading system as a unit instead of toggling 18 jobs individually.\n\nCurrent state: all trading cron jobs run under main. OpenClaw has no native agent start/stop (openclaw agents supports add/delete/bind only). Cron disable is ID-by-ID only \u2014 no bulk or agent-scoped toggle.\n\nProposed design:\n1. Create trading agent in openclaw.json with dedicated workspace (~/.openclaw/agents/trading/workspace)\n2. Re-point all 18 TradingBot cron jobs to agentId: trading\n3. Migrate relevant state files to new workspace\n4. Build trading-pause.sh / trading-resume.sh shell scripts that bulk-disable/enable all trading job IDs via openclaw cron disable <id> \u2014 since no native group toggle exists, script the IDs\n5. Optionally: wire pause/resume to a single gate file (trading_active.json) checked by the pre-market agent \u2014 more elegant but step 4 works immediately\n\nJobs to migrate (18 total): Preflight 6am goals, Morning brief curator, trading:premarket-phase, Morning brief composer, trading:preopen-gateway, TradingBot Market Status, Universe, Research, Alt Sentiment, Thesis, Strategy, Validation, Broker Auth, Risk Decision, Systems Audit, Remediation, Risk Approval, Pre-Open Refresh, Execution, Positions (x3), Volatility (x2), EOD Decision, Post-Close, Daily Audit, Governance Review.\n\nBackup: unchanged \u2014 prompt files stay in OpenClaw-s-Brain on GitHub.\n\nPrereq check needed: confirm openclaw cron edit supports changing agentId on existing jobs, or whether jobs must be deleted and re-added.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "arch Python package or custom GSADF implementation.",
+      "prereq": "Confirm openclaw cron edit supports agentId changes on existing jobs.",
       "priority": "medium",
       "ticket": null,
       "tags": [
+        "infrastructure",
         "trading",
-        "research",
-        "bubble-detection",
-        "gsadf",
-        "paper-8",
-        "tier-3"
-      ]
+        "agent-isolation",
+        "cron",
+        "on-off-switch",
+        "workspace"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-037",
-      "category": "trading",
-      "title": "Deflated Sharpe Ratio for performance evaluation",
-      "what": "Apply DSR correction (Bailey & Lopez De Prado, 2014) when evaluating strategy performance. Corrects for multiple testing, non-normal returns, data snooping. Probability that observed Sharpe is genuine. Flag when DSR < 0.5. v1: add to performance_aggregator.py. v2: per-strategy DSR for backtester (Q-025), walk-forward DSR, dashboard comparison chart.",
+      "id": "Q-011",
+      "category": "llc",
+      "title": "Tax & accounting setup checklist",
+      "what": "Set up the financial infrastructure to support the LLC properly and protect deductions. Key steps: (1) Open dedicated business checking \u2014 never mix personal and business money, this is non-negotiable. (2) Set up expense tracking \u2014 Wave (free) or QuickBooks Simple Start. Save every API invoice, hardware receipt, and subscription confirmation to a dedicated folder. (3) Understand Schedule C \u2014 single-member LLC files taxes on Schedule C attached to personal 1040, no separate business return required. Florida has no state income tax so no state business return either. (4) Document pursuit of profit \u2014 keep a simple log of hours worked, goals, and business activities. Protects against IRS hobby classification. (5) Section 179 for hardware \u2014 new machine can be fully expensed in year one rather than depreciated. (6) Find a CPA before first tax filing \u2014 not before forming the LLC, but before filing. Early year losses (pre-revenue) can be carried forward to offset future income, but only if IRS agrees it's a business. CPA helps document intent. Deductible categories: LLM API subscriptions, hardware, software tools, internet (business %), home office (dedicated space %), education, domain/hosting.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "performance_aggregator.py producing Sharpe. Enough trading days for meaningful statistics.",
-      "priority": "medium",
+      "prereq": "LLC formed (Q-007). Dedicated business bank account opened.",
+      "priority": "high",
       "ticket": null,
       "tags": [
-        "trading",
-        "research",
-        "performance",
-        "sharpe",
-        "overfitting",
-        "paper-7",
-        "tier-3"
-      ]
+        "llc",
+        "tax",
+        "accounting",
+        "schedule-c",
+        "section-179",
+        "deductions"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-038",
-      "category": "trading",
-      "title": "Cross-Market Contagion Monitor",
-      "what": "ARDL-style monitoring of cross-index correlation dynamics. Track whether shocks to S&P 500, Nasdaq, international indices propagate to our sectors with measurable lag. When contagion risk elevated, flag for defensive posture. Extends sector_correlation_monitor.py. v1: add SPY/QQQ/EFA/EEM to correlation matrix with lagged correlations. v2: full ARDL model, regime-conditional contagion.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-029 (sector correlation monitor) as base.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "contagion",
-        "cross-market",
-        "paper-8",
-        "paper-1",
-        "tier-3"
-      ]
-    },
-    {
-      "id": "Q-040",
-      "category": "trading",
-      "title": "LSTM Regime Classifier (R&D)",
-      "what": "Upgrade from HMM (Markovian, memoryless) to LSTM-based regime detection capturing path dependency. The fRNN insight from Paper #4: decisions should consider the full price PATH, not just current state. Only begin after HMM has 30+ days of data to benchmark against. v1: train LSTM on same data, compare accuracy. v2: replace HMM if meaningfully better.",
-      "blocker": "Need 30+ days of HMM regime data to benchmark against.",
+      "id": "Q-024",
+      "category": "dashboard",
+      "title": "Systems tab \u2014 strategy toggles, performance reports, parameter history",
+      "what": "New first-class tab in the Vercel trading app. Strategy on/off toggles (equity execution, options wheel, options BPS) with confirmation UX. Weekly BPS performance report viewer (rendered from bps_performance_report_YYYY-MM-DD.md). Parameter change history timeline. Sector/symbol win rate heatmap. Tunables tab may merge into this. Premium design consistent with art-direction pass. Build after BPS has 1-2 weeks of real data.",
+      "blocker": "BPS module needs 1-2 weeks of data first",
       "blocker_type": "data",
-      "prereq": "Q-028 (HMM) running 30+ days. PyTorch or TensorFlow for LSTM training.",
-      "priority": "low",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "research",
-        "regime-detection",
-        "lstm",
-        "deep-learning",
-        "paper-4",
-        "tier-4"
-      ]
-    },
-    {
-      "id": "Q-027",
-      "category": "trading",
-      "title": "Bull/Bear adversarial debate in Thesis agent",
-      "what": "Add a two-pass adversarial debate pattern to Agent-06 (Thesis). After forming the initial thesis, run a second pass that argues against it \u2014 forces explicit bear case argumentation before finalizing conviction. If the bear case is stronger, downgrade conviction. Inspired by TauricResearch/TradingAgents bull/bear researcher pattern. Implementation: two-pass prompt within existing Agent-06 (not a new agent). Pass 1 forms thesis as today. Pass 2 receives the thesis and constructs the strongest bear case. Final output includes both arguments and adjusted conviction. Reduces confirmation bias in stock selection.",
-      "blocker": "Need 1+ week of paper trading data to compare thesis quality before/after.",
-      "blocker_type": "data",
-      "prereq": "Research v2 stable. Pipeline producing daily thesis_packet.json with real data. Validate with pipeline-validate.sh before deploy.",
+      "prereq": "BPS module running in production (crons active, weekly reports generating)",
       "priority": "medium",
       "ticket": null,
       "tags": [
-        "trading",
-        "agent-06",
-        "thesis",
-        "adversarial-debate",
-        "bull-bear",
-        "quality"
-      ]
+        "dashboard",
+        "ux",
+        "ops-console",
+        "bps",
+        "strategy-management"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
       "id": "Q-026",
@@ -479,83 +423,9 @@
         "learning",
         "thesis",
         "emotional-regime"
-      ]
-    },
-    {
-      "id": "Q-024",
-      "category": "dashboard",
-      "title": "Systems tab \u2014 strategy toggles, performance reports, parameter history",
-      "what": "New first-class tab in the Vercel trading app. Strategy on/off toggles (equity execution, options wheel, options BPS) with confirmation UX. Weekly BPS performance report viewer (rendered from bps_performance_report_YYYY-MM-DD.md). Parameter change history timeline. Sector/symbol win rate heatmap. Tunables tab may merge into this. Premium design consistent with art-direction pass. Build after BPS has 1-2 weeks of real data.",
-      "blocker": "BPS module needs 1-2 weeks of data first",
-      "blocker_type": "data",
-      "prereq": "BPS module running in production (crons active, weekly reports generating)",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "dashboard",
-        "ux",
-        "ops-console",
-        "bps",
-        "strategy-management"
-      ]
-    },
-    {
-      "id": "Q-019",
-      "category": "infrastructure",
-      "title": "Trading system isolation \u2014 dedicated agent + on/off switch",
-      "what": "Move all 18 trading cron jobs from the main agent to a new dedicated trading agent with its own isolated workspace. Goal: pause or resume the entire trading system as a unit instead of toggling 18 jobs individually.\n\nCurrent state: all trading cron jobs run under main. OpenClaw has no native agent start/stop (openclaw agents supports add/delete/bind only). Cron disable is ID-by-ID only \u2014 no bulk or agent-scoped toggle.\n\nProposed design:\n1. Create trading agent in openclaw.json with dedicated workspace (~/.openclaw/agents/trading/workspace)\n2. Re-point all 18 TradingBot cron jobs to agentId: trading\n3. Migrate relevant state files to new workspace\n4. Build trading-pause.sh / trading-resume.sh shell scripts that bulk-disable/enable all trading job IDs via openclaw cron disable <id> \u2014 since no native group toggle exists, script the IDs\n5. Optionally: wire pause/resume to a single gate file (trading_active.json) checked by the pre-market agent \u2014 more elegant but step 4 works immediately\n\nJobs to migrate (18 total): Preflight 6am goals, Morning brief curator, trading:premarket-phase, Morning brief composer, trading:preopen-gateway, TradingBot Market Status, Universe, Research, Alt Sentiment, Thesis, Strategy, Validation, Broker Auth, Risk Decision, Systems Audit, Remediation, Risk Approval, Pre-Open Refresh, Execution, Positions (x3), Volatility (x2), EOD Decision, Post-Close, Daily Audit, Governance Review.\n\nBackup: unchanged \u2014 prompt files stay in OpenClaw-s-Brain on GitHub.\n\nPrereq check needed: confirm openclaw cron edit supports changing agentId on existing jobs, or whether jobs must be deleted and re-added.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Confirm openclaw cron edit supports agentId changes on existing jobs.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "infrastructure",
-        "trading",
-        "agent-isolation",
-        "cron",
-        "on-off-switch",
-        "workspace"
-      ]
-    },
-    {
-      "id": "Q-017",
-      "category": "project",
-      "title": "YouTube video production pipeline \u2014 ElevenLabs \u2192 video \u2192 captions \u2192 thumbnail \u2192 upload",
-      "what": "Automated production pipeline that takes a finished script (from Q-016) and outputs a published YouTube video. Human input is already done at this stage \u2014 this is pure production automation.\n\nSTAGE 1 \u2014 VOICE: ElevenLabs Professional Voice Clone. Jacob records 30+ min of clean audio (reading any natural text \u2014 doesn't need to be scripted). Submit via ElevenLabs API to create a persistent voice model. All future voiceover generation uses this model \u2014 one-time setup cost, infinite reuse. API key already configured in OpenClaw. Output: MP3 voiceover file per script segment.\n\nSTAGE 2 \u2014 VISUALS: Three-layer composition.\n(a) Screen recordings: auto-capture from terminal sessions using asciinema or OBS scripted capture. Triggered during actual pipeline runs \u2014 real terminal output, real state files, real code. Not staged.\n(b) Architecture diagrams: generate Mermaid diagrams from the pipeline's agent topology, animate transitions with ffmpeg. These are accurate because they're generated from the actual prompt files and cron jobs.\n(c) B-roll transitions: AI video generation (Runway ML, Pika, or similar) for abstract visual segments between technical sections. Keep to <20% of total runtime \u2014 the real footage is the differentiator.\n\nSTAGE 3 \u2014 ASSEMBLY: ffmpeg pipeline stitches audio + screen recordings + b-roll per script timing cues. Script markdown format includes explicit segment markers: [SCREEN:filename], [BROLL:prompt], [DIAGRAM:agent-topology]. Agent reads markers and assembles accordingly.\n\nSTAGE 4 \u2014 CAPTIONS: OpenAI Whisper transcribes final audio and generates .srt file. Burn captions into video with ffmpeg. Style: clean sans-serif, high contrast, lower-third placement. Not Comic Sans. Not rainbow colors. Minimal and professional.\n\nSTAGE 5 \u2014 THUMBNAIL: AI image generation (DALL-E or Stable Diffusion via API) using a consistent brand template. Template elements: dark background, bold title text overlay, small brand mark. Batch generate 3 variants per video, pick best. Consistent visual identity across all thumbnails is more important than any individual thumbnail being perfect.\n\nSTAGE 6 \u2014 UPLOAD: YouTube Data API v3. Upload video, set title/description/tags from script metadata. Description template: hook paragraph, timestamps (auto-generated from script segment markers), GitHub repo link, Ko-fi/donation link, affiliate links (Alpaca, ElevenLabs, Anthropic API). Schedule publish time rather than immediate upload \u2014 Tuesday/Thursday 9am ET performs well for technical audiences.\n\nPhased build: Stage 1 (voice clone) + Stage 6 (upload) first. Then Stage 4 (captions). Then Stage 5 (thumbnail). Stages 2+3 (visuals) last \u2014 start with screen recordings only before adding AI b-roll.\n\nMonetization hooks baked into every video: GitHub repo link (builds stars/credibility), Ko-fi link ($5 prompt pack access), affiliate links. These go in the description template from day one.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-016 content trigger agent producing well-structured scripts. ElevenLabs Professional Voice Clone recorded (30+ min audio). YouTube channel created. YouTube Data API v3 credentials. Ko-fi or Gumroad account for donation/paid access link.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "youtube",
-        "elevenlabs",
-        "voice-clone",
-        "video-production",
-        "automation",
-        "monetization",
-        "content"
-      ]
-    },
-    {
-      "id": "Q-014",
-      "category": "trading",
-      "title": "Intraday execute-if-approved mode (Option C)",
-      "what": "Extend the late-session paper validation chain to include an execution step after approval. Today's late-session run proved the validation \u2192 approval path works (AUTO_APPROVED_PAPER, 2026-03-09). The missing piece is the execution leg.\n\nSpecific gap: Agent-12 reads preopen_refresh.json for execution_allowed. That file is not written in the current late-session chain, so Agent-12 fails on MISSING_ARTIFACT before it can place any orders.\n\nFix: add Step 7.5 to late_session_paper_validation_v1.md \u2014 write a minimal late-session preopen_refresh.json with execution_allowed=true only when approval_state=AUTO_APPROVED_PAPER and circuit_breaker_state != HALT. Then run Agent-12 against it. Agent-12 reads risk_decision.json (approved names + sizes), broker_auth_ok.json, and risk_policy.json \u2014 all of which are already written by the existing chain.\n\nEnd-to-end flow when complete:\n1. Manual trigger (Telegram command or openclaw cron --at)\n2. Fresh scan \u2192 thesis \u2192 strategy (basket correlation) \u2192 validation (WEAK_EDGE gate) \u2192 risk eval \u2192 approval gate\n3. If AUTO_APPROVED_PAPER: write late-session preopen_refresh.json \u2192 Agent-12 \u2192 paper orders placed\n4. Write execution_log.json with picked names, order IDs, fill status\n5. Summary posted to channel: names, approval state, order outcome\n\nConstraints to bake in:\n- max 1-2 names (hard cap, already in chain)\n- minimum session time remaining: skip execution if < 30 min to close (no point entering)\n- QUARTER sizing mandatory (REDUCE_ONLY inherited)\n- paper only (live_trading_enabled=false gate)\n- no order submission if market_status shows circuit_breaker_active=true\n\nTest plan: run on a day where market is open, trigger manually at ~11am or 2pm, verify execution_log.json and broker paper order both appear. Do not test near close.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "late_session_paper_validation_v1.md exists (done 2026-03-09). Approval path proven (done 2026-03-09). Agent-12 prompt already handles paper execution path.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "intraday",
-        "execution",
-        "agent-12",
-        "late-session",
-        "paper-trading",
-        "option-c"
-      ]
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
       "id": "Q-010",
@@ -574,7 +444,150 @@
         "legal",
         "post-paper-gate",
         "high-upside"
-      ]
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-053",
+      "category": "documentation",
+      "title": "Pipeline Architecture & Strategy Guide",
+      "what": "Comprehensive 30-40 page technical document covering the entire trading pipeline: signal generation, trade selection, quality scoring, risk management, options strategy, infrastructure, and research paper lineage. Written for Jacob + financial advisors. Lives in Obsidian vault (interlinked) + PDF export. Includes quick reference card.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "None \u2014 writing project, not code.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "documentation",
+        "architecture",
+        "obsidian"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-054",
+      "category": "infrastructure",
+      "title": "Obsidian vault integration + daily performance reports",
+      "what": "Set up Obsidian vault structure for trading knowledge graph. Daily post-close briefing notes (auto-generated) linking to symbols, agents, papers. Email delivery via SendGrid. Same content in Obsidian + email \u2014 evaluate which Jacob prefers.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-053 architecture doc (provides the template and structure).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "obsidian",
+        "email",
+        "reporting"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-040",
+      "category": "trading",
+      "title": "LSTM Regime Classifier (R&D)",
+      "what": "Upgrade from HMM (Markovian, memoryless) to LSTM-based regime detection capturing path dependency. The fRNN insight from Paper #4: decisions should consider the full price PATH, not just current state. Only begin after HMM has 30+ days of data to benchmark against. v1: train LSTM on same data, compare accuracy. v2: replace HMM if meaningfully better.",
+      "blocker": "Need 30+ days of HMM regime data to benchmark against.",
+      "blocker_type": "data",
+      "prereq": "Q-028 (HMM) running 30+ days. PyTorch or TensorFlow for LSTM training.",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "regime-detection",
+        "lstm",
+        "deep-learning",
+        "paper-4",
+        "tier-4"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-014",
+      "category": "trading",
+      "title": "Intraday execute-if-approved mode (Option C)",
+      "what": "Extend the late-session paper validation chain to include an execution step after approval. Today's late-session run proved the validation \u2192 approval path works (AUTO_APPROVED_PAPER, 2026-03-09). The missing piece is the execution leg.\n\nSpecific gap: Agent-12 reads preopen_refresh.json for execution_allowed. That file is not written in the current late-session chain, so Agent-12 fails on MISSING_ARTIFACT before it can place any orders.\n\nFix: add Step 7.5 to late_session_paper_validation_v1.md \u2014 write a minimal late-session preopen_refresh.json with execution_allowed=true only when approval_state=AUTO_APPROVED_PAPER and circuit_breaker_state != HALT. Then run Agent-12 against it. Agent-12 reads risk_decision.json (approved names + sizes), broker_auth_ok.json, and risk_policy.json \u2014 all of which are already written by the existing chain.\n\nEnd-to-end flow when complete:\n1. Manual trigger (Telegram command or openclaw cron --at)\n2. Fresh scan \u2192 thesis \u2192 strategy (basket correlation) \u2192 validation (WEAK_EDGE gate) \u2192 risk eval \u2192 approval gate\n3. If AUTO_APPROVED_PAPER: write late-session preopen_refresh.json \u2192 Agent-12 \u2192 paper orders placed\n4. Write execution_log.json with picked names, order IDs, fill status\n5. Summary posted to channel: names, approval state, order outcome\n\nConstraints to bake in:\n- max 1-2 names (hard cap, already in chain)\n- minimum session time remaining: skip execution if < 30 min to close (no point entering)\n- QUARTER sizing mandatory (REDUCE_ONLY inherited)\n- paper only (live_trading_enabled=false gate)\n- no order submission if market_status shows circuit_breaker_active=true\n\nTest plan: run on a day where market is open, trigger manually at ~11am or 2pm, verify execution_log.json and broker paper order both appear. Do not test near close.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "late_session_paper_validation_v1.md exists (done 2026-03-09). Approval path proven (done 2026-03-09). Agent-12 prompt already handles paper execution path.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "intraday",
+        "execution",
+        "agent-12",
+        "late-session",
+        "paper-trading",
+        "option-c"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-035",
+      "category": "trading",
+      "title": "Hedge-vs-Rebalance Decision Framework",
+      "what": "When pipeline suggests reducing a position, compare cost-to-sell vs cost-to-hedge-with-puts. High alpha + cheap puts = hedge instead of sell. Low alpha or expensive puts = sell. Implements Paper #5's no-trade zone concept for sell decisions. v1: simple cost comparison in morning_position_reviewer.py. v2: full model with transaction costs, market impact, time decay, asymmetric shock response.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-030 (no-trade zone), protective_put_screener single-symbol mode.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "hedging",
+        "position-management",
+        "paper-5",
+        "paper-4",
+        "tier-2"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-052",
+      "category": "trading",
+      "title": "HMM threshold empirical sweep",
+      "what": "Current 35/65 thresholds set by judgment. After 60+ days of HMM output, sweep via Hall & Pagan simulation to find optimal values.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "60+ days of hmm_regime output (~late May 2026)",
+      "priority": "low",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "hmm",
+        "research"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-036",
+      "category": "trading",
+      "title": "GSADF Bubble Detection \u2014 explosive price early warning",
+      "what": "Generalized Supremum ADF test on SPY, QQQ, and held sector ETFs. Detects explosive price behavior (bubbles) before they burst. When bubble detected, proactively tighten circuit breaker thresholds. Weekly diagnostic. v1: GSADF test via arch package. v2: combine with EXCF, track contagion lag, auto-tighten circuit breaker.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "arch Python package or custom GSADF implementation.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "bubble-detection",
+        "gsadf",
+        "paper-8",
+        "tier-3"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
       "id": "Q-007",
@@ -591,44 +604,74 @@
         "legal",
         "tax",
         "foundation"
-      ]
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-011",
-      "category": "llc",
-      "title": "Tax & accounting setup checklist",
-      "what": "Set up the financial infrastructure to support the LLC properly and protect deductions. Key steps: (1) Open dedicated business checking \u2014 never mix personal and business money, this is non-negotiable. (2) Set up expense tracking \u2014 Wave (free) or QuickBooks Simple Start. Save every API invoice, hardware receipt, and subscription confirmation to a dedicated folder. (3) Understand Schedule C \u2014 single-member LLC files taxes on Schedule C attached to personal 1040, no separate business return required. Florida has no state income tax so no state business return either. (4) Document pursuit of profit \u2014 keep a simple log of hours worked, goals, and business activities. Protects against IRS hobby classification. (5) Section 179 for hardware \u2014 new machine can be fully expensed in year one rather than depreciated. (6) Find a CPA before first tax filing \u2014 not before forming the LLC, but before filing. Early year losses (pre-revenue) can be carried forward to offset future income, but only if IRS agrees it's a business. CPA helps document intent. Deductible categories: LLM API subscriptions, hardware, software tools, internet (business %), home office (dedicated space %), education, domain/hosting.",
+      "id": "Q-037",
+      "category": "trading",
+      "title": "Deflated Sharpe Ratio for performance evaluation",
+      "what": "Apply DSR correction (Bailey & Lopez De Prado, 2014) when evaluating strategy performance. Corrects for multiple testing, non-normal returns, data snooping. Probability that observed Sharpe is genuine. Flag when DSR < 0.5. v1: add to performance_aggregator.py. v2: per-strategy DSR for backtester (Q-025), walk-forward DSR, dashboard comparison chart.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "LLC formed (Q-007). Dedicated business bank account opened.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "llc",
-        "tax",
-        "accounting",
-        "schedule-c",
-        "section-179",
-        "deductions"
-      ]
-    },
-    {
-      "id": "Q-009",
-      "category": "project",
-      "title": "AI automation consulting / agency",
-      "what": "Sell the skillset, not a product. You know how to build multi-agent systems with real infrastructure \u2014 most businesses don't have anyone who can do this. One retainer client at $3-5k/month covers all subscriptions and hardware. Services: custom agent pipelines, OpenClaw-style automation setups, AI workflow integration for small businesses. No product needed to start \u2014 just a landing page, a LinkedIn presence, and one warm outreach campaign. Strategy: close 1-2 clients to fund the hobby side, keep scope tight, productize repeatable work into templates over time.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "LLC formed (Q-007). Simple contract template. Define service scope and pricing before first outreach.",
+      "prereq": "performance_aggregator.py producing Sharpe. Enough trading days for meaningful statistics.",
       "priority": "medium",
       "ticket": null,
       "tags": [
-        "consulting",
-        "agency",
-        "ai-automation",
-        "monetization",
-        "services"
-      ]
+        "trading",
+        "research",
+        "performance",
+        "sharpe",
+        "overfitting",
+        "paper-7",
+        "tier-3"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-038",
+      "category": "trading",
+      "title": "Cross-Market Contagion Monitor",
+      "what": "ARDL-style monitoring of cross-index correlation dynamics. Track whether shocks to S&P 500, Nasdaq, international indices propagate to our sectors with measurable lag. When contagion risk elevated, flag for defensive posture. Extends sector_correlation_monitor.py. v1: add SPY/QQQ/EFA/EEM to correlation matrix with lagged correlations. v2: full ARDL model, regime-conditional contagion.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-029 (sector correlation monitor) as base.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "research",
+        "contagion",
+        "cross-market",
+        "paper-8",
+        "paper-1",
+        "tier-3"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-027",
+      "category": "trading",
+      "title": "Bull/Bear adversarial debate in Thesis agent",
+      "what": "Add a two-pass adversarial debate pattern to Agent-06 (Thesis). After forming the initial thesis, run a second pass that argues against it \u2014 forces explicit bear case argumentation before finalizing conviction. If the bear case is stronger, downgrade conviction. Inspired by TauricResearch/TradingAgents bull/bear researcher pattern. Implementation: two-pass prompt within existing Agent-06 (not a new agent). Pass 1 forms thesis as today. Pass 2 receives the thesis and constructs the strongest bear case. Final output includes both arguments and adjusted conviction. Reduces confirmation bias in stock selection.",
+      "blocker": "Need 1+ week of paper trading data to compare thesis quality before/after.",
+      "blocker_type": "data",
+      "prereq": "Research v2 stable. Pipeline producing daily thesis_packet.json with real data. Validate with pipeline-validate.sh before deploy.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "trading",
+        "agent-06",
+        "thesis",
+        "adversarial-debate",
+        "bull-bear",
+        "quality"
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
       "id": "Q-051",
@@ -646,37 +689,29 @@
         "hedging",
         "copula",
         "paper-triage-2"
-      ]
+      ],
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-052",
-      "category": "trading",
-      "title": "HMM threshold empirical sweep",
-      "what": "Current 35/65 thresholds set by judgment. After 60+ days of HMM output, sweep via Hall & Pagan simulation to find optimal values.",
+      "id": "Q-009",
+      "category": "project",
+      "title": "AI automation consulting / agency",
+      "what": "Sell the skillset, not a product. You know how to build multi-agent systems with real infrastructure \u2014 most businesses don't have anyone who can do this. One retainer client at $3-5k/month covers all subscriptions and hardware. Services: custom agent pipelines, OpenClaw-style automation setups, AI workflow integration for small businesses. No product needed to start \u2014 just a landing page, a LinkedIn presence, and one warm outreach campaign. Strategy: close 1-2 clients to fund the hobby side, keep scope tight, productize repeatable work into templates over time.",
       "blocker": null,
       "blocker_type": null,
-      "prereq": "60+ days of hmm_regime output (~late May 2026)",
-      "priority": "low",
+      "prereq": "LLC formed (Q-007). Simple contract template. Define service scope and pricing before first outreach.",
+      "priority": "medium",
       "ticket": null,
       "tags": [
-        "trading",
-        "hmm",
-        "research"
-      ]
-    }
-  ],
-  "completed": [
-    {
-      "id": "Q-061",
-      "category": "trading",
-      "title": "CB auto-downstep in nightly validator",
-      "what": "HALT\u2192REDUCE_ONLY after 1 clean validation. REDUCE_ONLY\u2192NORMAL after 3 consecutive clean nights. Counter resets on failure. All transitions reported to Discord #pipeline. Runs at 23:00 ET nightly only.",
-      "tags": [
-        "trading",
-        "risk",
-        "infrastructure"
+        "consulting",
+        "agency",
+        "ai-automation",
+        "monetization",
+        "services"
       ],
-      "closed_at": "2026-04-03"
+      "closed_at": "2026-04-12",
+      "closed_reason": "archived_from_active_queue_during_2026-04-12_scrub"
     },
     {
       "id": "ITEMS-1-18",
@@ -688,7 +723,21 @@
         "infrastructure",
         "reliability"
       ],
-      "closed_at": "2026-04-03"
+      "closed_at": "2026-04-03",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-061",
+      "category": "trading",
+      "title": "CB auto-downstep in nightly validator",
+      "what": "HALT\u2192REDUCE_ONLY after 1 clean validation. REDUCE_ONLY\u2192NORMAL after 3 consecutive clean nights. Counter resets on failure. All transitions reported to Discord #pipeline. Runs at 23:00 ET nightly only.",
+      "tags": [
+        "trading",
+        "risk",
+        "infrastructure"
+      ],
+      "closed_at": "2026-04-03",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-056",
@@ -700,19 +749,8 @@
         "discord",
         "notifications"
       ],
-      "closed_at": "2026-04-02"
-    },
-    {
-      "id": "Q-025",
-      "category": "trading",
-      "title": "Backtesting framework infrastructure",
-      "what": "Walk-forward backtesting engine: prepare.py (data download + walk-forward windows), backtest.py (strategy execution with stops/targets/position limits), strategy module interface. 502 days, 12 symbols, 17 folds. Momentum baseline: 60.5% WR, 1.85 PF. Ready for strategy-specific backtests.",
-      "tags": [
-        "trading",
-        "backtesting",
-        "infrastructure"
-      ],
-      "closed_at": "2026-03-31"
+      "closed_at": "2026-04-02",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-055",
@@ -725,43 +763,21 @@
         "directional",
         "weekly"
       ],
-      "closed_at": "2026-03-31"
+      "closed_at": "2026-03-31",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-015",
+      "id": "Q-025",
       "category": "trading",
-      "title": "Paper-mode governance tolerance",
-      "what": "Agent-08b severity tier system (SAFETY/GOVERNANCE/CARRYOVER) with paper vs live mode behavior. GOVERNANCE checks warn+continue in paper, hard block in live. Implemented across v1.1-v1.5 of Agent-08b prompt.",
+      "title": "Backtesting framework infrastructure",
+      "what": "Walk-forward backtesting engine: prepare.py (data download + walk-forward windows), backtest.py (strategy execution with stops/targets/position limits), strategy module interface. 502 days, 12 symbols, 17 folds. Momentum baseline: 60.5% WR, 1.85 PF. Ready for strategy-specific backtests.",
       "tags": [
         "trading",
-        "governance",
-        "risk"
+        "backtesting",
+        "infrastructure"
       ],
-      "closed_at": "2026-03-30"
-    },
-    {
-      "id": "P0-001",
-      "category": "trading",
-      "title": "Protective put sizing formula fix + idempotency guard",
-      "what": "Fixed contracts_needed from qty to qty//100. Added date-match idempotency check to options_regime_router.py. BX 165-contract overhedge traced to this bug.",
-      "tags": [
-        "trading",
-        "bugfix",
-        "options"
-      ],
-      "closed_at": "2026-03-30"
-    },
-    {
-      "id": "P1-001",
-      "category": "trading",
-      "title": "Options concentration gate + dashboard deployed capital",
-      "what": "Max 50% options notional in single underlying (gate_options_risk.py check 5). Dashboard now shows equity_deployed + options_deployed split. Live API fixed to include options in positions_value.",
-      "tags": [
-        "trading",
-        "risk",
-        "dashboard"
-      ],
-      "closed_at": "2026-03-30"
+      "closed_at": "2026-03-31",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "P2-001",
@@ -773,7 +789,8 @@
         "pipeline",
         "orchestrator"
       ],
-      "closed_at": "2026-03-30"
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-048",
@@ -787,35 +804,47 @@
         "research",
         "paper-triage-2"
       ],
-      "closed_at": "2026-03-30"
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-047",
+      "id": "P0-001",
       "category": "trading",
-      "title": "Change-point coincidence for correlation monitor",
-      "what": "PELT-based structural break detection across 11 sector ETFs + SPY. Measures pairwise break coincidence \u2014 assets that crash together even with low daily correlation. Enriches sector_correlations.json. Current: SPY/XLC/XLY/XLK all broke simultaneously (100% coincidence). Cron 07:05 ET Monday after correlation monitor. Paper: Semi-Metric Portfolio (James et al. 2023).",
+      "title": "Protective put sizing formula fix + idempotency guard",
+      "what": "Fixed contracts_needed from qty to qty//100. Added date-match idempotency check to options_regime_router.py. BX 165-contract overhedge traced to this bug.",
       "tags": [
         "trading",
-        "correlation",
+        "bugfix",
+        "options"
+      ],
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-015",
+      "category": "trading",
+      "title": "Paper-mode governance tolerance",
+      "what": "Agent-08b severity tier system (SAFETY/GOVERNANCE/CARRYOVER) with paper vs live mode behavior. GOVERNANCE checks warn+continue in paper, hard block in live. Implemented across v1.1-v1.5 of Agent-08b prompt.",
+      "tags": [
+        "trading",
+        "governance",
+        "risk"
+      ],
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "P1-001",
+      "category": "trading",
+      "title": "Options concentration gate + dashboard deployed capital",
+      "what": "Max 50% options notional in single underlying (gate_options_risk.py check 5). Dashboard now shows equity_deployed + options_deployed split. Live API fixed to include options in positions_value.",
+      "tags": [
+        "trading",
         "risk",
-        "research",
-        "paper-triage-2"
+        "dashboard"
       ],
-      "closed_at": "2026-03-30"
-    },
-    {
-      "id": "Q-046",
-      "category": "trading",
-      "title": "HMM threshold calibration (asymmetric hysteresis)",
-      "what": "Replaced Viterbi hard state assignment with probability-based classification using asymmetric hysteresis. VOLATILE entry: calm_prob < 0.35. CALM entry: calm_prob > 0.65. Hysteresis band (0.35-0.65) maintains previous regime to prevent whipsaw. Paper: Hall & Pagan (2025).",
-      "tags": [
-        "trading",
-        "hmm",
-        "regime",
-        "research",
-        "paper-triage-2"
-      ],
-      "closed_at": "2026-03-30"
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-050",
@@ -829,7 +858,38 @@
         "research",
         "paper-triage-2"
       ],
-      "closed_at": "2026-03-30"
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-046",
+      "category": "trading",
+      "title": "HMM threshold calibration (asymmetric hysteresis)",
+      "what": "Replaced Viterbi hard state assignment with probability-based classification using asymmetric hysteresis. VOLATILE entry: calm_prob < 0.35. CALM entry: calm_prob > 0.65. Hysteresis band (0.35-0.65) maintains previous regime to prevent whipsaw. Paper: Hall & Pagan (2025).",
+      "tags": [
+        "trading",
+        "hmm",
+        "regime",
+        "research",
+        "paper-triage-2"
+      ],
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-047",
+      "category": "trading",
+      "title": "Change-point coincidence for correlation monitor",
+      "what": "PELT-based structural break detection across 11 sector ETFs + SPY. Measures pairwise break coincidence \u2014 assets that crash together even with low daily correlation. Enriches sector_correlations.json. Current: SPY/XLC/XLY/XLK all broke simultaneously (100% coincidence). Cron 07:05 ET Monday after correlation monitor. Paper: Semi-Metric Portfolio (James et al. 2023).",
+      "tags": [
+        "trading",
+        "correlation",
+        "risk",
+        "research",
+        "paper-triage-2"
+      ],
+      "closed_at": "2026-03-30",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-049",
@@ -843,7 +903,36 @@
         "research",
         "paper-triage-2"
       ],
-      "closed_at": "2026-03-29"
+      "closed_at": "2026-03-29",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-041",
+      "category": "trading",
+      "title": "Per-agent model routing + openai-codex retirement",
+      "what": "Retired openai-codex (expired OAuth, unsanctioned endpoint). Implemented per-agent model routing: 28 Haiku (gates/rules), 8 Sonnet (reasoning), 3 Gemini Flash (data-heavy). Added kill_running_session() to orchestrator for timeout cleanup. Zombie reaper tightened 30m\u219215m. Routing policy upgraded to v3. Gemini 2.5 Flash live and verified.",
+      "tags": [
+        "trading",
+        "model-routing",
+        "orchestrator",
+        "infrastructure"
+      ],
+      "closed_at": "2026-03-29",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-033",
+      "category": "trading",
+      "title": "Per-Trade Quality Score \u2014 5-dimension assessment (D/M/R/P/I)",
+      "what": "Added quality scoring to Agent-07 (Validation v1.6): Data freshness, Model confidence, Robustness, Risk/Reward, Interpretability. Each 0-2, max 10. Quality gate: total < 5 = FAIL. Agent-08b v1.4 check #8 enforces the gate. Paper #7 inspired.",
+      "tags": [
+        "trading",
+        "validation",
+        "quality",
+        "paper-7"
+      ],
+      "closed_at": "2026-03-29",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-034",
@@ -857,33 +946,52 @@
         "paper-7",
         "paper-2"
       ],
-      "closed_at": "2026-03-29"
+      "closed_at": "2026-03-29",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-041",
-      "category": "trading",
-      "title": "Per-agent model routing + openai-codex retirement",
-      "what": "Retired openai-codex (expired OAuth, unsanctioned endpoint). Implemented per-agent model routing: 28 Haiku (gates/rules), 8 Sonnet (reasoning), 3 Gemini Flash (data-heavy). Added kill_running_session() to orchestrator for timeout cleanup. Zombie reaper tightened 30m\u219215m. Routing policy upgraded to v3. Gemini 2.5 Flash live and verified.",
+      "id": "Q-016",
+      "category": "project",
+      "title": "YouTube content trigger agent \u2014 5 bullets in, publish-ready script out",
+      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience \u2014 this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity \u2014 the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing \u2014 the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident \u2192 root cause \u2192 fix \u2192 lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' \u2014 lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions \u2014 not generic descriptions\n- Honest about failures and limitations \u2014 this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley \u2014 developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "YouTube channel created with clear series concept. A few real incidents/sessions documented to use as first video content (today's governance loop incident + the basket quality improvements are both strong first videos). Decide on channel name/identity before building the agent so brand voice can be baked into the prompt.",
+      "priority": "medium",
+      "ticket": null,
       "tags": [
-        "trading",
-        "model-routing",
-        "orchestrator",
-        "infrastructure"
+        "youtube",
+        "content",
+        "script-generation",
+        "brand",
+        "build-in-public",
+        "monetization",
+        "elevenlabs"
       ],
-      "closed_at": "2026-03-29"
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 superseded by Q-018 (autonomous story agent)",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-033",
-      "category": "trading",
-      "title": "Per-Trade Quality Score \u2014 5-dimension assessment (D/M/R/P/I)",
-      "what": "Added quality scoring to Agent-07 (Validation v1.6): Data freshness, Model confidence, Robustness, Risk/Reward, Interpretability. Each 0-2, max 10. Quality gate: total < 5 = FAIL. Agent-08b v1.4 check #8 enforces the gate. Paper #7 inspired.",
+      "id": "Q-008",
+      "category": "project",
+      "title": "YouTube / content + tools",
+      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell \u2014 audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity and branding.",
+      "priority": "medium",
+      "ticket": null,
       "tags": [
-        "trading",
-        "validation",
-        "quality",
-        "paper-7"
+        "youtube",
+        "content",
+        "monetization",
+        "brand",
+        "audience"
       ],
-      "closed_at": "2026-03-29"
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 superseded by Q-017 and Q-018 (specific YouTube items)",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-023",
@@ -904,7 +1012,8 @@
         "phase-5"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-022",
@@ -924,7 +1033,8 @@
         "phase-4"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-021",
@@ -945,7 +1055,8 @@
         "phase-3"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-020",
@@ -965,7 +1076,30 @@
         "phase-2c"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 pipeline refactor phase not pursued"
+      "close_note": "Closed \u2014 pipeline refactor phase not pursued",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
+    },
+    {
+      "id": "Q-006",
+      "category": "trading",
+      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
+      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score \u2014 not three independent signals. Must not override options flow, news, or technical analysis.",
+      "blocker": "60-day paper gate not yet reached.",
+      "blocker_type": "internal",
+      "prereq": "None \u2014 public API. Review Stocktwits API docs for rate limits before building.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "agent-04",
+        "stocktwits",
+        "sentiment",
+        "signals",
+        "intelligence",
+        "post-paper-gate"
+      ],
+      "closed_at": "2026-03-15",
+      "close_note": "Closed \u2014 Stocktwits integrated into OpenClaw pipeline",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-018",
@@ -988,29 +1122,8 @@
         "monetization"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 done, nightly story agent cron running at 02:00 ET"
-    },
-    {
-      "id": "Q-016",
-      "category": "project",
-      "title": "YouTube content trigger agent \u2014 5 bullets in, publish-ready script out",
-      "what": "The content layer of the YouTube pipeline. Automation handles production (Q-017) but content must be anchored in real human experience \u2014 this agent bridges the two. Jacob writes 5 bullet points in 5 minutes describing what happened, why it matters, and what was learned. The agent produces a full publish-ready video script.\n\nWhy this is not fully automated: AI-generated scripts from source code alone produce dry, generic, commodity content. The 5-bullet input from Jacob is the non-negotiable human layer that makes the content real. It preserves authenticity \u2014 the thing that actually separates this channel from the hundreds of AI trading bot channels that will never build an audience.\n\nINPUT FORMAT (Jacob provides):\n- What happened (1 sentence)\n- Why it matters to the system (1 sentence)\n- What was surprising or hard (1 sentence)\n- What the fix or decision was (1 sentence)\n- What a viewer should take away (1 sentence)\nOptional: list of relevant source files or state files to include as context.\n\nAGENT READS (automatically, no manual input):\n- Relevant agent prompt files from OpenClaw-s-Brain (inferred from bullet content)\n- Relevant state JSON files from trading-bot/state/ (for real data to reference)\n- queue.json completed section (for accurate history/timeline)\n- Pipeline architecture (agent list, stage sequence, models)\n\nOUTPUT: Structured script markdown with:\n- HOOK (0:00-0:30): opening that leads with the most interesting thing \u2014 the failure, the discovery, the result. Never start with 'in this video I will show you.'\n- CONTEXT (0:30-2:00): brief setup, what the system is, why this session matters. Assume viewer knows Python/AI basics but not this specific system.\n- CORE (2:00-8:00): the actual content. Walk through what happened with real references to code, state files, and architecture. Segment markers for screen recordings and diagrams: [SCREEN:filename], [DIAGRAM:topology], [BROLL:description].\n- TAKEAWAY (8:00-9:30): what this means for the broader project, what comes next, honest assessment of current state.\n- OUTRO + CTA (9:30-10:00): subscribe, GitHub link, Ko-fi link, next video tease.\n- METADATA block: suggested title (3 variants), description (full, with timestamps auto-filled from segment markers), tags, thumbnail text suggestions.\n\nSERIES TEMPLATES (agent picks the right one based on bullet content):\n- POST-MORTEM: incident \u2192 root cause \u2192 fix \u2192 lesson. Best for governance failures, bugs, unexpected blocks. Highest retention because failure is interesting.\n- BUILD LOG: here is what I added, why I added it, how it works. Best for new features (Agent-06 basket correlation, etc.).\n- DAY-N RECAP: what the system picked today, how it performed, what the approval gate did. Recurring format, builds longitudinal audience investment.\n- EXPLAINER: deep dive on one concept (multi-agent systems, risk approval gates, paper trading architecture). Evergreen content, high search volume.\n\nQUALITY RULES baked into the agent prompt:\n- Never open with 'in this video' \u2014 lead with the most interesting thing\n- Write for someone who is smart but has never seen this codebase\n- Reference real numbers, real file names, real decisions \u2014 not generic descriptions\n- Honest about failures and limitations \u2014 this is the differentiator vs. polished demo channels\n- Script should sound like Jacob talking, not like a Wikipedia article\n- Target runtime: 8-12 minutes for explainers/post-mortems, 4-6 minutes for day-N recaps\n\nBrand positioning this content builds toward: Jacob Barkley \u2014 developer building a real AI trading system in public, showing what actually works and what breaks. Not a trading tips channel. Not a generic AI tutorial channel. A transparent engineering journal with a financial edge.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "YouTube channel created with clear series concept. A few real incidents/sessions documented to use as first video content (today's governance loop incident + the basket quality improvements are both strong first videos). Decide on channel name/identity before building the agent so brand voice can be baked into the prompt.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "youtube",
-        "content",
-        "script-generation",
-        "brand",
-        "build-in-public",
-        "monetization",
-        "elevenlabs"
-      ],
-      "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 superseded by Q-018 (autonomous story agent)"
+      "close_note": "Closed \u2014 done, nightly story agent cron running at 02:00 ET",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-012",
@@ -1031,28 +1144,8 @@
         "options-sleeve"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 obsolete, BPS replaced wheel strategy entirely"
-    },
-    {
-      "id": "Q-004",
-      "category": "trading",
-      "title": "Agent-04 Reddit Pipeline v2",
-      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer \u2014 not three independent data pulls.",
-      "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
-      "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
-      "blocker_type": "internal",
-      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps \u2014 script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
-      "priority": "low",
-      "ticket": "TICKET-021",
-      "tags": [
-        "agent-04",
-        "reddit",
-        "signals",
-        "intelligence",
-        "post-paper-gate"
-      ],
-      "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 won't do, Reddit API policy too restrictive"
+      "close_note": "Closed \u2014 obsolete, BPS replaced wheel strategy entirely",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
       "id": "Q-005",
@@ -1073,128 +1166,77 @@
         "post-paper-gate"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 ApeWisdom integrated into OpenClaw pipeline"
+      "close_note": "Closed \u2014 ApeWisdom integrated into OpenClaw pipeline",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-006",
+      "id": "Q-004",
       "category": "trading",
-      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
-      "what": "Integrate Stocktwits public API for per-ticker sentiment and message volume. Better signal-to-noise than Reddit for individual tickers since the platform is finance-only. Free, no key required for public endpoints. Agent integration: feed bullish/bearish ratio and message volume spikes into the intelligence layer alongside ApeWisdom (Q-005). Design the combined sentiment layer so Agent-04 can weight Reddit narrative (squeeze/macro), Stocktwits momentum (ticker-level), and ApeWisdom rank (retail crowd direction) as a unified retail sentiment score \u2014 not three independent signals. Must not override options flow, news, or technical analysis.",
-      "blocker": "60-day paper gate not yet reached.",
+      "title": "Agent-04 Reddit Pipeline v2",
+      "what": "Upgrade Agent-04 from public search scraping to proper Reddit OAuth API with structured feature extraction. Treat Reddit as a narrative pressure sensor, not a signal engine. Design alongside Q-005 (ApeWisdom) and Q-006 (Stocktwits) as a unified retail sentiment layer \u2014 not three independent data pulls.",
+      "priority_features": "mention acceleration, cross-subreddit propagation, narrative classification (squeeze/earnings/YOLO), authenticity score",
+      "blocker": "60-day paper gate not yet reached. Do not build before proven execution stack.",
       "blocker_type": "internal",
-      "prereq": "None \u2014 public API. Review Stocktwits API docs for rate limits before building.",
-      "priority": "medium",
-      "ticket": null,
+      "prereq": "Reddit developer app (self-serve OAuth via reddit.com/prefs/apps \u2014 script type). Data API enterprise application was rejected as unnecessary; PRAW OAuth is the correct approach for read-only subreddit monitoring.",
+      "priority": "low",
+      "ticket": "TICKET-021",
       "tags": [
         "agent-04",
-        "stocktwits",
-        "sentiment",
+        "reddit",
         "signals",
         "intelligence",
         "post-paper-gate"
       ],
       "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 Stocktwits integrated into OpenClaw pipeline"
+      "close_note": "Closed \u2014 won't do, Reddit API policy too restrictive",
+      "closed_reason": "archived_from_completed_during_2026-04-12_scrub"
     },
     {
-      "id": "Q-008",
-      "category": "project",
-      "title": "YouTube / content + tools",
-      "what": "Document the build publicly. 'I built a 16-agent AI trading pipeline' is genuinely interesting content with a real audience. Monetizes through AdSense, sponsorships, and naturally leads to selling templates, prompt packs, or the OpenClaw setup as a product. Lowest regulatory risk, lowest startup cost, builds audience before you have anything to sell \u2014 audience is the asset. Strategy: start with build-log style videos (what you built, why, what broke), layer in tutorials as the system matures, eventually gate advanced content or tools behind a paid tier.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "LLC formed (Q-007). Basic recording setup. Decide on channel identity and branding.",
-      "priority": "medium",
+      "id": "W-004",
+      "category": "trading",
+      "title": "Prompt source drift fix \u2014 3 cron jobs corrected to canonical prompts + gpt-5.4",
+      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list \u2014 all three now show gpt-5.4.",
       "ticket": null,
       "tags": [
-        "youtube",
-        "content",
-        "monetization",
-        "brand",
-        "audience"
+        "cron",
+        "prompt-source",
+        "agent-08",
+        "agent-09",
+        "agent-10",
+        "model-upgrade"
       ],
-      "closed_at": "2026-03-15",
-      "close_note": "Closed \u2014 superseded by Q-017 and Q-018 (specific YouTube items)"
+      "closed_at": "2026-03-09"
     },
     {
-      "id": "Q-012",
+      "id": "W-001",
       "category": "trading",
-      "title": "Options sleeve Phase 2B \u2014 Wheel strategy (CSP + CC)",
-      "what": "Built complete options module as independent sidecar (trading-bot/options/). Follows Signal Bus + Module pattern \u2014 reads equity pipeline signals read-only, writes to own namespace. Components: options_screener.py (yfinance chains, IV proxy + snapshot history, earnings blackout, OI/spread/delta/bid filters, equity signal cross-reference), gate_options_risk.py (deterministic capital/concentration gate \u2014 max 20% per CSP, max 2 concurrent, 15% cash buffer), options_order_submitter.py (OCC symbol formatting, Alpaca paper Level 2, 09:35 post-open delay), Agent-17 prompt (qualitative screening), Agent-18 prompt (CSP/CC strategy decisions, position management rules). 3 cron jobs: 08:22 screener, 08:28 strategy, 09:35 execution. Smoke test: AMD $185 CSP 57% ann, NVDA $175 CSP 46% ann, ORCL $150 CSP 65% ann. Q-005/Q-006 ApeWisdom+StockTwits data feeds into screener. Architecture reviewed by Claude Opus.",
-      "tags": [
-        "trading",
-        "options",
-        "wheel",
-        "csp",
-        "covered-calls",
-        "agent-17",
-        "agent-18"
-      ],
-      "closed_at": "2026-03-14"
-    },
-    {
-      "id": "Q-020",
-      "category": "trading",
-      "title": "Trading pipeline Phase 2C \u2014 preflight bootstrap validation",
-      "what": "Added --check mode to pipeline_contract_bootstrap.py (verify_bootstrap()). Checks session_context.json, normalized_risk_policy.json, current_run.json freshness. Writes bootstrap_check.json. Agent-01 Market Status cron (07:35 ET) now runs --check as a pre-step gate \u2014 if bootstrap stale, kills the chain and sends Telegram alert before any LLM work. validation_helper.py updated to check bootstrap artifacts exist (BOOTSTRAP_ARTIFACTS list). Preflight check passes. Q-020 complete.",
+      "title": "PostToolUse hook \u2014 dashboard auto-sync on file edits",
+      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost \u2014 pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
       "ticket": null,
       "tags": [
-        "trading",
-        "pipeline-robustness",
-        "preflight",
-        "bootstrap",
-        "phase-2c"
+        "dashboard",
+        "automation",
+        "hooks",
+        "queue",
+        "devops"
       ],
-      "closed_at": "2026-03-13"
+      "closed_at": "2026-03-09"
     },
     {
-      "id": "Q-005",
-      "category": "trading",
-      "title": "ApeWisdom integration \u2014 retail sentiment layer",
-      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches all-stocks (3 pages) + WSB (2 pages), extracts mention counts, rank, rank_delta, velocity_pct per symbol. Writes to alt_sentiment_raw.json. Agent-04 cron pre-runs fetcher and passes real data to LLM \u2014 no more hallucinated ApeWisdom data. Both APIs confirmed live. Note: implemented ahead of 60-day paper gate due to signal quality need.",
-      "ticket": null,
+      "id": "Q-001",
+      "category": "architecture",
+      "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
+      "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
+      "ticket": "TICKET-020",
       "tags": [
-        "agent-04",
-        "apewisdom",
-        "reddit-sentiment",
-        "signals",
-        "intelligence"
+        "openclaw",
+        "claude-bridge",
+        "acp",
+        "live-session",
+        "telegram"
       ],
-      "closed_at": "2026-03-13"
+      "closed_at": "2026-03-09"
     },
-    {
-      "id": "Q-006",
-      "category": "trading",
-      "title": "Stocktwits integration \u2014 finance-specific sentiment feed",
-      "what": "Shipped as part of alt_sentiment_fetcher.py (2026-03-13). Fetches 30 messages/symbol, computes bullish_count, bearish_count, bullish_ratio, tag_rate, narrative (strongly_bullish|bullish|bearish|strongly_bearish|mixed|insufficient_data), and up to 3 message snippets. Writes to alt_sentiment_raw.json alongside ApeWisdom data. Agent-04 prompt v1.2 updated with per-field interpretation rules (momentum thresholds, manipulation detection). Note: implemented ahead of 60-day paper gate due to signal quality need.",
-      "ticket": null,
-      "tags": [
-        "agent-04",
-        "stocktwits",
-        "sentiment",
-        "signals",
-        "intelligence"
-      ],
-      "closed_at": "2026-03-13"
-    },
-    {
-      "id": "Q-021",
-      "category": "trading",
-      "title": "Trading pipeline Phase 3 \u2014 4-gate Python scripts + health simplification",
-      "what": "Created 4 canonical gate scripts: gate_session.py (session_context validity), gate_artifacts.py (artifact_manifest + contract foundation freshness), gate_policy.py (normalized_risk_policy completeness + bounds, handles semantic labels QUARTER/HALF/FULL), gate_broker.py (broker_auth + soft NOT_YET skip pre-08:10). Orchestrator run_gates.py runs all 4, writes gate_report.json. Premarket preflight cron (06:55) now runs run_gates.py as Step 1. Agent-08b cron updated to read gate_report.json as additional input. pipeline_contract_bootstrap.py updated to resolve semantic labels to floats in normalization. Health simplification: Agent-09 PRECEDENCE_BREACH demoted from CRITICAL/HALT to HIGH/REDUCE_ONLY. Agent-10 PRECEDENCE_BREACH carry-forward capped at HIGH/REDUCE_ONLY \u2014 cannot cascade as CRITICAL or trigger HALT. Phase 3 scheduler gate owns prevention. 4/4 gates PASS on live state.",
-      "ticket": null,
-      "tags": [
-        "trading",
-        "pipeline-robustness",
-        "gate-scripts",
-        "systems-auditor",
-        "remediation",
-        "phase-3"
-      ],
-      "closed_at": "2026-03-13"
-    }
-  ],
-  "closed_archive": [
     {
       "id": "W-005",
       "category": "trading",
@@ -1211,18 +1253,42 @@
       "closed_at": "2026-03-09"
     },
     {
-      "id": "W-004",
+      "id": "T-018",
       "category": "trading",
-      "title": "Prompt source drift fix \u2014 3 cron jobs corrected to canonical prompts + gpt-5.4",
-      "what": "Discovered Agent-08 (08:08), Agent-09 (08:12), and Agent-10 (08:15) cron jobs were pointing at stale workspace .txt prompt files using gpt-5.3-codex instead of the canonical .md repo prompts. Updated all three in ~/.openclaw/cron/jobs.json to use canonical paths (Agent-08-Risk-v1.1.md, Agent-09-Systems-Auditor-v1.1.md, Agent-10-Remediation-Manager-v1.1.md) and gpt-5.4. Agent-08b was already correct. Confirmed via openclaw cron list \u2014 all three now show gpt-5.4.",
-      "ticket": null,
+      "title": "Formalize options_regime contract for Agent-06 and Agent-07",
+      "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
+      "ticket": "TICKET-018",
       "tags": [
-        "cron",
-        "prompt-source",
-        "agent-08",
-        "agent-09",
-        "agent-10",
-        "model-upgrade"
+        "agent-06",
+        "agent-07",
+        "options-regime",
+        "contract-hardening"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "T-019",
+      "category": "trading",
+      "title": "Formalize Agent-12 live_trading_enabled contract input",
+      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code \u2014 no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
+      "ticket": "TICKET-019",
+      "tags": [
+        "agent-12",
+        "live-trading",
+        "contract-hardening"
+      ],
+      "closed_at": "2026-03-09"
+    },
+    {
+      "id": "T-017",
+      "category": "trading",
+      "title": "Fix encoding artifacts in all agent prompts",
+      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts \u2014 em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
+      "ticket": "TICKET-017",
+      "tags": [
+        "prompt-quality",
+        "encoding",
+        "all-agents"
       ],
       "closed_at": "2026-03-09"
     },
@@ -1259,74 +1325,17 @@
       "closed_at": "2026-03-09"
     },
     {
-      "id": "W-001",
+      "id": "Q-003",
       "category": "trading",
-      "title": "PostToolUse hook \u2014 dashboard auto-sync on file edits",
-      "what": "Added PostToolUse hook to ~/.claude/settings.json that runs push-dashboard-data.sh after every Edit or Write tool call. Zero credit cost \u2014 pure bash, no LLM invocation. Also fixed push-dashboard-data.sh to stage queue.json alongside tickets.json so queue changes are never silently dropped. Root cause of today's missed Q-014/Q-015 push: queue.json was modified but the script only staged tickets.json.",
+      "title": "Verify trade journal + KPI aggregator (2026-03-06)",
+      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py \u2014 was using UTC date, now uses ET date via ZoneInfo.",
       "ticket": null,
       "tags": [
-        "dashboard",
-        "automation",
-        "hooks",
-        "queue",
-        "devops"
+        "trade-journal",
+        "kpi",
+        "data-integrity"
       ],
-      "closed_at": "2026-03-09"
-    },
-    {
-      "id": "Q-001",
-      "category": "architecture",
-      "title": "OpenClaw \u2192 Claude Code live bridge via ACP (persistent channel binding)",
-      "what": "Bound Claude Code (Sonnet 4.6) directly to Claude-Claw Telegram topic via ACP persistent channel binding. Verified: topic responds as Claude, not the OpenClaw harness. Binding survives gateway restart. OpenClaw main agent remains on gpt-5.4.",
-      "ticket": "TICKET-020",
-      "tags": [
-        "openclaw",
-        "claude-bridge",
-        "acp",
-        "live-session",
-        "telegram"
-      ],
-      "closed_at": "2026-03-09"
-    },
-    {
-      "id": "T-017",
-      "category": "trading",
-      "title": "Fix encoding artifacts in all agent prompts",
-      "what": "Cleaned double-encoded UTF-8 mojibake from all 14 affected agent prompts \u2014 em dashes, apostrophes, and emoji sequences all corrected. Zero artifacts remaining across all 17 prompt files.",
-      "ticket": "TICKET-017",
-      "tags": [
-        "prompt-quality",
-        "encoding",
-        "all-agents"
-      ],
-      "closed_at": "2026-03-09"
-    },
-    {
-      "id": "T-018",
-      "category": "trading",
-      "title": "Formalize options_regime contract for Agent-06 and Agent-07",
-      "what": "Declared options_regime as explicit contract input in both prompts. Defined valid values (IV_LOW | IV_ELEVATED | IV_HIGH | IV_EXTREME). Conservative IV_ELEVATED default for Phase 1; hard fail path documented for Phase 2 options sleeve activation (tracked in Q-012).",
-      "ticket": "TICKET-018",
-      "tags": [
-        "agent-06",
-        "agent-07",
-        "options-regime",
-        "contract-hardening"
-      ],
-      "closed_at": "2026-03-09"
-    },
-    {
-      "id": "T-019",
-      "category": "trading",
-      "title": "Formalize Agent-12 live_trading_enabled contract input",
-      "what": "Declared live_trading_enabled as explicit required contract input in Agent-12. Added MISSING_POLICY_FIELD fail code \u2014 no silent default. Added hard gate comment: true = live broker orders, false = paper only.",
-      "ticket": "TICKET-019",
-      "tags": [
-        "agent-12",
-        "live-trading",
-        "contract-hardening"
-      ],
-      "closed_at": "2026-03-09"
+      "closed_at": "2026-03-06"
     },
     {
       "id": "Q-002",
@@ -1338,19 +1347,6 @@
         "agent-11",
         "stale-signal",
         "risk"
-      ],
-      "closed_at": "2026-03-06"
-    },
-    {
-      "id": "Q-003",
-      "category": "trading",
-      "title": "Verify trade journal + KPI aggregator (2026-03-06)",
-      "what": "Confirmed all 4 delayed fills captured (AVGO, MRVL, NVDA, MU). Fixed UTC date bug in trade_journal.py \u2014 was using UTC date, now uses ET date via ZoneInfo.",
-      "ticket": null,
-      "tags": [
-        "trade-journal",
-        "kpi",
-        "data-integrity"
       ],
       "closed_at": "2026-03-06"
     }
