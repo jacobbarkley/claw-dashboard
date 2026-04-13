@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-10T20:45:11.482014+00:00",
+  "generated_at": "2026-04-13T13:00:10.100701+00:00",
   "as_of_date": "2026-04-10",
   "account": {
     "equity": 84844.04,
@@ -129,8 +129,8 @@
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-04-10",
-    "run_id": null,
+    "trading_date": "2026-04-13",
+    "run_id": "2026-04-13-preopen-01",
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
@@ -855,7 +855,7 @@
         "in_position": false
       }
     ],
-    "as_of": "2026-04-09",
+    "as_of": "2026-04-12",
     "source": "weekly"
   },
   "exit_candidates": [],
@@ -1543,10 +1543,10 @@
     "as_of": "2026-03-26T16:45:48.393231-04:00"
   },
   "bps": {
-    "as_of": "2026-04-10T08:50:05.501432",
-    "account_equity": 85006.34,
-    "available_capital": 72255.39,
-    "free_capital": 72255.39,
+    "as_of": "2026-04-13T08:50:10.653325",
+    "account_equity": 84749.18,
+    "available_capital": 72036.8,
+    "free_capital": 72036.8,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
@@ -1559,55 +1559,55 @@
     "approved": null,
     "universe_watch": [
       {
-        "symbol": "DTE",
-        "sector": "Utilities",
-        "final_score": 9.1,
-        "rsi_14": 48.8,
-        "earnings_blackout": false
-      },
-      {
-        "symbol": "DELL",
-        "sector": "Technology",
-        "final_score": 8.8,
-        "rsi_14": 64.7,
-        "earnings_blackout": false
-      },
-      {
-        "symbol": "LVS",
+        "symbol": "BKNG",
         "sector": "Consumer Cyclical",
-        "final_score": 8.7,
-        "rsi_14": 53.3,
+        "final_score": 8.8,
+        "rsi_14": 50.5,
         "earnings_blackout": false
       },
       {
-        "symbol": "BX",
-        "sector": "Financial Services",
-        "final_score": 8.4,
-        "rsi_14": 62.9,
-        "earnings_blackout": false
-      },
-      {
-        "symbol": "INCY",
+        "symbol": "SYK",
         "sector": "Healthcare",
+        "final_score": 8.4,
+        "rsi_14": 56.1,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "FSLR",
+        "sector": "Technology",
         "final_score": 8.3,
-        "rsi_14": 60.4,
+        "rsi_14": 58.2,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "TXT",
+        "sector": "Industrials",
+        "final_score": 8.3,
+        "rsi_14": 58.4,
+        "earnings_blackout": false
+      },
+      {
+        "symbol": "CTRA",
+        "sector": "Energy",
+        "final_score": 8.2,
+        "rsi_14": 46.3,
         "earnings_blackout": false
       }
     ],
-    "universe_date": "2026-04-06"
+    "universe_date": "2026-04-13"
   },
   "hedges": {
     "status": "regime_not_active",
     "regime": {
-      "vix_level": 19.35,
+      "vix_level": 21.12,
       "vix_regime": "MEDIUM",
       "cb_state": "NORMAL",
       "active": false
     },
-    "routing_reason": "VIX=19.35 (MEDIUM) \u2014 both BPS + protective puts",
+    "routing_reason": "VIX=21.12 (MEDIUM) \u2014 both BPS + protective puts",
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-10T16:45:10.070003-04:00"
+    "as_of": "2026-04-13T09:00:08.966640-04:00"
   }
 }
