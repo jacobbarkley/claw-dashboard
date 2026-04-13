@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T18:30:10.803459+00:00",
+  "generated_at": "2026-04-13T18:45:10.695501+00:00",
   "as_of_date": "2026-04-13",
   "account": {
     "equity": 84928.55,
@@ -1578,11 +1578,29 @@
         "short_strike": 122.0,
         "long_strike": 117.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.8,
+        "credit_width_ratio": 0.36,
+        "annualized_yield_pct": 625.7,
+        "max_loss_per_contract": 320.0,
         "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "FSLR",
+        "price": 203.47,
+        "sector": "Technology",
+        "expiry": "2026-05-01",
+        "dte": 18,
+        "short_strike": 200.0,
+        "long_strike": 195.0,
+        "spread_width": 5.0,
+        "net_credit": 1.25,
+        "credit_width_ratio": 0.25,
+        "annualized_yield_pct": 434.5,
+        "max_loss_per_contract": 375.0,
+        "iv_rank_proxy": 0.047,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1609,7 +1627,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "BKNG",
@@ -1661,6 +1679,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-13T14:30:09.593520-04:00"
+    "as_of": "2026-04-13T14:45:09.666950-04:00"
   }
 }
