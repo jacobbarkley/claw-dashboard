@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T16:30:10.738125+00:00",
+  "generated_at": "2026-04-13T16:45:11.577449+00:00",
   "as_of_date": "2026-04-13",
   "account": {
     "equity": 84928.55,
@@ -1570,19 +1570,19 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
+        "symbol": "DELL",
+        "price": 177.8,
+        "sector": "Technology",
         "expiry": "2026-05-01",
         "dte": 18,
-        "short_strike": 37.0,
-        "long_strike": 32.0,
+        "short_strike": 180.0,
+        "long_strike": 175.0,
         "spread_width": 5.0,
         "net_credit": 1.25,
         "credit_width_ratio": 0.25,
         "annualized_yield_pct": 434.5,
         "max_loss_per_contract": 375.0,
-        "iv_rank_proxy": 0.031,
+        "iv_rank_proxy": 0.25,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1643,6 +1643,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-13T12:30:09.618225-04:00"
+    "as_of": "2026-04-13T12:45:10.405075-04:00"
   }
 }
