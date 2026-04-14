@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T17:46:32.698797-04:00",
+  "generated_at": "2026-04-14T17:47:01.682264-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -177,25 +177,6 @@
       ]
     },
     {
-      "id": "Q-081",
-      "category": "dashboard",
-      "title": "Queue auto-close mechanism - one-time scrub done, automation still needed",
-      "what": "The one-time backlog scrub was completed on 2026-04-12: completed rebuild slices were removed from queued, stale legacy/personal/R&D items were archived, and old completed items were pushed out of the dashboard-facing list. The remaining work is the reliable auto-close path so the queue stays honest without manual cleanup. Candidates remain: ticket frontmatter status, commit trailers (Closes: Q-NNN), or a lightweight queue-close CLI/nightly reconciler.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "One-time scrub completed. Next step is implementing the close signal, not another manual audit.",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "dashboard",
-        "queue",
-        "hygiene",
-        "automation",
-        "auto-close",
-        "tickets"
-      ]
-    },
-    {
       "id": "Q-044",
       "category": "trading",
       "title": "Options strategy expansion \u2014 execution path + directional plays",
@@ -214,6 +195,27 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-081",
+      "category": "dashboard",
+      "title": "Queue auto-close mechanism - one-time scrub done, automation still needed",
+      "what": "The one-time backlog scrub was completed on 2026-04-12: completed rebuild slices were removed from queued, stale legacy/personal/R&D items were archived, and old completed items were pushed out of the dashboard-facing list. The remaining work is the reliable auto-close path so the queue stays honest without manual cleanup. Candidates remain: ticket frontmatter status, commit trailers (Closes: Q-NNN), or a lightweight queue-close CLI/nightly reconciler.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "One-time scrub completed. Next step is implementing the close signal, not another manual audit.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "dashboard",
+        "queue",
+        "hygiene",
+        "automation",
+        "auto-close",
+        "tickets"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "Auto-close script + nightly reconciler shipped. Cron at 23:30 ET. 4 items reconciled tonight. Q-071 also closed."
+    },
     {
       "id": "Q-071",
       "category": "infrastructure",
