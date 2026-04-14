@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T11:12:59.009544-04:00",
+  "generated_at": "2026-04-14T12:42:26.864398-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -150,6 +150,27 @@
         "momentum",
         "multi-era",
         "research"
+      ]
+    },
+    {
+      "id": "Q-087",
+      "category": "strategy",
+      "title": "Broad-market defensive sleeve research \u2014 revive defensive_value_proxy + new strategy families",
+      "what": "The equities momentum sleeve (regime_aware_momentum) is proven to work in tech leadership but actively degrades on broad-market names. Broad-market exposure needs a DIFFERENT strategy family, not a diluted momentum strategy. This ticket revives defensive_value_proxy.py with a proper 20-30 name diversified universe, runs it through the Q-083 multi-era framework, and evaluates whether it can serve as a stability counterweight to the tech momentum sleeve. Also scope whether a new strategy family is needed (e.g. quality/low-vol, mean-reversion, or value-tilt entry logic designed for non-tech names). The end state is two sub-sleeves within equities: tech momentum (opportunity/growth) + broad defensive (stability/floor). Capital split between sub-sleeves could be regime-informed (more to tech in CALM, more to defensive in VOLATILE). Q-076B showed defensive_value_proxy had interesting inconclusive variants with positive DM excess and low drawdowns, but sample-starved. Needs broader universe + more eras to get a real read.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-085 Tier 2 results in (don't preempt dynamic tech screening). Q-083 multi-era framework operational (done). defensive_value_proxy.py skeleton exists (done from Q-076B).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "defensive",
+        "broad-market",
+        "value",
+        "sub-sleeve",
+        "regime-adaptive",
+        "multi-era"
       ]
     },
     {
