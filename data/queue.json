@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-12T17:04:27.846678-04:00",
+  "generated_at": "2026-04-13T21:26:08.602902-04:00",
   "queued": [
     {
       "id": "Q-070",
@@ -68,6 +68,28 @@
         "backtesting",
         "automation",
         "openclaw"
+      ]
+    },
+    {
+      "id": "Q-083",
+      "category": "strategy",
+      "title": "Multi-era validation extension + cross-era consistency scoring + trial ledger",
+      "what": "Extend the validation campaign runner to support named era windows, per-era reporting, cross-era consistency scoring, equity-curve structural break diagnostics, and a trial ledger sidecar for future DSR/PBO overfitting quantification. Four phased deliverables: (1) multi-era campaign config extension with named era windows and per-era + cross-era reports, (2) equity-curve break diagnostics via PELT on strategy equity curves per era and overall, (3) trial ledger + sidecar DSR/PBO computation as research-side metrics (additive, not governance-gating), (4) regime-conditional parameter sweeps only AFTER the single-parameter baseline is proven across eras. Guardrails: no live trading path changes, no relaxing anti-lookahead or reproducibility rules, no retroactive era cherry-picking after results are seen, no PASS/FAIL policy changes until new metrics are calibrated, all new metrics start as additive sidecars before governance. Ownership split: Claude specs config shape + era catalog + report fields + research framing + reviews implementation. Codex owns typed contract + evaluator integration + backward compatibility + guardrails.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-076B manual campaigns complete (frozen winner exists). Validation runtime generalized (Q-076A). Spec doc from Claude delivered to Codex.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "backtesting",
+        "multi-era",
+        "regime",
+        "research",
+        "overfitting",
+        "DSR",
+        "CPCV"
       ]
     },
     {
