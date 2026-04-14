@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T20:45:10.753585+00:00",
+  "generated_at": "2026-04-14T13:00:10.072297+00:00",
   "as_of_date": "2026-04-13",
   "account": {
     "equity": 85148.06,
@@ -140,8 +140,8 @@
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-04-13",
-    "run_id": null,
+    "trading_date": "2026-04-14",
+    "run_id": "2026-04-14-preopen-01",
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
@@ -744,75 +744,57 @@
   "watchlist": {
     "items": [
       {
-        "symbol": "DTE",
-        "trigger": "Price pullback or breakout setup \u2014 score 9.1",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 49, Rev +29%",
-        "in_position": false
-      },
-      {
-        "symbol": "DELL",
+        "symbol": "BKNG",
         "trigger": "Price pullback or breakout setup \u2014 score 8.8",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 65, Rev +40%",
+        "note": "RSI 50, Rev +16%",
         "in_position": false
       },
       {
-        "symbol": "LVS",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.7",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 53, Rev +26%",
-        "in_position": false
-      },
-      {
-        "symbol": "BX",
+        "symbol": "SYK",
         "trigger": "Price pullback or breakout setup \u2014 score 8.4",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 63, Rev +51%",
+        "note": "RSI 56, Rev +11%",
         "in_position": false
       },
       {
-        "symbol": "INCY",
+        "symbol": "FSLR",
         "trigger": "Price pullback or breakout setup \u2014 score 8.3",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 60, Rev +28%",
+        "note": "RSI 58, Rev +11%",
         "in_position": false
       },
       {
-        "symbol": "ADI",
+        "symbol": "TXT",
         "trigger": "Price pullback or breakout setup \u2014 score 8.3",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 59, Rev +30%",
+        "note": "RSI 58, Rev +16%",
         "in_position": false
       },
       {
-        "symbol": "TEL",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.3",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 58, Rev +22%",
-        "in_position": false
-      },
-      {
-        "symbol": "ELV",
+        "symbol": "CTRA",
         "trigger": "Price pullback or breakout setup \u2014 score 8.2",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 60, Rev +10%",
+        "note": "RSI 46, Rev +23%",
+        "in_position": false
+      },
+      {
+        "symbol": "DELL",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.2",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 63, Rev +40%",
         "in_position": false
       },
       {
@@ -825,61 +807,79 @@
         "in_position": false
       },
       {
-        "symbol": "KKR",
+        "symbol": "INCY",
         "trigger": "Price pullback or breakout setup \u2014 score 8.1",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 66, Rev +76%",
-        "in_position": true
-      },
-      {
-        "symbol": "AMD",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.1",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 65, Rev +34%",
-        "in_position": true
-      },
-      {
-        "symbol": "MCO",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.1",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 58, Rev +13%",
+        "note": "RSI 66, Rev +28%",
         "in_position": false
       },
       {
-        "symbol": "CVNA",
+        "symbol": "RVTY",
         "trigger": "Price pullback or breakout setup \u2014 score 8.1",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 55, Rev +58%",
+        "note": "RSI 62, Rev +6%",
         "in_position": false
       },
       {
-        "symbol": "CTSH",
-        "trigger": "Price pullback or breakout setup \u2014 score 8.1",
-        "stop": "Below 20-day EMA / key support",
-        "target": "",
-        "modifier": "FULL",
-        "note": "RSI 60, Rev +5%",
-        "in_position": false
-      },
-      {
-        "symbol": "COF",
+        "symbol": "BX",
         "trigger": "Price pullback or breakout setup \u2014 score 8.0",
         "stop": "Below 20-day EMA / key support",
         "target": "",
         "modifier": "FULL",
-        "note": "RSI 53, Rev +52%",
+        "note": "RSI 59, Rev +51%, earnings 2026-04-23",
+        "in_position": false
+      },
+      {
+        "symbol": "KKR",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.0",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 54, Rev +76%",
+        "in_position": true
+      },
+      {
+        "symbol": "LVS",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.0",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 53, Rev +26%",
+        "in_position": false
+      },
+      {
+        "symbol": "SMCI",
+        "trigger": "Price pullback or breakout setup \u2014 score 8.0",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "FULL",
+        "note": "RSI 67, Rev +123%",
+        "in_position": false
+      },
+      {
+        "symbol": "DTE",
+        "trigger": "Price pullback or breakout setup \u2014 score 7.9",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "HALF",
+        "note": "RSI 85, Rev +29%",
+        "in_position": false
+      },
+      {
+        "symbol": "ES",
+        "trigger": "Price pullback or breakout setup \u2014 score 7.9",
+        "stop": "Below 20-day EMA / key support",
+        "target": "",
+        "modifier": "HALF",
+        "note": "RSI 74, Rev +13%",
         "in_position": false
       }
     ],
-    "as_of": "2026-04-12",
+    "as_of": "2026-04-13",
     "source": "weekly"
   },
   "exit_candidates": [],
@@ -1567,75 +1567,20 @@
     "as_of": "2026-03-26T16:45:48.393231-04:00"
   },
   "bps": {
-    "as_of": "2026-04-13T08:50:10.653325",
-    "account_equity": 84749.18,
-    "available_capital": 72036.8,
-    "free_capital": 72036.8,
+    "as_of": "2026-04-14T08:50:10.808790",
+    "account_equity": 85231.59,
+    "available_capital": 72446.85,
+    "free_capital": 72446.85,
     "current_open_positions": 0,
     "new_positions_possible": 10,
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "CF",
-        "price": 121.32,
-        "sector": "Basic Materials",
-        "expiry": "2026-05-01",
-        "dte": 18,
-        "short_strike": 122.0,
-        "long_strike": 117.0,
-        "spread_width": 5.0,
-        "net_credit": 1.7,
-        "credit_width_ratio": 0.34,
-        "annualized_yield_pct": 591.0,
-        "max_loss_per_contract": 330.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "SMCI",
-        "price": 25.26,
-        "sector": "Technology",
-        "expiry": "2026-05-01",
-        "dte": 18,
-        "short_strike": 26.0,
-        "long_strike": 21.0,
-        "spread_width": 5.0,
-        "net_credit": 1.25,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 375.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-01",
-        "dte": 18,
-        "short_strike": 37.0,
-        "long_strike": 32.0,
-        "spread_width": 5.0,
-        "net_credit": 1.25,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 375.0,
-        "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 3,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
@@ -1678,15 +1623,15 @@
   "hedges": {
     "status": "regime_not_active",
     "regime": {
-      "vix_level": 21.12,
+      "vix_level": 18.39,
       "vix_regime": "MEDIUM",
       "cb_state": "NORMAL",
       "active": false
     },
-    "routing_reason": "VIX=21.12 (MEDIUM) \u2014 both BPS + protective puts",
+    "routing_reason": "VIX=18.39 (MEDIUM) \u2014 both BPS + protective puts",
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-13T16:45:09.309240-04:00"
+    "as_of": "2026-04-14T09:00:08.937435-04:00"
   }
 }
