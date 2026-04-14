@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T20:41:09.444347+00:00",
+  "generated_at": "2026-04-14T20:45:10.751016+00:00",
   "as_of_date": "2026-04-14",
   "account": {
     "equity": 85359.88,
@@ -141,7 +141,7 @@
   ],
   "pipeline_status": {
     "trading_date": "2026-04-14",
-    "run_id": "2026-04-14-preopen-01",
+    "run_id": null,
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
@@ -1664,6 +1664,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-14T16:41:08.147932-04:00"
+    "as_of": "2026-04-14T16:45:09.648307-04:00"
   }
 }
