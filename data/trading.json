@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T17:30:10.603415+00:00",
+  "generated_at": "2026-04-14T17:45:11.723719+00:00",
   "as_of_date": "2026-04-14",
   "account": {
     "equity": 85378.15,
@@ -1591,10 +1591,10 @@
         "short_strike": 120.0,
         "long_strike": 115.0,
         "spread_width": 5.0,
-        "net_credit": 2.0,
-        "credit_width_ratio": 0.4,
-        "annualized_yield_pct": 695.2,
-        "max_loss_per_contract": 300.0,
+        "net_credit": 1.8,
+        "credit_width_ratio": 0.36,
+        "annualized_yield_pct": 625.7,
+        "max_loss_per_contract": 320.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1656,6 +1656,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-14T13:30:08.909494-04:00"
+    "as_of": "2026-04-14T13:45:10.216604-04:00"
   }
 }
