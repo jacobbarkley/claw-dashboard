@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T13:04:45.956890-04:00",
+  "generated_at": "2026-04-14T17:41:38.437314-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -111,48 +111,6 @@
       ]
     },
     {
-      "id": "Q-083",
-      "category": "strategy",
-      "title": "Multi-era validation extension + cross-era consistency scoring + trial ledger",
-      "what": "Extend the validation campaign runner to support named era windows, per-era reporting, cross-era consistency scoring, equity-curve structural break diagnostics, and a trial ledger sidecar for future DSR/PBO overfitting quantification. Four phased deliverables: (1) multi-era campaign config extension with named era windows and per-era + cross-era reports, (2) equity-curve break diagnostics via PELT on strategy equity curves per era and overall, (3) trial ledger + sidecar DSR/PBO computation as research-side metrics (additive, not governance-gating), (4) regime-conditional parameter sweeps only AFTER the single-parameter baseline is proven across eras. Guardrails: no live trading path changes, no relaxing anti-lookahead or reproducibility rules, no retroactive era cherry-picking after results are seen, no PASS/FAIL policy changes until new metrics are calibrated, all new metrics start as additive sidecars before governance. Ownership split: Claude specs config shape + era catalog + report fields + research framing + reviews implementation. Codex owns typed contract + evaluator integration + backward compatibility + guardrails.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-076B manual campaigns complete (frozen winner exists). Validation runtime generalized (Q-076A). Spec doc from Claude delivered to Codex.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "strategy",
-        "validation",
-        "backtesting",
-        "multi-era",
-        "regime",
-        "research",
-        "overfitting",
-        "DSR",
-        "CPCV"
-      ]
-    },
-    {
-      "id": "Q-085",
-      "category": "strategy",
-      "title": "Broader universe campaign \u2014 test momentum logic beyond the frozen 6-name sleeve",
-      "what": "Run the regime_aware_momentum strategy logic against a broader universe (20-30 names, e.g. S&P 100 subset or sector leaders) to determine whether the edge is specific to the frozen 6-name sleeve or generalizes to a wider pool. Two sub-questions: (1) does the same entry/exit logic produce comparable risk-adjusted returns on a broader universe? (2) does a dynamic screening rule (top N by trailing momentum from a larger pool, refreshed monthly) outperform the fixed 6-name list? Use the multi-era framework (Q-083) to test across all 5 eras. This directly addresses concentration risk and survivorship bias in the current frozen winner. Ownership: Claude proposes candidate universe lists + screening rules. Codex runs the campaigns. Both review results.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-083 Phase 1 multi-era framework operational (done). Frozen winner multi-era baseline results available for comparison (done, run 2026-04-13).",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "strategy",
-        "validation",
-        "universe",
-        "concentration-risk",
-        "momentum",
-        "multi-era",
-        "research"
-      ]
-    },
-    {
       "id": "Q-087",
       "category": "strategy",
       "title": "Broad-market defensive sleeve research \u2014 revive defensive_value_proxy + new strategy families",
@@ -171,26 +129,6 @@
         "sub-sleeve",
         "regime-adaptive",
         "multi-era"
-      ]
-    },
-    {
-      "id": "Q-088",
-      "category": "strategy",
-      "title": "Slippage sensitivity sweep + turnover cost reporting for campaign evaluator",
-      "what": "Add slippage sensitivity analysis to the campaign evaluator. Current default is 5bps which is optimistic for momentum entries during breakouts. Deliverables: (1) slippage_sensitivity array on campaign config that re-runs each variant at multiple slippage levels (recommended: 5/15/30 bps) and reports the per-level performance degradation curve. (2) Turnover cost report for dynamic-universe campaigns: total universe-rotation trades per era, estimated friction at each slippage level, net-of-friction returns compared to fixed-list baselines. (3) A breakeven_slippage_bps field on each result row showing the slippage level at which the strategy's deployment-matched excess return goes to zero. This tells the operator exactly how much execution quality matters. No new runtime logic needed \u2014 the slippage_bps field already exists on ExperimentConfig. Implementation is a loop over existing infrastructure at multiple slippage levels. Additive sidecar, not governance-gating, per the same graduation policy as Q-083 metrics.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Q-085 Tier 2 complete (dynamic universe results available for turnover cost comparison). Multi-era framework operational (done).",
-      "priority": "medium",
-      "ticket": null,
-      "tags": [
-        "strategy",
-        "validation",
-        "slippage",
-        "turnover",
-        "execution-cost",
-        "backtesting",
-        "additive-sidecar"
       ]
     },
     {
@@ -275,25 +213,6 @@
       ]
     },
     {
-      "id": "Q-082",
-      "category": "docs",
-      "title": "Rebuild Obsidian vault docs against the new rebuild architecture",
-      "what": "Step 1 vault audit is already done and staging exists. Remaining work: apply the rebuild-era architecture/docs refresh to the real vault through the staging/sync path, keep the daily reports and technical architecture notes current, and finish retiring legacy-era vault pages that still describe the old 16-agent system as current.",
-      "blocker": "Q-072 closed provides the new strategic frame. Rebuild architecture docs (08/12/13/16/17/19) already exist on disk. Not blocked \u2014 can start whenever Jacob has bandwidth.",
-      "blocker_type": null,
-      "prereq": "Vault audit complete; staging/sync pattern established; remaining work is curated apply + ongoing maintenance.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "docs",
-        "obsidian",
-        "vault",
-        "rebuild",
-        "architecture",
-        "narrative-layer"
-      ]
-    },
-    {
       "id": "Q-044",
       "category": "trading",
       "title": "Options strategy expansion \u2014 execution path + directional plays",
@@ -312,6 +231,95 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-082",
+      "category": "docs",
+      "title": "Rebuild Obsidian vault docs against the new rebuild architecture",
+      "what": "Step 1 vault audit is already done and staging exists. Remaining work: apply the rebuild-era architecture/docs refresh to the real vault through the staging/sync path, keep the daily reports and technical architecture notes current, and finish retiring legacy-era vault pages that still describe the old 16-agent system as current.",
+      "blocker": "Q-072 closed provides the new strategic frame. Rebuild architecture docs (08/12/13/16/17/19) already exist on disk. Not blocked \u2014 can start whenever Jacob has bandwidth.",
+      "blocker_type": null,
+      "prereq": "Vault audit complete; staging/sync pattern established; remaining work is curated apply + ongoing maintenance.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "docs",
+        "obsidian",
+        "vault",
+        "rebuild",
+        "architecture",
+        "narrative-layer"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "Obsidian vault rebuild complete. 9 architecture notes, rewritten README/Quick Reference/Glossary, new daily template, legacy notes archived. Applied to Windows vault."
+    },
+    {
+      "id": "Q-088",
+      "category": "strategy",
+      "title": "Slippage sensitivity sweep + turnover cost reporting for campaign evaluator",
+      "what": "Add slippage sensitivity analysis to the campaign evaluator. Current default is 5bps which is optimistic for momentum entries during breakouts. Deliverables: (1) slippage_sensitivity array on campaign config that re-runs each variant at multiple slippage levels (recommended: 5/15/30 bps) and reports the per-level performance degradation curve. (2) Turnover cost report for dynamic-universe campaigns: total universe-rotation trades per era, estimated friction at each slippage level, net-of-friction returns compared to fixed-list baselines. (3) A breakeven_slippage_bps field on each result row showing the slippage level at which the strategy's deployment-matched excess return goes to zero. This tells the operator exactly how much execution quality matters. No new runtime logic needed \u2014 the slippage_bps field already exists on ExperimentConfig. Implementation is a loop over existing infrastructure at multiple slippage levels. Additive sidecar, not governance-gating, per the same graduation policy as Q-083 metrics.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-085 Tier 2 complete (dynamic universe results available for turnover cost comparison). Multi-era framework operational (done).",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "slippage",
+        "turnover",
+        "execution-cost",
+        "backtesting",
+        "additive-sidecar"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "Slippage sensitivity sweep complete. C-lite v2 breaks even at 24.6 bps vs Fixed Tech 12 at 9.9 bps. C-lite v2 is clearly more friction-tolerant. Two-sub-sleeve case strengthened."
+    },
+    {
+      "id": "Q-085",
+      "category": "strategy",
+      "title": "Broader universe campaign \u2014 test momentum logic beyond the frozen 6-name sleeve",
+      "what": "Run the regime_aware_momentum strategy logic against a broader universe (20-30 names, e.g. S&P 100 subset or sector leaders) to determine whether the edge is specific to the frozen 6-name sleeve or generalizes to a wider pool. Two sub-questions: (1) does the same entry/exit logic produce comparable risk-adjusted returns on a broader universe? (2) does a dynamic screening rule (top N by trailing momentum from a larger pool, refreshed monthly) outperform the fixed 6-name list? Use the multi-era framework (Q-083) to test across all 5 eras. This directly addresses concentration risk and survivorship bias in the current frozen winner. Ownership: Claude proposes candidate universe lists + screening rules. Codex runs the campaigns. Both review results.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-083 Phase 1 multi-era framework operational (done). Frozen winner multi-era baseline results available for comparison (done, run 2026-04-13).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "universe",
+        "concentration-risk",
+        "momentum",
+        "multi-era",
+        "research"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "Broader universe research complete. Tier 1 (4 fixed universes), Tier 2 (dynamic trailing-return), C-lite v1+ablation+v2 all run. Edge is tech momentum. C-lite v2 (0.8707 STRONG) is the recommended dynamic screen. Two-sub-sleeve architecture validated."
+    },
+    {
+      "id": "Q-083",
+      "category": "strategy",
+      "title": "Multi-era validation extension + cross-era consistency scoring + trial ledger",
+      "what": "Extend the validation campaign runner to support named era windows, per-era reporting, cross-era consistency scoring, equity-curve structural break diagnostics, and a trial ledger sidecar for future DSR/PBO overfitting quantification. Four phased deliverables: (1) multi-era campaign config extension with named era windows and per-era + cross-era reports, (2) equity-curve break diagnostics via PELT on strategy equity curves per era and overall, (3) trial ledger + sidecar DSR/PBO computation as research-side metrics (additive, not governance-gating), (4) regime-conditional parameter sweeps only AFTER the single-parameter baseline is proven across eras. Guardrails: no live trading path changes, no relaxing anti-lookahead or reproducibility rules, no retroactive era cherry-picking after results are seen, no PASS/FAIL policy changes until new metrics are calibrated, all new metrics start as additive sidecars before governance. Ownership split: Claude specs config shape + era catalog + report fields + research framing + reviews implementation. Codex owns typed contract + evaluator integration + backward compatibility + guardrails.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-076B manual campaigns complete (frozen winner exists). Validation runtime generalized (Q-076A). Spec doc from Claude delivered to Codex.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "backtesting",
+        "multi-era",
+        "regime",
+        "research",
+        "overfitting",
+        "DSR",
+        "CPCV"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "Multi-era validation framework operational. 5-era catalog, consistency scoring, consumed-tape exclusion, universe coverage all live. Used across Q-085 research track."
+    },
     {
       "id": "Q-072",
       "category": "validation",
