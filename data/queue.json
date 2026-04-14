@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-13T22:14:04.905799-04:00",
+  "generated_at": "2026-04-14T11:12:59.009544-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -35,6 +35,26 @@
         "rebuild",
         "pipeline",
         "critical"
+      ]
+    },
+    {
+      "id": "Q-086",
+      "category": "infrastructure",
+      "title": "Capital allocation execution \u2014 park idle capital in BIL/SGOV, unpark for trades",
+      "what": "Extend the capital allocation scaffold (config/rebuild_capital_allocation.json + capital_allocation.py service) into an execution path. When the active equities sleeve has no trades and capital is sitting idle, produce a parking order (BUY BIL/SGOV for the cash management reserve portion). When the sleeve produces a real trade plan, produce a corresponding unpark order (SELL BIL/SGOV to free capital). Both flow through the approval queue in DECISION_SUPPORT or auto-execute in AUTONOMOUS_PAPER. Requires: (1) allocation service reads current positions + allocation config + trade plan status, (2) produces parking/unparking actions in portfolio_action_plan.json, (3) bridge handles BIL/SGOV orders alongside strategy orders, (4) stewardship treats parked positions as CASH_MANAGEMENT origin (not strategy-owned, no stop/target rules). The config already defines reserve_vehicle_candidates, sleeve targets, and parking_policy per sleeve \u2014 this ticket wires the execution.",
+      "blocker": "Codex must land AUTONOMOUS_PAPER bridge support (Q-084 blocker 1) first since parking orders need the same execution path",
+      "blocker_type": "dependency",
+      "prereq": "Capital allocation config landed (done 2026-04-13). AUTONOMOUS_PAPER bridge support (Q-084 blocker 1). Stewardship v1 (done).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "capital-allocation",
+        "execution",
+        "parking",
+        "BIL",
+        "SGOV",
+        "cash-management"
       ]
     },
     {
@@ -110,6 +130,26 @@
         "overfitting",
         "DSR",
         "CPCV"
+      ]
+    },
+    {
+      "id": "Q-085",
+      "category": "strategy",
+      "title": "Broader universe campaign \u2014 test momentum logic beyond the frozen 6-name sleeve",
+      "what": "Run the regime_aware_momentum strategy logic against a broader universe (20-30 names, e.g. S&P 100 subset or sector leaders) to determine whether the edge is specific to the frozen 6-name sleeve or generalizes to a wider pool. Two sub-questions: (1) does the same entry/exit logic produce comparable risk-adjusted returns on a broader universe? (2) does a dynamic screening rule (top N by trailing momentum from a larger pool, refreshed monthly) outperform the fixed 6-name list? Use the multi-era framework (Q-083) to test across all 5 eras. This directly addresses concentration risk and survivorship bias in the current frozen winner. Ownership: Claude proposes candidate universe lists + screening rules. Codex runs the campaigns. Both review results.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-083 Phase 1 multi-era framework operational (done). Frozen winner multi-era baseline results available for comparison (done, run 2026-04-13).",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "universe",
+        "concentration-risk",
+        "momentum",
+        "multi-era",
+        "research"
       ]
     },
     {
