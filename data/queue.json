@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T12:42:26.864398-04:00",
+  "generated_at": "2026-04-14T13:04:45.956890-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -171,6 +171,26 @@
         "sub-sleeve",
         "regime-adaptive",
         "multi-era"
+      ]
+    },
+    {
+      "id": "Q-088",
+      "category": "strategy",
+      "title": "Slippage sensitivity sweep + turnover cost reporting for campaign evaluator",
+      "what": "Add slippage sensitivity analysis to the campaign evaluator. Current default is 5bps which is optimistic for momentum entries during breakouts. Deliverables: (1) slippage_sensitivity array on campaign config that re-runs each variant at multiple slippage levels (recommended: 5/15/30 bps) and reports the per-level performance degradation curve. (2) Turnover cost report for dynamic-universe campaigns: total universe-rotation trades per era, estimated friction at each slippage level, net-of-friction returns compared to fixed-list baselines. (3) A breakeven_slippage_bps field on each result row showing the slippage level at which the strategy's deployment-matched excess return goes to zero. This tells the operator exactly how much execution quality matters. No new runtime logic needed \u2014 the slippage_bps field already exists on ExperimentConfig. Implementation is a loop over existing infrastructure at multiple slippage levels. Additive sidecar, not governance-gating, per the same graduation policy as Q-083 metrics.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Q-085 Tier 2 complete (dynamic universe results available for turnover cost comparison). Multi-era framework operational (done).",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "validation",
+        "slippage",
+        "turnover",
+        "execution-cost",
+        "backtesting",
+        "additive-sidecar"
       ]
     },
     {
