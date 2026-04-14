@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T17:41:38.437314-04:00",
+  "generated_at": "2026-04-14T17:46:32.698797-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -55,23 +55,6 @@
         "BIL",
         "SGOV",
         "cash-management"
-      ]
-    },
-    {
-      "id": "Q-071",
-      "category": "infrastructure",
-      "title": "OpenClaw 2026.4.5 upgrade \u2014 cron auto-replay, prompt cache improvements, Claude CLI hardening",
-      "what": "Upgrade to OpenClaw 2026.4.5. Adopts: cron replay interrupted recurring jobs on gateway restart (#60583, fixes 2026-04-06 power-outage manual recovery gap), cron failure notifications via primary delivery channel (#60622), prompt caching improvements (stable system prompt fingerprints, removed duplicate tool inventories, cache reuse in status --verbose \u2014 direct cost reduction given April pricing change), Claude CLI security hardening + dedicated health checks, heartbeat skip-wake when session lane busy, live model switching fix, auto-reply lifecycle fix on gateway restart. Breaking: legacy public config aliases removed (talk.voiceId, sandbox.perSession, channel allow toggles \u2014 doctor --fix migrates), Anthropic Claude CLI backend removed from new onboarding (existing profiles runnable), bundled CLI text-provider backends removed. Plan: Saturday morning backup \u2192 upgrade \u2192 doctor --fix \u2192 verify Claude CLI auth \u2192 single job test \u2192 Saturday afternoon pipeline-validate.sh dry run \u2192 Sunday nightly validator \u2192 Monday live. NOT part of audit-and-rebuild freeze \u2014 infrastructure track, separate from Q-068/069/070.",
-      "blocker": null,
-      "blocker_type": null,
-      "prereq": "Saturday window (markets closed). Backup of ~/.openclaw/openclaw.json and cron list JSON before upgrade.",
-      "priority": "high",
-      "ticket": null,
-      "tags": [
-        "infrastructure",
-        "upgrade",
-        "openclaw",
-        "cost-optimization"
       ]
     },
     {
@@ -231,6 +214,25 @@
     }
   ],
   "completed": [
+    {
+      "id": "Q-071",
+      "category": "infrastructure",
+      "title": "OpenClaw 2026.4.5 upgrade \u2014 cron auto-replay, prompt cache improvements, Claude CLI hardening",
+      "what": "Upgrade to OpenClaw 2026.4.5. Adopts: cron replay interrupted recurring jobs on gateway restart (#60583, fixes 2026-04-06 power-outage manual recovery gap), cron failure notifications via primary delivery channel (#60622), prompt caching improvements (stable system prompt fingerprints, removed duplicate tool inventories, cache reuse in status --verbose \u2014 direct cost reduction given April pricing change), Claude CLI security hardening + dedicated health checks, heartbeat skip-wake when session lane busy, live model switching fix, auto-reply lifecycle fix on gateway restart. Breaking: legacy public config aliases removed (talk.voiceId, sandbox.perSession, channel allow toggles \u2014 doctor --fix migrates), Anthropic Claude CLI backend removed from new onboarding (existing profiles runnable), bundled CLI text-provider backends removed. Plan: Saturday morning backup \u2192 upgrade \u2192 doctor --fix \u2192 verify Claude CLI auth \u2192 single job test \u2192 Saturday afternoon pipeline-validate.sh dry run \u2192 Sunday nightly validator \u2192 Monday live. NOT part of audit-and-rebuild freeze \u2014 infrastructure track, separate from Q-068/069/070.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Saturday window (markets closed). Backup of ~/.openclaw/openclaw.json and cron list JSON before upgrade.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "upgrade",
+        "openclaw",
+        "cost-optimization"
+      ],
+      "closed_at": "2026-04-14",
+      "close_note": "OpenClaw 2026.4.5 upgrade completed last week by Jacob"
+    },
     {
       "id": "Q-082",
       "category": "docs",
