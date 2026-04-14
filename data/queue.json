@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T17:47:01.682264-04:00",
+  "generated_at": "2026-04-14T17:51:41.354477-04:00",
   "queued": [
     {
       "id": "Q-084",
@@ -191,6 +191,24 @@
         "options",
         "execution",
         "strategy"
+      ]
+    },
+    {
+      "id": "Q-089",
+      "category": "dashboard",
+      "title": "Dashboard cleanup \u2014 kill stale tabs, surface stewardship on Trading",
+      "what": "Remove Tunables and Pipeline tabs (dead legacy surfaces). Surface stewardship data on the Trading tab once the operator feed exposes it (position book summary, review recommendations, action plan status). This is the focused dashboard TLC pass \u2014 no sleeve switcher, no new tabs, just clean up what's dead and add the one high-value missing section. Sleeve switcher (Q-079) comes later when there are two sleeves to switch between.",
+      "blocker": "Stewardship section in operator feed (Codex needs to add stewardship_summary to push-operator-feed.py). Tab removal is unblocked.",
+      "blocker_type": "partial",
+      "prereq": "Tab removal: none, can do immediately. Stewardship surfacing: operator feed needs stewardship_summary section.",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "dashboard",
+        "cleanup",
+        "stewardship",
+        "trading-page",
+        "remove-dead-tabs"
       ]
     }
   ],
