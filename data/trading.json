@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-14T20:15:12.547415+00:00",
+  "generated_at": "2026-04-14T20:30:15.153515+00:00",
   "as_of_date": "2026-04-14",
   "account": {
     "equity": 85359.88,
@@ -145,12 +145,12 @@
     "circuit_breaker": "REDUCE_ONLY",
     "verdict": "WARN",
     "critical_issues": 0,
-    "high_issues": 5,
-    "medium_issues": 2,
-    "chain_ok": true,
-    "approval_path": "AUTO_PAPER",
+    "high_issues": 1,
+    "medium_issues": 3,
+    "chain_ok": false,
+    "approval_path": "MIXED",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-13T20:20:00-04:00"
+    "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
     "total_trades": 58,
@@ -554,6 +554,14 @@
       "date": "2026-04-13",
       "net_pnl": 0.0,
       "trades": 2,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-04-14",
+      "net_pnl": 0.0,
+      "trades": 0,
       "winners": 0,
       "losers": 0,
       "win_rate": null
@@ -1591,10 +1599,10 @@
         "short_strike": 120.0,
         "long_strike": 115.0,
         "spread_width": 5.0,
-        "net_credit": 2.1,
-        "credit_width_ratio": 0.42,
-        "annualized_yield_pct": 730.0,
-        "max_loss_per_contract": 290.0,
+        "net_credit": 1.8,
+        "credit_width_ratio": 0.36,
+        "annualized_yield_pct": 625.7,
+        "max_loss_per_contract": 320.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1656,6 +1664,6 @@
     "positions_screened": 0,
     "candidates_found": 0,
     "candidates": [],
-    "as_of": "2026-04-14T16:15:10.866471-04:00"
+    "as_of": "2026-04-14T16:30:13.072683-04:00"
   }
 }
