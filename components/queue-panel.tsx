@@ -130,6 +130,11 @@ const CATEGORIES: Record<string, { label: string; color: string; dot: string; ac
   llc:            { label: "LLC & Legal",       color: "text-amber-400",   dot: "bg-amber-400",   accent: "border-l-amber-500/40" },
   governance:     { label: "Governance",        color: "text-yellow-400",  dot: "bg-yellow-400",  accent: "border-l-yellow-500/40" },
   project:        { label: "Separate Projects", color: "text-purple-400",  dot: "bg-purple-400",  accent: "border-l-purple-500/40" },
+  strategy:       { label: "Strategy",          color: "text-teal-400",    dot: "bg-teal-400",    accent: "border-l-teal-500/40" },
+  "strategy-bank":{ label: "Strategy Bank",     color: "text-teal-300",    dot: "bg-teal-300",    accent: "border-l-teal-400/40" },
+  operator:       { label: "Operator",          color: "text-indigo-400",  dot: "bg-indigo-400",  accent: "border-l-indigo-500/40" },
+  docs:           { label: "Docs",              color: "text-sky-400",     dot: "bg-sky-400",     accent: "border-l-sky-500/40" },
+  content:        { label: "Content",           color: "text-pink-400",    dot: "bg-pink-400",    accent: "border-l-pink-500/40" },
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -141,12 +146,13 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 // ─── View Modes ──────────────────────────────────────────────────────────────
 
-type ViewMode = "category" | "priority" | "status"
+type ViewMode = "category" | "priority" | "status" | "all"
 
 const VIEW_TABS: { key: ViewMode; label: string }[] = [
   { key: "category", label: "Category" },
   { key: "priority", label: "Priority" },
   { key: "status",   label: "Status" },
+  { key: "all",      label: "All" },
 ]
 
 // ─── Roadmap Control Strip ───────────────────────────────────────────────────
@@ -396,7 +402,7 @@ function QueueCard({ item }: { item: QueueItem }) {
 
   // Parse "what" into structured sections for expanded view.
   // First sentence = description. Rest is detail.
-  const whatSentences = item.what.split(/(?<=\.)\s+/)
+  const whatSentences = (item.what ?? "").split(/(?<=\.)\s+/)
   const description = whatSentences[0] ?? ""
   const detail = whatSentences.slice(1).join(" ")
 
@@ -699,7 +705,7 @@ export function QueuePanel({ data, operatorData }: { data: QueueData | null; ope
   // Group items by category
   const categoryGroups = useMemo(() => {
     if (!data) return {}
-    const catOrder = ["audit", "architecture", "validation", "rebuild", "trading", "infrastructure", "documentation", "dashboard", "llc", "governance", "content", "project"]
+    const catOrder = ["audit", "architecture", "validation", "rebuild", "strategy", "strategy-bank", "trading", "operator", "infrastructure", "docs", "documentation", "dashboard", "llc", "governance", "content", "project"]
     return catOrder.reduce<Record<string, QueueItem[]>>((acc, cat) => {
       const items = data.queued.filter(i => i.category === cat)
       if (items.length > 0) acc[cat] = items
@@ -785,6 +791,16 @@ export function QueuePanel({ data, operatorData }: { data: QueueData | null; ope
                 />
               ) : null
             )
+          }
+
+          {viewMode === "all" &&
+            [...data.queued]
+              .sort((a, b) => {
+                const numA = parseInt(a.id.replace(/\D/g, "") || "0")
+                const numB = parseInt(b.id.replace(/\D/g, "") || "0")
+                return numB - numA
+              })
+              .map(item => <QueueCard key={item.id} item={item} />)
           }
         </div>
 
