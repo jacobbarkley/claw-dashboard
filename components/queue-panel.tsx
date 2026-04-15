@@ -406,17 +406,26 @@ function QueueCard({ item }: { item: QueueItem }) {
   const description = whatSentences[0] ?? ""
   const detail = whatSentences.slice(1).join(" ")
 
+  const cardGradient = state === "ready"
+    ? "radial-gradient(circle at top left, rgba(34,197,94,0.14), transparent 35%), radial-gradient(circle at bottom right, rgba(59,130,246,0.10), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
+    : state === "blocked"
+      ? "radial-gradient(circle at top left, rgba(249,115,22,0.12), transparent 35%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
+      : state === "strategic"
+        ? "radial-gradient(circle at top left, rgba(59,130,246,0.12), transparent 35%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
+        : "linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))"
+
   return (
     <div
-      className={`rounded-lg border transition-colors ${
+      className={`rounded-xl border transition-colors ${
         state === "blocked"
-          ? "border-orange-500/15 bg-zinc-900"
+          ? "border-orange-500/20"
           : state === "ready"
-            ? "border-emerald-500/10 bg-zinc-900"
+            ? "border-emerald-500/15"
             : state === "parked"
-              ? "border-zinc-800/60 bg-zinc-900/70"
-              : "border-zinc-800 bg-zinc-900"
+              ? "border-zinc-800/60"
+              : "border-zinc-800"
       }`}
+      style={{ background: cardGradient }}
     >
       {/* Collapsed header — always visible */}
       <button
@@ -748,8 +757,6 @@ export function QueuePanel({ data, operatorData }: { data: QueueData | null; ope
       <Nav active="queue" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <OperatorPulse operatorData={operatorData ?? null} />
-
         {/* Roadmap Control Strip */}
         <RoadmapStrip items={data.queued} />
 
