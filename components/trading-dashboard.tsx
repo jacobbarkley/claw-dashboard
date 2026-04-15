@@ -1801,6 +1801,17 @@ function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; pos
 }
 
 // ─── Qualified Setups (Watchlist) ──────────────────────────────────────────────
+const COMPANY_NAMES: Record<string, string> = {
+  AAPL: "Apple", AMZN: "Amazon", AMD: "Advanced Micro Devices", AVGO: "Broadcom",
+  BAC: "Bank of America", CAT: "Caterpillar", COST: "Costco", CVX: "Chevron",
+  GS: "Goldman Sachs", JPM: "JPMorgan Chase", KKR: "KKR & Co", LLY: "Eli Lilly",
+  META: "Meta Platforms", MS: "Morgan Stanley", MSFT: "Microsoft", NFLX: "Netflix",
+  NVDA: "NVIDIA", TSLA: "Tesla", TSM: "Taiwan Semiconductor", GOOG: "Alphabet",
+  GOOGL: "Alphabet", UNH: "UnitedHealth", ASML: "ASML Holdings", JNJ: "Johnson & Johnson",
+  SPY: "SPDR S&P 500 ETF", QQQ: "Invesco Nasdaq 100 ETF", SGOV: "iShares 0-3M Treasury Bond ETF",
+  BIL: "SPDR 1-3M T-Bill ETF",
+}
+
 function QualifiedSetups({
   items,
   as_of,
@@ -1835,6 +1846,11 @@ function QualifiedSetups({
               <span className={`font-mono font-semibold ${item.in_position ? "text-[var(--cb-text-tertiary)]" : "text-[var(--cb-text-primary)]"}`}>
                 {item.symbol}
               </span>
+              {COMPANY_NAMES[item.symbol] && (
+                <span className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                  {COMPANY_NAMES[item.symbol]}
+                </span>
+              )}
               {item.in_position && (
                 <span style={{ fontSize: 9, color: "var(--cb-green)", fontWeight: 500, letterSpacing: "0.04em" }}>HELD</span>
               )}
