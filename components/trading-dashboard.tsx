@@ -873,17 +873,30 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           // Merge incidents + gate blockers into one deduplicated list
           // Filter out retired legacy checks
           const RETIRED = new Set(["legacy.market_status_missing"])
+          // Expected/informational items — normal outcomes, not real blockers
+          const INFORMATIONAL = new Set([
+            "shadow.trade_plan_empty",
+            "strategy.thesis_set_empty",
+          ])
+          const isInformational = (code: string) =>
+            INFORMATIONAL.has(code) || code.startsWith("steward.position_watch_only")
           const allCodes = new Set([...incidents, ...gateBlockers].filter((c: string) => !RETIRED.has(c)))
           const blockerSet = new Set(gateBlockers)
           const dedupedIssues = [...allCodes].map((code: string) => ({
             code,
-            isBlocker: blockerSet.has(code),
+            // Only flag as blocker if it's in the blocker set AND not an expected/informational item
+            isBlocker: blockerSet.has(code) && !isInformational(code),
+            isInfo: isInformational(code),
           }))
 
+          const realIssues = dedupedIssues.filter(i => !i.isInfo)
+          const infoItems = dedupedIssues.filter(i => i.isInfo)
+          const issueCount = realIssues.length
+
           return dedupedIssues.length > 0 || !pipeline.chain_ok ? (
-            <Disclosure label={`${dedupedIssues.length} issue${dedupedIssues.length !== 1 ? "s" : ""} · ${pipeline.chain_ok ? "chain healthy" : "chain has incidents"} · ${data.as_of_date}`}>
+            <Disclosure label={`${issueCount > 0 ? `${issueCount} issue${issueCount !== 1 ? "s" : ""}` : "No issues"}${infoItems.length > 0 ? ` · ${infoItems.length} info` : ""} · ${pipeline.chain_ok ? "chain healthy" : "chain has incidents"} · ${data.as_of_date}`}>
               <div className="mt-2 space-y-2">
-                {dedupedIssues.map(({ code, isBlocker }) => {
+                {realIssues.map(({ code, isBlocker }) => {
                   const info = humanizeIncident(code)
                   return (
                     <div key={code} className="text-xs space-y-0.5">
@@ -900,6 +913,19 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
                     </div>
                   )
                 })}
+                {infoItems.length > 0 && (
+                  <div className="pt-1 border-t border-zinc-800/40">
+                    <div className="text-[10px] uppercase tracking-widest font-semibold mb-1.5" style={{ color: "var(--cb-text-tertiary)" }}>Expected / Informational</div>
+                    {infoItems.map(({ code }) => {
+                      const info = humanizeIncident(code)
+                      return (
+                        <div key={code} className="text-xs py-0.5" style={{ color: "var(--cb-text-tertiary)" }}>
+                          {info.label}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
                 {plan?.blocked_reasons?.map((reason: string) => (
                   <div key={`reason-${reason}`} className="text-xs space-y-0.5">
                     <div className="font-medium" style={{ color: "var(--cb-amber)" }}>Plan blocked</div>
