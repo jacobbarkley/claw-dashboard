@@ -3068,45 +3068,10 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* System caption */}
         <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          Phase 1 equities sleeve · operator-feed contract · {data.operator?.mode?.current_mode ?? data.pipeline_status?.approval_path ?? data.tunables.trading_mode} mode
+          Phase 1 equities sleeve · {data.operator?.mode?.current_mode ?? data.tunables.trading_mode} · {titleizeToken(data.operator?.mode?.broker_environment ?? data.tunables.trading_mode)} broker
         </p>
 
-        {data.source_context?.mode !== "canonical" && (
-          <section
-            className="rounded-[18px] border px-4 py-3 space-y-1.5"
-            style={{
-              borderColor: "rgba(245,158,11,0.28)",
-              background:
-                "linear-gradient(180deg, rgba(45, 28, 6, 0.92), rgba(24, 14, 4, 0.96))",
-              boxShadow: "0 12px 30px rgba(10, 6, 2, 0.28)",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--cb-amber)", display: "inline-block", flexShrink: 0 }} />
-              <span className="text-xs font-medium" style={{ color: "var(--cb-amber)" }}>
-                {humanizeLabel(data.source_context?.label)} — Demo View
-              </span>
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              Sample data while the rebuild pipeline is validated against live runs. Real numbers replace this after checkpoint 05 cutover.
-            </div>
-            <Disclosure label="Technical details">
-              <div className="text-[11px] space-y-0.5" style={{ color: "var(--cb-text-tertiary)" }}>
-                <div>Source mode: {data.source_context?.mode ?? "unknown"}</div>
-                <div>Label: {data.source_context?.label ?? "none"}</div>
-                {data.source_context?.override_keys?.length ? <div>Override keys: {data.source_context.override_keys.length}</div> : null}
-                {data.source_context?.note && <div>Note: {data.source_context.note}</div>}
-              </div>
-            </Disclosure>
-          </section>
-        )}
-
-        <OperatorOverview data={data} tunables={data.tunables} />
-
-        {/* Promoted Strategy */}
-        <PromotedStrategy bank={data.operator?.strategy_bank} />
-
-        {/* Capital Hero */}
+        {/* Capital Hero — first thing you see */}
         <section>
           <CapitalHero account={data.account} />
         </section>
@@ -3172,6 +3137,14 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* Options — Strategy Tabs */}
         <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
+
+        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
+
+        {/* Operator Context — below the action area */}
+        <OperatorOverview data={data} tunables={data.tunables} />
+
+        {/* Promoted Strategy */}
+        <PromotedStrategy bank={data.operator?.strategy_bank} />
 
       </div>
     </div>
