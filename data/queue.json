@@ -210,6 +210,43 @@
         "trading-page",
         "remove-dead-tabs"
       ]
+    },
+    {
+      "id": "Q-090a",
+      "category": "strategy",
+      "title": "Crypto sub-sleeve v1 \u2014 BTC 4h feasibility spike",
+      "what": "First validation spike for a BTC-only 4h momentum/breakout strategy on the existing bench. Research only \u2014 no execution, no state changes, no crypto infrastructure. Build CryptoBTCDataSource (yfinance 1h resampled to 4h, UTC-anchored), write first crypto strategy skeleton, run walk-forward validation. Frozen dataset required before any validation run. Comparison baseline: BTC buy-and-hold + no-trade control. Fee assumption: 0.2% round-trip. Gate criteria: Sharpe >1.0, max DD <25%, PF >1.5, min 50 trades, survives 0.3% slippage sweep.",
+      "blocker": null,
+      "blocker_type": null,
+      "prereq": "Existing bench stack (Q-076A/B complete). Validation runtime generalized. Strategy registry pattern established.",
+      "priority": "high",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "crypto",
+        "btc",
+        "research",
+        "bench",
+        "validation"
+      ]
+    },
+    {
+      "id": "Q-090b",
+      "category": "strategy",
+      "title": "Crypto data upgrade \u2014 longer-history BTC for multi-era validation",
+      "what": "If Q-090a shows signal, upgrade BTC data source for proper multi-cycle coverage (2022 bear, 2023 recovery, 2024 bull, 2025 consolidation). Options: paid data API, daily-bar regime characterization, or ccxt for exchange-native historical OHLCV. Re-run validation with multi-era framework across named crypto eras.",
+      "blocker": "Q-090a must show positive signal worth pursuing",
+      "blocker_type": "dependency",
+      "prereq": "Q-090a verdict",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "strategy",
+        "crypto",
+        "btc",
+        "data",
+        "multi-era"
+      ]
     }
   ],
   "completed": [
