@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-15T17:45:13.904621+00:00",
+  "generated_at": "2026-04-15T18:00:13.435880+00:00",
   "as_of_date": "2026-04-15",
   "account": {
     "equity": 85442.62,
@@ -1484,11 +1484,30 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "FSLR",
+        "price": 203.47,
+        "sector": "Technology",
+        "expiry": "2026-05-08",
+        "dte": 23,
+        "short_strike": 185.0,
+        "long_strike": 180.0,
+        "spread_width": 5.0,
+        "net_credit": 1.25,
+        "credit_width_ratio": 0.25,
+        "annualized_yield_pct": 434.5,
+        "max_loss_per_contract": 375.0,
+        "iv_rank_proxy": 0.047,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
