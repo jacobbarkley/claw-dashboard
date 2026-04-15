@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-15T11:22:20.192703-04:00",
+  "generated_at": "2026-04-15T13:47:46.644244-04:00",
   "queued": [
     {
       "id": "Q-070",
@@ -230,12 +230,12 @@
     },
     {
       "id": "Q-094",
-      "title": "Multi-user product foundation",
+      "title": "Multi-user product foundation \u2014 scope discipline for consumer-app readiness",
       "category": "architecture",
       "priority": "low",
       "status": "queued",
       "created_date": "2026-04-15",
-      "what": "Umbrella ticket for incremental rework toward consumer-app readiness. State isolation, API layer readiness, LLM cost awareness, broker abstraction, auth/identity. Opportunistic \u2014 chip away when touching nearby code."
+      "what": "Guardrail ticket establishing scope discipline so future slices avoid single-user corners. Doctrine: portfolio_id is the unit of isolation (not user), actor identity is separate from state ownership, stop hardcoding rebuild_latest in domain logic, prefer request-service-artifact patterns over CLI-only wrappers, pass scope/actor explicitly when cheap, treat sleeves as scoped product surfaces. Does not change what we build next but changes how we build it. Tightened per Codex review 2026-04-15."
     },
     {
       "id": "Q-093",
