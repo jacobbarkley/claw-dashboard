@@ -1056,6 +1056,26 @@ function PromotedStrategy({ bank }: { bank: StrategyBankSection | null | undefin
             {active.symbols.join(", ")} · {strategyRuleSummary(active)}
           </div>
         )}
+
+        <Disclosure label="How this strategy works">
+          <div className="space-y-2 text-xs leading-relaxed" style={{ color: "var(--cb-text-secondary)" }}>
+            <p>
+              {active.strategy_family === "REGIME_AWARE_MOMENTUM"
+                ? `This strategy trades momentum in a fixed universe of ${active.symbols?.length ?? 0} large-cap names (${active.symbols?.join(", ") ?? "none"}).`
+                  + ` It only enters LONG positions when the market regime is favorable (HMM reads CALM).`
+                  + ` When the regime turns volatile, it stops opening new trades and lets existing positions hit their stops or targets.`
+                : `This strategy runs on ${active.symbols?.length ?? 0} names: ${active.symbols?.join(", ") ?? "none"}.`}
+            </p>
+            <ul className="space-y-1 pl-3" style={{ listStyleType: "disc" }}>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Universe:</span> {active.symbols?.length ?? 0} fixed names — {active.symbols?.join(", ") ?? "none"}</li>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Direction:</span> {active.allowed_sides?.join(" / ") ?? "LONG"} only</li>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Max positions:</span> {active.max_positions ?? "—"} at a time, {active.risk_pct_per_trade ?? "—"}% of capital risked per trade</li>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Entry:</span> Buys when a name shows strong recent momentum and the regime filter is green</li>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Exit:</span> {active.stop_loss_pct ?? "—"}% stop loss, {active.target_pct ?? "—"}% profit target, or {active.max_hold_days ?? "—"}-day max hold — whichever hits first</li>
+              <li><span style={{ color: "var(--cb-text-tertiary)" }}>Backtest:</span> {perf.total_trades ?? "—"} trades over {perf.evaluated_trading_days ?? "—"} days, {formatPctPlain(perf.win_rate_pct, 1)} win rate, {formatRatio(perf.profit_factor)} profit factor</li>
+            </ul>
+          </div>
+        </Disclosure>
       </div>
 
       {banked.length > 0 && (
@@ -2894,20 +2914,47 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
 
-        {/* Candidate Monitor */}
+        {/* Candidate Monitor — falls back to strategy universe when watchlist is empty */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <span className="cb-label">
-              {data.watchlist.items.length > 0
-                ? `Qualified Setups · ${data.watchlist.items.length}`
-                : "Qualified Setups"}
-            </span>
-          </div>
-          <QualifiedSetups
-            items={data.watchlist.items}
-            as_of={data.watchlist.as_of}
-            source={data.watchlist.source}
-          />
+          {(() => {
+            const activeStrategy = data.operator?.strategy_bank?.active
+            const strategySymbols = activeStrategy?.symbols ?? []
+            const heldSymbols = new Set(data.positions.map(p => p.symbol))
+            const watchlistItems = data.watchlist.items.length > 0
+              ? data.watchlist.items
+              : strategySymbols.map((sym: string) => ({
+                  symbol: sym,
+                  in_position: heldSymbols.has(sym),
+                  modifier: "",
+                  trigger: activeStrategy?.strategy_family === "REGIME_AWARE_MOMENTUM" ? "Momentum signal + regime filter" : "",
+                  stop: activeStrategy?.stop_loss_pct ? `${activeStrategy.stop_loss_pct}% stop loss` : "",
+                  target: activeStrategy?.target_pct ? `${activeStrategy.target_pct}% profit target` : "",
+                  note: heldSymbols.has(sym) ? "Currently held" : "In strategy universe, waiting for entry signal",
+                }))
+            const label = data.watchlist.items.length > 0
+              ? `Qualified Setups · ${data.watchlist.items.length}`
+              : strategySymbols.length > 0
+                ? `Strategy Universe · ${strategySymbols.length} names`
+                : "Qualified Setups"
+
+            return (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="cb-label">{label}</span>
+                  {data.watchlist.items.length === 0 && strategySymbols.length > 0 && (
+                    <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                      from {humanizeStrategyName(activeStrategy?.display_name ?? activeStrategy?.record_id)}
+                    </span>
+                  )}
+                </div>
+                <QualifiedSetups
+                  items={watchlistItems}
+                  as_of={data.watchlist.as_of ?? new Date().toISOString().slice(0, 10)}
+                  source={data.watchlist.items.length > 0 ? data.watchlist.source : "active_strategy"}
+                />
+              </>
+            )
+          })()}
         </section>
 
         {/* Options — Strategy Tabs */}

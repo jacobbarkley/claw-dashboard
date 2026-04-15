@@ -181,8 +181,8 @@
 }
 .cb-hero-primary {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.10), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.10), transparent 40%),
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.14), transparent 38%),
     linear-gradient(155deg, rgba(28, 18, 64, 0.50) 0%, rgba(8, 5, 22, 0.20) 100%);
   padding: 28px 28px 22px;
 }
@@ -194,8 +194,8 @@
 
 .cb-card-t1 {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.06), transparent 35%),
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.12), transparent 35%),
     var(--cb-surface-0);
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
@@ -205,8 +205,8 @@
 }
 .cb-card-t2 {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.05), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.05), transparent 35%),
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.10), transparent 35%),
     var(--cb-surface-0);
   border: 1px solid var(--cb-border-std);
   border-radius: 10px;
@@ -214,9 +214,9 @@
 }
 .cb-card-t3 {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.06), transparent 40%),
-    linear-gradient(180deg, rgba(24, 24, 27, 0.95), rgba(9, 9, 11, 0.95));
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.12), transparent 38%),
+    linear-gradient(180deg, rgba(24, 24, 27, 0.96), rgba(9, 9, 11, 0.96));
   border: 1px solid var(--cb-border-dim);
   border-radius: 10px;
 }
