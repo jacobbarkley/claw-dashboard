@@ -1,26 +1,6 @@
 {
-  "generated_at": "2026-04-14T17:51:41.354477-04:00",
+  "generated_at": "2026-04-15T10:23:03.600010-04:00",
   "queued": [
-    {
-      "id": "Q-084",
-      "category": "infrastructure",
-      "title": "Legacy pipeline cutover \u2014 kill legacy, run rebuild-only",
-      "what": "Weekend cutover to rebuild-only operation. Three blockers: (1) AUTONOMOUS_PAPER bridge support for both entry and EXIT bridges, (2) minimal rebuild-native incident alerting (premarket failed, midday stalled, action plan pending, bridge failed), (3) intraday protection decision (keep legacy broker_reconciler vs build rebuild watcher). Plus: final legacy snapshot, rollback script, disable 20 OpenClaw crons + 10 system crontab entries, verification checklist by time window. Full checklist at memory/q084-legacy-cutover-checklist.md.",
-      "blocker": "Codex must land AUTONOMOUS_PAPER bridge support + incident alerting before cutover",
-      "blocker_type": "dependency",
-      "prereq": "At least 1 full rebuild trading day in SHADOW/DECISION_SUPPORT (2026-04-13 done). Operator preflight CLI working.",
-      "priority": "critical",
-      "ticket": null,
-      "tags": [
-        "infrastructure",
-        "cutover",
-        "legacy",
-        "rebuild",
-        "autonomous-paper",
-        "alerting",
-        "weekend"
-      ]
-    },
     {
       "id": "Q-070",
       "category": "rebuild",
@@ -247,9 +227,40 @@
         "data",
         "multi-era"
       ]
+    },
+    {
+      "id": "Q-094",
+      "title": "Multi-user product foundation",
+      "description": "Umbrella ticket for incremental rework toward consumer-app readiness. State isolation, API layer readiness, LLM cost awareness, broker abstraction, auth/identity. Opportunistic \u2014 chip away when touching nearby code.",
+      "category": "architecture",
+      "priority": "low",
+      "status": "queued",
+      "created_date": "2026-04-15"
     }
   ],
   "completed": [
+    {
+      "id": "Q-084",
+      "category": "infrastructure",
+      "title": "Legacy pipeline cutover \u2014 kill legacy, run rebuild-only",
+      "what": "Weekend cutover to rebuild-only operation. Three blockers: (1) AUTONOMOUS_PAPER bridge support for both entry and EXIT bridges, (2) minimal rebuild-native incident alerting (premarket failed, midday stalled, action plan pending, bridge failed), (3) intraday protection decision (keep legacy broker_reconciler vs build rebuild watcher). Plus: final legacy snapshot, rollback script, disable 20 OpenClaw crons + 10 system crontab entries, verification checklist by time window. Full checklist at memory/q084-legacy-cutover-checklist.md.",
+      "blocker": "Codex must land AUTONOMOUS_PAPER bridge support + incident alerting before cutover",
+      "blocker_type": "dependency",
+      "prereq": "At least 1 full rebuild trading day in SHADOW/DECISION_SUPPORT (2026-04-13 done). Operator preflight CLI working.",
+      "priority": "critical",
+      "ticket": null,
+      "tags": [
+        "infrastructure",
+        "cutover",
+        "legacy",
+        "rebuild",
+        "autonomous-paper",
+        "alerting",
+        "weekend"
+      ],
+      "status": "completed",
+      "completed_date": "2026-04-14"
+    },
     {
       "id": "Q-081",
       "category": "dashboard",
