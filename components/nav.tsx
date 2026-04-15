@@ -1,18 +1,16 @@
 import Link from "next/link"
-import { Zap, Activity, GitBranch, TrendingUp, List, Settings } from "lucide-react"
+import { Zap, Activity, TrendingUp, List } from "lucide-react"
 
 const LINKS = [
   { href: "/dashboard", label: "Ops",      icon: Activity   },
-  { href: "/pipeline",  label: "Pipeline", icon: GitBranch  },
   { href: "/trading",   label: "Trading",  icon: TrendingUp },
   { href: "/queue",     label: "Queue",    icon: List       },
-  { href: "/tunables",  label: "Tunables", icon: Settings   },
 ]
 
 const NAV_BG = "rgba(3, 1, 12, 0.92)"
 const BORDER = "rgba(90, 70, 160, 0.14)"
 
-export function Nav({ active }: { active: "dashboard" | "pipeline" | "trading" | "queue" | "tunables" }) {
+export function Nav({ active }: { active: "dashboard" | "trading" | "queue" }) {
   return (
     <>
       {/* Top nav — sticky, part of the product shell */}
