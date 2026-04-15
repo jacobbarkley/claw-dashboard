@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-15T00:27:23.263552+00:00",
+  "generated_at": "2026-04-15T00:27:24.450479+00:00",
   "as_of_date": "2026-04-14",
   "source_context": {
     "mode": "canonical",
@@ -169,7 +169,7 @@
     "chain_ok": false,
     "approval_path": "DECISION_SUPPORT",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-15T00:27:23.263607+00:00"
+    "audit_written_at": "2026-04-15T00:27:24.450559+00:00"
   },
   "kpis": {
     "total_trades": 58,
