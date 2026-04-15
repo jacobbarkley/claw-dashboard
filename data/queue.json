@@ -215,7 +215,7 @@
       "id": "Q-090a",
       "category": "strategy",
       "title": "Crypto sub-sleeve v1 \u2014 BTC 4h feasibility spike",
-      "what": "First validation spike for a BTC-only 4h momentum/breakout strategy on the existing bench. Research only \u2014 no execution, no state changes, no crypto infrastructure. Build CryptoBTCDataSource (yfinance 1h resampled to 4h, UTC-anchored), write first crypto strategy skeleton, run walk-forward validation. Frozen dataset required before any validation run. Comparison baseline: BTC buy-and-hold + no-trade control. Fee assumption: 0.2% round-trip. Gate criteria: Sharpe >1.0, max DD <25%, PF >1.5, min 50 trades, survives 0.3% slippage sweep.",
+      "what": "First validation spike for a BTC-only 4h momentum/breakout strategy on the existing bench. Research only \u2014 no execution, no state changes, no crypto infrastructure. Extends validation data model/provider to support timestamped intraday bars and crypto research path (current runtime is daily/equity-shaped). Builds CryptoBTCDataSource (yfinance 1h resampled to 4h, UTC-anchored), defines 24/7 replay calendar for 4h bars. Frozen dataset required before any validation run. Walk-forward: 90-calendar-day train / 30-calendar-day test folds over 4h bars. Comparison baseline: BTC buy-and-hold + no-trade control. Fee assumption: 0.2% round-trip. Gate criteria: Sharpe >1.0, max DD <25%, PF >1.5, min 50 trades, survives 0.3% slippage sweep. If FAIL: closes this BTC 4h hypothesis, not the entire crypto sleeve.",
       "blocker": null,
       "blocker_type": null,
       "prereq": "Existing bench stack (Q-076A/B complete). Validation runtime generalized. Strategy registry pattern established.",
