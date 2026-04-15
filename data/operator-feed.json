@@ -1,7 +1,7 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-11T17:36:49.278806+00:00",
-  "as_of_date": "2026-04-10",
+  "generated_at": "2026-04-15T00:27:23.263552+00:00",
+  "as_of_date": "2026-04-14",
   "source_context": {
     "mode": "canonical",
     "label": "canonical",
@@ -10,19 +10,19 @@
     "note": "Feed generated from canonical rebuild artifacts."
   },
   "account": {
-    "equity": 84967.48,
-    "cash": 73933.63,
-    "buying_power": 158901.11,
+    "equity": 85378.15,
+    "cash": 74564.94,
+    "buying_power": 159943.09,
     "base_value": 100000.0,
-    "total_pnl": -15032.52,
-    "total_pnl_pct": -15.0325,
-    "today_pnl": null,
-    "today_pnl_pct": null,
-    "positions_value": 11033.85,
-    "equity_deployed": 11033.85,
+    "total_pnl": -14621.85,
+    "total_pnl_pct": -14.6219,
+    "today_pnl": 228.71,
+    "today_pnl_pct": 0.2686,
+    "positions_value": 10812.88,
+    "equity_deployed": 10812.88,
     "options_deployed": 0,
-    "unrealized_pnl": 794.36,
-    "unrealized_pnl_pct": 7.76
+    "unrealized_pnl": 970.08,
+    "unrealized_pnl_pct": 9.86
   },
   "positions": [
     {
@@ -30,11 +30,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 214.21,
-      "current_price": 245.04,
-      "market_value": 472.0,
-      "unrealized_pnl": 43.58,
-      "unrealized_pct": 10.17,
-      "change_today_pct": 3.55,
+      "current_price": 254.9,
+      "market_value": 504.6002,
+      "unrealized_pnl": 76.1802,
+      "unrealized_pct": 17.78,
+      "change_today_pct": 3.27,
       "asset_type": "EQUITY"
     },
     {
@@ -42,23 +42,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 210.19,
-      "current_price": 238.38,
-      "market_value": 466.88,
-      "unrealized_pnl": 46.5,
-      "unrealized_pct": 11.06,
-      "change_today_pct": 2.02,
-      "asset_type": "EQUITY"
-    },
-    {
-      "symbol": "BX",
-      "qty": 33.0,
-      "side": "long",
-      "entry_price": 107.17,
-      "current_price": 116.89999999999999,
-      "market_value": 3857.7,
-      "unrealized_pnl": 321.09,
-      "unrealized_pct": 9.08,
-      "change_today_pct": 0.0,
+      "current_price": 248.67,
+      "market_value": 496.92,
+      "unrealized_pnl": 76.54,
+      "unrealized_pct": 18.21,
+      "change_today_pct": 3.66,
       "asset_type": "EQUITY"
     },
     {
@@ -66,11 +54,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 723.9,
-      "current_price": 790.66,
-      "market_value": 786.5,
-      "unrealized_pnl": 62.6,
-      "unrealized_pct": 8.65,
-      "change_today_pct": 0.46,
+      "current_price": 794.3,
+      "market_value": 793.9226,
+      "unrealized_pnl": 70.0226,
+      "unrealized_pct": 9.67,
+      "change_today_pct": 0.33,
       "asset_type": "EQUITY"
     },
     {
@@ -78,23 +66,35 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 208.53,
-      "current_price": 188.54,
-      "market_value": 190.36,
-      "unrealized_pnl": -18.17,
-      "unrealized_pct": -8.71,
-      "change_today_pct": -0.96,
+      "current_price": 186.9,
+      "market_value": 186.43,
+      "unrealized_pnl": -22.1,
+      "unrealized_pct": -10.6,
+      "change_today_pct": -2.54,
       "asset_type": "EQUITY"
     },
     {
       "symbol": "GS",
+      "qty": 2.0,
+      "side": "long",
+      "entry_price": 870.94,
+      "current_price": 909.0,
+      "market_value": 1810.16,
+      "unrealized_pnl": 68.28,
+      "unrealized_pct": 3.92,
+      "change_today_pct": 2.04,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "JPM",
       "qty": 1.0,
       "side": "long",
-      "entry_price": 863.0,
-      "current_price": 907.8,
-      "market_value": 903.72,
-      "unrealized_pnl": 40.72,
-      "unrealized_pct": 4.72,
-      "change_today_pct": 0.45,
+      "entry_price": 306.5,
+      "current_price": 311.11,
+      "market_value": 311.69,
+      "unrealized_pnl": 5.19,
+      "unrealized_pct": 1.69,
+      "change_today_pct": -0.82,
       "asset_type": "EQUITY"
     },
     {
@@ -102,11 +102,47 @@
       "qty": 43.0,
       "side": "long",
       "entry_price": 86.47,
-      "current_price": 91.22,
-      "market_value": 3991.69,
-      "unrealized_pnl": 273.48,
-      "unrealized_pct": 7.36,
-      "change_today_pct": -1.73,
+      "current_price": 100.43,
+      "market_value": 4341.3875,
+      "unrealized_pnl": 623.1775,
+      "unrealized_pct": 16.76,
+      "change_today_pct": 2.33,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "LLY",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 948.06,
+      "current_price": 922.5,
+      "market_value": 935.725,
+      "unrealized_pnl": -12.335,
+      "unrealized_pct": -1.3,
+      "change_today_pct": -0.76,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "META",
+      "qty": 1.0,
+      "side": "long",
+      "entry_price": 636.32,
+      "current_price": 662.16,
+      "market_value": 664.41,
+      "unrealized_pnl": 28.09,
+      "unrealized_pct": 4.41,
+      "change_today_pct": 4.35,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "NVDA",
+      "qty": 2.0,
+      "side": "long",
+      "entry_price": 185.08,
+      "current_price": 196.86,
+      "market_value": 388.5002,
+      "unrealized_pnl": 18.3402,
+      "unrealized_pct": 4.95,
+      "change_today_pct": 3.99,
       "asset_type": "EQUITY"
     },
     {
@@ -114,31 +150,31 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 340.44,
-      "current_price": 370.6,
-      "market_value": 365.0,
-      "unrealized_pnl": 24.56,
-      "unrealized_pct": 7.21,
-      "change_today_pct": 1.4,
+      "current_price": 380.6,
+      "market_value": 379.135,
+      "unrealized_pnl": 38.695,
+      "unrealized_pct": 11.37,
+      "change_today_pct": 2.99,
       "asset_type": "EQUITY"
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-04-10",
-    "run_id": "2026-04-10-shadow-daily-01",
-    "circuit_breaker": "REDUCE_ONLY",
+    "trading_date": "2026-04-14",
+    "run_id": "2026-04-14-shadow-midday-01",
+    "circuit_breaker": "OPEN",
     "verdict": "WARN",
     "critical_issues": 0,
     "high_issues": 3,
-    "medium_issues": 2,
+    "medium_issues": 14,
     "chain_ok": false,
-    "approval_path": "SHADOW",
+    "approval_path": "DECISION_SUPPORT",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-11T17:36:49.278933+00:00"
+    "audit_written_at": "2026-04-15T00:27:23.263607+00:00"
   },
   "kpis": {
-    "total_trades": 56,
+    "total_trades": 58,
     "closed_trades": 19,
-    "open_trades": 37,
+    "open_trades": 39,
     "win_rate_pct": 15.79,
     "profit_factor": 0.031,
     "expectancy": -25.91,
@@ -148,7 +184,7 @@
     "max_win_streak": 1,
     "max_loss_streak": 10,
     "source": "legacy_pipeline_kpis_v1",
-    "positions_count": 8
+    "positions_count": 11
   },
   "daily_performance": [
     {
@@ -534,6 +570,22 @@
       "winners": 0,
       "losers": 0,
       "win_rate": 0.0
+    },
+    {
+      "date": "2026-04-13",
+      "net_pnl": 0.0,
+      "trades": 2,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-04-14",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
@@ -746,48 +798,23 @@
       "equity": 84970.24,
       "profit_loss": -29.04,
       "profit_loss_pct": -0.03
+    },
+    {
+      "date": "2026-04-11",
+      "equity": 84843.82,
+      "profit_loss": -126.42,
+      "profit_loss_pct": -0.15
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 85149.44,
+      "profit_loss": 305.62,
+      "profit_loss_pct": 0.36
     }
   ],
   "watchlist": {
-    "items": [
-      {
-        "symbol": "NVDA",
-        "trigger": "GENERAL",
-        "stop": "178.39",
-        "target": "194.94",
-        "modifier": "HIGH",
-        "note": "Up 7.4% in 10 days with +2.0% rel strength vs SPY. RSI 58.84 and %B 0.84 \u2014 mid-band, not extended. Revenue +73.2% YoY, profit margin 55.6%. Earnings not until 5/20 (40 days); no near-term binary event risk. Retail bullish, corroborated, stable sentiment momentum.",
-        "in_position": false
-      },
-      {
-        "symbol": "LLY",
-        "trigger": "GENERAL",
-        "stop": "926.53",
-        "target": "1012.50",
-        "modifier": "HIGH",
-        "note": "RSI 53.24 and %B 0.71 \u2014 mid-band with room to run. Revenue +42.6% YoY, profit margin 31.67%, low beta (0.50) provides downside cushion. Earnings not until 4/30 (20 days). Retail bullish, corroborated, ACCELERATING momentum. Best combination of fundamental quality and momentum maturity in the watchlist.",
-        "in_position": false
-      },
-      {
-        "symbol": "COST",
-        "trigger": "GENERAL",
-        "stop": "1001.07",
-        "target": "1093.95",
-        "modifier": "HIGH",
-        "note": "Consumer defensive, beta 0.98. Revenue +21.5% YoY. RSI 72.97 and %B 0.97 show established trend. Price 3.65% above 20-day SMA with BULLISH technical signal. Earnings not until 5/28 (48 days). Provides portfolio stability in uncertain macro regime if risk-averse rotation continues.",
-        "in_position": false
-      },
-      {
-        "symbol": "BLK",
-        "trigger": "EARNINGS",
-        "stop": "971.57",
-        "target": "1061.72",
-        "modifier": "HIGH",
-        "note": "HIGH research confidence. Revenue +23.4% YoY, forward P/E 16.39 vs trailing 28.33 \u2014 multiple compression implies growth expectations. RSI 63.60 and %B 0.97 with BULLISH technical signal. Price 4.16% above 20-day SMA. Earnings 4/14 could catalyze upside if Q1 AUM flows beat expectations from prior-quarter equity rally.",
-        "in_position": false
-      }
-    ],
-    "as_of": "2026-04-10",
+    "items": [],
+    "as_of": "2026-04-14",
     "source": "rebuild_pregate_intent"
   },
   "exit_candidates": [],
@@ -801,41 +828,55 @@
     "max_concurrent_positions": 4,
     "consecutive_loss_limit": null,
     "consecutive_loss_size_modifier": null,
-    "reduce_only_size_cap": "NO_NEW_ENTRIES",
-    "updated_at": "2026-04-10T08:00:02.672014-04:00"
+    "reduce_only_size_cap": "FULL_SIZE",
+    "updated_at": "2026-04-14T12:00:09.275716-04:00"
   },
   "options": null,
   "hedges": null,
   "bps": null,
   "operator": {
     "mode": {
-      "current_mode": "SHADOW",
-      "effective_mode": "SHADOW",
+      "current_mode": "DECISION_SUPPORT",
+      "effective_mode": "DECISION_SUPPORT",
       "requested_mode": null,
       "target_paper_mode": "AUTONOMOUS_PAPER",
       "target_live_mode": "DECISION_SUPPORT",
       "broker_environment": "PAPER",
       "execution_enabled": false,
-      "approval_required": false,
+      "approval_required": true,
       "live_autonomous_available": false,
-      "allowed_transitions": [],
-      "last_transition_reason": "initial_phase1_default",
-      "applied_at": "2026-04-08T13:23:54.854058-04:00",
+      "allowed_transitions": [
+        "SHADOW"
+      ],
+      "last_transition_reason": "paper_premarket_operator_session",
+      "applied_at": "2026-04-12T12:32:47.228344-04:00",
       "requested_at": null,
       "gate_state": {
         "checkpoint05_passed": false,
         "live_capital_enabled": false,
         "blocking_incidents": [
           "legacy.direction_defaulted_long",
-          "legacy.positions_snapshot_date_mismatch"
+          "shadow.trade_plan_empty",
+          "steward.position_watch_only:AMD",
+          "steward.position_watch_only:AMZN",
+          "steward.position_watch_only:CAT",
+          "steward.position_watch_only:CVX",
+          "steward.position_watch_only:GS",
+          "steward.position_watch_only:JPM",
+          "steward.position_watch_only:KKR",
+          "steward.position_watch_only:LLY",
+          "steward.position_watch_only:META",
+          "steward.position_watch_only:NVDA",
+          "steward.position_watch_only:TSM",
+          "strategy.thesis_set_empty"
         ]
       },
-      "note": "Checkpoint-05 is still accumulating; operator mode remains SHADOW."
+      "note": "Governed Decision Support mode is active; live plans require human approval before submission."
     },
     "session": {
-      "run_id": "2026-04-10-shadow-daily-01",
-      "phase": "PREMARKET",
-      "entry_mode": "REDUCE_ONLY",
+      "run_id": "2026-04-14-shadow-midday-01",
+      "phase": "INTRADAY",
+      "entry_mode": "OPEN",
       "policy_version": "0.1.0"
     },
     "checkpoint05": {
@@ -847,111 +888,55 @@
       "one_sided_days": 6,
       "trivial_days": 7,
       "avg_substantive_match": 0.1429,
-      "latest_suppression_cause": "GATE_BLOCKED",
+      "latest_suppression_cause": "NO_SIGNAL",
       "blocking_notes": [
         "Only 1 substantive post-gate day(s); need at least 10.",
         "6 one-sided post-gate day(s) remain in the current window.",
-        "Latest live shadow day is still suppressed post-gate (GATE_BLOCKED)."
+        "Latest live shadow day is still suppressed post-gate (NO_SIGNAL)."
       ]
     },
     "plan": {
-      "pre_gate_status": "HAS_CANDIDATES",
-      "pre_gate_candidate_count": 4,
-      "pre_gate_symbols": [
-        "NVDA",
-        "LLY",
-        "COST",
-        "BLK"
-      ],
-      "trade_plan_status": "BLOCKED",
+      "pre_gate_status": "NO_CANDIDATES",
+      "pre_gate_candidate_count": 0,
+      "pre_gate_symbols": [],
+      "trade_plan_status": "NO_TRADES",
       "trade_plan_count": 0,
       "trade_plan_symbols": [],
-      "blocked_reasons": [
-        "entry_mode:REDUCE_ONLY",
-        "checkpoint04_blocks_new_entries_in_reduce_only"
-      ],
-      "suppression_cause": "GATE_BLOCKED",
-      "narrative": "4 candidate(s) cleared research, but the plan stayed blocked by Reduce Only (entry_mode:REDUCE_ONLY, checkpoint04_blocks_new_entries_in_reduce_only). Current candidate set: NVDA, LLY, COST, BLK."
+      "blocked_reasons": [],
+      "suppression_cause": "NO_SIGNAL",
+      "narrative": "No candidates surfaced in the current rebuild slice."
     },
     "research": {
-      "tradable_symbol_count": 12,
+      "tradable_symbol_count": 6,
       "coverage_symbols": [
-        "JPM",
-        "WFC",
-        "GS",
-        "BLK",
-        "LLY"
+        "AAPL",
+        "AVGO",
+        "COST",
+        "LLY",
+        "META"
       ],
-      "research_item_count": 12,
-      "thesis_item_count": 12,
-      "long_bias_count": 6,
+      "research_item_count": 6,
+      "thesis_item_count": 0,
+      "long_bias_count": 0,
       "short_bias_count": 0,
-      "neutral_count": 6,
-      "top_theses": [
-        {
-          "symbol": "NVDA",
-          "side_bias": "LONG",
-          "confidence": "HIGH",
-          "bull_prob": 60,
-          "bear_prob": 25,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "Up 7.4% in 10 days with +2.0% rel strength vs SPY. RSI 58.84 and %B 0.84 \u2014 mid-band, not extended. Revenue +73.2% YoY, profit margin 55.6%. Earnings not until 5/20 (40 days); no near-term binary event risk. Retail bullish, corroborated, stable sentiment momentum."
-        },
-        {
-          "symbol": "LLY",
-          "side_bias": "LONG",
-          "confidence": "HIGH",
-          "bull_prob": 62,
-          "bear_prob": 23,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "RSI 53.24 and %B 0.71 \u2014 mid-band with room to run. Revenue +42.6% YoY, profit margin 31.67%, low beta (0.50) provides downside cushion. Earnings not until 4/30 (20 days). Retail bullish, corroborated, ACCELERATING momentum. Best combination of fundamental quality and momentum maturity in the watchlist."
-        },
-        {
-          "symbol": "COST",
-          "side_bias": "LONG",
-          "confidence": "HIGH",
-          "bull_prob": 45,
-          "bear_prob": 35,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "Consumer defensive, beta 0.98. Revenue +21.5% YoY. RSI 72.97 and %B 0.97 show established trend. Price 3.65% above 20-day SMA with BULLISH technical signal. Earnings not until 5/28 (48 days). Provides portfolio stability in uncertain macro regime if risk-averse rotation continues."
-        },
-        {
-          "symbol": "BLK",
-          "side_bias": "LONG",
-          "confidence": "HIGH",
-          "bull_prob": 45,
-          "bear_prob": 38,
-          "catalyst_label": "EARNINGS",
-          "thesis_summary": "HIGH research confidence. Revenue +23.4% YoY, forward P/E 16.39 vs trailing 28.33 \u2014 multiple compression implies growth expectations. RSI 63.60 and %B 0.97 with BULLISH technical signal. Price 4.16% above 20-day SMA. Earnings 4/14 could catalyze upside if Q1 AUM flows beat expectations from prior-quarter equity rally."
-        },
-        {
-          "symbol": "AMD",
-          "side_bias": "LONG",
-          "confidence": "MEDIUM",
-          "bull_prob": 58,
-          "bear_prob": 30,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "Strongest relative strength in watchlist: +10.73% vs SPY on a 16.13% 10-day move. Retail bullish, corroborated, ACCELERATING momentum. Revenue +34.1% YoY. No earnings until 5/5 (25 days). AI chip demand narrative supports continued momentum."
-        }
-      ],
-      "narrative": "Coverage spans 12 liquid names (JPM, WFC, GS, BLK, LLY +7 more). Current thesis mix is 6 long / 0 short. Lead idea is NVDA Long on a General setup."
+      "neutral_count": 0,
+      "top_theses": [],
+      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). No lead thesis is populated yet."
     },
     "regime": {
-      "vix_level": 19.35,
+      "vix_level": 18.39,
       "vix_regime": "MEDIUM",
       "hmm_regime": "CALM",
       "jump_variation_pctile": 100.0,
-      "notes": [
-        "positions_snapshot_date_mismatch:2026-04-09"
-      ],
+      "notes": [],
       "populated": true,
-      "narrative": "VIX is 19.35 in a Medium regime. HMM reads Calm. jump stress is elevated."
+      "narrative": "VIX is 18.39 in a Medium regime. HMM reads Calm. jump stress is elevated."
     },
     "report_paths": {
       "local_only": true,
       "checkpoint05_status": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json",
-      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-10-daily-01.json",
-      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-10-daily-01.json"
+      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-14-midday-01.json",
+      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-14-midday-01.json"
     },
     "approval": null,
     "strategy_bank": {
@@ -1215,19 +1200,62 @@
     },
     "mode_history": {
       "history_window": 20,
-      "event_count": 0,
-      "latest_event": null,
-      "recent_events": [],
-      "note": "No governed mode-change events recorded yet."
+      "event_count": 4,
+      "latest_event": {
+        "event_type": "MODE_CHANGE_DENIED",
+        "from_mode": "DECISION_SUPPORT",
+        "to_mode": "DECISION_SUPPORT",
+        "requested_by": "jacob",
+        "reason": "monday_paper_decision_support_session",
+        "timestamp": "2026-04-12T12:32:57.203403-04:00"
+      },
+      "recent_events": [
+        {
+          "event_type": "MODE_CHANGE_DENIED",
+          "from_mode": "DECISION_SUPPORT",
+          "to_mode": "DECISION_SUPPORT",
+          "requested_by": "jacob",
+          "reason": "monday_paper_decision_support_session",
+          "timestamp": "2026-04-12T12:32:57.203403-04:00"
+        },
+        {
+          "event_type": "MODE_CHANGE_REQUESTED",
+          "from_mode": "DECISION_SUPPORT",
+          "to_mode": "DECISION_SUPPORT",
+          "requested_by": "jacob",
+          "reason": "monday_paper_decision_support_session",
+          "timestamp": "2026-04-12T12:32:57.201307-04:00"
+        },
+        {
+          "event_type": "MODE_CHANGE_APPLIED",
+          "from_mode": "SHADOW",
+          "to_mode": "DECISION_SUPPORT",
+          "requested_by": "jacob",
+          "reason": "paper_premarket_operator_session",
+          "timestamp": "2026-04-12T12:32:47.228344-04:00"
+        }
+      ],
+      "note": "Showing the latest governed mode-control events from rebuild history."
     },
     "incident_flags": [
       "legacy.direction_defaulted_long",
-      "legacy.positions_snapshot_date_mismatch"
+      "shadow.trade_plan_empty",
+      "steward.position_watch_only:AMD",
+      "steward.position_watch_only:AMZN",
+      "steward.position_watch_only:CAT",
+      "steward.position_watch_only:CVX",
+      "steward.position_watch_only:GS",
+      "steward.position_watch_only:JPM",
+      "steward.position_watch_only:KKR",
+      "steward.position_watch_only:LLY",
+      "steward.position_watch_only:META",
+      "steward.position_watch_only:NVDA",
+      "steward.position_watch_only:TSM",
+      "strategy.thesis_set_empty"
     ],
     "notes": [
       "shadow_slice_read_only",
-      "legacy_research_and_thesis_adapters_active",
-      "trade_plan_blocked_by_entry_mode"
+      "legacy_research_and_thesis_adapters_active"
     ]
   }
 }
