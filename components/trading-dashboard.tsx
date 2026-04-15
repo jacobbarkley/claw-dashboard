@@ -1434,11 +1434,17 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
 }
 
 // ─── Performance Grid ─────────────────────────────────────────────────────────
-function MetricCard({ label, value, sub, tooltip }: { label: string; value: string; sub?: string; tooltip?: string }) {
+function MetricCard({ label, value, sub, tooltip, tone }: { label: string; value: string; sub?: string; tooltip?: string; tone?: "good" | "bad" | "neutral" }) {
   const [show, setShow] = useState(false)
+  const gradient = tone === "good"
+    ? "radial-gradient(circle at top left, rgba(34,197,94,0.14), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.10), transparent 40%), rgba(255,255,255,0.018)"
+    : tone === "bad"
+      ? "radial-gradient(circle at top left, rgba(239,68,68,0.12), transparent 40%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 40%), rgba(255,255,255,0.018)"
+      : "radial-gradient(circle at top left, rgba(245,158,11,0.08), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), rgba(255,255,255,0.018)"
   return (
     <div
       className="relative cb-metric"
+      style={{ background: gradient, borderRadius: 10 }}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
@@ -1475,16 +1481,19 @@ function PerformanceGrid({ kpis }: { kpis: TradingData["kpis"] }) {
             label="Win Rate"
             value={kpis.win_rate_pct != null ? `${kpis.win_rate_pct.toFixed(1)}%` : "—"}
             tooltip="Percentage of closed trades that ended in profit. Above 50% means more winners than losers."
+            tone={kpis.win_rate_pct == null ? "neutral" : kpis.win_rate_pct >= 55 ? "good" : kpis.win_rate_pct >= 40 ? "neutral" : "bad"}
           />
           <MetricCard
             label="Profit Factor"
             value={fmt(kpis.profit_factor)}
             tooltip="Gross profit divided by gross loss. Above 1.0 means the system makes more than it loses overall."
+            tone={kpis.profit_factor == null ? "neutral" : kpis.profit_factor >= 1.5 ? "good" : kpis.profit_factor >= 1.0 ? "neutral" : "bad"}
           />
           <MetricCard
             label="Expectancy"
             value={fmt(kpis.expectancy, "$")}
             tooltip="Average dollar return per trade, accounting for win rate and average win/loss size. Positive means edge."
+            tone={kpis.expectancy == null ? "neutral" : kpis.expectancy > 0 ? "good" : kpis.expectancy > -50 ? "neutral" : "bad"}
           />
         </div>
       </div>
@@ -1498,18 +1507,21 @@ function PerformanceGrid({ kpis }: { kpis: TradingData["kpis"] }) {
             value={kpis.max_drawdown_usd != null ? `$${kpis.max_drawdown_usd.toFixed(2)}` : "—"}
             sub={kpis.max_drawdown_pct != null ? `${kpis.max_drawdown_pct.toFixed(2)}% of base` : undefined}
             tooltip="Largest peak-to-trough loss in cumulative realized P&L, expressed as a dollar amount and % of starting equity ($100k)."
+            tone={kpis.max_drawdown_pct == null ? "neutral" : kpis.max_drawdown_pct <= 2 ? "good" : kpis.max_drawdown_pct <= 5 ? "neutral" : "bad"}
           />
           <MetricCard
             label="Win Streak"
             value={String(kpis.max_win_streak)}
             sub="best"
             tooltip="Longest consecutive string of winning trades recorded."
+            tone={kpis.max_win_streak >= 5 ? "good" : kpis.max_win_streak >= 2 ? "neutral" : "bad"}
           />
           <MetricCard
             label="Loss Streak"
             value={String(kpis.max_loss_streak)}
             sub="worst"
             tooltip="Longest consecutive string of losing trades. The consecutive loss limit in risk policy will halt trading when hit."
+            tone={kpis.max_loss_streak <= 2 ? "good" : kpis.max_loss_streak <= 5 ? "neutral" : "bad"}
           />
         </div>
       </div>
