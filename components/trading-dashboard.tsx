@@ -767,11 +767,11 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const preGateSymbols = plan?.pre_gate_symbols ?? []
   const readySymbols = plan?.trade_plan_symbols ?? []
   const effectiveModeLabel = titleizeToken(mode?.effective_mode ?? mode?.current_mode)
-  const nextModeLabel = allowedTransitions[0]
-    ? titleizeToken(allowedTransitions[0])
-    : mode?.target_paper_mode
-      ? titleizeToken(mode.target_paper_mode)
-      : null
+  // Only show "next" if there's a meaningful forward transition (not a regression to Shadow)
+  const forwardTransitions = allowedTransitions.filter((t: string) => t !== "SHADOW")
+  const nextModeLabel = forwardTransitions[0]
+    ? titleizeToken(forwardTransitions[0])
+    : null
   const topThesis = research?.top_theses?.[0]
 
   const regimeSummary = !regime?.populated
@@ -868,64 +868,57 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
 
         </div>
 
-        {/* Incidents & status */}
-        {(incidents.length > 0 || gateBlockers.length > 0 || !pipeline.chain_ok) ? (
-          <Disclosure label={`${incidents.length + gateBlockers.length} issue${incidents.length + gateBlockers.length !== 1 ? "s" : ""} · ${pipeline.chain_ok ? "chain healthy" : "chain has incidents"} · ${data.as_of_date}`}>
-            <div className="mt-2 space-y-2">
-              {incidents.map((code: string) => {
-                const info = humanizeIncident(code)
-                return (
-                  <div key={code} className="text-xs space-y-0.5">
-                    <div className="font-medium" style={{ color: "var(--cb-amber)" }}>{info.label}</div>
-                    <div style={{ color: "var(--cb-text-secondary)" }}>{info.detail}</div>
-                    <div style={{ color: "var(--cb-text-tertiary)" }}>{info.action}</div>
+        {/* Incidents & status — deduplicated, legacy noise filtered */}
+        {(() => {
+          // Merge incidents + gate blockers into one deduplicated list
+          // Filter out retired legacy checks
+          const RETIRED = new Set(["legacy.market_status_missing"])
+          const allCodes = new Set([...incidents, ...gateBlockers].filter((c: string) => !RETIRED.has(c)))
+          const blockerSet = new Set(gateBlockers)
+          const dedupedIssues = [...allCodes].map((code: string) => ({
+            code,
+            isBlocker: blockerSet.has(code),
+          }))
+
+          return dedupedIssues.length > 0 || !pipeline.chain_ok ? (
+            <Disclosure label={`${dedupedIssues.length} issue${dedupedIssues.length !== 1 ? "s" : ""} · ${pipeline.chain_ok ? "chain healthy" : "chain has incidents"} · ${data.as_of_date}`}>
+              <div className="mt-2 space-y-2">
+                {dedupedIssues.map(({ code, isBlocker }) => {
+                  const info = humanizeIncident(code)
+                  return (
+                    <div key={code} className="text-xs space-y-0.5">
+                      <div className="font-medium flex items-center gap-2" style={{ color: isBlocker ? "var(--cb-red)" : "var(--cb-amber)" }}>
+                        {info.label}
+                        {isBlocker && (
+                          <span className="rounded-full border px-1.5 py-0 text-[9px] font-medium" style={{ borderColor: "rgba(239,68,68,0.3)", color: "var(--cb-red)" }}>
+                            blocker
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: "var(--cb-text-secondary)" }}>{info.detail}</div>
+                      <div style={{ color: "var(--cb-text-tertiary)" }}>{info.action}</div>
+                    </div>
+                  )
+                })}
+                {plan?.blocked_reasons?.map((reason: string) => (
+                  <div key={`reason-${reason}`} className="text-xs space-y-0.5">
+                    <div className="font-medium" style={{ color: "var(--cb-amber)" }}>Plan blocked</div>
+                    <div style={{ color: "var(--cb-text-secondary)" }}>{humanizeBlockedReason(reason)}</div>
                   </div>
-                )
-              })}
-              {gateBlockers.map((code: string) => {
-                const info = humanizeIncident(code)
-                return (
-                  <div key={`blocker-${code}`} className="text-xs space-y-0.5">
-                    <div className="font-medium" style={{ color: "var(--cb-red)" }}>Promotion blocker: {info.label}</div>
-                    <div style={{ color: "var(--cb-text-secondary)" }}>{info.detail}</div>
-                    <div style={{ color: "var(--cb-text-tertiary)" }}>{info.action}</div>
-                  </div>
-                )
-              })}
-              {plan?.blocked_reasons?.map((reason: string) => (
-                <div key={`reason-${reason}`} className="text-xs space-y-0.5">
-                  <div className="font-medium" style={{ color: "var(--cb-amber)" }}>Plan blocked</div>
-                  <div style={{ color: "var(--cb-text-secondary)" }}>{humanizeBlockedReason(reason)}</div>
-                </div>
-              ))}
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
-                  Contract v{data.contract_version ?? "legacy"}
-                </span>
-                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
-                  Events {modeHistory?.event_count ?? 0}
-                </span>
-                <span className="rounded-full border px-2.5 py-1 text-[11px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
-                  Phase {titleizeToken(session?.phase)}
-                </span>
+                ))}
               </div>
-            </div>
-          </Disclosure>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2 text-[11px] mt-3">
-            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(34,197,94,0.2)", color: "var(--cb-green)" }}>
-              Chain healthy
-            </span>
-            {allowedTransitions.length > 0 && (
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
-                Next: {allowedTransitions.map(titleizeToken).join(" / ")}
+            </Disclosure>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2 text-[11px] mt-3">
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(34,197,94,0.2)", color: "var(--cb-green)" }}>
+                Chain healthy
               </span>
-            )}
-            <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
-              {data.as_of_date}
-            </span>
-          </div>
-        )}
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+                {data.as_of_date}
+              </span>
+            </div>
+          )
+        })()}
       </div>
     </section>
   )
