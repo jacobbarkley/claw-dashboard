@@ -180,7 +180,10 @@
     0 20px 60px rgba(3, 1, 12, 0.85);
 }
 .cb-hero-primary {
-  background: linear-gradient(155deg, rgba(28, 18, 64, 0.50) 0%, rgba(8, 5, 22, 0.20) 100%);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.10), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.10), transparent 40%),
+    linear-gradient(155deg, rgba(28, 18, 64, 0.50) 0%, rgba(8, 5, 22, 0.20) 100%);
   padding: 28px 28px 22px;
 }
 .cb-hero-support {
@@ -190,7 +193,10 @@
 }
 
 .cb-card-t1 {
-  background: var(--cb-surface-0);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.06), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.06), transparent 35%),
+    var(--cb-surface-0);
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
   box-shadow:
@@ -198,15 +204,21 @@
     0 12px 40px rgba(3, 1, 12, 0.7);
 }
 .cb-card-t2 {
-  background: var(--cb-surface-0);
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.05), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.05), transparent 35%),
+    var(--cb-surface-0);
   border: 1px solid var(--cb-border-std);
   border-radius: 10px;
   box-shadow: 0 2px 12px rgba(3, 1, 12, 0.5);
 }
 .cb-card-t3 {
-  background: transparent;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.06), transparent 40%),
+    linear-gradient(180deg, rgba(24, 24, 27, 0.95), rgba(9, 9, 11, 0.95));
   border: 1px solid var(--cb-border-dim);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 /* Borderless metric readout — analytics/utility only */
 .cb-metric {
