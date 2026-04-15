@@ -829,127 +829,40 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
           </div>
         </div>
 
-        {/* Horizontal scroll cards */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 mt-4 pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none" style={{ scrollSnapStop: "always" }}>
+        {/* Summary cards — just the essentials */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
 
           {/* Card 1: Today's Plan */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5 overflow-hidden">
             <div className="cb-label">Today&apos;s Plan</div>
-            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
+            <div className="text-sm font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
               {titleizeToken(plan?.trade_plan_status)} · {plan?.trade_plan_count ?? 0} ready
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
               {readySymbols.length > 0
-                ? setsMatch
-                  ? `${readySymbols.length} candidate${readySymbols.length !== 1 ? "s" : ""} cleared the risk gate`
-                  : `${preGateSymbols.length} surfaced, ${readySymbols.length} cleared risk filters`
+                ? `${readySymbols.length} cleared risk · ${summarizeSymbols(readySymbols, 5)}`
                 : preGateSymbols.length > 0
-                  ? `${preGateSymbols.length} surfaced before gating, none cleared`
+                  ? `${preGateSymbols.length} surfaced, none cleared`
                   : "No candidates in current snapshot"}
             </div>
-            {readySymbols.length > 0 && (
-              <div className="text-xs truncate" style={{ color: "var(--cb-text-primary)" }}>
-                {summarizeSymbols(readySymbols, 5)}
-              </div>
-            )}
             {plan?.suppression_cause && plan.suppression_cause !== "NOT_SUPPRESSED" && (
               <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
                 {humanizeSuppression(plan.suppression_cause)}
               </div>
             )}
-            {!setsMatch && preGateSymbols.length > 0 && readySymbols.length > 0 && (
-              <Disclosure label="Filtered candidates">
-                <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
-                  Before gate: {summarizeSymbols(preGateSymbols, 6)}
-                </div>
-              </Disclosure>
-            )}
           </div>
 
-          {/* Card 2: Promotion Readiness */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
-            <div className="cb-label">Promotion Readiness</div>
-            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
-              {titleizeToken(checkpoint?.checkpoint_status)} · {checkpoint?.substantive_shadow_days ?? 0}/{checkpoint?.total_shadow_days ?? 0} days
+          {/* Card 2: Market Regime */}
+          <div className="cb-card-t3 px-4 py-3 space-y-1.5 overflow-hidden">
+            <div className="cb-label">Market Regime</div>
+            <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+              {regimeSummary}
             </div>
             <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {checkpoint?.substantive_shadow_days ?? 0} post-gate · {checkpoint?.substantive_pregate_days ?? 0} pre-gate
+              {research?.tradable_symbol_count ?? 0} tradable names · {research?.thesis_item_count ?? 0} theses
             </div>
-            <div className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>
-              {checkpoint?.latest_suppression_cause === "GATE_BLOCKED"
-                ? "Risk gate blocked the latest day. Normal during shadow collection."
-                : checkpoint?.latest_suppression_cause === "NOT_SUPPRESSED"
-                  ? "Latest day would have traded — evidence accumulating."
-                  : checkpoint?.latest_suppression_cause
-                    ? `${humanizeSuppression(checkpoint.latest_suppression_cause)}.`
-                    : "Evidence accumulating across shadow days."}
-            </div>
-            <Disclosure label="Details">
-              <div className="space-y-1 text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
-                <div>Gate: {mode?.gate_state?.checkpoint05_passed ? "Ready" : "Accumulating"}</div>
-                <div>Next: {allowedTransitions.length > 0 ? allowedTransitions.map(titleizeToken).join(", ") : "none yet"}</div>
-                {blockingNotes.length > 0 && <div className="text-[var(--cb-amber)]">{blockingNotes.length} blocking note{blockingNotes.length !== 1 ? "s" : ""}</div>}
-                {gateBlockers.length > 0 && <div className="text-[var(--cb-amber)]">{gateBlockers.length} blocker{gateBlockers.length !== 1 ? "s" : ""}</div>}
-              </div>
-            </Disclosure>
-          </div>
-
-          {/* Card 3: Approval Queue */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
-            <div className="cb-label">Approval Queue</div>
-            {approvalPending ? (
-              <>
-                <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
-                  {approval!.pending_count} pending
-                </div>
-                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                  {approval!.trade_count ?? 0} trade{(approval!.trade_count ?? 0) !== 1 ? "s" : ""}
-                  {approval!.symbols?.length ? ` · ${summarizeSymbols(approval!.symbols, 4)}` : ""}
-                  {approval!.gross_risk_pct != null ? ` · ${approval!.gross_risk_pct.toFixed(1)}% risk` : ""}
-                </div>
-                <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-                  {titleizeToken(approval!.latest_status)}
-                  {approval!.latest_expiry ? ` · expires ${formatEventTimestamp(approval!.latest_expiry)}` : ""}
-                </div>
-                {approval!.status_note && (
-                  <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>{approval!.status_note}</div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="text-base font-medium" style={{ color: "var(--cb-text-tertiary)" }}>
-                  Idle
-                </div>
-                <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
-                  {isDecisionSupport
-                    ? "Decision Support is active. No plans are awaiting approval right now."
-                    : "Approval queue activates in Decision Support mode."}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Card 4: Research & Regime */}
-          <div className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] min-h-[180px] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:min-h-0 md:flex-shrink overflow-hidden">
-            <div className="cb-label">Research & Regime</div>
-            <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)" }}>
-              {research?.research_item_count ?? 0} research · {research?.thesis_item_count ?? 0} theses
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {research?.tradable_symbol_count ?? 0} tradable names · {regimeSummary}
-            </div>
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {topThesis?.symbol
-                ? `Lead: ${topThesis.symbol} ${titleizeToken(topThesis.side_bias)}${topThesis.confidence ? ` (${titleizeToken(topThesis.confidence)})` : ""}`
-                : "Top thesis not populated yet"}
-            </div>
-            {(regime?.narrative || research?.narrative) && (
-              <Disclosure label="Context">
-                <div className="text-xs space-y-1" style={{ color: "var(--cb-text-tertiary)" }}>
-                  {regime?.narrative && <div>{regime.narrative}</div>}
-                  {research?.narrative && <div>{research.narrative}</div>}
-                </div>
-              </Disclosure>
+            {regime?.narrative && (
+              <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>{regime.narrative}</div>
             )}
           </div>
 
@@ -1069,240 +982,83 @@ function strategyRuleSummary(record: StrategyBankRecord): string {
   return parts.join(" · ") || "—"
 }
 
+function humanizeStrategyName(name: string | null | undefined): string {
+  if (!name) return "Unknown"
+  // "regime_aware_momentum:stop_5_target_15" → "Regime Aware Momentum (5% stop / 15% target)"
+  const parts = name.split(":")
+  const family = parts[0].replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+  if (parts.length < 2) return family
+  const variant = parts[1]
+  // Try to extract stop/target numbers from variant name
+  const stopMatch = variant.match(/stop[_]?(\d+)/)
+  const targetMatch = variant.match(/target[_]?(\d+)/)
+  if (stopMatch && targetMatch) {
+    return `${family} (${stopMatch[1]}% stop / ${targetMatch[1]}% target)`
+  }
+  return `${family} · ${variant.replace(/_/g, " ")}`
+}
+
 function PromotedStrategy({ bank }: { bank: StrategyBankSection | null | undefined }) {
   if (!bank || !bank.active) return null
   const active = bank.active
   const banked = (bank.banked_strategies ?? []).filter(r => r.record_id !== active.record_id)
   const perf = active.performance_summary ?? {}
   const stageColors = promotionStageColor(active.promotion_stage)
-  const dmExcess = perf.deployment_matched_excess_return_pct
-  const absExcess = perf.excess_return_pct
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <span className="cb-label">
-          Promoted Strategy{bank.strategy_count ? ` · ${bank.strategy_count} banked` : ""}
-        </span>
-        <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-          Active selection governs live runtime
-        </span>
-      </div>
+      <div className="cb-label mb-3">Active Strategy</div>
 
-      {/* Active strategy hero */}
-      <div
-        className="rounded-[18px] border px-5 py-4 space-y-4"
-        style={{
-          borderColor: "rgba(90, 70, 160, 0.22)",
-          background:
-            "radial-gradient(circle at top right, rgba(139, 92, 246, 0.12), transparent 32%), linear-gradient(180deg, rgba(6, 4, 16, 0.96), rgba(5, 3, 14, 0.94))",
-          boxShadow: "0 10px 32px rgba(3, 1, 12, 0.32)",
-        }}
-      >
-        {/* Headline row */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="space-y-1 min-w-0 flex-1">
-            <div className="text-base font-medium truncate" style={{ color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
-              {active.display_name ?? active.record_id}
-            </div>
-            {active.description && (
-              <div className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>
-                {active.description}
-              </div>
-            )}
+      <div className="cb-card-t3 px-4 py-3 space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
+            {humanizeStrategyName(active.display_name ?? active.record_id)}
           </div>
-          <div className="flex flex-wrap gap-1.5 flex-shrink-0">
-            {active.promotion_stage && (
-              <span
-                className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
-                style={{ borderColor: stageColors.border, color: stageColors.color, background: stageColors.bg }}
-              >
-                {titleizeToken(active.promotion_stage)}
-              </span>
-            )}
-            {active.signal_source && (
-              <span
-                className="rounded-full border px-2.5 py-1 text-[11px]"
-                style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}
-              >
-                Signal: {titleizeToken(active.signal_source)}
-              </span>
-            )}
-            {active.allowed_sides && active.allowed_sides.length > 0 && (
-              <span
-                className="rounded-full border px-2.5 py-1 text-[11px]"
-                style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}
-              >
-                {active.allowed_sides.join("/")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Metrics strip */}
-        <div className="flex gap-5 overflow-x-auto pb-1 -mx-1 px-1">
-          <StrategyMetric
-            label="Return"
-            value={formatPctPlain(perf.total_return_pct)}
-            tone={perf.total_return_pct != null && perf.total_return_pct >= 0 ? "pos" : "neg"}
-          />
-          <StrategyMetric
-            label="Excess SPY"
-            value={formatPctSigned(absExcess)}
-            tone={absExcess != null && absExcess >= 0 ? "pos" : "neg"}
-          />
-          <StrategyMetric
-            label="DM Excess"
-            value={formatPctSigned(dmExcess)}
-            tone={dmExcess != null && dmExcess >= 0 ? "pos" : "neg"}
-          />
-          <StrategyMetric label="Sharpe" value={formatRatio(perf.sharpe_ratio)} />
-          <StrategyMetric
-            label="Max DD"
-            value={formatPctPlain(perf.max_drawdown_pct)}
-            tone="neg"
-          />
-          <StrategyMetric label="Trades" value={perf.total_trades != null ? String(perf.total_trades) : "—"} />
-          <StrategyMetric label="Win Rate" value={formatPctPlain(perf.win_rate_pct, 1)} />
-          <StrategyMetric label="Profit Factor" value={formatRatio(perf.profit_factor)} />
-        </div>
-
-        {/* Symbols + rules */}
-        <div className="space-y-1.5">
-          {active.symbols && active.symbols.length > 0 && (
-            <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              <span style={{ color: "var(--cb-text-tertiary)" }}>Universe · </span>
-              <span style={{ color: "var(--cb-text-primary)" }}>{active.symbols.join(", ")}</span>
-            </div>
+          {active.promotion_stage && (
+            <span
+              className="rounded-full border px-2 py-0.5 text-[10px] flex-shrink-0"
+              style={{ borderColor: stageColors.border, color: stageColors.color, background: stageColors.bg }}
+            >
+              {titleizeToken(active.promotion_stage)}
+            </span>
           )}
-          <div className="text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-            <span style={{ color: "var(--cb-text-tertiary)" }}>Rules · </span>
-            <span style={{ color: "var(--cb-text-primary)" }}>{strategyRuleSummary(active)}</span>
-          </div>
         </div>
 
-        {/* Research notes */}
-        {active.notes && active.notes.length > 0 && (
-          <Disclosure label={`Research notes (${active.notes.length})`}>
-            <ul className="space-y-1 text-xs" style={{ color: "var(--cb-text-secondary)" }}>
-              {active.notes.map((note, i) => (
-                <li key={i} className="leading-snug">• {note}</li>
-              ))}
-            </ul>
-          </Disclosure>
-        )}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs" style={{ color: "var(--cb-text-secondary)" }}>
+          <span>{formatPctPlain(perf.total_return_pct)} return</span>
+          <span>Sharpe {formatRatio(perf.sharpe_ratio)}</span>
+          <span>{formatPctPlain(perf.max_drawdown_pct)} max DD</span>
+          <span>{perf.total_trades ?? "—"} trades</span>
+          <span>{formatPctPlain(perf.win_rate_pct, 1)} win rate</span>
+        </div>
 
-        {/* Evidence */}
-        {active.evidence?.campaign_id && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            <span className="rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
-              Campaign: {active.evidence.campaign_id}
-            </span>
-            {active.evidence.validation_run_id && (
-              <span className="rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: "rgba(139,92,246,0.15)", color: "var(--cb-text-tertiary)" }}>
-                Run: {active.evidence.validation_run_id}
-              </span>
-            )}
+        {active.symbols && active.symbols.length > 0 && (
+          <div className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
+            {active.symbols.join(", ")} · {strategyRuleSummary(active)}
           </div>
         )}
       </div>
 
-      {/* Bank strip */}
       {banked.length > 0 && (
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="cb-label">Bank · {banked.length} other approved</span>
-            <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-              Switch via bin/strategy_bank.py select
-            </span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-1 px-1 md:grid md:grid-cols-2 md:overflow-visible md:snap-none lg:grid-cols-3">
+        <Disclosure label={`${banked.length} other banked strateg${banked.length === 1 ? "y" : "ies"}`}>
+          <div className="space-y-2 mt-2">
             {banked.map((record) => {
               const rPerf = record.performance_summary ?? {}
-              const rStage = promotionStageColor(record.promotion_stage)
-              const rExcess = rPerf.deployment_matched_excess_return_pct ?? rPerf.excess_return_pct
               return (
-                <div
-                  key={record.record_id}
-                  className="cb-card-t3 px-4 py-3 space-y-2 w-[78vw] min-w-[78vw] max-w-[78vw] snap-center flex-shrink-0 md:w-auto md:min-w-0 md:max-w-none md:flex-shrink overflow-hidden"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-sm font-medium truncate" style={{ color: "var(--cb-text-primary)" }}>
-                      {record.display_name ?? record.record_id}
-                    </div>
-                    {record.promotion_stage && (
-                      <span
-                        className="rounded-full border px-2 py-0.5 text-[10px] flex-shrink-0"
-                        style={{ borderColor: rStage.border, color: rStage.color, background: rStage.bg }}
-                      >
-                        {titleizeToken(record.promotion_stage)}
-                      </span>
-                    )}
-                  </div>
-                  {record.description && (
-                    <div className="text-[11px] leading-snug" style={{ color: "var(--cb-text-tertiary)" }}>
-                      {record.description}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px]" style={{ color: "var(--cb-text-secondary)" }}>
-                    <span>
-                      <span style={{ color: "var(--cb-text-tertiary)" }}>Ret </span>
-                      <span
-                        className="tabular-nums"
-                        style={{
-                          color: rPerf.total_return_pct != null && rPerf.total_return_pct >= 0
-                            ? "var(--cb-green)"
-                            : "var(--cb-red)",
-                        }}
-                      >
-                        {formatPctPlain(rPerf.total_return_pct)}
-                      </span>
-                    </span>
-                    <span>
-                      <span style={{ color: "var(--cb-text-tertiary)" }}>Excess </span>
-                      <span
-                        className="tabular-nums"
-                        style={{
-                          color: rExcess != null && rExcess >= 0
-                            ? "var(--cb-green)"
-                            : "var(--cb-red)",
-                        }}
-                      >
-                        {formatPctSigned(rExcess)}
-                      </span>
-                    </span>
-                    <span>
-                      <span style={{ color: "var(--cb-text-tertiary)" }}>Sharpe </span>
-                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
-                        {formatRatio(rPerf.sharpe_ratio)}
-                      </span>
-                    </span>
-                    <span>
-                      <span style={{ color: "var(--cb-text-tertiary)" }}>DD </span>
-                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
-                        {formatPctPlain(rPerf.max_drawdown_pct)}
-                      </span>
-                    </span>
-                    <span>
-                      <span style={{ color: "var(--cb-text-tertiary)" }}>Trades </span>
-                      <span className="tabular-nums" style={{ color: "var(--cb-text-primary)" }}>
-                        {rPerf.total_trades ?? "—"}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
-                    {strategyRuleSummary(record)}
-                  </div>
-                  {record.symbols && record.symbols.length > 0 && (
-                    <div className="text-[10px] truncate" style={{ color: "var(--cb-text-tertiary)" }}>
-                      {summarizeSymbols(record.symbols, 6)}
-                    </div>
-                  )}
+                <div key={record.record_id} className="flex items-center justify-between gap-3 text-xs py-1.5">
+                  <span style={{ color: "var(--cb-text-secondary)" }}>
+                    {humanizeStrategyName(record.display_name ?? record.record_id)}
+                  </span>
+                  <span className="flex gap-3 flex-shrink-0 tabular-nums" style={{ color: "var(--cb-text-tertiary)" }}>
+                    <span>{formatPctPlain(rPerf.total_return_pct)}</span>
+                    <span>S {formatRatio(rPerf.sharpe_ratio)}</span>
+                    <span>{formatPctPlain(rPerf.max_drawdown_pct)} DD</span>
+                  </span>
                 </div>
               )
             })}
           </div>
-        </div>
+        </Disclosure>
       )}
     </section>
   )
