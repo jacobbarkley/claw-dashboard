@@ -417,15 +417,24 @@ function TicketCard({ ticket, defaultExpanded }: { ticket: Ticket; defaultExpand
   return (
     <>
       <div
-        className={`rounded-lg border transition-colors ${
+        className={`rounded-xl border transition-colors ${
           isClosed
-            ? "border-zinc-800/60 bg-zinc-900/50"
+            ? "border-zinc-800/60"
             : age >= 7
-              ? "border-red-500/15 bg-zinc-900"
+              ? "border-red-500/15"
               : age >= 3
-                ? "border-amber-500/10 bg-zinc-900"
-                : "border-zinc-800 bg-zinc-900"
+                ? "border-amber-500/10"
+                : "border-zinc-800"
         }`}
+        style={{
+          background: isClosed
+            ? "linear-gradient(180deg, rgba(24,24,27,0.7), rgba(9,9,11,0.7))"
+            : age >= 7
+              ? "radial-gradient(circle at top left, rgba(239,68,68,0.10), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))"
+              : age >= 3
+                ? "radial-gradient(circle at top left, rgba(245,158,11,0.08), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))"
+                : "radial-gradient(circle at top left, rgba(34,197,94,0.08), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))"
+        }}
       >
         {/* Collapsed header — always visible, tappable on mobile */}
         <button
@@ -580,7 +589,7 @@ function OpsCockpit({ metrics, totalTickets }: { metrics: OpsMetrics; totalTicke
         </Card>
 
         {/* Active Repairs */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="border-zinc-800" style={{ background: "radial-gradient(circle at top left, rgba(59,130,246,0.10), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))" }}>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-2xl font-bold text-blue-400 tabular-nums">{metrics.activeRepairs}</div>
             <div className="text-[11px] text-zinc-500 mt-1 uppercase tracking-wide font-medium flex items-center gap-1.5">
@@ -591,7 +600,7 @@ function OpsCockpit({ metrics, totalTickets }: { metrics: OpsMetrics; totalTicke
         </Card>
 
         {/* Closed This Week */}
-        <Card className="bg-zinc-900 border-zinc-800">
+        <Card className="border-zinc-800" style={{ background: "radial-gradient(circle at top left, rgba(34,197,94,0.10), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))" }}>
           <CardContent className="pt-4 pb-3 px-4">
             <div className="text-2xl font-bold text-emerald-400 tabular-nums">{metrics.closedThisWeek}</div>
             <div className="text-[11px] text-zinc-500 mt-1 uppercase tracking-wide font-medium flex items-center gap-1.5">
@@ -604,19 +613,19 @@ function OpsCockpit({ metrics, totalTickets }: { metrics: OpsMetrics; totalTicke
 
       {/* Secondary row: pipeline-impacting + aging + total */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
+        <div className="rounded-lg border border-zinc-800 px-3 py-2.5 flex items-center justify-between">
           <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Pipeline</span>
           <span className={`text-sm font-bold tabular-nums ${metrics.pipelineImpacting > 0 ? "text-orange-400" : "text-zinc-400"}`}>
             {metrics.pipelineImpacting}
           </span>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
+        <div className="rounded-lg border border-zinc-800 px-3 py-2.5 flex items-center justify-between">
           <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Aging</span>
           <span className={`text-sm font-bold tabular-nums ${metrics.agingCritical > 0 ? "text-red-400" : "text-zinc-400"}`}>
             {metrics.agingCritical}
           </span>
         </div>
-        <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 flex items-center justify-between">
+        <div className="rounded-lg border border-zinc-800 px-3 py-2.5 flex items-center justify-between">
           <span className="text-[11px] text-zinc-500 uppercase tracking-wide font-medium">Total</span>
           <span className="text-sm font-bold text-zinc-300 tabular-nums">{totalTickets}</span>
         </div>
