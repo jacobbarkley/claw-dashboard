@@ -1598,6 +1598,11 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
               <span className="font-mono font-semibold text-[var(--cb-text-primary)] text-base">
                 {opt ? `${opt.underlying} $${opt.strike}${opt.type}` : p.symbol}
               </span>
+              {!opt && COMPANY_NAMES[p.symbol] && (
+                <span className="text-[11px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                  {COMPANY_NAMES[p.symbol]}
+                </span>
+              )}
               {optBadge && (
                 <span style={{ fontSize: 10, color: "var(--cb-brand)", fontFamily: "monospace", fontWeight: 600 }}>{optBadge}</span>
               )}
@@ -2973,9 +2978,6 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           })()}
         </section>
 
-        {/* Options — Strategy Tabs */}
-        <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
-
         <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
 
         {/* Operator Context — below the action area */}
@@ -2983,6 +2985,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* Promoted Strategy */}
         <PromotedStrategy bank={data.operator?.strategy_bank} />
+
+        {/* Options — parked at bottom until options sleeve is developed */}
+        <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
 
       </div>
     </div>
