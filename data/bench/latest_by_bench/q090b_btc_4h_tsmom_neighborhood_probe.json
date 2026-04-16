@@ -1,0 +1,17 @@
+{
+  "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
+  "run_id": "q090b-neighborhood-full-20260416-v2",
+  "title": "BTC 4H TSMOM Neighborhood Probe",
+  "sleeve": "CRYPTO",
+  "engine": "CRYPTO_RESEARCH_SWEEP",
+  "promotion_target": "BENCH",
+  "status": "SUCCEEDED",
+  "selected_config_id": "grid-00193",
+  "evaluated_candidate_count": 433,
+  "search_space_size": 486,
+  "candidate_cap": 486,
+  "sweep_truncated": false,
+  "primary_metric": "median_era_sharpe",
+  "primary_metric_value": 0.5916,
+  "generated_at": "2026-04-16T17:04:04.099370-04:00"
+}

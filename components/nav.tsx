@@ -1,16 +1,17 @@
 import Link from "next/link"
-import { Zap, Activity, TrendingUp, List } from "lucide-react"
+import { Zap, Activity, TrendingUp, List, FlaskConical } from "lucide-react"
 
 const LINKS = [
   { href: "/dashboard", label: "Ops",      icon: Activity      },
   { href: "/trading",   label: "Trading",  icon: TrendingUp    },
+  { href: "/bench",     label: "Bench",    icon: FlaskConical  },
   { href: "/queue",     label: "Queue",    icon: List          },
 ]
 
 const NAV_BG = "rgba(5, 8, 26, 0.92)"
 const BORDER = "rgba(90, 110, 180, 0.14)"
 
-export function Nav({ active }: { active: "dashboard" | "trading" | "queue" | "chat" }) {
+export function Nav({ active }: { active: "dashboard" | "trading" | "queue" | "chat" | "bench" }) {
   return (
     <>
       {/* Top nav — sticky, part of the product shell */}

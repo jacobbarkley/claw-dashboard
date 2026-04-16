@@ -1,0 +1,81 @@
+{
+  "run_id": "q090b-bounded-smoke-20260416-crypto",
+  "bench_id": "q090b_btc_4h_tsmom_sweep",
+  "generated_at": "2026-04-16T14:22:22.940864-04:00",
+  "status": "PARTIAL",
+  "spec_path": "backtest/bench/specs/q090b_btc_4h_tsmom_sweep.bench_spec.json",
+  "spec_hash": "989c8817e8e6450dd838ce88bf306ac42417b126dc999324c44b6cb246d3a0aa",
+  "code_ref": null,
+  "selected_config_id": null,
+  "variant_count": 25,
+  "evaluated_candidate_count": 25,
+  "search_space_size": 43740,
+  "candidate_cap": 25,
+  "sweep_truncated": true,
+  "candidate_config_ids": [
+    "base",
+    "grid-00001",
+    "grid-00002",
+    "grid-00003",
+    "grid-00004",
+    "grid-00005",
+    "grid-00006",
+    "grid-00007",
+    "grid-00008",
+    "grid-00009",
+    "grid-00010",
+    "grid-00011",
+    "grid-00012",
+    "grid-00013",
+    "grid-00014",
+    "grid-00015",
+    "grid-00016",
+    "grid-00017",
+    "grid-00018",
+    "grid-00019",
+    "grid-00020",
+    "grid-00021",
+    "grid-00022",
+    "grid-00023",
+    "grid-00024"
+  ],
+  "baseline_ids": [
+    "BUY_AND_HOLD_BTC",
+    "NO_TRADE"
+  ],
+  "era_ids": [
+    "2016_rebuild",
+    "2017_mania",
+    "2018_2020_reset",
+    "2020_2021_bull",
+    "2021_2022_reset",
+    "2023_2026_current"
+  ],
+  "primary_metric": "median_era_sharpe",
+  "primary_metric_value": 0.0505,
+  "artifact_refs": [
+    {
+      "artifact_id": "crypto_bench_report",
+      "artifact_type": "REPORT",
+      "path": "backtest/bench/results/q090b_btc_4h_tsmom_sweep/q090b-bounded-smoke-20260416-crypto/crypto_bench_report.json",
+      "description": "Primary BTC bench report generated from the structured bench spec."
+    },
+    {
+      "artifact_id": "crypto_bench_leaderboard",
+      "artifact_type": "LEADERBOARD",
+      "path": "backtest/bench/results/q090b_btc_4h_tsmom_sweep/q090b-bounded-smoke-20260416-crypto/crypto_bench_leaderboard.json",
+      "description": "Dashboard-friendly ranking view for evaluated crypto bench candidates."
+    },
+    {
+      "artifact_id": "bench_spec_snapshot",
+      "artifact_type": "SPEC_SNAPSHOT",
+      "path": "backtest/bench/results/q090b_btc_4h_tsmom_sweep/q090b-bounded-smoke-20260416-crypto/bench_spec.snapshot.json",
+      "description": "Bench spec snapshot used for the run."
+    }
+  ],
+  "notes": [
+    "Bench-spec-driven crypto report bundle with candidate leaderboard output.",
+    "Only a bounded subset of the declared sweep was evaluated in this run.",
+    "No winner was selected under the current evaluation constraints."
+  ]
+}

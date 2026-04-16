@@ -1,0 +1,17 @@
+{
+  "bench_id": "q090b_btc_4h_tsmom_sweep",
+  "run_id": "q090b-bounded-2000-20260416",
+  "title": "BTC 4H TSMOM Sweep",
+  "sleeve": "CRYPTO",
+  "engine": "CRYPTO_RESEARCH_SWEEP",
+  "promotion_target": "BENCH",
+  "status": "PARTIAL",
+  "selected_config_id": null,
+  "evaluated_candidate_count": 2000,
+  "search_space_size": 43740,
+  "candidate_cap": 2000,
+  "sweep_truncated": true,
+  "primary_metric": "median_era_sharpe",
+  "primary_metric_value": 0.0505,
+  "generated_at": "2026-04-16T16:32:38.671466-04:00"
+}
