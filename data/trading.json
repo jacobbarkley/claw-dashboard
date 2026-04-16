@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-16T20:30:14.928486+00:00",
+  "generated_at": "2026-04-16T20:41:12.510171+00:00",
   "as_of_date": "2026-04-16",
   "account": {
     "equity": 85442.04,
@@ -54,9 +54,9 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 58,
+    "total_trades": 59,
     "closed_trades": 19,
-    "open_trades": 39,
+    "open_trades": 40,
     "win_rate_pct": 15.79,
     "profit_factor": 0.031,
     "expectancy": -25.91,
@@ -1526,10 +1526,10 @@
         "short_strike": 95.0,
         "long_strike": 90.0,
         "spread_width": 5.0,
-        "net_credit": 1.79,
-        "credit_width_ratio": 0.358,
-        "annualized_yield_pct": 622.2,
-        "max_loss_per_contract": 321.0,
+        "net_credit": 1.99,
+        "credit_width_ratio": 0.398,
+        "annualized_yield_pct": 691.8,
+        "max_loss_per_contract": 301.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
