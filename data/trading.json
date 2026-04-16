@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-16T16:00:14.373077+00:00",
+  "generated_at": "2026-04-16T16:15:15.280555+00:00",
   "as_of_date": "2026-04-16",
   "account": {
-    "equity": 85445.48,
+    "equity": 85451.45,
     "cash": 31092.35,
-    "buying_power": 116537.83,
+    "buying_power": 116543.8,
     "base_value": 100000.0,
-    "total_pnl": -14554.52,
-    "total_pnl_pct": -14.5545,
-    "today_pnl": 1.27,
-    "today_pnl_pct": 0.0015,
-    "positions_value": 54353.93,
-    "equity_deployed": 54353.93,
+    "total_pnl": -14548.55,
+    "total_pnl_pct": -14.5485,
+    "today_pnl": 7.24,
+    "today_pnl_pct": 0.0085,
+    "positions_value": 54359.18,
+    "equity_deployed": 54359.18,
     "options_deployed": 0,
-    "unrealized_pnl": 2.07,
-    "unrealized_pnl_pct": 0.0
+    "unrealized_pnl": 7.32,
+    "unrealized_pnl_pct": 0.01
   },
   "positions": [
     {
@@ -22,9 +22,9 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 199.0099,
-      "market_value": 3184.1584,
-      "unrealized_pnl": 2.1284,
+      "current_price": 199.0199,
+      "market_value": 3184.3184,
+      "unrealized_pnl": 2.2884,
       "unrealized_pct": 0.07,
       "change_today_pct": 0.07
     },
@@ -33,11 +33,11 @@
       "qty": 509.0,
       "side": "long",
       "entry_price": 100.530118,
-      "current_price": 100.53,
-      "market_value": 51169.77,
-      "unrealized_pnl": -0.060062,
-      "unrealized_pct": 0.0,
-      "change_today_pct": 0.0
+      "current_price": 100.54,
+      "market_value": 51174.86,
+      "unrealized_pnl": 5.029938,
+      "unrealized_pct": 0.01,
+      "change_today_pct": 0.01
     }
   ],
   "pipeline_status": {
