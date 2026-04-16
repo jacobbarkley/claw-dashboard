@@ -42,6 +42,10 @@ interface WatchlistItem {
   modifier: string
   note: string
   in_position?: boolean
+  // Optional card accent tone — callers can compute this per-symbol.
+  // Not held: defaults to "medium" (champagne — optimistic candidate).
+  // Held: tone based on today's performance (good/bad/medium).
+  tone?: "good" | "medium" | "bad"
 }
 
 interface BpsPosition {
@@ -1650,7 +1654,7 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
               ) : (
                 <>
                   <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-                    {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"}
+                    {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"} · ${p.market_value?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"} value
                   </span>
                   {exitLabel && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
                 </>
@@ -1879,7 +1883,7 @@ function QualifiedSetups({
   return (
     <div className="space-y-2">
       {visibleItems.map(item => (
-        <div key={item.symbol} className="cb-card-t2">
+        <div key={item.symbol} className={`cb-card-t2 ${toneClass(item.tone ?? "medium")}`}>
           <button
             onClick={() => setExpanded(e => e === item.symbol ? null : item.symbol)}
             className="w-full flex items-center justify-between px-3 py-2.5 text-left"
@@ -2286,11 +2290,17 @@ function StocksSleeve({ data }: { data: TradingData }) {
   const qualifiedSymbols = new Set(data.watchlist.items.map(i => i.symbol))
   const qualifiedToday = strategySymbols.filter(s => qualifiedSymbols.has(s)).length
 
+  const positionBySymbol = new Map(equityPositions.map(p => [p.symbol, p]))
   const universeItems = strategySymbols.length > 0
     ? strategySymbols.map(sym => {
         const held = heldSymbols.has(sym)
         const qualified = qualifiedSymbols.has(sym)
         const watchlistEntry = data.watchlist.items.find(i => i.symbol === sym)
+        // Tone: held → today's performance; otherwise champagne (optimistic candidate)
+        const heldPos = held ? positionBySymbol.get(sym) : null
+        const tone: "good" | "medium" | "bad" = heldPos
+          ? pnlTone(heldPos.change_today_pct)
+          : "medium"
         return {
           symbol: sym,
           in_position: held,
@@ -2306,6 +2316,7 @@ function StocksSleeve({ data }: { data: TradingData }) {
             : qualified
               ? "Qualified today — entry signal active"
               : "In strategy universe · awaiting entry signal",
+          tone,
         }
       })
     : data.watchlist.items
