@@ -754,26 +754,26 @@ function CommandStrip({
         {onOpenAssistant && (
           <button
             onClick={onOpenAssistant}
-            aria-label="Open assistant"
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all hover:scale-[1.03]"
+            aria-label="Open Talon assistant"
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 transition-all hover:scale-[1.03]"
             style={{
-              background: "radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.14), transparent 55%), rgba(14, 20, 40, 0.85)",
-              border: "1px solid rgba(110, 135, 210, 0.32)",
-              boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.05), 0 2px 10px rgba(5, 8, 26, 0.5)",
+              background: "radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.22), transparent 55%), rgba(14, 20, 40, 0.90)",
+              border: "1px solid rgba(124, 58, 237, 0.40)",
+              boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.06), 0 2px 14px rgba(124, 58, 237, 0.18), 0 2px 10px rgba(5, 8, 26, 0.5)",
             }}
           >
-            <Sparkles className="w-3 h-3" style={{ color: "var(--cb-brand)" }} />
+            <Sparkles className="w-4 h-4" style={{ color: "var(--cb-brand)" }} />
             <span
               className="hidden sm:inline"
               style={{
-                fontSize: 10,
-                fontWeight: 500,
+                fontSize: 11,
+                fontWeight: 600,
                 letterSpacing: "0.10em",
                 textTransform: "uppercase",
                 color: "var(--cb-text-primary)",
               }}
             >
-              Ask
+              Talon
             </span>
           </button>
         )}
@@ -2795,8 +2795,8 @@ function AssistantSheet({ open, onClose, activeTab }: {
         >
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4" style={{ color: tabMeta.accent }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cb-text-primary)", letterSpacing: "0.02em" }}>
-              Assistant
+            <span style={{ fontSize: 14, fontWeight: 600, color: "var(--cb-text-primary)", letterSpacing: "0.01em" }}>
+              Talon
             </span>
             <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
               · {tabMeta.label}
@@ -2884,6 +2884,29 @@ function AssistantSheet({ open, onClose, activeTab }: {
                 style={{ background: "rgba(14, 20, 40, 0.85)", border: "1px solid var(--cb-border-std)" }}
               >
                 <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--cb-text-tertiary)" }} />
+              </div>
+            </div>
+          )}
+
+          {chat.error && (
+            <div className="flex justify-start">
+              <div
+                className="rounded-2xl rounded-bl-md px-3.5 py-2.5 text-sm leading-relaxed max-w-[86%]"
+                style={{
+                  background: "rgba(40, 14, 20, 0.85)",
+                  border: "1px solid rgba(224, 82, 82, 0.35)",
+                  color: "var(--cb-text-secondary)",
+                }}
+              >
+                <div style={{ fontSize: 11, color: "var(--cb-red)", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4 }}>
+                  Connection error
+                </div>
+                <div style={{ fontSize: 12, lineHeight: 1.5 }}>
+                  {chat.error.message || "Couldn't reach the assistant endpoint."}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 6 }}>
+                  Check that /api/chat is deployed and ANTHROPIC_API_KEY is set in Vercel env.
+                </div>
               </div>
             </div>
           )}
