@@ -2682,12 +2682,24 @@ function AssistantSheet({ open, onClose, activeTab }: {
 
   useEffect(() => setMounted(true), [])
 
-  // Auto-scroll on new messages
+  // Auto-scroll to bottom only when new messages arrive — never on open.
+  // Opening the sheet should show chips at the top, not shove them off-screen.
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && chat.messages.length > 0) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [chat.messages, open])
+  }, [chat.messages])
+
+  // When sheet opens with an existing conversation, park at the bottom so the
+  // latest message is visible. Empty state: scroll to top so chips show.
+  useEffect(() => {
+    if (!open || !scrollRef.current) return
+    if (chat.messages.length > 0) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    } else {
+      scrollRef.current.scrollTop = 0
+    }
+  }, [open, chat.messages.length])
 
   // Esc to close
   useEffect(() => {
@@ -2697,9 +2709,21 @@ function AssistantSheet({ open, onClose, activeTab }: {
     return () => window.removeEventListener("keydown", onKey)
   }, [open, onClose])
 
-  // Focus input when opening
+  // Lock body scroll while sheet is open so the page behind can't drift.
   useEffect(() => {
-    if (open && inputRef.current) inputRef.current.focus()
+    if (!open) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => { document.body.style.overflow = prev }
+  }, [open])
+
+  // Focus input on desktop only — mobile auto-focus pops the keyboard and
+  // eats space before the user can see the suggested chips.
+  useEffect(() => {
+    if (!open || !inputRef.current) return
+    if (typeof window !== "undefined" && window.innerWidth >= 640) {
+      inputRef.current.focus()
+    }
   }, [open])
 
   const isLoading = chat.status === "streaming" || chat.status === "submitted"
