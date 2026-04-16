@@ -1,7 +1,7 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-16T04:23:11.992338+00:00",
-  "as_of_date": "2026-04-15",
+  "generated_at": "2026-04-16T16:35:57.197713+00:00",
+  "as_of_date": "2026-04-16",
   "source_context": {
     "mode": "canonical",
     "label": "canonical",
@@ -10,46 +10,58 @@
     "note": "Feed generated from canonical rebuild artifacts."
   },
   "account": {
-    "equity": 85442.62,
-    "cash": 34074.34,
-    "buying_power": 119516.96,
+    "equity": 85446.76,
+    "cash": 32684.7,
+    "buying_power": 118131.46,
     "base_value": 100000.0,
-    "total_pnl": -14557.38,
-    "total_pnl_pct": -14.5574,
-    "today_pnl": null,
-    "today_pnl_pct": null,
-    "positions_value": 51368.28,
-    "equity_deployed": 51368.28,
+    "total_pnl": -14553.24,
+    "total_pnl_pct": -14.5532,
+    "today_pnl": 2.55,
+    "today_pnl_pct": 0.003,
+    "positions_value": 52762.06,
+    "equity_deployed": 52762.06,
     "options_deployed": 0,
-    "unrealized_pnl": -2.56,
-    "unrealized_pnl_pct": -0.0
+    "unrealized_pnl": 2.55,
+    "unrealized_pnl_pct": 0.0
   },
   "positions": [
     {
-      "symbol": "SGOV",
-      "qty": 511.0,
+      "symbol": "NVDA",
+      "qty": 8.0,
       "side": "long",
-      "entry_price": 100.53,
-      "current_price": 100.525,
-      "market_value": 51368.275,
-      "unrealized_pnl": -2.555,
+      "entry_price": 198.71,
+      "current_price": 199.0199,
+      "market_value": 1592.24,
+      "unrealized_pnl": 2.56,
+      "unrealized_pct": 0.16,
+      "change_today_pct": 0.07,
+      "asset_type": "EQUITY"
+    },
+    {
+      "symbol": "SGOV",
+      "qty": 509.0,
+      "side": "long",
+      "entry_price": 100.530118,
+      "current_price": 100.54,
+      "market_value": 51169.8209,
+      "unrealized_pnl": -0.009162,
       "unrealized_pct": -0.0,
       "change_today_pct": 0.01,
       "asset_type": "EQUITY"
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-04-15",
-    "run_id": "2026-04-15-shadow-open-refresh-04",
+    "trading_date": "2026-04-16",
+    "run_id": "2026-04-16-shadow-midday-01",
     "circuit_breaker": "OPEN",
     "verdict": "WARN",
     "critical_issues": 0,
-    "high_issues": 3,
-    "medium_issues": 2,
+    "high_issues": 2,
+    "medium_issues": 1,
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-16T04:23:11.992395+00:00"
+    "audit_written_at": "2026-04-16T16:35:57.197771+00:00"
   },
   "kpis": {
     "total_trades": 58,
@@ -64,7 +76,7 @@
     "max_win_streak": 1,
     "max_loss_streak": 10,
     "source": "legacy_pipeline_kpis_v1",
-    "positions_count": 1
+    "positions_count": 2
   },
   "daily_performance": [
     {
@@ -607,7 +619,7 @@
       "date": "2026-03-21",
       "equity": 99775.38,
       "profit_loss": -229.98,
-      "profit_loss_pct": -0.23
+      "profit_loss_pct": -0.22999999999999998
     },
     {
       "date": "2026-03-24",
@@ -631,7 +643,7 @@
       "date": "2026-03-27",
       "equity": 99829.97,
       "profit_loss": -276.53,
-      "profit_loss_pct": -0.28
+      "profit_loss_pct": -0.27999999999999997
     },
     {
       "date": "2026-03-28",
@@ -643,13 +655,13 @@
       "date": "2026-03-31",
       "equity": 103844.97,
       "profit_loss": 4260.32,
-      "profit_loss_pct": 4.28
+      "profit_loss_pct": 4.279999999999999
     },
     {
       "date": "2026-04-01",
       "equity": 88391.08,
       "profit_loss": -15453.89,
-      "profit_loss_pct": -14.88
+      "profit_loss_pct": -14.879999999999999
     },
     {
       "date": "2026-04-02",
@@ -704,11 +716,27 @@
       "equity": 85361.16,
       "profit_loss": 211.72,
       "profit_loss_pct": 0.25
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 85444.21,
+      "profit_loss": 83.05,
+      "profit_loss_pct": 0.1
     }
   ],
   "watchlist": {
-    "items": [],
-    "as_of": "2026-04-15",
+    "items": [
+      {
+        "symbol": "NVDA",
+        "trigger": "GENERAL",
+        "stop": "188.93",
+        "target": "228.70",
+        "modifier": "MEDIUM",
+        "note": "NVDA regime-aware momentum long: 20-day return 9.31% with realized vol 35.57%. Benchmark regime supportive: 50-day SPY return 0.65% with realized vol 16.22% and close 699.94 above trend average 674.68.",
+        "in_position": true
+      }
+    ],
+    "as_of": "2026-04-16",
     "source": "rebuild_pregate_intent"
   },
   "exit_candidates": [],
@@ -723,7 +751,7 @@
     "consecutive_loss_limit": null,
     "consecutive_loss_size_modifier": null,
     "reduce_only_size_cap": "FULL_SIZE",
-    "updated_at": "2026-04-15T12:39:38.767857-04:00"
+    "updated_at": "2026-04-16T11:45:14.997113-04:00"
   },
   "options": null,
   "hedges": null,
@@ -750,15 +778,14 @@
         "checkpoint05_passed": false,
         "live_capital_enabled": false,
         "blocking_incidents": [
-          "shadow.trade_plan_empty",
-          "strategy.thesis_set_empty"
+          "steward.open_action_deferred_existing_position:NVDA"
         ]
       },
       "note": "Governed Autonomous Paper mode is active; paper execution may run without approval."
     },
     "session": {
-      "run_id": "2026-04-15-shadow-open-refresh-04",
-      "phase": "OPEN",
+      "run_id": "2026-04-16-shadow-midday-01",
+      "phase": "INTRADAY",
       "entry_mode": "OPEN",
       "policy_version": "0.1.0"
     },
@@ -771,23 +798,26 @@
       "one_sided_days": 6,
       "trivial_days": 7,
       "avg_substantive_match": 0.1429,
-      "latest_suppression_cause": "NO_SIGNAL",
+      "latest_suppression_cause": "NOT_SUPPRESSED",
       "blocking_notes": [
         "Only 1 substantive post-gate day(s); need at least 10.",
-        "6 one-sided post-gate day(s) remain in the current window.",
-        "Latest live shadow day is still suppressed post-gate (NO_SIGNAL)."
+        "6 one-sided post-gate day(s) remain in the current window."
       ]
     },
     "plan": {
-      "pre_gate_status": "NO_CANDIDATES",
-      "pre_gate_candidate_count": 0,
-      "pre_gate_symbols": [],
-      "trade_plan_status": "NO_TRADES",
-      "trade_plan_count": 0,
-      "trade_plan_symbols": [],
+      "pre_gate_status": "HAS_CANDIDATES",
+      "pre_gate_candidate_count": 1,
+      "pre_gate_symbols": [
+        "NVDA"
+      ],
+      "trade_plan_status": "READY",
+      "trade_plan_count": 1,
+      "trade_plan_symbols": [
+        "NVDA"
+      ],
       "blocked_reasons": [],
-      "suppression_cause": "NO_SIGNAL",
-      "narrative": "No candidates surfaced in the current rebuild slice."
+      "suppression_cause": "NOT_SUPPRESSED",
+      "narrative": "1 trade(s) are ready to express today: NVDA."
     },
     "research": {
       "tradable_symbol_count": 6,
@@ -799,19 +829,29 @@
         "META"
       ],
       "research_item_count": 6,
-      "thesis_item_count": 0,
-      "long_bias_count": 0,
+      "thesis_item_count": 1,
+      "long_bias_count": 1,
       "short_bias_count": 0,
       "neutral_count": 0,
-      "top_theses": [],
-      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). No lead thesis is populated yet."
+      "top_theses": [
+        {
+          "symbol": "NVDA",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 75,
+          "bear_prob": 25,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "NVDA regime-aware momentum long: 20-day return 9.31% with realized vol 35.57%. Benchmark regime supportive: 50-day SPY return 0.65% with realized vol 16.22% and close 699.94 above trend average 674.68."
+        }
+      ],
+      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). Current thesis mix is 1 long / 0 short. Lead idea is NVDA Long on a General setup."
     },
     "regime": {
-      "vix_level": 17.96,
+      "vix_level": 18.78,
       "vix_regime": "MEDIUM",
       "hmm_regime": "CALM",
       "vol_persistence_regime": "RANDOM_WALK",
-      "vol_persistence_hurst": 0.5686,
+      "vol_persistence_hurst": 0.5843,
       "suppress_mean_reversion": false,
       "jump_variation_pctile": 100.0,
       "jump_variation_regime": "JUMP_ELEVATED",
@@ -820,13 +860,13 @@
         "native_regime_enrichment_active"
       ],
       "populated": true,
-      "narrative": "VIX is 17.96 in a Medium regime. HMM reads Calm. jump stress is elevated."
+      "narrative": "VIX is 18.78 in a Medium regime. HMM reads Calm. jump stress is elevated."
     },
     "report_paths": {
       "local_only": true,
       "checkpoint05_status": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json",
-      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-15-open-refresh-04.json",
-      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-15-open-refresh-04.json"
+      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-16-midday-01.json",
+      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-16-midday-01.json"
     },
     "approval": null,
     "strategy_bank": {
@@ -1128,8 +1168,7 @@
       "note": "Showing the latest governed mode-control events from rebuild history."
     },
     "incident_flags": [
-      "shadow.trade_plan_empty",
-      "strategy.thesis_set_empty"
+      "steward.open_action_deferred_existing_position:NVDA"
     ],
     "notes": [
       "shadow_slice_read_only",
