@@ -790,18 +790,21 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
   const approvalPending = (approval?.pending_count ?? 0) > 0
   const isDecisionSupport = mode?.current_mode === "DECISION_SUPPORT"
 
+  // Tone: incidents → bad, suppressed plan or approval pending → medium, ready → good
+  const planStatus = (plan?.trade_plan_status ?? "").toUpperCase()
+  const overviewTone: CardTone =
+    incidents.length > 0 || gateBlockers.length > 0
+      ? "bad"
+      : planStatus.includes("SUPPRESS") || approvalPending
+        ? "medium"
+        : planStatus.includes("READY") || planStatus.includes("ACTIVE")
+          ? "good"
+          : "medium"
+
   return (
     <section className="space-y-3">
       {/* Hero header */}
-      <div
-        className="rounded-[22px] border px-5 py-4"
-        style={{
-          borderColor: "var(--cb-border-hi)",
-          background:
-            "radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 30%), radial-gradient(circle at top right, rgba(80, 120, 220, 0.10), transparent 32%), linear-gradient(180deg, rgba(10, 14, 31, 0.98), rgba(8, 11, 26, 0.96))",
-          boxShadow: "0 14px 40px rgba(5, 8, 26, 0.45)",
-        }}
-      >
+      <div className={`cb-card-t1 ${toneClass(overviewTone)} px-5 py-4`}>
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="text-base font-medium" style={{ color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
@@ -1024,11 +1027,19 @@ function PromotedStrategy({ bank }: { bank: StrategyBankSection | null | undefin
   const perf = active.performance_summary ?? {}
   const stageColors = promotionStageColor(active.promotion_stage)
 
+  const stage = (active.promotion_stage ?? "").toUpperCase()
+  const strategyTone: CardTone =
+    stage.includes("ACTIVE") || stage.includes("LIVE") || stage === "PROMOTED"
+      ? "good"
+      : stage.includes("FROZEN") || stage.includes("CONFIRMATION") || stage.includes("PENDING")
+        ? "medium"
+        : "medium"
+
   return (
     <section>
       <div className="cb-label mb-3">Active Strategy</div>
 
-      <div className="cb-card-t3 px-4 py-3 space-y-2">
+      <div className={`cb-card-t3 ${toneClass(strategyTone)} px-4 py-3 space-y-2`}>
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm font-medium" style={{ color: "var(--cb-text-primary)" }}>
             {humanizeStrategyName(active.display_name ?? active.record_id)}
@@ -1116,8 +1127,10 @@ function CapitalHero({
   const equity    = account.equity ?? account.positions_value
   const baseValue = account.base_value
 
+  const tone = pnlTone(todayPnl)
+
   return (
-    <div className="cb-card-hero">
+    <div className={`cb-card-hero ${toneClass(tone)}`}>
       {/* Primary zone: deployed capital + today's move */}
       <div className="cb-hero-primary">
         <div className="flex items-end justify-between gap-6 flex-wrap">
@@ -1277,8 +1290,13 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
   const yMax = Math.ceil((maxEq + naturalPad) / 10) * 10
   const fmtK = (v: number) => `$${(v / 1000).toFixed(1)}k`
 
+  // Tone: compare last equity to first over visible window
+  const tone: CardTone = equities.length >= 2
+    ? pnlTone(equities[equities.length - 1] - equities[0], mid * 0.001)
+    : "medium"
+
   return (
-    <div className="cb-card-t2 px-4 pt-4 pb-4">
+    <div className={`cb-card-t2 ${toneClass(tone)} px-4 pt-4 pb-4`}>
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="cb-label">
           Account Equity
@@ -1368,8 +1386,11 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
     </div>
   )
 
+  const periodSum = displayData.reduce((acc, d) => acc + (d.net_pnl ?? 0), 0)
+  const tone = pnlTone(periodSum)
+
   return (
-    <div className="cb-card-t2 px-4 pt-4 pb-4">
+    <div className={`cb-card-t2 ${toneClass(tone)} px-4 pt-4 pb-4`}>
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="cb-label">Daily P&L</span>
         <select
@@ -1414,18 +1435,32 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
   )
 }
 
+// ─── Sentiment tone helper ────────────────────────────────────────────────────
+// Maps a card's semantic state to a cb-tone-* class. Used by every major card
+// to make the shared accent gradient carry good/medium/bad signal at a glance.
+type CardTone = "good" | "medium" | "bad"
+
+function toneClass(tone: CardTone | null | undefined): string {
+  if (tone === "good") return "cb-tone-good"
+  if (tone === "bad") return "cb-tone-bad"
+  if (tone === "medium") return "cb-tone-medium"
+  return ""
+}
+
+function pnlTone(value: number | null | undefined, epsilon = 0.01): CardTone {
+  if (value == null || !Number.isFinite(value)) return "medium"
+  if (value > epsilon) return "good"
+  if (value < -epsilon) return "bad"
+  return "medium"
+}
+
 // ─── Performance Grid ─────────────────────────────────────────────────────────
 function MetricCard({ label, value, sub, tooltip, tone }: { label: string; value: string; sub?: string; tooltip?: string; tone?: "good" | "bad" | "neutral" }) {
   const [show, setShow] = useState(false)
-  const gradient = tone === "good"
-    ? "radial-gradient(circle at 15% 20%, rgba(16, 185, 129, 0.14), transparent 45%), rgba(255, 255, 255, 0.018)"
-    : tone === "bad"
-      ? "radial-gradient(circle at 15% 20%, rgba(224, 82, 82, 0.12), transparent 45%), rgba(255, 255, 255, 0.018)"
-      : "radial-gradient(circle at 15% 20%, rgba(212, 194, 138, 0.10), transparent 45%), rgba(255, 255, 255, 0.018)"
+  const toneCls = tone === "good" ? "cb-tone-good" : tone === "bad" ? "cb-tone-bad" : "cb-tone-medium"
   return (
     <div
-      className="relative cb-metric"
-      style={{ background: gradient, borderRadius: 10 }}
+      className={`relative cb-metric ${toneCls}`}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
@@ -1578,9 +1613,11 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
     ? (p.change_today_pct <= 0 ? "var(--cb-green)" : "var(--cb-red)")
     : undefined
 
+  const positionTone = pnlTone(p.unrealized_pnl)
+
   return (
     <div
-      className={`cb-card-t2 hover:opacity-90 transition-opacity cursor-pointer ${severityClass}`}
+      className={`cb-card-t2 ${toneClass(positionTone)} hover:opacity-90 transition-opacity cursor-pointer ${severityClass}`}
       onClick={() => setOpen(o => !o)}
     >
       {/* Main row */}
@@ -1776,8 +1813,14 @@ function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; pos
   if (!orphaned.length) return null
   return (
     <div className="space-y-2">
-      {orphaned.map(item => (
-        <div key={item.symbol} className="cb-card-t2 p-3 space-y-1">
+      {orphaned.map(item => {
+        const urgency = (item.decision ?? "").toUpperCase()
+        const exitTone: CardTone =
+          urgency === "URGENT_CLOSE" ? "bad"
+          : urgency === "CLOSE_BEFORE_BELL" ? "medium"
+          : "medium"
+        return (
+        <div key={item.symbol} className={`cb-card-t2 ${toneClass(exitTone)} p-3 space-y-1`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-mono font-semibold text-[var(--cb-text-primary)]">{item.symbol}</span>
@@ -1793,7 +1836,8 @@ function ExitCandidatesPanel({ items, positions }: { items: ExitCandidate[]; pos
           </div>
           <p className="text-xs leading-snug" style={{ color: "var(--cb-text-secondary)" }}>{item.reason}</p>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

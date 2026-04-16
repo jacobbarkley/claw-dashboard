@@ -180,8 +180,14 @@
 
 /* Card tiers */
 
-/* Hero card — two internal zones, no outer padding (zones own padding) */
+/* ── Card accent system ──────────────────────────────────────────────────────
+   Every card gets a subtle radial accent gradient from top-left. Each card
+   sets --cb-card-accent based on its sentiment (good / medium / bad) via the
+   .cb-tone-* modifier classes. Cards with no semantic signal fall back to a
+   neutral indigo wash so gradient treatment is consistent everywhere. */
+
 .cb-card-hero {
+  --cb-card-accent: rgba(16, 185, 129, 0.12);  /* default good — hero is portfolio-level, usually aspirational */
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
   overflow: hidden;
@@ -201,10 +207,11 @@
   border-top: 1px solid var(--cb-border-dim);
 }
 
-/* Tier 1 — sleeve-header / hero card. Restrained accent tint, deep indigo base. */
+/* Tier 1 — sleeve-header / hero card. Prominent accent gradient. */
 .cb-card-t1 {
+  --cb-card-accent: rgba(120, 140, 200, 0.10);
   background:
-    radial-gradient(circle at 15% 10%, var(--cb-card-accent), transparent 40%),
+    radial-gradient(circle at 15% 10%, var(--cb-card-accent), transparent 42%),
     var(--cb-surface-0);
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
@@ -213,9 +220,12 @@
     0 12px 40px rgba(5, 8, 26, 0.7);
 }
 
-/* Tier 2 — charts, positions, plan. Flat surface, crisp border, subtle inset top highlight. */
+/* Tier 2 — charts, positions, plan. Moderate accent gradient. */
 .cb-card-t2 {
-  background: var(--cb-surface-0);
+  --cb-card-accent: rgba(120, 140, 200, 0.08);
+  background:
+    radial-gradient(circle at 12% 14%, var(--cb-card-accent), transparent 44%),
+    var(--cb-surface-0);
   border: 1px solid var(--cb-border-std);
   border-radius: 10px;
   box-shadow:
@@ -223,18 +233,31 @@
     0 2px 12px rgba(5, 8, 26, 0.45);
 }
 
-/* Tier 3 — metric tiles. Minimal, recedes. */
+/* Tier 3 — metric tiles. Subtle accent, compact. */
 .cb-card-t3 {
-  background: var(--cb-surface-1);
+  --cb-card-accent: rgba(120, 140, 200, 0.06);
+  background:
+    radial-gradient(circle at 15% 15%, var(--cb-card-accent), transparent 48%),
+    var(--cb-surface-1);
   border: 1px solid var(--cb-border-dim);
   border-radius: 10px;
 }
+
 /* Borderless metric readout — analytics/utility only */
 .cb-metric {
-  background: rgba(255, 255, 255, 0.018);
+  --cb-card-accent: rgba(120, 140, 200, 0.06);
+  background:
+    radial-gradient(circle at 15% 20%, var(--cb-card-accent), transparent 48%),
+    rgba(255, 255, 255, 0.018);
   border-radius: 8px;
   padding: 12px 14px;
 }
+
+/* Sentiment modifiers — override --cb-card-accent to signal good/medium/bad.
+   Apply alongside any card class: <div class="cb-card-t2 cb-tone-good">. */
+.cb-tone-good   { --cb-card-accent: rgba(16, 185, 129, 0.13); }  /* emerald */
+.cb-tone-medium { --cb-card-accent: rgba(212, 194, 138, 0.11); } /* champagne */
+.cb-tone-bad    { --cb-card-accent: rgba(224, 82, 82, 0.11); }   /* soft red */
 
 /* Section label */
 .cb-label {
