@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic"
-import { streamText } from "ai"
+import { streamText, convertToModelMessages } from "ai"
 import { promises as fs } from "fs"
 import path from "path"
 
@@ -108,10 +108,15 @@ export async function POST(req: Request) {
 
   const feed = await readJson("data/operator-feed.json")
 
+  // useChat sends UIMessage[] (role + parts[]), streamText needs ModelMessage[] (role + content).
+  // convertToModelMessages bridges the two formats — without it, streamText gets nothing parseable
+  // and the response stream is silently empty.
+  const modelMessages = await convertToModelMessages(messages)
+
   const result = streamText({
     model: anthropic("claude-haiku-4-5-20251001"),
     system: buildSystemPrompt(feed),
-    messages,
+    messages: modelMessages,
   })
 
   return result.toTextStreamResponse()
