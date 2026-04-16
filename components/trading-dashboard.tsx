@@ -2082,14 +2082,17 @@ function BpsTargetRow({ t }: { t: BpsTarget }) {
 }
 
 
-// ─── Sleeves ──────────────────────────────────────────────────────────────────
+// ─── Trading tabs + sleeves ──────────────────────────────────────────────────
+type TradingTab = "home" | "stocks" | "options" | "crypto"
 type Sleeve = "stocks" | "options" | "crypto"
 
-const SLEEVE_META: Record<Sleeve, { label: string; accent: string; accentVar: string }> = {
-  stocks:  { label: "Stocks",  accent: "#10b981", accentVar: "var(--cb-sleeve-stocks)"  },
-  options: { label: "Options", accent: "#d4c28a", accentVar: "var(--cb-sleeve-options)" },
-  crypto:  { label: "Crypto",  accent: "#8b5cf6", accentVar: "var(--cb-sleeve-crypto)"  },
+const TAB_META: Record<TradingTab, { label: string; accent: string }> = {
+  home:    { label: "Home",    accent: "#e3e6f0" },  // near-white, neutral — portfolio-wide
+  stocks:  { label: "Stocks",  accent: "#10b981" },
+  options: { label: "Options", accent: "#d4c28a" },
+  crypto:  { label: "Crypto",  accent: "#8b5cf6" },
 }
+const SLEEVE_META = TAB_META  // back-compat alias used by sleeve sub-components
 
 function fmtSleeveUsd(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v) || v < 0.5) return "—"
@@ -2097,188 +2100,118 @@ function fmtSleeveUsd(v: number | null | undefined): string {
   return `$${v.toFixed(0)}`
 }
 
-function SleeveTabs({ active, onChange, stocksAlloc, optionsAlloc, cryptoAlloc }: {
-  active: Sleeve
-  onChange: (s: Sleeve) => void
-  stocksAlloc: number | null
-  optionsAlloc: number | null
-  cryptoAlloc: number | null
-}) {
-  const tabs: { sleeve: Sleeve; allocation: number | null; status?: string }[] = [
-    { sleeve: "stocks",  allocation: stocksAlloc },
-    { sleeve: "options", allocation: optionsAlloc },
-    { sleeve: "crypto",  allocation: cryptoAlloc, status: "coming online" },
-  ]
-
+// Underlined tabs — product-level control, not a content widget.
+// Home gets a neutral near-white accent, each sleeve gets its chromatic accent.
+function TradingTabs({ active, onChange }: { active: TradingTab; onChange: (t: TradingTab) => void }) {
+  const order: TradingTab[] = ["home", "stocks", "options", "crypto"]
   return (
-    <>
-      {/* Desktop — sleeve cards (3 equal) */}
-      <div className="hidden sm:grid grid-cols-3 gap-3">
-        {tabs.map(({ sleeve, allocation, status }) => {
-          const meta = SLEEVE_META[sleeve]
-          const isActive = active === sleeve
-          return (
-            <button
-              key={sleeve}
-              onClick={() => onChange(sleeve)}
-              className="text-left rounded-xl px-4 py-3 transition-all"
+    <div
+      className="flex items-center gap-7 sm:gap-9 overflow-x-auto snap-x -mx-4 px-4 sm:-mx-6 sm:px-6"
+      style={{ borderBottom: "1px solid var(--cb-border-dim)", scrollbarWidth: "none" }}
+    >
+      {order.map(tab => {
+        const meta = TAB_META[tab]
+        const isActive = active === tab
+        return (
+          <button
+            key={tab}
+            onClick={() => onChange(tab)}
+            className="relative shrink-0 snap-start pt-1 pb-3 transition-colors outline-none"
+            style={{
+              fontSize: 12,
+              fontWeight: isActive ? 600 : 400,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
+            }}
+          >
+            {meta.label}
+            <span
+              aria-hidden
+              className="absolute left-0 right-0 bottom-[-1px] transition-all duration-200"
               style={{
-                background: isActive
-                  ? `radial-gradient(circle at 12% 20%, ${meta.accent}26, transparent 55%), var(--cb-surface-0)`
-                  : "var(--cb-surface-0)",
-                border: `1px solid ${isActive ? meta.accent + "40" : "var(--cb-border-std)"}`,
-                boxShadow: isActive
-                  ? `inset 0 1px 0 rgba(180, 195, 235, 0.04), 0 0 0 1px ${meta.accent}14, 0 4px 16px rgba(5, 8, 26, 0.5)`
-                  : "inset 0 1px 0 rgba(180, 195, 235, 0.025), 0 2px 8px rgba(5, 8, 26, 0.35)",
+                height: 2,
+                background: isActive ? meta.accent : "transparent",
+                boxShadow: isActive ? `0 0 10px ${meta.accent}55` : "none",
+                borderRadius: 1,
               }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="inline-block rounded-full"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      background: meta.accent,
-                      boxShadow: isActive ? `0 0 8px ${meta.accent}80` : "none",
-                      opacity: isActive ? 1 : 0.55,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: isActive ? 600 : 500,
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                      color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
-                    }}
-                  >
-                    {meta.label}
-                  </span>
-                </div>
-                <span
-                  className="cb-number"
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 300,
-                    color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {fmtSleeveUsd(allocation)}
-                </span>
-              </div>
-              {status && (
-                <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4, letterSpacing: "0.04em" }}>
-                  {status}
-                </div>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Mobile — compact pills, horizontal scroll */}
-      <div className="sm:hidden flex gap-2 overflow-x-auto snap-x -mx-4 px-4 pb-1">
-        {tabs.map(({ sleeve }) => {
-          const meta = SLEEVE_META[sleeve]
-          const isActive = active === sleeve
-          return (
-            <button
-              key={sleeve}
-              onClick={() => onChange(sleeve)}
-              className="shrink-0 snap-start rounded-full px-4 py-2 flex items-center gap-2 transition-colors"
-              style={{
-                background: isActive
-                  ? `${meta.accent}1a`
-                  : "var(--cb-surface-0)",
-                border: `1px solid ${isActive ? meta.accent + "55" : "var(--cb-border-std)"}`,
-              }}
-            >
-              <span
-                className="inline-block rounded-full"
-                style={{
-                  width: 6,
-                  height: 6,
-                  background: meta.accent,
-                  opacity: isActive ? 1 : 0.55,
-                }}
-              />
-              <span style={{
-                fontSize: 11,
-                fontWeight: isActive ? 600 : 500,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
-              }}>
-                {meta.label}
-              </span>
-            </button>
-          )
-        })}
-      </div>
-    </>
+            />
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
-function SleeveHeader({ sleeve, allocation, deployedPct, mode, tagline }: {
-  sleeve: Sleeve
-  allocation: number | null
-  deployedPct: number | null
-  mode?: string
-  tagline: string
+// Compact placeholder banner for sleeves without real capital/data.
+function SleeveCapitalPlaceholder({ accent, title, message, sub }: {
+  accent: string; title: string; message: string; sub?: string
 }) {
-  const meta = SLEEVE_META[sleeve]
   return (
     <div
-      className="rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
+      className="rounded-xl px-5 py-5"
       style={{
-        background: `radial-gradient(circle at 12% 10%, ${meta.accent}18, transparent 45%), var(--cb-surface-0)`,
-        border: `1px solid ${meta.accent}33`,
-        boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.035), 0 4px 20px rgba(5, 8, 26, 0.45)",
+        background: `radial-gradient(circle at 12% 10%, ${accent}14, transparent 48%), var(--cb-surface-0)`,
+        border: `1px solid ${accent}33`,
       }}
     >
-      <div>
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block rounded-full"
-            style={{ width: 8, height: 8, background: meta.accent, boxShadow: `0 0 8px ${meta.accent}80` }}
-          />
-          <span style={{
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.10em",
-            textTransform: "uppercase",
-            color: "var(--cb-text-primary)",
-          }}>
-            {meta.label} sleeve
-          </span>
-        </div>
-        <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", marginTop: 4, letterSpacing: "0.02em" }}>
-          {tagline}
-        </div>
+      <div className="cb-label mb-2">{title}</div>
+      <div style={{ fontSize: 13, color: "var(--cb-text-primary)", lineHeight: 1.55 }}>
+        {message}
       </div>
-      <div className="flex items-end gap-6">
-        <div className="text-right">
-          <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>
-            {fmtSleeveUsd(allocation)}
-          </div>
-          <div className="cb-label" style={{ marginTop: 2 }}>
-            deployed{deployedPct != null ? ` · ${deployedPct.toFixed(1)}%` : ""}
-          </div>
+      {sub && (
+        <div className="mt-3" style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
+          {sub}
         </div>
-        {mode && (
-          <div className="text-right">
-            <div style={{ fontSize: 11, color: "var(--cb-text-primary)", fontWeight: 500, letterSpacing: "0.04em" }}>
-              {mode}
-            </div>
-            <div className="cb-label" style={{ marginTop: 2 }}>mode</div>
-          </div>
-        )}
+      )}
+    </div>
+  )
+}
+
+// Placeholder chart card for sleeves without data yet.
+function ChartPlaceholder({ label, height = 160 }: { label: string; height?: number }) {
+  return (
+    <div className="cb-card-t2 px-4 pt-4 pb-6">
+      <div className="cb-label mb-3">{label}</div>
+      <div className="flex items-center justify-center" style={{ height }}>
+        <p className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>
+          Awaiting first sleeve-scoped feed
+        </p>
       </div>
     </div>
   )
 }
+
+// ─── Home view — portfolio-wide, the default landing ──────────────────────────
+function HomeView({ data }: { data: TradingData }) {
+  return (
+    <div className="space-y-8">
+      <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+        Portfolio overview · {data.operator?.mode?.current_mode ?? data.tunables.trading_mode} · {titleizeToken(data.operator?.mode?.broker_environment ?? data.tunables.trading_mode)} broker
+      </p>
+
+      <section>
+        <CapitalHero account={data.account} />
+      </section>
+
+      <section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
+          <DailyPnlChart data={data.daily_performance} />
+        </div>
+      </section>
+
+      <section>
+        <PerformanceGrid kpis={data.kpis} />
+      </section>
+
+      <section>
+        <OperatorOverview data={data} tunables={data.tunables} />
+      </section>
+    </div>
+  )
+}
+
 
 // ─── Sleeve positions mini-chart ──────────────────────────────────────────────
 // Hand-rolled horizontal bar chart showing today's % move for each open position.
@@ -2381,17 +2314,35 @@ function StocksSleeve({ data }: { data: TradingData }) {
     ? `Strategy Universe · ${strategySymbols.length} names`
     : `Qualified Setups · ${data.watchlist.items.length}`
 
-  return (
-    <div className="space-y-6">
-      <SleeveHeader
-        sleeve="stocks"
-        allocation={allocation}
-        deployedPct={deployedPct}
-        mode={modeLabel}
-        tagline="Regime-aware equities · daily-bar · fixed universe"
-      />
+  // Suppress unused-var warnings — allocation/deployedPct/modeLabel still useful
+  // if SleeveHeader is reintroduced later; kept computed for v2 feed transition.
+  void allocation; void deployedPct; void modeLabel;
 
-      {/* Open positions — top of sleeve */}
+  return (
+    <div className="space-y-8">
+      <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+        Stocks sleeve · regime-aware equities · showing portfolio-level figures until feed v2 lands per-sleeve
+      </p>
+
+      {/* Stocks capital banner — today duplicates portfolio since ~100% stocks */}
+      <section>
+        <CapitalHero account={data.account} />
+      </section>
+
+      {/* Stocks performance charts — duplicate of home until feed v2 splits per-sleeve */}
+      <section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
+          <DailyPnlChart data={data.daily_performance} />
+        </div>
+      </section>
+
+      {/* Strategy KPIs for stocks */}
+      <section>
+        <PerformanceGrid kpis={data.kpis} />
+      </section>
+
+      {/* Open positions */}
       <section>
         <div className="flex items-center justify-between mb-3">
           <span className="cb-label">Open Positions · {equityPositions.length}</span>
@@ -2446,22 +2397,46 @@ function StocksSleeve({ data }: { data: TradingData }) {
 
 function OptionsSleeve({ data }: { data: TradingData }) {
   const optionPositions = data.positions.filter(p => parseOptionSymbol(p.symbol))
-  const allocation = data.account.options_deployed
-    ?? optionPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const totalDeployed = data.account.positions_value ?? 0
-  const deployedPct = totalDeployed > 0 ? (allocation / totalDeployed) * 100 : null
   const meta = SLEEVE_META.options
 
   return (
-    <div className="space-y-6">
-      <SleeveHeader
-        sleeve="options"
-        allocation={allocation}
-        deployedPct={deployedPct}
-        mode={titleizeToken(data.operator?.mode?.current_mode ?? data.tunables.trading_mode)}
-        tagline="Derivatives sleeve · pending first promoted strategy"
+    <div className="space-y-8">
+      <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+        Options sleeve · derivatives · awaiting first promoted strategy
+      </p>
+
+      {/* Options capital banner — templated */}
+      <SleeveCapitalPlaceholder
+        accent={meta.accent}
+        title="Deployed capital"
+        message="$0 deployed in options. Sleeve activates once a directional spread or covered-call strategy clears the bench."
+        sub="Per-sleeve capital breakdown lands with operator-feed v2."
       />
 
+      {/* Options charts — placeholders */}
+      <section>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ChartPlaceholder label="Options sleeve equity" />
+          <ChartPlaceholder label="Options daily P&L" height={120} />
+        </div>
+      </section>
+
+      {/* Options KPIs — placeholder grid */}
+      <section>
+        <div className="cb-label mb-3">Strategy KPIs</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {["Win rate", "Profit factor", "Expectancy", "Max drawdown"].map(label => (
+            <div key={label} className="cb-metric cb-tone-medium">
+              <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
+              <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Option positions */}
       {optionPositions.length > 0 ? (
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -2470,21 +2445,23 @@ function OptionsSleeve({ data }: { data: TradingData }) {
           <PositionsList positions={optionPositions} exitCandidates={data.exit_candidates} />
         </section>
       ) : (
-        <div
-          className="rounded-xl px-5 py-5"
-          style={{
-            background: `radial-gradient(circle at 12% 10%, ${meta.accent}14, transparent 48%), var(--cb-surface-0)`,
-            border: `1px solid ${meta.accent}33`,
-          }}
-        >
-          <div className="cb-label mb-2">Positions</div>
-          <div style={{ fontSize: 13, color: "var(--cb-text-primary)", lineHeight: 1.55 }}>
-            No open option positions. Sleeve will activate once a directional
-            spread or covered-call strategy clears the bench.
+        <section>
+          <div className="cb-label mb-3">Open Positions · 0</div>
+          <div
+            className="rounded-xl px-5 py-4"
+            style={{
+              background: `radial-gradient(circle at 12% 10%, ${meta.accent}10, transparent 48%), var(--cb-surface-0)`,
+              border: `1px solid var(--cb-border-std)`,
+            }}
+          >
+            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)" }}>
+              No open option positions.
+            </div>
           </div>
-        </div>
+        </section>
       )}
 
+      {/* Active strategy — bottom */}
       <div className="cb-card-t3 cb-tone-medium px-4 py-3">
         <div className="cb-label mb-1">Active strategy</div>
         <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
@@ -2501,41 +2478,61 @@ function OptionsSleeve({ data }: { data: TradingData }) {
 function CryptoSleeve() {
   const meta = SLEEVE_META.crypto
   const universe = ["BTC", "ETH", "SOL", "LINK", "AVAX", "ADA", "XRP", "DOGE", "LTC", "BCH"]
+
   return (
-    <div className="space-y-6">
-      <SleeveHeader
-        sleeve="crypto"
-        allocation={null}
-        deployedPct={null}
-        mode="SHADOW · pending"
-        tagline="24/7 crypto sleeve · daily-bar research"
+    <div className="space-y-8">
+      <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
+        Crypto sleeve · 24/7 research · SHADOW · paper data pending
+      </p>
+
+      {/* Crypto capital banner — templated */}
+      <SleeveCapitalPlaceholder
+        accent={meta.accent}
+        title="Deployed capital"
+        message="$0 deployed in crypto. Integration lands after equities checkpoint 05 passes and the first crypto campaign closes a promoted backtest."
+        sub={`First strategy family: crypto_regime_aware_momentum. Data provider: Alpaca (paper) with Coinbase planned for live.`}
       />
 
-      {/* Open positions — top of sleeve (placeholder) */}
+      {/* Crypto charts — placeholders */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <span className="cb-label">Open Positions · 0</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <ChartPlaceholder label="Crypto sleeve equity" />
+          <ChartPlaceholder label="Crypto daily P&L" height={120} />
         </div>
+      </section>
+
+      {/* Crypto KPIs — placeholder grid */}
+      <section>
+        <div className="cb-label mb-3">Strategy KPIs</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {["Win rate", "Profit factor", "Expectancy", "Max drawdown"].map(label => (
+            <div key={label} className="cb-metric cb-tone-medium">
+              <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
+              <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Positions placeholder */}
+      <section>
+        <div className="cb-label mb-3">Open Positions · 0</div>
         <div
-          className="rounded-xl px-5 py-5"
+          className="rounded-xl px-5 py-4"
           style={{
-            background: `radial-gradient(circle at 12% 10%, ${meta.accent}14, transparent 48%), var(--cb-surface-0)`,
-            border: `1px solid ${meta.accent}33`,
+            background: `radial-gradient(circle at 12% 10%, ${meta.accent}10, transparent 48%), var(--cb-surface-0)`,
+            border: `1px solid var(--cb-border-std)`,
           }}
         >
-          <div style={{ fontSize: 13, color: "var(--cb-text-primary)", lineHeight: 1.55 }}>
-            No crypto positions yet. Paper sleeve is empty — integration lands
-            after equities checkpoint&nbsp;05 passes and the first crypto
-            campaign closes a promoted backtest.
-          </div>
-          <div className="mt-3" style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
-            First strategy family: <span style={{ color: meta.accent, fontWeight: 500 }}>crypto_regime_aware_momentum</span>.
-            Data provider: Alpaca (paper) with Coinbase planned for live.
+          <div style={{ fontSize: 12, color: "var(--cb-text-secondary)" }}>
+            No crypto positions yet.
           </div>
         </div>
       </section>
 
-      {/* Today's plan + bench summary — middle */}
+      {/* Today's plan + bench summary */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="cb-card-t3 cb-tone-medium px-4 py-3">
           <div className="cb-label mb-1">Today&rsquo;s plan</div>
@@ -2579,7 +2576,7 @@ function CryptoSleeve() {
         </div>
       </section>
 
-      {/* Active strategy — bottom of sleeve (matches stocks sleeve pattern) */}
+      {/* Active strategy — bottom */}
       <div className="cb-card-t3 cb-tone-medium px-4 py-3">
         <div className="cb-label mb-1">Active strategy</div>
         <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
@@ -2598,7 +2595,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
   const [data, setData] = useState<TradingData | null>(initialData)
   const [lastFetched, setLastFetched] = useState(new Date())
   const [refreshing, setRefreshing] = useState(false)
-  const [activeSleeve, setActiveSleeve] = useState<Sleeve>("stocks")
+  const [activeTab, setActiveTab] = useState<TradingTab>("home")
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -2763,12 +2760,6 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
     )
   }
 
-  const stocksAlloc = data.account.equity_deployed
-    ?? data.positions.filter(p => !parseOptionSymbol(p.symbol)).reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const optionsAlloc = data.account.options_deployed
-    ?? data.positions.filter(p => parseOptionSymbol(p.symbol)).reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const cryptoAlloc = null
-
   return (
     <div className="min-h-screen text-[var(--cb-text-primary)] font-sans pb-16 sm:pb-0">
       <Nav active="trading" />
@@ -2782,60 +2773,24 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         onRefresh={refresh}
       />
 
-      {/* ═══ STICKY SLEEVE TABS — always reachable ═══ */}
+      {/* ═══ STICKY TRADING TABS — Home / Stocks / Options / Crypto ═══ */}
       <div
         className="sticky z-[29] backdrop-blur-md"
         style={{
           top: 100,
-          background: "rgba(5, 8, 26, 0.90)",
-          borderBottom: "1px solid var(--cb-border-dim)",
+          background: "rgba(5, 8, 26, 0.92)",
         }}
       >
-        <div className="px-4 sm:px-6 py-3 max-w-5xl mx-auto">
-          <SleeveTabs
-            active={activeSleeve}
-            onChange={setActiveSleeve}
-            stocksAlloc={stocksAlloc}
-            optionsAlloc={optionsAlloc}
-            cryptoAlloc={cryptoAlloc}
-          />
+        <div className="px-4 sm:px-6 max-w-5xl mx-auto">
+          <TradingTabs active={activeTab} onChange={setActiveTab} />
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-8">
-
-        {/* System caption */}
-        <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          Portfolio overview · {data.operator?.mode?.current_mode ?? data.tunables.trading_mode} · {titleizeToken(data.operator?.mode?.broker_environment ?? data.tunables.trading_mode)} broker
-        </p>
-
-        {/* ═══ PORTFOLIO ZONE — always visible, spans all sleeves ═══ */}
-        <section>
-          <CapitalHero account={data.account} />
-        </section>
-
-        <section>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
-            <DailyPnlChart data={data.daily_performance} />
-          </div>
-        </section>
-
-        <section>
-          <PerformanceGrid kpis={data.kpis} />
-        </section>
-
-        <section>
-          <OperatorOverview data={data} tunables={data.tunables} />
-        </section>
-
-        {/* ═══ ACTIVE SLEEVE CONTENT ═══ */}
-        <section>
-          {activeSleeve === "stocks"  && <StocksSleeve data={data} />}
-          {activeSleeve === "options" && <OptionsSleeve data={data} />}
-          {activeSleeve === "crypto"  && <CryptoSleeve />}
-        </section>
-
+      <div className="px-4 sm:px-6 py-8 max-w-5xl mx-auto">
+        {activeTab === "home"    && <HomeView data={data} />}
+        {activeTab === "stocks"  && <StocksSleeve data={data} />}
+        {activeTab === "options" && <OptionsSleeve data={data} />}
+        {activeTab === "crypto"  && <CryptoSleeve />}
       </div>
     </div>
   )
