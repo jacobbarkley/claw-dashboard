@@ -1,16 +1,17 @@
 import Link from "next/link"
-import { Zap, Activity, TrendingUp, List } from "lucide-react"
+import { Zap, Activity, TrendingUp, List, MessageCircle } from "lucide-react"
 
 const LINKS = [
-  { href: "/dashboard", label: "Ops",      icon: Activity   },
-  { href: "/trading",   label: "Trading",  icon: TrendingUp },
-  { href: "/queue",     label: "Queue",    icon: List       },
+  { href: "/dashboard", label: "Ops",      icon: Activity      },
+  { href: "/trading",   label: "Trading",  icon: TrendingUp    },
+  { href: "/queue",     label: "Queue",    icon: List          },
+  { href: "/chat",      label: "Chat",     icon: MessageCircle },
 ]
 
 const NAV_BG = "rgba(3, 1, 12, 0.92)"
 const BORDER = "rgba(90, 70, 160, 0.14)"
 
-export function Nav({ active }: { active: "dashboard" | "trading" | "queue" }) {
+export function Nav({ active }: { active: "dashboard" | "trading" | "queue" | "chat" }) {
   return (
     <>
       {/* Top nav — sticky, part of the product shell */}
