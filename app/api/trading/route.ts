@@ -2,6 +2,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import { NextResponse } from "next/server"
 
+export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const RAW_BASE = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main/data"

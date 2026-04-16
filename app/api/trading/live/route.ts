@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 
+export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const ALPACA_BASE = "https://paper-api.alpaca.markets/v2"

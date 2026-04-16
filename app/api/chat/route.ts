@@ -3,6 +3,8 @@ import { streamText } from "ai"
 import { promises as fs } from "fs"
 import path from "path"
 
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 export const maxDuration = 30
 
 async function readJson(filename: string) {
