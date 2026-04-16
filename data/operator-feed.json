@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-16T03:00:58.842265+00:00",
+  "generated_at": "2026-04-16T04:07:00.337004+00:00",
   "as_of_date": "2026-04-15",
   "source_context": {
     "mode": "canonical",
@@ -16,8 +16,8 @@
     "base_value": 100000.0,
     "total_pnl": -14557.38,
     "total_pnl_pct": -14.5574,
-    "today_pnl": 81.46,
-    "today_pnl_pct": 0.0954,
+    "today_pnl": null,
+    "today_pnl_pct": null,
     "positions_value": 51368.28,
     "equity_deployed": 51368.28,
     "options_deployed": 0,
@@ -49,7 +49,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-16T03:00:58.842376+00:00"
+    "audit_written_at": "2026-04-16T04:07:00.337066+00:00"
   },
   "kpis": {
     "total_trades": 58,
