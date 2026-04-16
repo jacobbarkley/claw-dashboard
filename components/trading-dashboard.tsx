@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { Nav } from "@/components/nav"
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
+  ComposedChart, Line, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts"
 import {
@@ -687,8 +687,8 @@ function CommandStrip({
     <div
       className="px-6 py-2 flex items-center justify-between gap-4 backdrop-blur-md sticky top-[52px] z-30"
       style={{
-        borderBottom: "1px solid rgba(90, 70, 160, 0.14)",
-        background: "rgba(3, 1, 12, 0.92)",
+        borderBottom: "1px solid rgba(90, 110, 180, 0.14)",
+        background: "rgba(5, 8, 26, 0.92)",
       }}
     >
       {/* Left: mode */}
@@ -706,10 +706,10 @@ function CommandStrip({
 
       {/* Center: compact chips */}
       <div className="hidden sm:flex items-center gap-2 text-[11px] min-w-0">
-        <span className="rounded-full px-2 py-0.5" style={{ background: "rgba(139,92,246,0.1)", color: "var(--cb-text-secondary)" }}>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "rgba(120, 140, 200, 0.10)", color: "var(--cb-text-secondary)" }}>
           Checkpoint {checkpointChip}
         </span>
-        <span className="rounded-full px-2 py-0.5" style={{ background: "rgba(139,92,246,0.1)", color: "var(--cb-text-secondary)" }}>
+        <span className="rounded-full px-2 py-0.5" style={{ background: "rgba(120, 140, 200, 0.10)", color: "var(--cb-text-secondary)" }}>
           Plan {planChip}
         </span>
       </div>
@@ -796,10 +796,10 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
       <div
         className="rounded-[22px] border px-5 py-4"
         style={{
-          borderColor: "rgba(90, 70, 160, 0.18)",
+          borderColor: "var(--cb-border-hi)",
           background:
-            "radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 28%), radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 28%), linear-gradient(180deg, rgba(6, 4, 16, 0.98), rgba(5, 3, 14, 0.96))",
-          boxShadow: "0 14px 40px rgba(3, 1, 12, 0.35)",
+            "radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 30%), radial-gradient(circle at top right, rgba(80, 120, 220, 0.10), transparent 32%), linear-gradient(180deg, rgba(10, 14, 31, 0.98), rgba(8, 11, 26, 0.96))",
+          boxShadow: "0 14px 40px rgba(5, 8, 26, 0.45)",
         }}
       >
         <div className="flex items-start justify-between gap-4">
@@ -939,7 +939,7 @@ function OperatorOverview({ data, tunables }: { data: TradingData; tunables: Tun
               <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(34,197,94,0.2)", color: "var(--cb-green)" }}>
                 Chain healthy
               </span>
-              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "rgba(139,92,246,0.2)", color: "var(--cb-text-secondary)" }}>
+              <span className="rounded-full border px-2.5 py-1" style={{ borderColor: "var(--cb-border-std)", color: "var(--cb-text-secondary)" }}>
                 {data.as_of_date}
               </span>
             </div>
@@ -975,7 +975,7 @@ function promotionStageColor(stage: string | null | undefined): { color: string;
   if (s.includes("FROZEN") || s.includes("CONFIRMATION") || s.includes("PENDING")) {
     return { color: "var(--cb-amber)", border: "rgba(245,158,11,0.28)", bg: "rgba(245,158,11,0.08)" }
   }
-  return { color: "var(--cb-text-secondary)", border: "rgba(139,92,246,0.22)", bg: "rgba(139,92,246,0.06)" }
+  return { color: "var(--cb-text-secondary)", border: "rgba(120, 140, 200, 0.22)", bg: "rgba(120, 140, 200, 0.06)" }
 }
 
 function StrategyMetric({ label, value, tone }: { label: string; value: string; tone?: "pos" | "neg" | "neutral" }) {
@@ -1191,31 +1191,6 @@ function CapitalHero({
   )
 }
 
-// ─── Orbital Ring SVG overlay for charts ──────────────────────────────────────
-function OrbitalRings() {
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 800 200"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <radialGradient id="chartGlow" cx="50%" cy="100%" r="70%">
-          <stop offset="0%" stopColor="#4c1d95" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#07021a" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <rect width="800" height="200" fill="url(#chartGlow)" />
-      <ellipse cx="400" cy="230" rx="180" ry="80"  fill="none" stroke="#7c3aed" strokeOpacity="0.10" strokeWidth="0.6" />
-      <ellipse cx="400" cy="230" rx="290" ry="130" fill="none" stroke="#7c3aed" strokeOpacity="0.08" strokeWidth="0.6" />
-      <ellipse cx="400" cy="230" rx="400" ry="185" fill="none" stroke="#7c3aed" strokeOpacity="0.06" strokeWidth="0.5" />
-      <ellipse cx="400" cy="230" rx="520" ry="240" fill="none" stroke="#7c3aed" strokeOpacity="0.04" strokeWidth="0.5" />
-      <ellipse cx="400" cy="230" rx="650" ry="300" fill="none" stroke="#7c3aed" strokeOpacity="0.03" strokeWidth="0.5" />
-    </svg>
-  )
-}
-
 // ─── Premium Tooltip ──────────────────────────────────────────────────────────
 function ChartTooltip({ active, payload, label, formatter, labelFormatter }: {
   active?: boolean; payload?: any[]; label?: any
@@ -1226,11 +1201,11 @@ function ChartTooltip({ active, payload, label, formatter, labelFormatter }: {
   const heading = labelFormatter ? labelFormatter(label) : String(label)
   return (
     <div style={{
-      background: "rgba(5, 3, 14, 0.97)",
-      border: "1px solid rgba(100, 80, 180, 0.22)",
+      background: "rgba(10, 14, 31, 0.97)",
+      border: "1px solid rgba(110, 135, 210, 0.22)",
       borderRadius: 10,
       padding: "10px 14px",
-      boxShadow: "0 8px 32px rgba(3, 1, 12, 0.9), 0 0 0 1px rgba(255,255,255,0.02) inset",
+      boxShadow: "0 8px 32px rgba(5, 8, 26, 0.9), inset 0 1px 0 rgba(180, 195, 235, 0.03)",
       minWidth: 120,
     }}>
       <div style={{ fontSize: 9, color: "var(--cb-text-tertiary)", marginBottom: 7, letterSpacing: "0.12em", textTransform: "uppercase" }}>
@@ -1315,7 +1290,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
           className="cursor-pointer focus:outline-none"
           style={{
             background: "transparent",
-            border: "1px solid rgba(139,92,246,0.2)",
+            border: "1px solid var(--cb-border-std)",
             color: "var(--cb-text-secondary)",
             fontSize: 10,
             borderRadius: 6,
@@ -1328,9 +1303,15 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
         </select>
       </div>
       <div className="relative px-2">
-        <OrbitalRings />
         <ResponsiveContainer width="100%" height={160}>
-          <LineChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+          <ComposedChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="cb-equity-halo" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor="#10b981" stopOpacity="0.24" />
+                <stop offset="60%"  stopColor="#10b981" stopOpacity="0.06" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+              </linearGradient>
+            </defs>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
             <YAxis
               tick={{ fontSize: 10, fill: "#7b7892" }}
@@ -1346,9 +1327,10 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
                 labelFormatter={(l: unknown) => shortDate(String(l))}
               />}
             />
-            {baseValue && <ReferenceLine y={baseValue} stroke="rgba(90,70,160,0.18)" strokeDasharray="4 3" />}
-            <Line type="monotone" dataKey="equity" stroke="#15803d" strokeWidth={0.8} dot={false} />
-          </LineChart>
+            {baseValue && <ReferenceLine y={baseValue} stroke="rgba(120, 140, 200, 0.22)" strokeDasharray="4 3" />}
+            <Area type="monotone" dataKey="equity" stroke="none" fill="url(#cb-equity-halo)" isAnimationActive={false} />
+            <Line type="monotone" dataKey="equity" stroke="#10b981" strokeWidth={1.2} dot={false} isAnimationActive={false} />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>
@@ -1396,7 +1378,7 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
           className="cursor-pointer focus:outline-none"
           style={{
             background: "transparent",
-            border: "1px solid rgba(139,92,246,0.2)",
+            border: "1px solid var(--cb-border-std)",
             color: "var(--cb-text-secondary)",
             fontSize: 10,
             borderRadius: 6,
@@ -1409,7 +1391,6 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
         </select>
       </div>
       <div className="relative px-2">
-        <OrbitalRings />
         <ResponsiveContainer width="100%" height={120}>
           <BarChart data={displayData} margin={{ top: 4, right: 12, bottom: 0, left: 0 }}>
             <XAxis dataKey="date" tickFormatter={shortDate} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
@@ -1420,10 +1401,10 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
                 labelFormatter={(l: unknown) => shortDate(String(l))}
               />}
             />
-            <ReferenceLine y={0} stroke="rgba(90,70,160,0.18)" />
-            <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]}>
+            <ReferenceLine y={0} stroke="rgba(120, 140, 200, 0.22)" />
+            <Bar dataKey="net_pnl" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {displayData.map((d, i) => (
-                <Cell key={i} fill={d.net_pnl >= 0 ? "#0f9e6e" : "#6a9eb8"} />
+                <Cell key={i} fill={d.net_pnl >= 0 ? "#10b981" : "#7ab0cc"} />
               ))}
             </Bar>
           </BarChart>
@@ -1437,10 +1418,10 @@ function DailyPnlChart({ data }: { data: Array<{ date: string; net_pnl: number }
 function MetricCard({ label, value, sub, tooltip, tone }: { label: string; value: string; sub?: string; tooltip?: string; tone?: "good" | "bad" | "neutral" }) {
   const [show, setShow] = useState(false)
   const gradient = tone === "good"
-    ? "radial-gradient(circle at top left, rgba(34,197,94,0.14), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.10), transparent 40%), rgba(255,255,255,0.018)"
+    ? "radial-gradient(circle at 15% 20%, rgba(16, 185, 129, 0.14), transparent 45%), rgba(255, 255, 255, 0.018)"
     : tone === "bad"
-      ? "radial-gradient(circle at top left, rgba(239,68,68,0.12), transparent 40%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 40%), rgba(255,255,255,0.018)"
-      : "radial-gradient(circle at top left, rgba(245,158,11,0.08), transparent 40%), radial-gradient(circle at bottom right, rgba(79,70,229,0.06), transparent 40%), rgba(255,255,255,0.018)"
+      ? "radial-gradient(circle at 15% 20%, rgba(224, 82, 82, 0.12), transparent 45%), rgba(255, 255, 255, 0.018)"
+      : "radial-gradient(circle at 15% 20%, rgba(212, 194, 138, 0.10), transparent 45%), rgba(255, 255, 255, 0.018)"
   return (
     <div
       className="relative cb-metric"
@@ -1459,7 +1440,7 @@ function MetricCard({ label, value, sub, tooltip, tone }: { label: string; value
           className="absolute bottom-full left-0 mb-1.5 z-50 rounded-lg px-3 py-2 text-[11px] w-52 leading-snug shadow-xl pointer-events-none"
           style={{
             background: "var(--cb-surface-1)",
-            border: "1px solid rgba(139,92,246,0.2)",
+            border: "1px solid var(--cb-border-std)",
             color: "var(--cb-text-secondary)",
           }}
         >

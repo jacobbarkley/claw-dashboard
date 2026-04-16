@@ -8,8 +8,8 @@ const LINKS = [
   { href: "/chat",      label: "Chat",     icon: MessageCircle },
 ]
 
-const NAV_BG = "rgba(3, 1, 12, 0.92)"
-const BORDER = "rgba(90, 70, 160, 0.14)"
+const NAV_BG = "rgba(5, 8, 26, 0.92)"
+const BORDER = "rgba(90, 110, 180, 0.14)"
 
 export function Nav({ active }: { active: "dashboard" | "trading" | "queue" | "chat" }) {
   return (
@@ -56,7 +56,7 @@ export function Nav({ active }: { active: "dashboard" | "trading" | "queue" | "c
       {/* Mobile bottom nav */}
       <div
         className="sm:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t flex"
-        style={{ background: "rgba(3, 1, 12, 0.96)", borderColor: BORDER }}
+        style={{ background: "rgba(5, 8, 26, 0.96)", borderColor: BORDER }}
       >
         {LINKS.map(({ href, label, icon: Icon }) => {
           const isActive = active === href.slice(1)

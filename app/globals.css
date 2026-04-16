@@ -83,13 +83,13 @@
 }
 
 .dark {
-  /* ── Surfaces — darker, less violet-saturated ── */
-  --background: #03010c;
-  --card: #06040f;
-  --popover: #0a0820;
-  --secondary: #0d0a1e;
-  --muted: #0d0a1e;
-  --accent: #130f2e;
+  /* ── Surfaces — deep indigo night-sky ── */
+  --background: #05081a;
+  --card: #0a0e1f;
+  --popover: #0e1428;
+  --secondary: #131a33;
+  --muted: #131a33;
+  --accent: #1a2145;
 
   /* ── Text ── */
   --foreground: #f0eff8;
@@ -97,15 +97,15 @@
   --popover-foreground: #f0eff8;
   --secondary-foreground: #f0eff8;
   --accent-foreground: #f0eff8;
-  --muted-foreground: #8888a4;
+  --muted-foreground: #8a90ae;
 
   /* ── Structure ── */
   --primary: #f0eff8;
-  --primary-foreground: #03010c;
+  --primary-foreground: #05081a;
   --destructive: #e05252;
-  --border: rgba(120, 90, 220, 0.12);
-  --input: rgba(120, 90, 220, 0.08);
-  --ring: rgba(110, 70, 210, 0.35);
+  --border: rgba(90, 110, 180, 0.12);
+  --input: rgba(90, 110, 180, 0.10);
+  --ring: rgba(120, 140, 210, 0.35);
 
   /* ── Charts ── */
   --chart-1: oklch(0.809 0.105 251.813);
@@ -115,34 +115,36 @@
   --chart-5: oklch(0.424 0.199 265.638);
 
   /* ── Sidebar ── */
-  --sidebar: #080520;
+  --sidebar: #0a0e1f;
   --sidebar-foreground: #eeedf5;
   --sidebar-primary: #7c3aed;
   --sidebar-primary-foreground: #eeedf5;
-  --sidebar-accent: #110840;
+  --sidebar-accent: #141a30;
   --sidebar-accent-foreground: #eeedf5;
-  --sidebar-border: rgba(139, 92, 246, 0.10);
-  --sidebar-ring: rgba(124, 58, 237, 0.40);
+  --sidebar-border: rgba(90, 110, 180, 0.12);
+  --sidebar-ring: rgba(120, 140, 210, 0.35);
 
   /* ── ClawBoy semantic tokens ── */
-  --cb-void:          #03010c;
-  --cb-surface-0:     #06040f;
-  --cb-surface-1:     #0b0920;
-  --cb-surface-2:     #110e2a;
+  --cb-void:          #05081a;
+  --cb-surface-0:     #0a0e1f;
+  --cb-surface-1:     #0e1428;
+  --cb-surface-2:     #131a33;
 
-  /* Borders: slightly higher contrast, less saturated violet */
-  --cb-border-dim:    rgba(100, 80, 180, 0.10);
-  --cb-border-std:    rgba(100, 80, 180, 0.18);
-  --cb-border-hi:     rgba(110, 80, 200, 0.30);
+  /* Borders: cool indigo, not purple */
+  --cb-border-dim:    rgba(90, 110, 180, 0.10);
+  --cb-border-std:    rgba(90, 110, 180, 0.18);
+  --cb-border-hi:     rgba(110, 135, 210, 0.28);
 
+  /* Brand purple — used sparingly now, as accent not atmosphere */
   --cb-brand:         #7c3aed;
   --cb-brand-soft:    rgba(124, 58, 237, 0.12);
 
-  /* Text: brighter primary, clearer secondary, more readable tertiary */
+  /* Text */
   --cb-text-primary:  #f0eff8;
-  --cb-text-secondary:#9090ac;
-  --cb-text-tertiary: #52506a;
+  --cb-text-secondary:#9ba0bc;
+  --cb-text-tertiary: #5c6281;
 
+  /* Sentiment */
   --cb-green:         #10b981;
   --cb-green-soft:    rgba(16, 185, 129, 0.12);
   --cb-amber:         #d97706;
@@ -151,6 +153,15 @@
   --cb-red-soft:      rgba(224, 82, 82, 0.12);
   --cb-steel:         #7ab0cc;
   --cb-steel-soft:    rgba(122, 176, 204, 0.12);
+
+  /* ── Sleeve accents — set per-sleeve container later ── */
+  --cb-sleeve-stocks:      #10b981;  /* emerald */
+  --cb-sleeve-options:     #d4c28a;  /* champagne gold */
+  --cb-sleeve-crypto:      #8b5cf6;  /* violet */
+  --cb-sleeve-predictions: #38bdf8;  /* cyan — future */
+
+  /* Default card accent used by t1 hero when no sleeve context is set */
+  --cb-card-accent: rgba(16, 185, 129, 0.08);
 }
 
 @layer base {
@@ -175,48 +186,46 @@
   border-radius: 14px;
   overflow: hidden;
   box-shadow:
-    0 0 0 1px rgba(70, 50, 140, 0.06),
-    0 1px 0 rgba(140, 120, 240, 0.05) inset,
-    0 20px 60px rgba(3, 1, 12, 0.85);
+    inset 0 1px 0 rgba(180, 195, 235, 0.04),
+    0 20px 60px rgba(5, 8, 26, 0.85);
 }
 .cb-hero-primary {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), transparent 38%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.14), transparent 38%),
-    linear-gradient(155deg, rgba(28, 18, 64, 0.50) 0%, rgba(8, 5, 22, 0.20) 100%);
+    radial-gradient(circle at 15% 10%, var(--cb-card-accent), transparent 42%),
+    linear-gradient(160deg, rgba(22, 30, 60, 0.55) 0%, rgba(10, 14, 31, 0.30) 100%);
   padding: 28px 28px 22px;
 }
 .cb-hero-support {
-  background: rgba(3, 1, 12, 0.35);
+  background: rgba(5, 8, 26, 0.45);
   padding: 16px 28px 20px;
   border-top: 1px solid var(--cb-border-dim);
 }
 
+/* Tier 1 — sleeve-header / hero card. Restrained accent tint, deep indigo base. */
 .cb-card-t1 {
   background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.12), transparent 35%),
+    radial-gradient(circle at 15% 10%, var(--cb-card-accent), transparent 40%),
     var(--cb-surface-0);
   border: 1px solid var(--cb-border-hi);
   border-radius: 14px;
   box-shadow:
-    0 0 0 1px rgba(80, 60, 160, 0.06),
-    0 12px 40px rgba(3, 1, 12, 0.7);
+    inset 0 1px 0 rgba(180, 195, 235, 0.035),
+    0 12px 40px rgba(5, 8, 26, 0.7);
 }
+
+/* Tier 2 — charts, positions, plan. Flat surface, crisp border, subtle inset top highlight. */
 .cb-card-t2 {
-  background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 35%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.10), transparent 35%),
-    var(--cb-surface-0);
+  background: var(--cb-surface-0);
   border: 1px solid var(--cb-border-std);
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(3, 1, 12, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(180, 195, 235, 0.03),
+    0 2px 12px rgba(5, 8, 26, 0.45);
 }
+
+/* Tier 3 — metric tiles. Minimal, recedes. */
 .cb-card-t3 {
-  background:
-    radial-gradient(circle at top left, rgba(34, 197, 94, 0.14), transparent 38%),
-    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.12), transparent 38%),
-    linear-gradient(180deg, rgba(24, 24, 27, 0.96), rgba(9, 9, 11, 0.96));
+  background: var(--cb-surface-1);
   border: 1px solid var(--cb-border-dim);
   border-radius: 10px;
 }

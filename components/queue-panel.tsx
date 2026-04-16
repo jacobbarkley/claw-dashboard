@@ -407,12 +407,12 @@ function QueueCard({ item }: { item: QueueItem }) {
   const detail = whatSentences.slice(1).join(" ")
 
   const cardGradient = state === "ready"
-    ? "radial-gradient(circle at top left, rgba(34,197,94,0.14), transparent 35%), radial-gradient(circle at bottom right, rgba(59,130,246,0.10), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
+    ? "radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.14), transparent 40%), linear-gradient(180deg, rgba(14, 20, 40, 0.96), rgba(10, 14, 31, 0.96))"
     : state === "blocked"
-      ? "radial-gradient(circle at top left, rgba(249,115,22,0.12), transparent 35%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
+      ? "radial-gradient(circle at 15% 15%, rgba(249, 115, 22, 0.12), transparent 40%), linear-gradient(180deg, rgba(14, 20, 40, 0.96), rgba(10, 14, 31, 0.96))"
       : state === "strategic"
-        ? "radial-gradient(circle at top left, rgba(59,130,246,0.12), transparent 35%), radial-gradient(circle at bottom right, rgba(139,92,246,0.08), transparent 30%), linear-gradient(180deg, rgba(24,24,27,0.98), rgba(9,9,11,0.98))"
-        : "linear-gradient(180deg, rgba(24,24,27,0.95), rgba(9,9,11,0.95))"
+        ? "radial-gradient(circle at 15% 15%, rgba(80, 120, 220, 0.12), transparent 40%), linear-gradient(180deg, rgba(14, 20, 40, 0.96), rgba(10, 14, 31, 0.96))"
+        : "linear-gradient(180deg, rgba(14, 20, 40, 0.95), rgba(10, 14, 31, 0.95))"
 
   return (
     <div
