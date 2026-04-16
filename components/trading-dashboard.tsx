@@ -2925,7 +2925,8 @@ function AssistantSheet({ open, onClose, activeTab }: {
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
               placeholder={`Ask about ${activeTab === "home" ? "the portfolio" : `the ${tabMeta.label.toLowerCase()} sleeve`}...`}
               rows={1}
-              className="flex-1 resize-none rounded-xl px-3.5 py-2 text-sm outline-none placeholder:text-[var(--cb-text-tertiary)]"
+              // text-base (16px) on mobile prevents iOS Safari auto-zoom on focus; sm:text-sm (14px) on desktop
+              className="flex-1 resize-none rounded-xl px-3.5 py-2 text-base sm:text-sm outline-none placeholder:text-[var(--cb-text-tertiary)]"
               style={{
                 background: "rgba(14, 20, 40, 0.85)",
                 border: "1px solid var(--cb-border-std)",
