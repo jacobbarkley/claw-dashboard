@@ -104,20 +104,38 @@ function buildSystemPrompt(feed: Record<string, unknown> | null): string {
 }
 
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  try {
+    const { messages } = await req.json()
 
-  const feed = await readJson("data/operator-feed.json")
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: "ANTHROPIC_API_KEY missing from environment" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      )
+    }
 
-  // useChat sends UIMessage[] (role + parts[]), streamText needs ModelMessage[] (role + content).
-  // convertToModelMessages bridges the two formats — without it, streamText gets nothing parseable
-  // and the response stream is silently empty.
-  const modelMessages = await convertToModelMessages(messages)
+    const feed = await readJson("data/operator-feed.json")
 
-  const result = streamText({
-    model: anthropic("claude-haiku-4-5-20251001"),
-    system: buildSystemPrompt(feed),
-    messages: modelMessages,
-  })
+    // useChat sends UIMessage[] (role + parts[]), streamText needs ModelMessage[] (role + content).
+    // convertToModelMessages bridges the two formats.
+    const modelMessages = await convertToModelMessages(messages)
 
-  return result.toTextStreamResponse()
+    const result = streamText({
+      model: anthropic("claude-haiku-4-5-20251001"),
+      system: buildSystemPrompt(feed),
+      messages: modelMessages,
+      onError: ({ error }) => {
+        console.error("streamText error:", error)
+      },
+    })
+
+    return result.toTextStreamResponse()
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error("POST /api/chat error:", message, err)
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    )
+  }
 }
