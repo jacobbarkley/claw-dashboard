@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-16T15:15:15.379015+00:00",
+  "generated_at": "2026-04-16T15:30:14.157782+00:00",
   "as_of_date": "2026-04-16",
   "account": {
     "equity": 85447.07,
@@ -1510,24 +1510,6 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "FSLR",
-        "price": 203.47,
-        "sector": "Technology",
-        "expiry": "2026-05-08",
-        "dte": 22,
-        "short_strike": 185.0,
-        "long_strike": 180.0,
-        "spread_width": 5.0,
-        "net_credit": 1.3,
-        "credit_width_ratio": 0.26,
-        "annualized_yield_pct": 451.9,
-        "max_loss_per_contract": 370.0,
-        "iv_rank_proxy": 0.047,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "SCHW",
         "price": 94.8,
         "sector": "Financial Services",
@@ -1536,10 +1518,10 @@
         "short_strike": 95.0,
         "long_strike": 90.0,
         "spread_width": 5.0,
-        "net_credit": 1.25,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 375.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1549,7 +1531,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
