@@ -1,11 +1,10 @@
 import Link from "next/link"
-import { Zap, Activity, TrendingUp, List, MessageCircle } from "lucide-react"
+import { Zap, Activity, TrendingUp, List } from "lucide-react"
 
 const LINKS = [
   { href: "/dashboard", label: "Ops",      icon: Activity      },
   { href: "/trading",   label: "Trading",  icon: TrendingUp    },
   { href: "/queue",     label: "Queue",    icon: List          },
-  { href: "/chat",      label: "Chat",     icon: MessageCircle },
 ]
 
 const NAV_BG = "rgba(5, 8, 26, 0.92)"

@@ -2735,11 +2735,427 @@ function OptionsSection({ options, bps, hedges }: { options?: OptionsData; bps?:
   )
 }
 
+// ─── Sleeves ──────────────────────────────────────────────────────────────────
+type Sleeve = "stocks" | "options" | "crypto"
+
+const SLEEVE_META: Record<Sleeve, { label: string; accent: string; accentVar: string }> = {
+  stocks:  { label: "Stocks",  accent: "#10b981", accentVar: "var(--cb-sleeve-stocks)"  },
+  options: { label: "Options", accent: "#d4c28a", accentVar: "var(--cb-sleeve-options)" },
+  crypto:  { label: "Crypto",  accent: "#8b5cf6", accentVar: "var(--cb-sleeve-crypto)"  },
+}
+
+function fmtSleeveUsd(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v) || v < 0.5) return "—"
+  if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`
+  return `$${v.toFixed(0)}`
+}
+
+function SleeveTabs({ active, onChange, stocksAlloc, optionsAlloc, cryptoAlloc }: {
+  active: Sleeve
+  onChange: (s: Sleeve) => void
+  stocksAlloc: number | null
+  optionsAlloc: number | null
+  cryptoAlloc: number | null
+}) {
+  const tabs: { sleeve: Sleeve; allocation: number | null; status?: string }[] = [
+    { sleeve: "stocks",  allocation: stocksAlloc },
+    { sleeve: "options", allocation: optionsAlloc },
+    { sleeve: "crypto",  allocation: cryptoAlloc, status: "coming online" },
+  ]
+
+  return (
+    <>
+      {/* Desktop — sleeve cards (3 equal) */}
+      <div className="hidden sm:grid grid-cols-3 gap-3">
+        {tabs.map(({ sleeve, allocation, status }) => {
+          const meta = SLEEVE_META[sleeve]
+          const isActive = active === sleeve
+          return (
+            <button
+              key={sleeve}
+              onClick={() => onChange(sleeve)}
+              className="text-left rounded-xl px-4 py-3 transition-all"
+              style={{
+                background: isActive
+                  ? `radial-gradient(circle at 12% 20%, ${meta.accent}26, transparent 55%), var(--cb-surface-0)`
+                  : "var(--cb-surface-0)",
+                border: `1px solid ${isActive ? meta.accent + "40" : "var(--cb-border-std)"}`,
+                boxShadow: isActive
+                  ? `inset 0 1px 0 rgba(180, 195, 235, 0.04), 0 0 0 1px ${meta.accent}14, 0 4px 16px rgba(5, 8, 26, 0.5)`
+                  : "inset 0 1px 0 rgba(180, 195, 235, 0.025), 0 2px 8px rgba(5, 8, 26, 0.35)",
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-block rounded-full"
+                    style={{
+                      width: 8,
+                      height: 8,
+                      background: meta.accent,
+                      boxShadow: isActive ? `0 0 8px ${meta.accent}80` : "none",
+                      opacity: isActive ? 1 : 0.55,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: isActive ? 600 : 500,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
+                    }}
+                  >
+                    {meta.label}
+                  </span>
+                </div>
+                <span
+                  className="cb-number"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 300,
+                    color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {fmtSleeveUsd(allocation)}
+                </span>
+              </div>
+              {status && (
+                <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4, letterSpacing: "0.04em" }}>
+                  {status}
+                </div>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Mobile — compact pills, horizontal scroll */}
+      <div className="sm:hidden flex gap-2 overflow-x-auto snap-x -mx-4 px-4 pb-1">
+        {tabs.map(({ sleeve }) => {
+          const meta = SLEEVE_META[sleeve]
+          const isActive = active === sleeve
+          return (
+            <button
+              key={sleeve}
+              onClick={() => onChange(sleeve)}
+              className="shrink-0 snap-start rounded-full px-4 py-2 flex items-center gap-2 transition-colors"
+              style={{
+                background: isActive
+                  ? `${meta.accent}1a`
+                  : "var(--cb-surface-0)",
+                border: `1px solid ${isActive ? meta.accent + "55" : "var(--cb-border-std)"}`,
+              }}
+            >
+              <span
+                className="inline-block rounded-full"
+                style={{
+                  width: 6,
+                  height: 6,
+                  background: meta.accent,
+                  opacity: isActive ? 1 : 0.55,
+                }}
+              />
+              <span style={{
+                fontSize: 11,
+                fontWeight: isActive ? 600 : 500,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
+              }}>
+                {meta.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
+function SleeveHeader({ sleeve, allocation, deployedPct, mode, tagline }: {
+  sleeve: Sleeve
+  allocation: number | null
+  deployedPct: number | null
+  mode?: string
+  tagline: string
+}) {
+  const meta = SLEEVE_META[sleeve]
+  return (
+    <div
+      className="rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
+      style={{
+        background: `radial-gradient(circle at 12% 10%, ${meta.accent}18, transparent 45%), var(--cb-surface-0)`,
+        border: `1px solid ${meta.accent}33`,
+        boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.035), 0 4px 20px rgba(5, 8, 26, 0.45)",
+      }}
+    >
+      <div>
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-block rounded-full"
+            style={{ width: 8, height: 8, background: meta.accent, boxShadow: `0 0 8px ${meta.accent}80` }}
+          />
+          <span style={{
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.10em",
+            textTransform: "uppercase",
+            color: "var(--cb-text-primary)",
+          }}>
+            {meta.label} sleeve
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", marginTop: 4, letterSpacing: "0.02em" }}>
+          {tagline}
+        </div>
+      </div>
+      <div className="flex items-end gap-6">
+        <div className="text-right">
+          <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>
+            {fmtSleeveUsd(allocation)}
+          </div>
+          <div className="cb-label" style={{ marginTop: 2 }}>
+            deployed{deployedPct != null ? ` · ${deployedPct.toFixed(1)}%` : ""}
+          </div>
+        </div>
+        {mode && (
+          <div className="text-right">
+            <div style={{ fontSize: 11, color: "var(--cb-text-primary)", fontWeight: 500, letterSpacing: "0.04em" }}>
+              {mode}
+            </div>
+            <div className="cb-label" style={{ marginTop: 2 }}>mode</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StocksSleeve({ data }: { data: TradingData }) {
+  const equityPositions = data.positions.filter(p => !parseOptionSymbol(p.symbol))
+  const equitySymbols = new Set(equityPositions.map(p => p.symbol))
+  const equityExits = data.exit_candidates.filter(e => equitySymbols.has(e.symbol) || !data.positions.find(p => p.symbol === e.symbol && parseOptionSymbol(p.symbol)))
+
+  const allocation = data.account.equity_deployed
+    ?? equityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  const totalDeployed = data.account.positions_value ?? 0
+  const deployedPct = totalDeployed > 0 ? (allocation / totalDeployed) * 100 : null
+
+  const modeLabel = data.operator?.mode?.current_mode
+    ? titleizeToken(data.operator.mode.current_mode)
+    : titleizeToken(data.tunables.trading_mode)
+
+  return (
+    <div className="space-y-6">
+      <SleeveHeader
+        sleeve="stocks"
+        allocation={allocation}
+        deployedPct={deployedPct}
+        mode={modeLabel}
+        tagline="Regime-aware equities · daily-bar · fixed universe"
+      />
+
+      <PromotedStrategy bank={data.operator?.strategy_bank} />
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <span className="cb-label">Open Positions · {equityPositions.length}</span>
+          {equityExits.length > 0 && (
+            <span className="text-[10px]" style={{ color: "var(--cb-amber)" }}>
+              {equityExits.length} exit signal{equityExits.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+        <PositionsList positions={equityPositions} exitCandidates={equityExits} />
+      </section>
+
+      {equityExits.some(e => !equityPositions.find(p => p.symbol === e.symbol)) && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">Exit Signals · No Current Position</span>
+          </div>
+          <ExitCandidatesPanel items={equityExits} positions={equityPositions} />
+        </section>
+      )}
+
+      <section>
+        {(() => {
+          const activeStrategy = data.operator?.strategy_bank?.active
+          const strategySymbols = activeStrategy?.symbols ?? []
+          const heldSymbols = new Set(equityPositions.map(p => p.symbol))
+          const watchlistItems = data.watchlist.items.length > 0
+            ? data.watchlist.items
+            : strategySymbols.map((sym: string) => ({
+                symbol: sym,
+                in_position: heldSymbols.has(sym),
+                modifier: "",
+                trigger: activeStrategy?.strategy_family === "REGIME_AWARE_MOMENTUM" ? "Momentum signal + regime filter" : "",
+                stop: activeStrategy?.stop_loss_pct ? `${activeStrategy.stop_loss_pct}% stop loss` : "",
+                target: activeStrategy?.target_pct ? `${activeStrategy.target_pct}% profit target` : "",
+                note: heldSymbols.has(sym) ? "Currently held" : "In strategy universe, waiting for entry signal",
+              }))
+          const label = data.watchlist.items.length > 0
+            ? `Qualified Setups · ${data.watchlist.items.length}`
+            : strategySymbols.length > 0
+              ? `Strategy Universe · ${strategySymbols.length} names`
+              : "Qualified Setups"
+          return (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <span className="cb-label">{label}</span>
+                {data.watchlist.items.length === 0 && strategySymbols.length > 0 && (
+                  <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+                    from {humanizeStrategyName(activeStrategy?.display_name ?? activeStrategy?.record_id)}
+                  </span>
+                )}
+              </div>
+              <QualifiedSetups
+                items={watchlistItems}
+                as_of={data.watchlist.as_of ?? new Date().toISOString().slice(0, 10)}
+                source={data.watchlist.items.length > 0 ? data.watchlist.source : "active_strategy"}
+              />
+            </>
+          )
+        })()}
+      </section>
+    </div>
+  )
+}
+
+function OptionsSleeve({ data }: { data: TradingData }) {
+  const optionPositions = data.positions.filter(p => parseOptionSymbol(p.symbol))
+  const allocation = data.account.options_deployed
+    ?? optionPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  const totalDeployed = data.account.positions_value ?? 0
+  const deployedPct = totalDeployed > 0 ? (allocation / totalDeployed) * 100 : null
+
+  return (
+    <div className="space-y-6">
+      <SleeveHeader
+        sleeve="options"
+        allocation={allocation}
+        deployedPct={deployedPct}
+        mode={titleizeToken(data.operator?.mode?.current_mode ?? data.tunables.trading_mode)}
+        tagline="Derivatives on equities · spreads, wheel, hedges"
+      />
+
+      {optionPositions.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">Open Option Positions · {optionPositions.length}</span>
+          </div>
+          <PositionsList positions={optionPositions} exitCandidates={data.exit_candidates} />
+        </section>
+      )}
+
+      <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
+    </div>
+  )
+}
+
+function CryptoSleeve() {
+  const meta = SLEEVE_META.crypto
+  const universe = ["BTC", "ETH", "SOL", "LINK", "AVAX", "ADA", "XRP", "DOGE", "LTC", "BCH"]
+  return (
+    <div className="space-y-6">
+      <SleeveHeader
+        sleeve="crypto"
+        allocation={null}
+        deployedPct={null}
+        mode="SHADOW · pending"
+        tagline="24/7 crypto sleeve · daily-bar research"
+      />
+
+      <div
+        className="rounded-xl px-5 py-5"
+        style={{
+          background: `radial-gradient(circle at 12% 10%, ${meta.accent}14, transparent 48%), var(--cb-surface-0)`,
+          border: `1px solid ${meta.accent}33`,
+        }}
+      >
+        <div className="cb-label mb-2">Status</div>
+        <div style={{ fontSize: 13, color: "var(--cb-text-primary)", lineHeight: 1.55 }}>
+          Crypto sleeve is on the bench. Integration lands after equities
+          checkpoint&nbsp;05 passes and the first crypto campaign closes a
+          promoted backtest.
+        </div>
+        <div className="mt-3" style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
+          First strategy family: <span style={{ color: meta.accent, fontWeight: 500 }}>crypto_regime_aware_momentum</span>.
+          Data provider: Alpaca (paper) with Coinbase planned for live.
+        </div>
+      </div>
+
+      <section>
+        <div className="cb-label mb-3">Planned universe · {universe.length} liquids</div>
+        <div className="flex flex-wrap gap-2">
+          {universe.map(sym => (
+            <span
+              key={sym}
+              className="rounded-full px-3 py-1 font-mono"
+              style={{
+                fontSize: 11,
+                background: `${meta.accent}12`,
+                border: `1px solid ${meta.accent}33`,
+                color: "var(--cb-text-primary)",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {sym}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="cb-card-t3 cb-tone-medium px-4 py-3">
+          <div className="cb-label mb-1">Active strategy</div>
+          <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
+            None promoted yet
+          </div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
+            Awaiting first clean bench run
+          </div>
+        </div>
+        <div className="cb-card-t3 cb-tone-medium px-4 py-3">
+          <div className="cb-label mb-1">Today&rsquo;s plan</div>
+          <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
+            Plan generation not live
+          </div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
+            Landing with operator-feed v2
+          </div>
+        </div>
+        <div className="cb-card-t3 cb-tone-medium px-4 py-3">
+          <div className="cb-label mb-1">Positions</div>
+          <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
+            No crypto positions
+          </div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
+            Paper sleeve currently empty
+          </div>
+        </div>
+        <div className="cb-card-t3 cb-tone-medium px-4 py-3">
+          <div className="cb-label mb-1">Bench summary</div>
+          <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
+            No bench runs queued
+          </div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
+            Will populate from Q-077 overnight runs
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function TradingDashboard({ initialData }: { initialData: TradingData | null }) {
   const [data, setData] = useState<TradingData | null>(initialData)
   const [lastFetched, setLastFetched] = useState(new Date())
   const [refreshing, setRefreshing] = useState(false)
+  const [activeSleeve, setActiveSleeve] = useState<Sleeve>("stocks")
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -2904,6 +3320,12 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
     )
   }
 
+  const stocksAlloc = data.account.equity_deployed
+    ?? data.positions.filter(p => !parseOptionSymbol(p.symbol)).reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  const optionsAlloc = data.account.options_deployed
+    ?? data.positions.filter(p => parseOptionSymbol(p.symbol)).reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  const cryptoAlloc = null
+
   return (
     <div className="min-h-screen text-[var(--cb-text-primary)] font-sans pb-16 sm:pb-0">
       <Nav active="trading" />
@@ -2921,15 +3343,14 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
 
         {/* System caption */}
         <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-          Phase 1 equities sleeve · {data.operator?.mode?.current_mode ?? data.tunables.trading_mode} · {titleizeToken(data.operator?.mode?.broker_environment ?? data.tunables.trading_mode)} broker
+          Portfolio overview · {data.operator?.mode?.current_mode ?? data.tunables.trading_mode} · {titleizeToken(data.operator?.mode?.broker_environment ?? data.tunables.trading_mode)} broker
         </p>
 
-        {/* Capital Hero — first thing you see */}
+        {/* ═══ PORTFOLIO ZONE — always visible, spans all sleeves ═══ */}
         <section>
           <CapitalHero account={data.account} />
         </section>
 
-        {/* Charts */}
         <section>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
@@ -2937,94 +3358,32 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           </div>
         </section>
 
-        {/* Performance Grid */}
         <section>
           <PerformanceGrid kpis={data.kpis} />
         </section>
 
-        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-
-        {/* Positions */}
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <span className="cb-label">Open Positions · {data.positions.length}</span>
-            {data.exit_candidates.length > 0 && (
-              <span className="text-[10px]" style={{ color: "var(--cb-amber)" }}>
-                {data.exit_candidates.length} exit signal{data.exit_candidates.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <PositionsList positions={data.positions} exitCandidates={data.exit_candidates} />
+          <OperatorOverview data={data} tunables={data.tunables} />
         </section>
 
-        {/* Orphaned exit candidates */}
-        {data.exit_candidates.some(e => !data.positions.find(p => p.symbol === e.symbol)) && (
-          <>
-            <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <span className="cb-label">Exit Signals · No Current Position</span>
-              </div>
-              <ExitCandidatesPanel items={data.exit_candidates} positions={data.positions} />
-            </section>
-          </>
-        )}
-
-        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-
-        {/* Candidate Monitor — falls back to strategy universe when watchlist is empty */}
-        <section>
-          {(() => {
-            const activeStrategy = data.operator?.strategy_bank?.active
-            const strategySymbols = activeStrategy?.symbols ?? []
-            const heldSymbols = new Set(data.positions.map(p => p.symbol))
-            const watchlistItems = data.watchlist.items.length > 0
-              ? data.watchlist.items
-              : strategySymbols.map((sym: string) => ({
-                  symbol: sym,
-                  in_position: heldSymbols.has(sym),
-                  modifier: "",
-                  trigger: activeStrategy?.strategy_family === "REGIME_AWARE_MOMENTUM" ? "Momentum signal + regime filter" : "",
-                  stop: activeStrategy?.stop_loss_pct ? `${activeStrategy.stop_loss_pct}% stop loss` : "",
-                  target: activeStrategy?.target_pct ? `${activeStrategy.target_pct}% profit target` : "",
-                  note: heldSymbols.has(sym) ? "Currently held" : "In strategy universe, waiting for entry signal",
-                }))
-            const label = data.watchlist.items.length > 0
-              ? `Qualified Setups · ${data.watchlist.items.length}`
-              : strategySymbols.length > 0
-                ? `Strategy Universe · ${strategySymbols.length} names`
-                : "Qualified Setups"
-
-            return (
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="cb-label">{label}</span>
-                  {data.watchlist.items.length === 0 && strategySymbols.length > 0 && (
-                    <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
-                      from {humanizeStrategyName(activeStrategy?.display_name ?? activeStrategy?.record_id)}
-                    </span>
-                  )}
-                </div>
-                <QualifiedSetups
-                  items={watchlistItems}
-                  as_of={data.watchlist.as_of ?? new Date().toISOString().slice(0, 10)}
-                  source={data.watchlist.items.length > 0 ? data.watchlist.source : "active_strategy"}
-                />
-              </>
-            )
-          })()}
+        {/* ═══ SLEEVE TABS ═══ */}
+        <section className="pt-2">
+          <div className="cb-label mb-3">Sleeves</div>
+          <SleeveTabs
+            active={activeSleeve}
+            onChange={setActiveSleeve}
+            stocksAlloc={stocksAlloc}
+            optionsAlloc={optionsAlloc}
+            cryptoAlloc={cryptoAlloc}
+          />
         </section>
 
-        <div style={{ height: 1, background: "var(--cb-border-dim)" }} className="my-2" />
-
-        {/* Operator Context — below the action area */}
-        <OperatorOverview data={data} tunables={data.tunables} />
-
-        {/* Promoted Strategy */}
-        <PromotedStrategy bank={data.operator?.strategy_bank} />
-
-        {/* Options — parked at bottom until options sleeve is developed */}
-        <OptionsSection options={data.options} bps={data.bps} hedges={data.hedges} />
+        {/* ═══ ACTIVE SLEEVE CONTENT ═══ */}
+        <section>
+          {activeSleeve === "stocks"  && <StocksSleeve data={data} />}
+          {activeSleeve === "options" && <OptionsSleeve data={data} />}
+          {activeSleeve === "crypto"  && <CryptoSleeve />}
+        </section>
 
       </div>
     </div>
