@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { useChat } from "@ai-sdk/react"
+import { TextStreamChatTransport } from "ai"
 import { Nav } from "@/components/nav"
 import {
   ComposedChart, Line, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -9,6 +11,7 @@ import {
 import {
   Eye, Copy, Check, RefreshCw,
   ChevronDown, ChevronUp, Info,
+  Sparkles, Send, Loader2, Trash2, X,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -636,6 +639,7 @@ function CommandStrip({
   lastFetched,
   refreshing,
   onRefresh,
+  onOpenAssistant,
 }: {
   tunables: Tunables
   pipeline?: PipelineStatus
@@ -643,6 +647,7 @@ function CommandStrip({
   lastFetched: Date
   refreshing: boolean
   onRefresh: () => void
+  onOpenAssistant?: () => void
 }) {
   const [, setTick] = useState(0)
   useEffect(() => {
@@ -737,7 +742,7 @@ function CommandStrip({
           className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity"
           style={{ color: "var(--cb-text-tertiary)" }}
         >
-          <span style={{ color: "var(--cb-text-tertiary)" }}>
+          <span className="hidden sm:inline" style={{ color: "var(--cb-text-tertiary)" }}>
             Updated {timeAgo(lastFetched.toISOString())}
           </span>
           <RefreshCw
@@ -745,6 +750,33 @@ function CommandStrip({
             style={{ color: "var(--cb-text-tertiary)" }}
           />
         </button>
+
+        {onOpenAssistant && (
+          <button
+            onClick={onOpenAssistant}
+            aria-label="Open assistant"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-all hover:scale-[1.03]"
+            style={{
+              background: "radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.14), transparent 55%), rgba(14, 20, 40, 0.85)",
+              border: "1px solid rgba(110, 135, 210, 0.32)",
+              boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.05), 0 2px 10px rgba(5, 8, 26, 0.5)",
+            }}
+          >
+            <Sparkles className="w-3 h-3" style={{ color: "var(--cb-brand)" }} />
+            <span
+              className="hidden sm:inline"
+              style={{
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: "0.10em",
+                textTransform: "uppercase",
+                color: "var(--cb-text-primary)",
+              }}
+            >
+              Ask
+            </span>
+          </button>
+        )}
       </div>
     </div>
   )
@@ -2601,12 +2633,297 @@ function CryptoSleeve() {
   )
 }
 
+// ─── Assistant sheet ──────────────────────────────────────────────────────────
+// Overlay chat surface — replaces the old full-page /chat tab. Desktop renders
+// as a right-anchored 420px panel; mobile as a bottom sheet at 78vh. Backdrop
+// blur lets the dashboard show through so context stays visible.
+
+function contextChipsForTab(tab: TradingTab): string[] {
+  switch (tab) {
+    case "home":
+      return [
+        "Explain today's P&L",
+        "Any incidents right now?",
+        "Summarize the portfolio",
+        "What changed overnight?",
+      ]
+    case "stocks":
+      return [
+        "How's the stocks sleeve doing?",
+        "Explain the active strategy",
+        "Why these six names?",
+        "What would trigger a new entry?",
+      ]
+    case "options":
+      return [
+        "What's blocking options from going live?",
+        "Which strategies are on the bench for options?",
+      ]
+    case "crypto":
+      return [
+        "When does crypto come online?",
+        "Explain the planned crypto universe",
+        "What's checkpoint 05?",
+      ]
+  }
+}
+
+function AssistantSheet({ open, onClose, activeTab }: {
+  open: boolean
+  onClose: () => void
+  activeTab: TradingTab
+}) {
+  const transport = useMemo(() => new TextStreamChatTransport({ api: "/api/chat" }), [])
+  const chat = useChat({ transport })
+  const [input, setInput] = useState("")
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  // Auto-scroll on new messages
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [chat.messages, open])
+
+  // Esc to close
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, onClose])
+
+  // Focus input when opening
+  useEffect(() => {
+    if (open && inputRef.current) inputRef.current.focus()
+  }, [open])
+
+  const isLoading = chat.status === "streaming" || chat.status === "submitted"
+
+  const send = () => {
+    const text = input.trim()
+    if (!text || isLoading) return
+    chat.sendMessage({ text })
+    setInput("")
+    if (inputRef.current) inputRef.current.style.height = "auto"
+  }
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value)
+    e.target.style.height = "auto"
+    e.target.style.height = Math.min(e.target.scrollHeight, 100) + "px"
+  }
+
+  if (!mounted) return null
+
+  const chips = contextChipsForTab(activeTab)
+  const tabMeta = TAB_META[activeTab]
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        aria-hidden
+        onClick={onClose}
+        className="fixed inset-0 z-[45] transition-opacity duration-200"
+        style={{
+          background: "rgba(5, 8, 26, 0.40)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+        }}
+      />
+
+      {/* Sheet — desktop right overlay / mobile bottom sheet */}
+      <div
+        role="dialog"
+        aria-label="ClawBoy Assistant"
+        className={`fixed z-[50] flex flex-col transition-transform duration-300 ease-out
+          sm:top-0 sm:right-0 sm:bottom-0 sm:h-auto sm:w-[420px] sm:max-w-[94vw] sm:rounded-none
+          left-0 right-0 bottom-0 h-[78vh] rounded-t-3xl
+          ${open
+            ? "translate-y-0 sm:translate-x-0"
+            : "translate-y-full sm:translate-y-0 sm:translate-x-full"
+          }`}
+        style={{
+          background: "rgba(10, 14, 31, 0.97)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderTop: "1px solid var(--cb-border-hi)",
+          borderLeft: "1px solid var(--cb-border-hi)",
+          boxShadow: "0 -20px 60px rgba(5, 8, 26, 0.6), -20px 0 60px rgba(5, 8, 26, 0.55)",
+        }}
+      >
+        {/* Mobile grab handle */}
+        <div className="sm:hidden pt-2 pb-1 flex justify-center shrink-0">
+          <div className="w-10 h-1 rounded-full" style={{ background: "var(--cb-border-std)" }} />
+        </div>
+
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-3 shrink-0"
+          style={{ borderBottom: "1px solid var(--cb-border-dim)" }}
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4" style={{ color: tabMeta.accent }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cb-text-primary)", letterSpacing: "0.02em" }}>
+              Assistant
+            </span>
+            <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              · {tabMeta.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            {chat.messages.length > 0 && (
+              <button
+                onClick={() => chat.setMessages([])}
+                aria-label="Clear conversation"
+                className="p-1.5 rounded-md hover:bg-white/5 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" style={{ color: "var(--cb-text-tertiary)" }} />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              aria-label="Close assistant"
+              className="p-1.5 rounded-md hover:bg-white/5 transition-colors"
+            >
+              <X className="w-4 h-4" style={{ color: "var(--cb-text-tertiary)" }} />
+            </button>
+          </div>
+        </div>
+
+        {/* Messages + empty state */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3">
+          {chat.messages.length === 0 && (
+            <div className="space-y-4 py-2">
+              <div className="text-xs leading-relaxed" style={{ color: "var(--cb-text-secondary)" }}>
+                Ask anything about your portfolio, today&rsquo;s plan, the active strategy, or the market regime.
+                I have live context from the operator feed.
+              </div>
+              <div className="space-y-2">
+                <div className="cb-label">Suggested</div>
+                <div className="flex flex-col gap-1.5">
+                  {chips.map(chip => (
+                    <button
+                      key={chip}
+                      onClick={() => chat.sendMessage({ text: chip })}
+                      className="text-left text-xs px-3 py-2 rounded-lg transition-colors hover:bg-white/5"
+                      style={{
+                        border: "1px solid var(--cb-border-std)",
+                        color: "var(--cb-text-secondary)",
+                        background: "rgba(14, 20, 40, 0.55)",
+                      }}
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {chat.messages.map(m => (
+            <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[86%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                  m.role === "user" ? "rounded-br-md" : "rounded-bl-md"
+                }`}
+                style={
+                  m.role === "user"
+                    ? {
+                        background: `radial-gradient(circle at 20% 20%, ${tabMeta.accent}26, transparent 55%), rgba(14, 20, 40, 0.92)`,
+                        border: `1px solid ${tabMeta.accent}33`,
+                        color: "var(--cb-text-primary)",
+                      }
+                    : {
+                        background: "rgba(14, 20, 40, 0.85)",
+                        border: "1px solid var(--cb-border-std)",
+                        color: "var(--cb-text-secondary)",
+                      }
+                }
+              >
+                {m.parts?.map((part, i) => part.type === "text" ? <span key={i}>{part.text}</span> : null)}
+              </div>
+            </div>
+          ))}
+
+          {isLoading && chat.messages[chat.messages.length - 1]?.role === "user" && (
+            <div className="flex justify-start">
+              <div
+                className="rounded-2xl rounded-bl-md px-3.5 py-2.5"
+                style={{ background: "rgba(14, 20, 40, 0.85)", border: "1px solid var(--cb-border-std)" }}
+              >
+                <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: "var(--cb-text-tertiary)" }} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div
+          className="px-4 sm:px-5 py-3 shrink-0"
+          style={{ borderTop: "1px solid var(--cb-border-dim)" }}
+        >
+          <div className="flex items-end gap-2">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleTextareaChange}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send() } }}
+              placeholder={`Ask about ${activeTab === "home" ? "the portfolio" : `the ${tabMeta.label.toLowerCase()} sleeve`}...`}
+              rows={1}
+              className="flex-1 resize-none rounded-xl px-3.5 py-2 text-sm outline-none placeholder:text-[var(--cb-text-tertiary)]"
+              style={{
+                background: "rgba(14, 20, 40, 0.85)",
+                border: "1px solid var(--cb-border-std)",
+                color: "var(--cb-text-primary)",
+              }}
+            />
+            <button
+              onClick={send}
+              disabled={isLoading || !input.trim()}
+              aria-label="Send message"
+              className="p-2 rounded-xl transition-all disabled:opacity-30"
+              style={{
+                background: input.trim() ? `${tabMeta.accent}26` : "transparent",
+                border: `1px solid ${input.trim() ? tabMeta.accent + "55" : "var(--cb-border-std)"}`,
+                color: tabMeta.accent,
+              }}
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export function TradingDashboard({ initialData }: { initialData: TradingData | null }) {
   const [data, setData] = useState<TradingData | null>(initialData)
   const [lastFetched, setLastFetched] = useState(new Date())
   const [refreshing, setRefreshing] = useState(false)
   const [activeTab, setActiveTab] = useState<TradingTab>("home")
+  const [assistantOpen, setAssistantOpen] = useState(false)
+
+  // Cmd+J / Ctrl+J toggles assistant
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault()
+        setAssistantOpen(v => !v)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   const refresh = useCallback(async () => {
     setRefreshing(true)
@@ -2782,6 +3099,13 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         lastFetched={lastFetched}
         refreshing={refreshing}
         onRefresh={refresh}
+        onOpenAssistant={() => setAssistantOpen(true)}
+      />
+
+      <AssistantSheet
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        activeTab={activeTab}
       />
 
       {/* ═══ STICKY TRADING TABS — Home / Stocks / Options / Crypto ═══ */}
