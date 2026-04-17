@@ -1346,7 +1346,7 @@ function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
           <tbody>
             {comparison.lanes.map(lane => {
               const isBenchmark = lane.role === "benchmark"
-              const isGraduated = lane.role === "layer_1_graduated"
+              const isGraduated = lane.role === "layer_1_graduated" || lane.role === "combined_graduated"
               const isStandalone = lane.role === "layer_2_standalone"
               return (
                 <tr
@@ -1385,7 +1385,7 @@ function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
       </div>
 
       <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 11, color: "var(--cb-text-tertiary)", lineHeight: 1.5 }}>
-        Graduated core is the lead candidate — beats HODL on Sharpe and Calmar while capturing 61% of net return. Tactical is an overlay, not a standalone sleeve.
+        Graduated core + tactical overlay is the lead candidate — best Sharpe and Calmar of any lane, with max drawdown reduced from 84% (HODL) to 58%. Tactical is an overlay, not a standalone sleeve.
       </div>
     </div>
   )

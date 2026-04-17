@@ -2558,7 +2558,7 @@ function CryptoSleeve() {
               Decides whether BTC should be structurally owned. Benchmarked against buy-and-hold BTC.
             </div>
             <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              10-year backtest: +10,511% net · Sharpe 1.13 · Calmar 0.83 · beats HODL risk-adjusted
+              10-year backtest: +8,410% net · Sharpe 1.19 · Calmar 0.92 · max DD 58% (vs HODL 84%)
             </div>
           </div>
           <div
