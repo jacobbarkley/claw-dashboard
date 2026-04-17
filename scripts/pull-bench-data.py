@@ -28,6 +28,7 @@ from datetime import datetime
 from pathlib import Path
 
 TRADING_BOT_BENCH_RESULTS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/results"
+TRADING_BOT_BENCH_SPECS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/specs"
 DASHBOARD_BENCH_DATA = Path.home() / "claude/claw-dashboard/data/bench"
 
 WORKING_SET = (
@@ -110,6 +111,27 @@ def pull() -> None:
 
             print(f"  pull {bench_id}/{run_id}  status={entry['status']:8s}  evaluated={entry['evaluated_candidate_count']}/{entry['search_space_size']}")
 
+    # Copy checked-in bench specs (not results — the spec definitions)
+    specs_dest = DASHBOARD_BENCH_DATA / "specs"
+    specs_dest.mkdir(parents=True, exist_ok=True)
+    spec_entries: list[dict] = []
+    if TRADING_BOT_BENCH_SPECS.exists():
+        for spec_file in sorted(TRADING_BOT_BENCH_SPECS.glob("*.bench_spec.json")):
+            shutil.copy2(spec_file, specs_dest / spec_file.name)
+            with spec_file.open() as fh:
+                spec = json.load(fh)
+            bench_id = spec.get("bench_id", spec_file.stem)
+            has_runs = bench_id in {e["bench_id"] for e in index_entries}
+            spec_entries.append({
+                "bench_id": bench_id,
+                "title": spec.get("title", bench_id),
+                "sleeve": spec.get("sleeve"),
+                "engine": spec.get("engine"),
+                "hypothesis": spec.get("hypothesis"),
+                "has_runs": has_runs,
+            })
+            print(f"  spec {spec_file.name}  sleeve={spec.get('sleeve'):8s}  has_runs={has_runs}")
+
     # Write convenience manifests
     index_path = DASHBOARD_BENCH_DATA / "index.json"
     with index_path.open("w") as fh:
@@ -117,6 +139,7 @@ def pull() -> None:
             "generated_at": datetime.now().astimezone().isoformat(),
             "source": "local_dev_pull",
             "runs": index_entries,
+            "specs": spec_entries,
         }, fh, indent=2)
 
     for bench_id, entry in latest_by_bench.items():

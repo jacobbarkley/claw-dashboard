@@ -1,0 +1,293 @@
+{
+  "schema_version": "bench_spec.v1",
+  "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
+  "title": "BTC 4H TSMOM Neighborhood Probe",
+  "hypothesis": "Probe the promising local neighborhood around the first bounded winners to test for a real plateau.",
+  "sleeve": "CRYPTO",
+  "engine": "CRYPTO_RESEARCH_SWEEP",
+  "promotion_target": "BENCH",
+  "dataset": {
+    "provider": "ccxt",
+    "venue": "coinbase",
+    "primary_instrument_type": "CRYPTO_SPOT",
+    "symbol": "BTC/USD",
+    "universe_symbols": [],
+    "universe_ref": null,
+    "benchmark_symbol": "BTC/USD",
+    "dataset_ref": "backtest/experiments/q090b_btc_4h_longhistory/dataset_freezes/2026-04-16T032009Z/crypto_historical_dataset.json",
+    "contract_legs": [],
+    "contract_metadata": {},
+    "start_date": "2016-01-01",
+    "end_date": "2026-04-15",
+    "source_timeframe": "1H",
+    "target_timeframe": "4H",
+    "anchor_timezone": "UTC",
+    "era_catalog_ref": null,
+    "eras": [
+      {
+        "era_id": "2016_rebuild",
+        "label": "2016 Recovery Base",
+        "start_date": "2016-01-01",
+        "end_date": "2016-12-31",
+        "regime_character": "POST_BEAR_RECOVERY",
+        "rationale": "Thin-liquidity recovery tape before the 2017 mania acceleration."
+      },
+      {
+        "era_id": "2017_mania",
+        "label": "2017 Mania",
+        "start_date": "2017-01-01",
+        "end_date": "2018-01-31",
+        "regime_character": "PARABOLIC_BULL",
+        "rationale": "Captures the first major BTC retail mania and its immediate unwind."
+      },
+      {
+        "era_id": "2018_2020_reset",
+        "label": "2018-2020 Winter and Recovery",
+        "start_date": "2018-02-01",
+        "end_date": "2020-03-31",
+        "regime_character": "WINTER_AND_REPAIR",
+        "rationale": "Stress period for surviving post-mania collapse, chop, and early recovery."
+      },
+      {
+        "era_id": "2020_2021_bull",
+        "label": "2020-2021 Liquidity Bull",
+        "start_date": "2020-04-01",
+        "end_date": "2021-11-30",
+        "regime_character": "LIQUIDITY_BULL",
+        "rationale": "High-momentum regime that must not dominate the whole edge story."
+      },
+      {
+        "era_id": "2021_2022_reset",
+        "label": "2021-2022 Bear Reset",
+        "start_date": "2021-12-01",
+        "end_date": "2022-12-31",
+        "regime_character": "BEAR_RESET",
+        "rationale": "Bear market and shock-reset period where weak trend systems usually give back gains."
+      },
+      {
+        "era_id": "2023_2026_current",
+        "label": "2023-2026 Recovery and Current Cycle",
+        "start_date": "2023-01-01",
+        "end_date": "2026-04-15",
+        "regime_character": "RECOVERY_AND_CURRENT",
+        "rationale": "Modern regime for checking whether the edge still behaves sensibly after the 2022 reset."
+      }
+    ],
+    "notes": [
+      "Coinbase via ccxt gives full multi-cycle BTC/USD history without locking the product to Coinbase as the only future source of truth.",
+      "The same spec shape should later support Alpaca-aligned paper feasibility windows and consumer-venue comparisons."
+    ]
+  },
+  "strategy": {
+    "strategy_id": "btc_4h_tsmom_v1",
+    "strategy_family": "TIME_SERIES_MOMENTUM",
+    "module_path": "src/openclaw_core/validation/crypto_strategy.py",
+    "registry_strategy_id": null,
+    "registry_preset_id": null,
+    "base_parameters": {
+      "fast_ema_bars": 20,
+      "slow_ema_bars": 60,
+      "regime_sma_bars": 200,
+      "regime_slope_bars": 20,
+      "atr_bars": 22,
+      "natr_bars": 14,
+      "natr_floor_pct": 1.5,
+      "natr_ceiling_pct": 8.0,
+      "chandelier_multiplier": 3.0,
+      "max_hold_bars": 30,
+      "min_progress_atr": 1.0,
+      "target_annual_vol_pct": 40.0,
+      "realized_vol_lookback_bars": 42
+    },
+    "sweep_dimensions": [
+      {
+        "parameter": "fast_ema_bars",
+        "values": [
+          20,
+          24,
+          30
+        ],
+        "description": "Fast EMA for entry acceleration."
+      },
+      {
+        "parameter": "slow_ema_bars",
+        "values": [
+          60,
+          75,
+          100
+        ],
+        "description": "Slow EMA for trend confirmation."
+      },
+      {
+        "parameter": "regime_sma_bars",
+        "values": [
+          150
+        ],
+        "description": "Long-term regime filter."
+      },
+      {
+        "parameter": "atr_bars",
+        "values": [
+          14,
+          22,
+          30
+        ],
+        "description": "ATR horizon for the chandelier stop."
+      },
+      {
+        "parameter": "chandelier_multiplier",
+        "values": [
+          3.0,
+          3.5,
+          4.0
+        ],
+        "description": "Stop-width multiple."
+      },
+      {
+        "parameter": "natr_floor_pct",
+        "values": [
+          1.0
+        ],
+        "description": "Minimum normalized volatility required to enter."
+      },
+      {
+        "parameter": "natr_ceiling_pct",
+        "values": [
+          6.0,
+          8.0,
+          10.0
+        ],
+        "description": "Maximum normalized volatility allowed to enter."
+      },
+      {
+        "parameter": "target_annual_vol_pct",
+        "values": [
+          30.0,
+          40.0
+        ],
+        "description": "Target annualized volatility used for position-sizing suggestions."
+      }
+    ],
+    "tuning_rules": [
+      {
+        "rule_id": "slow_ge_2_5_fast",
+        "rule_type": "PARAMETER_RELATIONSHIP",
+        "left_parameter": "slow_ema_bars",
+        "operator": ">=",
+        "right_parameter": "fast_ema_bars",
+        "right_multiplier": 2.5,
+        "right_offset": 0.0,
+        "description": "Keep the slow EMA materially slower than the fast EMA to avoid redundant crossovers."
+      },
+      {
+        "rule_id": "natr_ceiling_gt_floor",
+        "rule_type": "PARAMETER_RELATIONSHIP",
+        "left_parameter": "natr_ceiling_pct",
+        "operator": ">",
+        "right_parameter": "natr_floor_pct",
+        "right_multiplier": 1.0,
+        "right_offset": 0.0,
+        "description": "Entry ceiling must remain above the floor."
+      }
+    ],
+    "notes": [
+      "This is a focused probe around the first passing TSMOM neighborhood, not the final production crypto sleeve."
+    ]
+  },
+  "run": {
+    "search_mode": "GRID",
+    "fill_model": "NEXT_BAR_OPEN",
+    "exposure_model": {
+      "mode": "LONG_ONLY",
+      "max_concurrent_positions": 1,
+      "max_gross_exposure_pct": 100.0,
+      "max_net_exposure_pct": 100.0,
+      "description": "Single-position long-only BTC exposure for the first research pass."
+    },
+    "capital_base_usd": 50000,
+    "train_window_days": null,
+    "test_window_days": null,
+    "step_size_days": null,
+    "artifacts_root": "backtest/bench/results/q090b_btc_4h_tsmom_neighborhood_probe",
+    "notes": [
+      "Run this probe on frozen data only.",
+      "Use this spec to test whether the first passing region is a real plateau before broadening again."
+    ]
+  },
+  "cost_model": {
+    "fee_bps_round_trip": 20.0,
+    "fee_per_trade_usd": 0.0,
+    "slippage_bps_one_way": 5.0,
+    "slippage_sweep_bps": [
+      3.0,
+      5.0,
+      10.0,
+      15.0
+    ],
+    "notes": [
+      "Apply 15 bps one-way slippage to the 2016 era if a per-era cost override layer is added later.",
+      "Short-history Alpaca runs can still be compared separately, but this long-history spec is the research truth set."
+    ]
+  },
+  "evaluation": {
+    "baseline_ids": [
+      "BUY_AND_HOLD_BTC",
+      "NO_TRADE"
+    ],
+    "selection_metric": "MEDIAN_ERA_SHARPE",
+    "secondary_metrics": [
+      "CALMAR",
+      "TOTAL_RETURN_PCT",
+      "MAX_DRAWDOWN_PCT",
+      "WIN_RATE_PCT",
+      "TIME_IN_MARKET_PCT"
+    ],
+    "hard_reject_rules": [
+      {
+        "gate_id": "min_trade_count",
+        "metric": "total_trades",
+        "scope": "ROLLUP",
+        "operator": ">=",
+        "value": 30,
+        "description": "Reject configs that do not produce enough trades to be decision-grade."
+      },
+      {
+        "gate_id": "worst_era_sharpe_non_negative",
+        "metric": "minimum_era_sharpe",
+        "scope": "ERA_SPLIT",
+        "operator": ">=",
+        "value": 0.0,
+        "description": "Reject configs whose worst era still has a negative Sharpe."
+      },
+      {
+        "gate_id": "single_era_pnl_share_cap",
+        "metric": "max_single_era_pnl_share_pct",
+        "scope": "ROLLUP",
+        "operator": "<=",
+        "value": 50.0,
+        "description": "Reject configs dominated by one era's PnL contribution."
+      }
+    ],
+    "plateau_rule": {
+      "required": true,
+      "neighborhood_side": 1,
+      "minimum_passing_neighbors": 3,
+      "description": "Promotion requires a local parameter plateau, not a single spiky winner."
+    },
+    "notes": [
+      "Report per-era PnL share explicitly so 2020-2021 concentration is obvious.",
+      "Score full-period performance only after era-split robustness clears first."
+    ]
+  },
+  "tags": [
+    "crypto",
+    "btc",
+    "tsmom",
+    "q090b",
+    "neighborhood-probe"
+  ],
+  "notes": [
+    "This probe narrows around the first credible passing cluster from the broad BTC 4H TSMOM sweep.",
+    "Execution venue adapters should stay separate from this research bench contract."
+  ]
+}

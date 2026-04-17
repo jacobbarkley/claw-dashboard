@@ -26,10 +26,20 @@ interface BenchIndexEntry {
   generated_at: string | null
 }
 
+interface BenchSpecEntry {
+  bench_id: string
+  title: string
+  sleeve: string | null
+  engine: string | null
+  hypothesis: string | null
+  has_runs: boolean
+}
+
 interface BenchIndex {
   generated_at: string
   source: string
   runs: BenchIndexEntry[]
+  specs?: BenchSpecEntry[]
 }
 
 interface LeaderboardRow {
@@ -981,6 +991,16 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
     return m
   }, [index])
 
+  const specsBySleeve = useMemo(() => {
+    const m = new Map<string, BenchSpecEntry[]>()
+    for (const s of (index.specs ?? [])) {
+      const key = s.sleeve ?? "UNKNOWN"
+      if (!m.has(key)) m.set(key, [])
+      m.get(key)!.push(s)
+    }
+    return m
+  }, [index])
+
   const totalRuns = index.runs.length
   const totalBenches = new Set(index.runs.map(r => r.bench_id)).size
   const totalEvaluated = index.runs.reduce((acc, r) => acc + (r.evaluated_candidate_count ?? 0), 0)
@@ -1014,6 +1034,8 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
           {sleeves.map(tab => {
             const meta = TAB_META[tab]
             const runs = bySleeve.get(meta.sleeveKey!) ?? []
+            const specs = specsBySleeve.get(meta.sleeveKey!) ?? []
+            const specsWithoutRuns = specs.filter(s => !s.has_runs)
             const benches = new Set(runs.map(r => r.bench_id)).size
             const latest = runs.reduce<BenchIndexEntry | null>((acc, r) => {
               if (!acc) return r
@@ -1056,11 +1078,27 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
                       </div>
                     )}
                   </>
+                ) : specsWithoutRuns.length > 0 ? (
+                  <>
+                    <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
+                      Spec ready · pending first run
+                    </div>
+                    {specsWithoutRuns.map(s => (
+                      <div key={s.bench_id} className="mt-2" style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.4 }}>
+                        <div className="font-mono" style={{ fontSize: 10, color: meta.accent }}>{s.bench_id}</div>
+                        {s.hypothesis && (
+                          <div className="mt-1" style={{ color: "var(--cb-text-tertiary)", fontSize: 10 }}>
+                            {s.hypothesis.length > 120 ? s.hypothesis.slice(0, 120) + "..." : s.hypothesis}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </>
                 ) : (
                   <>
                     <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>No {meta.label.toLowerCase()} benches yet</div>
                     <div className="mt-1" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-                      Will appear here when a {meta.label.toLowerCase()} spec runs
+                      Will appear here when a {meta.label.toLowerCase()} spec is checked in
                     </div>
                   </>
                 )}

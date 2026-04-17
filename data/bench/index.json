@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-16T19:23:45.807575-04:00",
+  "generated_at": "2026-04-17T00:47:19.653178-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -120,6 +120,32 @@
       "primary_metric": "median_era_sharpe",
       "primary_metric_value": 0.0505,
       "generated_at": "2026-04-16T14:22:22.940864-04:00"
+    }
+  ],
+  "specs": [
+    {
+      "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+      "title": "Regime-Aware Momentum Frozen Reference",
+      "sleeve": "STOCKS",
+      "engine": "VALIDATION_CAMPAIGN",
+      "hypothesis": "A six-name large-cap momentum sleeve with SPY regime gating can earn stock-sleeve promotion through risk-aware participation instead of index mimicry.",
+      "has_runs": false
+    },
+    {
+      "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
+      "title": "BTC 4H TSMOM Neighborhood Probe",
+      "sleeve": "CRYPTO",
+      "engine": "CRYPTO_RESEARCH_SWEEP",
+      "hypothesis": "Probe the promising local neighborhood around the first bounded winners to test for a real plateau.",
+      "has_runs": true
+    },
+    {
+      "bench_id": "q090b_btc_4h_tsmom_sweep",
+      "title": "BTC 4H TSMOM Sweep",
+      "sleeve": "CRYPTO",
+      "engine": "CRYPTO_RESEARCH_SWEEP",
+      "hypothesis": "Long-only BTC 4H time-series momentum with a trend regime filter can survive fees and slippage across multiple crypto eras.",
+      "has_runs": true
     }
   ]
 }
