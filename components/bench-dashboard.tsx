@@ -253,12 +253,20 @@ function InfoPop({ text }: { text: string }) {
       </button>
       {open && (
         <span
-          className="absolute left-0 top-5 z-20 rounded-lg px-3 py-2 text-[11px] w-64 leading-relaxed pointer-events-none"
+          className="fixed z-50 rounded-lg px-3.5 py-2.5 text-[11px] leading-relaxed shadow-xl"
           style={{
             background: "rgba(10, 14, 31, 0.98)",
             border: "1px solid var(--cb-border-hi)",
             boxShadow: "0 12px 32px rgba(5, 8, 26, 0.9)",
             color: "var(--cb-text-secondary)",
+            maxWidth: 260,
+            width: "max-content",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+            whiteSpace: "normal",
+            wordWrap: "break-word",
+            pointerEvents: "none",
           }}
         >
           {text}
