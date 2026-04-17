@@ -468,6 +468,53 @@ function DeltaChip({ label, tone, arrow }: {
   )
 }
 
+// ─── Bench role + result storytelling ────────────────────────────────────────
+// Derives what role a bench plays and tells a plain-language result story so a
+// first-time user understands what they're looking at without knowing the internals.
+
+function deriveBenchRole(benchId: string, hypothesis: string | undefined): { role: string; roleLabel: string; roleDescription: string } {
+  const id = benchId.toLowerCase()
+  if (id.includes("neighborhood") || id.includes("probe")) {
+    return {
+      role: "probe",
+      roleLabel: "NEIGHBORHOOD VALIDATION",
+      roleDescription: "Follow-up investigation — zooms into the parameter neighborhood around the main sweep's top candidates to confirm the edge isn't a single spiky winner. A much smaller, focused grid.",
+    }
+  }
+  if (id.includes("sweep")) {
+    return {
+      role: "sweep",
+      roleLabel: "PARAMETER SWEEP",
+      roleDescription: "Primary parameter search — explores the full grid of strategy configurations to find which combinations produce consistent risk-adjusted returns across all named eras.",
+    }
+  }
+  return {
+    role: "run",
+    roleLabel: "RESEARCH RUN",
+    roleDescription: hypothesis ?? "Bench validation run.",
+  }
+}
+
+function deriveResultStory(bundle: BenchRunBundle, spec: BenchSpec): string {
+  const passes = bundle.evaluated_candidate_count
+  const total = bundle.search_space_size
+
+  if (bundle.status === "SUCCEEDED" && bundle.selected_config_id) {
+    return `Winner confirmed: ${bundle.selected_config_id} cleared all hard-reject gates and has stable neighbors in the parameter grid. ${spec.evaluation?.plateau_rule?.required ? "Plateau check passed." : ""} Primary metric (${bundle.primary_metric}): ${bundle.primary_metric_value?.toFixed(4) ?? "—"}.`
+  }
+  if (bundle.status === "SUCCEEDED" && !bundle.selected_config_id) {
+    return `Completed full evaluation — ${passes} of ${total} configs tested. No candidate met all promotion criteria. The strategy hypothesis may need revision, or the gates may be too strict for this search space.`
+  }
+  if (bundle.status === "PARTIAL" && !bundle.selected_config_id) {
+    const pct = total ? ((passes / total) * 100).toFixed(1) : "?"
+    return `In progress — ${passes?.toLocaleString()} of ${total?.toLocaleString()} configs evaluated (${pct}% of search space). No winner yet from this bounded sample. A wider budget or follow-up neighborhood probe may find the passing region.`
+  }
+  if (bundle.status === "PARTIAL" && bundle.selected_config_id) {
+    return `Found a passing candidate (${bundle.selected_config_id}) within a bounded sample of ${passes?.toLocaleString()} configs. Sweep is partial — more configs remain untested.`
+  }
+  return `Status: ${bundle.status}. ${passes?.toLocaleString()} of ${total?.toLocaleString()} evaluated.`
+}
+
 // ─── Run summary + strategy explanation ─────────────────────────────────────
 function RunSummary({ detail, previousRun, onJumpToPrevious }: {
   detail: BenchRunDetail
@@ -479,7 +526,10 @@ function RunSummary({ detail, previousRun, onJumpToPrevious }: {
   const evaluatedPct = bundle.search_space_size
     ? Math.min(100, (bundle.evaluated_candidate_count / bundle.search_space_size) * 100)
     : 0
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)  // default expanded per Jacob's feedback
+
+  const { roleLabel, roleDescription } = deriveBenchRole(bundle.bench_id, spec.hypothesis ?? undefined)
+  const resultStory = deriveResultStory(bundle, spec)
 
   return (
     <div
@@ -495,8 +545,8 @@ function RunSummary({ detail, previousRun, onJumpToPrevious }: {
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block rounded-full"
               style={{ width: 8, height: 8, background: accent, boxShadow: `0 0 8px ${accent}80` }} />
-            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
-              {spec.sleeve ?? "—"} · {spec.engine ?? "—"}
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: accent }}>
+              {spec.sleeve ?? "—"} · {roleLabel}
             </span>
           </div>
           <div style={{ fontSize: 18, fontWeight: 500, color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
@@ -555,9 +605,25 @@ function RunSummary({ detail, previousRun, onJumpToPrevious }: {
         <RunDelta current={bundle} previous={previousRun} onJumpToPrevious={onJumpToPrevious} />
       )}
 
-      {/* Hypothesis — always visible, short */}
+      {/* Role description — what this bench IS */}
+      <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+        <span className="cb-label" style={{ marginRight: 8 }}>What this is</span>
+        {roleDescription}
+      </div>
+
+      {/* Result story — what this bench FOUND, in plain language */}
+      <div className="mt-3 px-4 py-3 rounded-lg" style={{ background: bundle.selected_config_id ? "rgba(16, 185, 129, 0.06)" : "rgba(212, 194, 138, 0.06)", border: `1px solid ${bundle.selected_config_id ? "rgba(16, 185, 129, 0.20)" : "rgba(212, 194, 138, 0.18)"}` }}>
+        <div className="cb-label mb-1" style={{ color: bundle.selected_config_id ? "var(--cb-green)" : "var(--cb-amber)" }}>
+          Result
+        </div>
+        <div style={{ fontSize: 12, color: "var(--cb-text-primary)", lineHeight: 1.55 }}>
+          {resultStory}
+        </div>
+      </div>
+
+      {/* Hypothesis — always visible */}
       {spec.hypothesis && (
-        <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+        <div className="mt-3" style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
           <span className="cb-label" style={{ marginRight: 8 }}>Hypothesis</span>
           {spec.hypothesis}
         </div>
@@ -1446,15 +1512,19 @@ function SleeveView({
             maxWidth: "100%",
           }}
         >
-          {visibleRuns.map(entry => (
-            <option
-              key={`${entry.bench_id}/${entry.run_id}`}
-              value={`${entry.bench_id}/${entry.run_id}`}
-              style={{ background: "var(--cb-surface-1)" }}
-            >
-              {entry.title} · {entry.run_id} · {entry.status} · {fmtCount(entry.evaluated_candidate_count)}/{fmtCount(entry.search_space_size)}
-            </option>
-          ))}
+          {visibleRuns.map(entry => {
+            const { roleLabel } = deriveBenchRole(entry.bench_id, undefined)
+            const winner = entry.selected_config_id ? ` · Winner: ${shortHash(entry.selected_config_id, 10)}` : ""
+            return (
+              <option
+                key={`${entry.bench_id}/${entry.run_id}`}
+                value={`${entry.bench_id}/${entry.run_id}`}
+                style={{ background: "var(--cb-surface-1)" }}
+              >
+                {entry.title} [{roleLabel}] · {entry.status} · {fmtCount(entry.evaluated_candidate_count)}/{fmtCount(entry.search_space_size)}{winner}
+              </option>
+            )
+          })}
         </select>
 
         {runs.length !== succeededRuns.length && (
