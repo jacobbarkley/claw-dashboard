@@ -1144,10 +1144,11 @@ function SpecDefLine({ term, def }: { term: string; def: string }) {
 
 // ─── Sleeve view (index rail + run detail) ───────────────────────────────────
 function SleeveView({
-  tab, runs, selected, onSelect,
+  tab, runs, specs, selected, onSelect,
 }: {
   tab: BenchTab
   runs: BenchIndexEntry[]
+  specs: BenchSpecEntry[]
   selected: { bench_id: string; run_id: string } | null
   onSelect: (s: { bench_id: string; run_id: string }) => void
 }) {
@@ -1191,13 +1192,54 @@ function SleeveView({
     return () => { cancelled = true }
   }, [selected])
 
+  const specsWithoutRuns = specs.filter(s => !s.has_runs)
+
   if (!runs.length) {
     return (
-      <div className="cb-card-t2 cb-tone-medium px-6 py-12 text-center">
-        <div style={{ fontSize: 14, color: "var(--cb-text-primary)", marginBottom: 8 }}>No {meta.label.toLowerCase()} benches yet</div>
-        <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
-          This sleeve will populate as soon as a {meta.label.toLowerCase()} bench spec runs and publishes results.
-        </div>
+      <div className="space-y-4">
+        {specsWithoutRuns.length > 0 ? (
+          specsWithoutRuns.map(s => (
+            <div
+              key={s.bench_id}
+              className="rounded-xl px-5 py-5"
+              style={{
+                background: `radial-gradient(circle at 12% 10%, ${meta.accent}18, transparent 45%), var(--cb-surface-0)`,
+                border: `1px solid ${meta.accent}33`,
+              }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: meta.accent }} />
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+                  Spec ready · pending first run
+                </span>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
+                {s.title}
+              </div>
+              <div className="font-mono mt-1" style={{ fontSize: 10, color: meta.accent }}>
+                {s.bench_id}
+              </div>
+              {s.hypothesis && (
+                <div className="mt-3" style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+                  <span className="cb-label" style={{ marginRight: 8 }}>Hypothesis</span>
+                  {s.hypothesis}
+                </div>
+              )}
+              <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 11, color: "var(--cb-text-tertiary)", lineHeight: 1.5 }}>
+                This spec is checked in and ready to run. When Codex executes it,
+                results will appear here automatically with the same leaderboard and
+                distribution views as the crypto bench runs.
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="cb-card-t2 cb-tone-medium px-6 py-12 text-center">
+            <div style={{ fontSize: 14, color: "var(--cb-text-primary)", marginBottom: 8 }}>No {meta.label.toLowerCase()} benches yet</div>
+            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
+              This sleeve will populate as soon as a {meta.label.toLowerCase()} bench spec is checked in and runs.
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1344,6 +1386,7 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
           <SleeveView
             tab={activeTab}
             runs={runsByTab[activeTab] ?? []}
+            specs={(index?.specs ?? []).filter(s => s.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
             selected={selectedBySleeve[activeTab] ?? null}
             onSelect={s => setSelectedBySleeve(prev => ({ ...prev, [activeTab]: s }))}
           />
