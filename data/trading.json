@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-16T20:45:13.574950+00:00",
-  "as_of_date": "2026-04-16",
+  "generated_at": "2026-04-17T15:45:12.426845+00:00",
+  "as_of_date": "2026-04-17",
   "account": {
-    "equity": 85442.04,
-    "cash": 31092.35,
-    "buying_power": 116534.39,
+    "equity": 85498.48,
+    "cash": 30991.78,
+    "buying_power": 116490.26,
     "base_value": 100000.0,
-    "total_pnl": -14557.96,
-    "total_pnl_pct": -14.558,
-    "today_pnl": -2.17,
-    "today_pnl_pct": -0.0025,
-    "positions_value": 54349.69,
-    "equity_deployed": 54349.69,
+    "total_pnl": -14501.52,
+    "total_pnl_pct": -14.5015,
+    "today_pnl": 62.76,
+    "today_pnl_pct": 0.0735,
+    "positions_value": 54506.54,
+    "equity_deployed": 54506.54,
     "options_deployed": 0,
-    "unrealized_pnl": -2.17,
-    "unrealized_pnl_pct": -0.0
+    "unrealized_pnl": 54.11,
+    "unrealized_pnl_pct": 0.1
   },
   "positions": [
     {
@@ -22,22 +22,22 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 198.745,
-      "market_value": 3179.92,
-      "unrealized_pnl": -2.11,
-      "unrealized_pct": -0.07,
-      "change_today_pct": -0.06
+      "current_price": 200.99,
+      "market_value": 3215.84,
+      "unrealized_pnl": 33.81,
+      "unrealized_pct": 1.06,
+      "change_today_pct": 1.33
     },
     {
       "symbol": "SGOV",
-      "qty": 509.0,
+      "qty": 510.0,
       "side": "long",
-      "entry_price": 100.530118,
-      "current_price": 100.53,
-      "market_value": 51169.77,
-      "unrealized_pnl": -0.060062,
-      "unrealized_pct": 0.0,
-      "change_today_pct": 0.0
+      "entry_price": 100.530196,
+      "current_price": 100.57,
+      "market_value": 51290.7,
+      "unrealized_pnl": 20.30004,
+      "unrealized_pct": 0.04,
+      "change_today_pct": 0.04
     }
   ],
   "pipeline_status": {
@@ -679,6 +679,11 @@
       "date": "2026-04-16",
       "equity": 85444.21,
       "profit_loss": 83.05
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 85435.72,
+      "profit_loss": -8.49
     }
   ],
   "watchlist": {
@@ -1522,14 +1527,14 @@
         "price": 94.8,
         "sector": "Financial Services",
         "expiry": "2026-05-08",
-        "dte": 22,
+        "dte": 21,
         "short_strike": 95.0,
         "long_strike": 90.0,
         "spread_width": 5.0,
-        "net_credit": 1.99,
-        "credit_width_ratio": 0.398,
-        "annualized_yield_pct": 691.8,
-        "max_loss_per_contract": 301.0,
+        "net_credit": 1.96,
+        "credit_width_ratio": 0.392,
+        "annualized_yield_pct": 681.3,
+        "max_loss_per_contract": 304.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
