@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-17T19:11:10.833406+00:00",
+  "generated_at": "2026-04-17T20:33:41.249829+00:00",
   "as_of_date": "2026-04-17",
   "source_context": {
     "mode": "canonical",
@@ -30,11 +30,11 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 200.875,
+      "current_price": 201.43,
       "market_value": 3215.8432,
       "unrealized_pnl": 33.8132,
       "unrealized_pct": 1.06,
-      "change_today_pct": 1.27,
+      "change_today_pct": 1.55,
       "asset_type": "EQUITY"
     },
     {
@@ -61,7 +61,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-17T19:11:10.833497+00:00"
+    "audit_written_at": "2026-04-17T20:33:41.249912+00:00"
   },
   "kpis": {
     "total_trades": 59,
