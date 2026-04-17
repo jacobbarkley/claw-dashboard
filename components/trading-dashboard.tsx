@@ -2558,7 +2558,7 @@ function CryptoSleeve() {
               Decides whether BTC should be structurally owned. Benchmarked against buy-and-hold BTC.
             </div>
             <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              10-year backtest: +4,007% net · 53% exposure · 10.7% max DD improvement vs HODL
+              10-year backtest: +10,511% net · Sharpe 1.13 · Calmar 0.83 · beats HODL risk-adjusted
             </div>
           </div>
           <div
@@ -2579,7 +2579,7 @@ function CryptoSleeve() {
               Not a standalone strategy — adds or reduces exposure around the core position.
             </div>
             <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              Core-gated tactical: +29% net · better DD than standalone · overlay value proven
+              Core-gated tactical: +29% net · overlay adds risk management, not standalone return
             </div>
           </div>
         </div>
