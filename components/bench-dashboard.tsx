@@ -1387,6 +1387,139 @@ function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
   )
 }
 
+// ─── Run selector — styled card dropdown ────────────────────────────────────
+// Replaces the native <select> with a proper card-based selector that shows
+// the current run's info clearly and reads as an interactive element.
+function RunSelector({ runs, selected, onSelect, showPartials, onTogglePartials, totalRuns, succeededCount }: {
+  runs: BenchIndexEntry[]
+  selected: { bench_id: string; run_id: string } | null
+  onSelect: (s: { bench_id: string; run_id: string }) => void
+  showPartials: boolean
+  onTogglePartials: () => void
+  totalRuns: number
+  succeededCount: number
+}) {
+  const [open, setOpen] = useState(false)
+  const current = selected ? runs.find(r => r.bench_id === selected.bench_id && r.run_id === selected.run_id) : null
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="cb-label">Select run</div>
+        {totalRuns !== succeededCount && (
+          <button
+            onClick={onTogglePartials}
+            className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
+            style={{
+              background: showPartials ? "rgba(212, 194, 138, 0.16)" : "transparent",
+              border: `1px solid ${showPartials ? "rgba(212, 194, 138, 0.4)" : "var(--cb-border-std)"}`,
+              color: showPartials ? "var(--cb-amber)" : "var(--cb-text-secondary)",
+            }}
+          >
+            {showPartials ? `Showing all ${totalRuns} runs` : `${totalRuns - succeededCount} partial hidden`}
+          </button>
+        )}
+      </div>
+
+      {/* Trigger — shows current selection as a card */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full text-left rounded-xl px-4 py-3 transition-all"
+        style={{
+          background: "radial-gradient(circle at 12% 15%, rgba(212, 194, 138, 0.10), transparent 55%), var(--cb-surface-0)",
+          border: "1px solid var(--cb-border-hi)",
+          boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.04), 0 2px 12px rgba(5, 8, 26, 0.4)",
+        }}
+      >
+        {current ? (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <div style={{ fontSize: 13, fontWeight: 500, color: "var(--cb-text-primary)" }}>
+                {current.title}
+              </div>
+              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} style={{ color: "var(--cb-text-tertiary)" }} />
+            </div>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: statusColor(current.status) }}>
+                {current.status}
+              </span>
+              <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>·</span>
+              <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                {deriveBenchRole(current.bench_id, undefined).roleLabel}
+              </span>
+              <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>·</span>
+              <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+                {fmtCount(current.evaluated_candidate_count)} / {fmtCount(current.search_space_size)} evaluated
+              </span>
+              {current.selected_config_id && (
+                <>
+                  <span style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>·</span>
+                  <span className="font-mono" style={{ fontSize: 10, color: "var(--cb-green)" }}>
+                    Winner: {shortHash(current.selected_config_id, 10)}
+                  </span>
+                </>
+              )}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: 12, color: "var(--cb-text-secondary)" }}>Select a run…</div>
+        )}
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            background: "var(--cb-surface-0)",
+            border: "1px solid var(--cb-border-hi)",
+            boxShadow: "0 12px 40px rgba(5, 8, 26, 0.7)",
+          }}
+        >
+          {runs.map(entry => {
+            const isSelected = selected?.bench_id === entry.bench_id && selected?.run_id === entry.run_id
+            const { roleLabel } = deriveBenchRole(entry.bench_id, undefined)
+            return (
+              <button
+                key={`${entry.bench_id}/${entry.run_id}`}
+                onClick={() => { onSelect({ bench_id: entry.bench_id, run_id: entry.run_id }); setOpen(false) }}
+                className="w-full text-left px-4 py-3 transition-colors hover:bg-white/[0.03]"
+                style={{
+                  borderBottom: "1px solid var(--cb-border-dim)",
+                  background: isSelected ? "rgba(212, 194, 138, 0.06)" : undefined,
+                }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div style={{ fontSize: 12, fontWeight: isSelected ? 600 : 400, color: isSelected ? "var(--cb-text-primary)" : "var(--cb-text-secondary)" }}>
+                    {entry.title}
+                  </div>
+                  {isSelected && <span style={{ fontSize: 9, color: "var(--cb-green)" }}>SELECTED</span>}
+                </div>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: statusColor(entry.status) }}>
+                    {entry.status}
+                  </span>
+                  <span style={{ fontSize: 9, color: "var(--cb-text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                    {roleLabel}
+                  </span>
+                  <span style={{ fontSize: 9, color: "var(--cb-text-tertiary)" }}>
+                    {fmtCount(entry.evaluated_candidate_count)}/{fmtCount(entry.search_space_size)}
+                  </span>
+                  {entry.selected_config_id && (
+                    <span className="font-mono" style={{ fontSize: 9, color: "var(--cb-green)" }}>
+                      Winner: {shortHash(entry.selected_config_id, 10)}
+                    </span>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Sleeve view (index dropdown + run detail) ──────────────────────────────
 function SleeveView({
   tab, runs, specs, comparisons, selected, onSelect,
@@ -1501,54 +1634,16 @@ function SleeveView({
       {/* Strategy comparison — the portfolio question (if available) */}
       {comparisons.length > 0 && comparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
 
-      {/* Run selector — dropdown instead of scrolling card rail */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="cb-label">Run</div>
-        <select
-          value={selected ? `${selected.bench_id}/${selected.run_id}` : ""}
-          onChange={e => {
-            const [bid, rid] = e.target.value.split("/")
-            if (bid && rid) onSelect({ bench_id: bid, run_id: rid })
-          }}
-          className="cursor-pointer focus:outline-none rounded-lg px-3 py-1.5"
-          style={{
-            background: "var(--cb-surface-1)",
-            border: "1px solid var(--cb-border-std)",
-            color: "var(--cb-text-primary)",
-            fontSize: 12,
-            minWidth: 200,
-            maxWidth: "100%",
-          }}
-        >
-          {visibleRuns.map(entry => {
-            const { roleLabel } = deriveBenchRole(entry.bench_id, undefined)
-            const winner = entry.selected_config_id ? ` · Winner: ${shortHash(entry.selected_config_id, 10)}` : ""
-            return (
-              <option
-                key={`${entry.bench_id}/${entry.run_id}`}
-                value={`${entry.bench_id}/${entry.run_id}`}
-                style={{ background: "var(--cb-surface-1)" }}
-              >
-                {entry.title} [{roleLabel}] · {entry.status} · {fmtCount(entry.evaluated_candidate_count)}/{fmtCount(entry.search_space_size)}{winner}
-              </option>
-            )
-          })}
-        </select>
-
-        {runs.length !== succeededRuns.length && (
-          <button
-            onClick={() => setShowPartials(v => !v)}
-            className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
-            style={{
-              background: showPartials ? "rgba(212, 194, 138, 0.16)" : "transparent",
-              border: `1px solid ${showPartials ? "rgba(212, 194, 138, 0.4)" : "var(--cb-border-std)"}`,
-              color: showPartials ? "var(--cb-amber)" : "var(--cb-text-secondary)",
-            }}
-          >
-            {showPartials ? `Showing all ${runs.length} runs` : `${runs.length - succeededRuns.length} partial runs hidden`}
-          </button>
-        )}
-      </div>
+      {/* Run selector — custom card dropdown */}
+      <RunSelector
+        runs={visibleRuns}
+        selected={selected}
+        onSelect={onSelect}
+        showPartials={showPartials}
+        onTogglePartials={() => setShowPartials(v => !v)}
+        totalRuns={runs.length}
+        succeededCount={succeededRuns.length}
+      />
 
       {/* Run detail */}
       {detailLoading && !detail && (
