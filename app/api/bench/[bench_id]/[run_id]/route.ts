@@ -35,18 +35,29 @@ export async function GET(
 
   const dir = path.join(process.cwd(), "data/bench/runs", bench_id, run_id)
 
-  const [bundle, spec, leaderboard] = await Promise.all([
+  const [bundle, spec] = await Promise.all([
     readJson(path.join(dir, "bench_run_bundle.json")),
     readJson(path.join(dir, "bench_spec.snapshot.json")),
-    readJson(path.join(dir, "crypto_bench_leaderboard.json")),
   ])
 
-  if (!bundle || !spec || !leaderboard) {
+  if (!bundle || !spec) {
     return NextResponse.json(
       { error: "Run artifacts not found", bench_id, run_id },
       { status: 404 }
     )
   }
 
-  return NextResponse.json({ bundle, spec, leaderboard })
+  // Leaderboard / report names vary by sleeve — try all known patterns
+  const leaderboard =
+    await readJson(path.join(dir, "crypto_bench_leaderboard.json")) ??
+    await readJson(path.join(dir, "stock_bench_leaderboard.json")) ??
+    null
+
+  const report =
+    await readJson(path.join(dir, "crypto_sleeve_comparison_report.json")) ??
+    await readJson(path.join(dir, "stock_bench_report.json")) ??
+    await readJson(path.join(dir, "crypto_bench_report.json")) ??
+    null
+
+  return NextResponse.json({ bundle, spec, leaderboard, report })
 }
