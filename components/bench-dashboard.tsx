@@ -236,6 +236,10 @@ const GLOSSARY: Record<string, string> = {
   col_min_era: "Worst-era Sharpe — the config's weakest performance in any single era. The hard-reject rule requires this ≥ 0, meaning the config can't lose money in its worst regime.",
   col_max_era_pct: "Maximum percentage of total PnL coming from a single era. Capped at 50% by a hard-reject rule — if more than half the profit comes from one era, the edge may not be durable.",
   col_trades: "Total number of trades across all eras. Hard-reject minimum of 30 ensures enough data points for statistical confidence.",
+  col_max_dd: "Maximum drawdown — the largest peak-to-trough drop during the backtest. If a portfolio goes from $100k to $25k before recovering, that's 75% max DD. Lower is better. Most retail investors panic-sell during deep drawdowns, so this is the consumer-grade safety metric.",
+  col_exposure: "Percentage of time the strategy is invested (holding a position). 100% = always in the market (like HODL). 53% = only invested about half the time. Lower exposure with comparable returns means the strategy is selective — it earns during favorable regimes and sits out during dangerous ones.",
+  col_sharpe: "Risk-adjusted return — measures return per unit of volatility. Above 1.0 is strong. Tells you whether the returns are earned through skill or just by taking more risk.",
+  col_calmar: "Return divided by maximum drawdown. Our primary success metric for crypto. Higher = better compensation for the worst pain endured. Answers: 'was the ride worth the dip?'",
 }
 
 function InfoPop({ text }: { text: string }) {
@@ -1333,10 +1337,10 @@ function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
             <tr style={{ color: "var(--cb-text-tertiary)" }}>
               <th style={{ textAlign: "left", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Strategy</th>
               <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Net Return</th>
-              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Sharpe <InfoPop text="Risk-adjusted return. Higher = better return per unit of risk. Above 1.0 is strong." /></th>
-              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Calmar <InfoPop text="Return divided by max drawdown. Higher = better compensation for pain endured. Our primary success metric for crypto." /></th>
-              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Max DD</th>
-              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Exposure</th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Sharpe <InfoPop text={GLOSSARY.col_sharpe} /></th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Calmar <InfoPop text={GLOSSARY.col_calmar} /></th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Max DD <InfoPop text={GLOSSARY.col_max_dd} /></th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Exposure <InfoPop text={GLOSSARY.col_exposure} /></th>
             </tr>
           </thead>
           <tbody>
