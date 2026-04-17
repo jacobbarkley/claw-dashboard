@@ -1667,7 +1667,9 @@ function SleeveView({
             previousRun={previousRun}
             onJumpToPrevious={() => previousRun && onSelect({ bench_id: previousRun.bench_id, run_id: previousRun.run_id })}
           />
-          <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
+          {detail.leaderboard && detail.leaderboard.length > 0 && (
+            <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
+          )}
         </>
       )}
     </div>
