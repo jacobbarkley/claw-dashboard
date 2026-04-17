@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Nav } from "@/components/nav"
-import { ChevronDown, ChevronUp, RefreshCw } from "lucide-react"
+import { ChevronDown, ChevronUp, RefreshCw, Info } from "lucide-react"
+import {
+  ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, ZAxis, Cell,
+} from "recharts"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-// Mirrors what scripts/pull-bench-data.py writes into data/bench/index.json.
-// When Codex's push pipeline takes over, the schema stays the same.
-
 interface BenchIndexEntry {
   bench_id: string
   run_id: string
@@ -15,8 +15,8 @@ interface BenchIndexEntry {
   sleeve: string | null
   engine: string | null
   promotion_target: string | null
-  status: string | null               // PARTIAL | SUCCEEDED | FAILED | ...
-  selected_config_id: string | null   // null means no winner yet (PARTIAL) or runner broke
+  status: string | null
+  selected_config_id: string | null
   evaluated_candidate_count: number | null
   search_space_size: number | null
   candidate_cap: number | null
@@ -45,7 +45,6 @@ interface LeaderboardRow {
   median_era_sharpe: number | null
   minimum_era_sharpe: number | null
   max_single_era_pnl_share_pct: number | null
-  // Benchmark-relative fields — spec'd, often null in current artifacts
   benchmark_id?: string | null
   excess_return_vs_benchmark_pct?: number | null
   sharpe_delta_vs_benchmark?: number | null
@@ -58,15 +57,47 @@ interface BenchSpec {
   bench_id: string
   title: string
   hypothesis?: string
-  sleeve?: string                        // CRYPTO | STOCKS | OPTIONS | ...
-  engine?: string                        // CRYPTO_RESEARCH_SWEEP | ...
+  sleeve?: string
+  engine?: string
   promotion_target?: string
-  dataset?: Record<string, unknown>
-  strategy?: Record<string, unknown>
-  run?: Record<string, unknown>
-  cost_model?: Record<string, unknown>
-  evaluation?: Record<string, unknown>
-  notes?: string
+  dataset?: {
+    provider?: string
+    venue?: string
+    symbol?: string
+    benchmark_symbol?: string
+    source_timeframe?: string
+    target_timeframe?: string
+    start_date?: string
+    end_date?: string
+    eras?: Array<{ era_id: string; label: string; start_date: string; end_date: string; regime_character?: string; rationale?: string }>
+  }
+  strategy?: {
+    strategy_id?: string
+    strategy_family?: string
+    base_parameters?: Record<string, number | string | boolean | null>
+    sweep_dimensions?: Array<{ parameter: string; values: (number | string)[]; description?: string }>
+  }
+  run?: {
+    search_mode?: string
+    fill_model?: string
+    exposure_model?: string
+    capital_base_usd?: number
+    train_window_days?: number
+    test_window_days?: number
+    step_size_days?: number
+  }
+  cost_model?: {
+    fee_bps_round_trip?: number
+    fee_per_trade_usd?: number
+    slippage_bps_one_way?: number
+  }
+  evaluation?: {
+    baseline_ids?: string[]
+    selection_metric?: string
+    secondary_metrics?: string[]
+    hard_reject_rules?: Array<{ gate_id: string; metric: string; operator: string; value: number; description?: string }>
+    plateau_rule?: { required?: boolean; neighborhood_side?: number; minimum_passing_neighbors?: number; description?: string }
+  }
 }
 
 interface BenchRunBundle {
@@ -81,8 +112,6 @@ interface BenchRunBundle {
   sweep_truncated: boolean
   primary_metric: string
   primary_metric_value: number | null
-  baseline_ids?: string[]
-  era_ids?: string[]
 }
 
 interface BenchRunDetail {
@@ -91,33 +120,36 @@ interface BenchRunDetail {
   leaderboard: LeaderboardRow[]
 }
 
-// Sleeve accent palette — keep in sync with --cb-sleeve-* tokens in globals.css
-const SLEEVE_ACCENT: Record<string, string> = {
-  CRYPTO:      "#8b5cf6",
-  STOCKS:      "#10b981",
-  OPTIONS:     "#d4c28a",
-  PREDICTIONS: "#38bdf8",
+type BenchTab = "home" | "stocks" | "options" | "crypto"
+
+// ─── Constants + helpers ──────────────────────────────────────────────────────
+const TAB_META: Record<BenchTab, { label: string; accent: string; sleeveKey: string | null }> = {
+  home:    { label: "Home",    accent: "#e3e6f0", sleeveKey: null },
+  stocks:  { label: "Stocks",  accent: "#10b981", sleeveKey: "STOCKS"  },
+  options: { label: "Options", accent: "#d4c28a", sleeveKey: "OPTIONS" },
+  crypto:  { label: "Crypto",  accent: "#8b5cf6", sleeveKey: "CRYPTO"  },
 }
 
 const STATUS_TONE: Record<string, "good" | "medium" | "bad"> = {
-  SUCCEEDED:    "good",
-  COMPLETED:    "good",
-  PARTIAL:      "medium",   // Codex: PARTIAL is bounded, NOT failure
-  IN_PROGRESS:  "medium",
-  RUNNING:      "medium",
-  FAILED:       "bad",
-  ERRORED:      "bad",
+  SUCCEEDED:   "good",
+  COMPLETED:   "good",
+  PARTIAL:     "medium",
+  IN_PROGRESS: "medium",
+  RUNNING:     "medium",
+  FAILED:      "bad",
+  ERRORED:     "bad",
+}
+
+function sleeveAccent(sleeve: string | null | undefined): string {
+  if (!sleeve) return "#9ba0bc"
+  const meta = Object.values(TAB_META).find(m => m.sleeveKey === sleeve.toUpperCase())
+  return meta?.accent ?? "#9ba0bc"
 }
 
 function statusColor(status: string | null): string {
   if (!status) return "var(--cb-text-tertiary)"
   const tone = STATUS_TONE[status.toUpperCase()] ?? "medium"
   return tone === "good" ? "var(--cb-green)" : tone === "bad" ? "var(--cb-red)" : "var(--cb-amber)"
-}
-
-function sleeveAccent(sleeve: string | null | undefined): string {
-  if (!sleeve) return "#9ba0bc"
-  return SLEEVE_ACCENT[sleeve.toUpperCase()] ?? "#9ba0bc"
 }
 
 function shortHash(s: string | null | undefined, len = 8): string {
@@ -127,7 +159,7 @@ function shortHash(s: string | null | undefined, len = 8): string {
 
 function fmtPct(v: number | null | undefined, digits = 2): string {
   if (v == null || !Number.isFinite(v)) return "—"
-  return `${v >= 0 ? "" : ""}${v.toFixed(digits)}%`
+  return `${v.toFixed(digits)}%`
 }
 
 function fmtNum(v: number | null | undefined, digits = 4): string {
@@ -151,16 +183,100 @@ function timeAgo(iso: string | null | undefined): string {
   return `${Math.round(diff / 86400)}d ago`
 }
 
-// ─── Bench index card ────────────────────────────────────────────────────────
+function titleizeFamily(s: string | null | undefined): string {
+  if (!s) return "—"
+  return s.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
+// ─── Glossary ────────────────────────────────────────────────────────────────
+// Definitions the UI can surface inline via InfoPop. Single source of truth so
+// explanations stay consistent across the bench surface.
+const GLOSSARY: Record<string, string> = {
+  winner: "A candidate config that cleared every hard-reject rule and satisfies the plateau rule — meaning it also has enough neighboring configs in the parameter grid that pass the same gates. Not just a single lucky score.",
+  partial: "A bounded sweep that stopped at its candidate cap before exhausting the full search space. Not a failure — it just means the runner ran the budget the spec asked for and reported what it found in that sample.",
+  no_winner: "The bench hasn't promoted a candidate yet. Two common reasons: (a) the sweep is PARTIAL and hasn't reached the region where winners live, or (b) no config in the evaluated sample cleared the hard-reject rules and plateau check.",
+  reject: "Candidate failed at least one hard-reject rule (e.g., too few trades, worst-era Sharpe below zero, or too much PnL concentrated in a single era). Real bench result, not an exception.",
+  plateau_rule: "Promotion requires a local plateau in the parameter grid — the winning candidate plus at least N neighbors must all pass the gates. Stops spiky single-point winners from being promoted.",
+  primary_metric: "The metric the bench uses to rank candidates. Usually something era-aware like median-era Sharpe so a config has to earn its rank across the whole catalog, not just one regime.",
+  truncated: "The runner hit its candidate cap before exhausting the search space. Common for bounded sweeps. If the top ranks cluster near the cap, the spec is likely worth re-running with a higher cap.",
+}
+
+function InfoPop({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span className="relative inline-flex">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v) }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="inline-flex items-center justify-center rounded-full hover:opacity-100 transition-opacity"
+        style={{ width: 13, height: 13, opacity: 0.55 }}
+        aria-label="What does this mean?"
+      >
+        <Info className="w-3 h-3" style={{ color: "var(--cb-text-tertiary)" }} />
+      </button>
+      {open && (
+        <span
+          className="absolute left-0 top-5 z-20 rounded-lg px-3 py-2 text-[11px] w-64 leading-relaxed pointer-events-none"
+          style={{
+            background: "rgba(10, 14, 31, 0.98)",
+            border: "1px solid var(--cb-border-hi)",
+            boxShadow: "0 12px 32px rgba(5, 8, 26, 0.9)",
+            color: "var(--cb-text-secondary)",
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
+// ─── Bench tabs (Home | Stocks | Options | Crypto) ──────────────────────────
+function BenchTabs({ active, onChange }: { active: BenchTab; onChange: (t: BenchTab) => void }) {
+  const order: BenchTab[] = ["home", "stocks", "options", "crypto"]
+  return (
+    <div
+      className="flex items-center gap-7 sm:gap-9 overflow-x-auto snap-x -mx-4 px-4 sm:-mx-6 sm:px-6"
+      style={{ borderBottom: "1px solid var(--cb-border-dim)", scrollbarWidth: "none" }}
+    >
+      {order.map(tab => {
+        const meta = TAB_META[tab]
+        const isActive = active === tab
+        return (
+          <button
+            key={tab}
+            onClick={() => onChange(tab)}
+            className="relative shrink-0 snap-start pt-1 pb-3 transition-colors outline-none"
+            style={{
+              fontSize: 12,
+              fontWeight: isActive ? 600 : 400,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: isActive ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
+            }}
+          >
+            {meta.label}
+            <span
+              aria-hidden
+              className="absolute left-0 right-0 bottom-[-1px] transition-all duration-200"
+              style={{
+                height: 2,
+                background: isActive ? meta.accent : "transparent",
+                boxShadow: isActive ? `0 0 10px ${meta.accent}55` : "none",
+                borderRadius: 1,
+              }}
+            />
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── Index card ──────────────────────────────────────────────────────────────
 function BenchIndexCard({
-  entry,
-  active,
-  onClick,
-}: {
-  entry: BenchIndexEntry
-  active: boolean
-  onClick: () => void
-}) {
+  entry, active, onClick,
+}: { entry: BenchIndexEntry; active: boolean; onClick: () => void }) {
   const accent = sleeveAccent(entry.sleeve)
   const statusCol = statusColor(entry.status)
   const evaluatedPct = entry.evaluated_candidate_count != null && entry.search_space_size
@@ -183,20 +299,13 @@ function BenchIndexCard({
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="inline-block rounded-full shrink-0"
-            style={{
-              width: 7,
-              height: 7,
-              background: accent,
-              boxShadow: active ? `0 0 8px ${accent}80` : "none",
-              opacity: active ? 1 : 0.65,
-            }}
-          />
+          <span className="inline-block rounded-full shrink-0" style={{
+            width: 7, height: 7, background: accent,
+            boxShadow: active ? `0 0 8px ${accent}80` : "none",
+            opacity: active ? 1 : 0.65,
+          }} />
           <span style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.10em",
+            fontSize: 10, fontWeight: 600, letterSpacing: "0.10em",
             textTransform: "uppercase",
             color: active ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
           }}>
@@ -204,22 +313,17 @@ function BenchIndexCard({
           </span>
         </div>
         <span style={{
-          fontSize: 9,
-          fontWeight: 600,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: statusCol,
+          fontSize: 9, fontWeight: 600, letterSpacing: "0.08em",
+          textTransform: "uppercase", color: statusCol,
         }}>
           {entry.status ?? "—"}
         </span>
       </div>
 
       <div style={{
-        fontSize: 13,
-        fontWeight: 500,
+        fontSize: 13, fontWeight: 500,
         color: active ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
-        lineHeight: 1.3,
-        marginBottom: 4,
+        lineHeight: 1.3, marginBottom: 4,
       }}>
         {entry.title}
       </div>
@@ -228,7 +332,6 @@ function BenchIndexCard({
         {entry.run_id}  ·  {timeAgo(entry.generated_at)}
       </div>
 
-      {/* Evaluated / search space progress */}
       {evaluatedPct != null && (
         <div className="space-y-1">
           <div className="flex justify-between" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
@@ -236,39 +339,30 @@ function BenchIndexCard({
             <span>{evaluatedPct.toFixed(1)}%</span>
           </div>
           <div className="relative h-1 rounded-full overflow-hidden" style={{ background: "var(--cb-surface-2)" }}>
-            <div
-              className="absolute inset-y-0 left-0 rounded-full transition-all"
-              style={{ width: `${evaluatedPct}%`, background: accent, opacity: 0.75 }}
-            />
+            <div className="absolute inset-y-0 left-0 rounded-full transition-all"
+              style={{ width: `${evaluatedPct}%`, background: accent, opacity: 0.75 }} />
           </div>
         </div>
       )}
 
-      {/* Headline — winner or no winner */}
       <div className="flex items-center justify-between mt-3" style={{ fontSize: 11 }}>
-        {entry.selected_config_id ? (
-          <>
-            <span style={{ color: "var(--cb-text-tertiary)" }}>Winner</span>
-            <span className="font-mono" style={{ color: "var(--cb-green)" }}>{shortHash(entry.selected_config_id, 10)}</span>
-          </>
-        ) : (
-          <>
-            <span style={{ color: "var(--cb-text-tertiary)" }}>Winner</span>
-            <span style={{ color: "var(--cb-amber)" }}>none yet</span>
-          </>
-        )}
+        <span style={{ color: "var(--cb-text-tertiary)" }}>Winner</span>
+        {entry.selected_config_id
+          ? <span className="font-mono" style={{ color: "var(--cb-green)" }}>{shortHash(entry.selected_config_id, 10)}</span>
+          : <span style={{ color: "var(--cb-amber)" }}>none yet</span>}
       </div>
     </button>
   )
 }
 
-// ─── Run summary strip ───────────────────────────────────────────────────────
+// ─── Run summary + strategy explanation ─────────────────────────────────────
 function RunSummary({ detail }: { detail: BenchRunDetail }) {
   const { bundle, spec } = detail
   const accent = sleeveAccent(spec.sleeve)
   const evaluatedPct = bundle.search_space_size
     ? Math.min(100, (bundle.evaluated_candidate_count / bundle.search_space_size) * 100)
     : 0
+  const [expanded, setExpanded] = useState(false)
 
   return (
     <div
@@ -282,10 +376,8 @@ function RunSummary({ detail }: { detail: BenchRunDetail }) {
       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span
-              className="inline-block rounded-full"
-              style={{ width: 8, height: 8, background: accent, boxShadow: `0 0 8px ${accent}80` }}
-            />
+            <span className="inline-block rounded-full"
+              style={{ width: 8, height: 8, background: accent, boxShadow: `0 0 8px ${accent}80` }} />
             <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
               {spec.sleeve ?? "—"} · {spec.engine ?? "—"}
             </span>
@@ -297,48 +389,79 @@ function RunSummary({ detail }: { detail: BenchRunDetail }) {
             {bundle.run_id} · generated {timeAgo(bundle.generated_at)}
           </div>
         </div>
-        <span
-          className="rounded-full px-2.5 py-1"
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            background: `${statusColor(bundle.status)}1f`,
-            color: statusColor(bundle.status),
-            border: `1px solid ${statusColor(bundle.status)}40`,
-          }}
-        >
-          {bundle.status}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full px-2.5 py-1"
+            style={{
+              fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase",
+              background: `${statusColor(bundle.status)}1f`, color: statusColor(bundle.status),
+              border: `1px solid ${statusColor(bundle.status)}40`,
+            }}
+          >
+            {bundle.status}
+          </span>
+          {bundle.status === "PARTIAL" && <InfoPop text={GLOSSARY.partial} />}
+        </div>
       </div>
 
-      {/* Metrics row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 mt-2">
-        <SummaryMetric label="Evaluated" value={`${fmtCount(bundle.evaluated_candidate_count)} / ${fmtCount(bundle.search_space_size)}`} sub={`${evaluatedPct.toFixed(1)}%`} />
-        <SummaryMetric label="Cap" value={bundle.candidate_cap ? fmtCount(bundle.candidate_cap) : "—"} sub={bundle.sweep_truncated ? "truncated" : "full"} />
-        <SummaryMetric label={`${bundle.primary_metric ?? "Primary"}`} value={fmtNum(bundle.primary_metric_value)} sub={bundle.selected_config_id ? "winner" : "no winner yet"} />
-        <SummaryMetric label="Selected" value={bundle.selected_config_id ? shortHash(bundle.selected_config_id, 12) : "none"} sub={bundle.selected_config_id ? "passed all gates" : "still searching"} mono />
+        <SummaryMetric
+          label="Evaluated"
+          value={`${fmtCount(bundle.evaluated_candidate_count)} / ${fmtCount(bundle.search_space_size)}`}
+          sub={`${evaluatedPct.toFixed(1)}% of space`}
+        />
+        <SummaryMetric
+          label="Cap"
+          value={bundle.candidate_cap ? fmtCount(bundle.candidate_cap) : "—"}
+          sub={bundle.sweep_truncated ? "truncated" : "full"}
+          infoText={bundle.sweep_truncated ? GLOSSARY.truncated : undefined}
+        />
+        <SummaryMetric
+          label={bundle.primary_metric ?? "Primary"}
+          value={fmtNum(bundle.primary_metric_value)}
+          sub={bundle.selected_config_id ? "winner's score" : "no winner yet"}
+          infoText={GLOSSARY.primary_metric}
+        />
+        <SummaryMetric
+          label="Winner"
+          value={bundle.selected_config_id ? shortHash(bundle.selected_config_id, 12) : "none"}
+          sub={bundle.selected_config_id ? "cleared all gates" : "still searching"}
+          mono={!!bundle.selected_config_id}
+          infoText={bundle.selected_config_id ? GLOSSARY.winner : GLOSSARY.no_winner}
+        />
       </div>
 
-      {/* Hypothesis */}
+      {/* Hypothesis — always visible, short */}
       {spec.hypothesis && (
-        <div
-          className="mt-4 pt-3"
-          style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}
-        >
+        <div className="mt-4 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
           <span className="cb-label" style={{ marginRight: 8 }}>Hypothesis</span>
           {spec.hypothesis}
         </div>
       )}
+
+      {/* Expandable: how this bench works */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full mt-3 flex items-center justify-between py-1 text-left"
+        style={{ fontSize: 11, color: "var(--cb-text-secondary)" }}
+      >
+        <span className="cb-label">How this bench works</span>
+        {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+
+      {expanded && <BenchExplainer spec={spec} />}
     </div>
   )
 }
 
-function SummaryMetric({ label, value, sub, mono }: { label: string; value: string; sub?: string; mono?: boolean }) {
+function SummaryMetric({ label, value, sub, mono, infoText }: {
+  label: string; value: string; sub?: string; mono?: boolean; infoText?: string
+}) {
   return (
     <div>
-      <div className="cb-label">{label}</div>
+      <div className="cb-label flex items-center gap-1">
+        <span>{label}</span>
+        {infoText && <InfoPop text={infoText} />}
+      </div>
       <div
         className={mono ? "font-mono" : ""}
         style={{ fontSize: 14, fontWeight: 500, color: "var(--cb-text-primary)", letterSpacing: mono ? 0 : "-0.01em", marginTop: 2 }}
@@ -350,18 +473,226 @@ function SummaryMetric({ label, value, sub, mono }: { label: string; value: stri
   )
 }
 
+function BenchExplainer({ spec }: { spec: BenchSpec }) {
+  return (
+    <div className="mt-2 pt-3 space-y-4" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 12, lineHeight: 1.6, color: "var(--cb-text-secondary)" }}>
+      {/* Strategy */}
+      {spec.strategy && (
+        <div>
+          <div className="cb-label mb-2">Strategy</div>
+          <div style={{ color: "var(--cb-text-primary)" }}>
+            {titleizeFamily(spec.strategy.strategy_family)}
+            {spec.strategy.strategy_id && <span className="font-mono" style={{ color: "var(--cb-text-tertiary)", marginLeft: 8, fontSize: 10 }}>{spec.strategy.strategy_id}</span>}
+          </div>
+          {spec.strategy.sweep_dimensions && spec.strategy.sweep_dimensions.length > 0 && (
+            <div className="mt-2">
+              <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)", marginBottom: 4 }}>
+                Sweep explores {spec.strategy.sweep_dimensions.length} parameter dimensions:
+              </div>
+              <ul className="space-y-1 pl-2">
+                {spec.strategy.sweep_dimensions.map(d => (
+                  <li key={d.parameter} className="flex items-start gap-2">
+                    <span className="font-mono shrink-0" style={{ color: "var(--cb-text-tertiary)", fontSize: 11, minWidth: 140 }}>
+                      {d.parameter}
+                    </span>
+                    <span style={{ fontSize: 11 }}>
+                      {d.values.length} values · {d.description ?? ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Dataset / eras */}
+      {spec.dataset && (
+        <div>
+          <div className="cb-label mb-2">Dataset</div>
+          <div>
+            <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{spec.dataset.symbol}</span>
+            {" at "}
+            <span className="font-mono">{spec.dataset.target_timeframe ?? spec.dataset.source_timeframe}</span>
+            {spec.dataset.provider && ` via ${spec.dataset.provider}`}
+            {spec.dataset.venue && ` (${spec.dataset.venue})`}
+            {spec.dataset.start_date && spec.dataset.end_date && ` · ${spec.dataset.start_date} → ${spec.dataset.end_date}`}
+          </div>
+          {spec.dataset.eras && spec.dataset.eras.length > 0 && (
+            <div className="mt-2">
+              <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)", marginBottom: 4 }}>
+                {spec.dataset.eras.length} eras — each candidate is evaluated across all of them so one regime can&rsquo;t carry the whole edge:
+              </div>
+              <ul className="space-y-1 pl-2">
+                {spec.dataset.eras.map(e => (
+                  <li key={e.era_id} style={{ fontSize: 11 }}>
+                    <span style={{ color: "var(--cb-text-primary)" }}>{e.label}</span>
+                    <span style={{ color: "var(--cb-text-tertiary)", marginLeft: 6 }}>
+                      {e.start_date} → {e.end_date}
+                    </span>
+                    {e.rationale && <div style={{ color: "var(--cb-text-tertiary)", marginTop: 1, paddingLeft: 0 }}>{e.rationale}</div>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Evaluation gates */}
+      {spec.evaluation && (
+        <div>
+          <div className="cb-label mb-2 flex items-center gap-1">
+            <span>Evaluation gates</span>
+            <InfoPop text={GLOSSARY.plateau_rule} />
+          </div>
+          {spec.evaluation.hard_reject_rules && spec.evaluation.hard_reject_rules.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)", marginBottom: 4 }}>
+                Hard-reject rules — any candidate failing these drops out entirely:
+              </div>
+              <ul className="space-y-1 pl-2">
+                {spec.evaluation.hard_reject_rules.map(r => (
+                  <li key={r.gate_id} style={{ fontSize: 11 }}>
+                    <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>
+                      {r.metric} {r.operator} {r.value}
+                    </span>
+                    {r.description && <span style={{ color: "var(--cb-text-tertiary)" }}> — {r.description}</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {spec.evaluation.plateau_rule?.required && (
+            <div className="mt-2" style={{ fontSize: 11 }}>
+              <span style={{ color: "var(--cb-text-primary)" }}>Plateau rule:</span>
+              <span style={{ color: "var(--cb-text-tertiary)", marginLeft: 4 }}>
+                Winner plus at least {spec.evaluation.plateau_rule.minimum_passing_neighbors} neighbors within
+                ±{spec.evaluation.plateau_rule.neighborhood_side} param steps must all pass the gates.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Cost model + run config */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {spec.cost_model && (
+          <div>
+            <div className="cb-label mb-2">Cost model</div>
+            <div style={{ fontSize: 11, lineHeight: 1.7 }}>
+              {spec.cost_model.fee_bps_round_trip != null && <div>{spec.cost_model.fee_bps_round_trip} bps round-trip fee</div>}
+              {spec.cost_model.slippage_bps_one_way != null && <div>{spec.cost_model.slippage_bps_one_way} bps one-way slippage</div>}
+              {spec.cost_model.fee_per_trade_usd != null && spec.cost_model.fee_per_trade_usd > 0 && <div>${spec.cost_model.fee_per_trade_usd} per-trade fee</div>}
+            </div>
+          </div>
+        )}
+        {spec.run && (
+          <div>
+            <div className="cb-label mb-2">Run config</div>
+            <div style={{ fontSize: 11, lineHeight: 1.7 }}>
+              {spec.run.search_mode && <div>{titleizeFamily(spec.run.search_mode)} search</div>}
+              {spec.run.capital_base_usd != null && <div>Starting capital ${fmtCount(spec.run.capital_base_usd)}</div>}
+              {spec.run.fill_model && <div>Fill model: {titleizeFamily(spec.run.fill_model)}</div>}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Leaderboard distribution chart ──────────────────────────────────────────
+// Scatter of primary_metric_value by rank — shows how the sample spreads and
+// where the top cluster converges (or doesn't).
+function LeaderboardDistribution({ rows, metricName, accent }: {
+  rows: LeaderboardRow[]; metricName: string; accent: string
+}) {
+  const data = useMemo(() => rows
+    .filter(r => r.primary_metric_value != null && Number.isFinite(r.primary_metric_value))
+    .map(r => ({
+      rank: r.rank,
+      value: r.primary_metric_value as number,
+      passes: r.passes_hard_reject_rules,
+      selected: r.selected,
+    })),
+    [rows])
+
+  if (!data.length) return null
+
+  return (
+    <div className="cb-card-t2 px-4 py-3 mb-3">
+      <div className="flex items-center justify-between mb-2">
+        <div className="cb-label flex items-center gap-1">
+          <span>{metricName} distribution</span>
+          <InfoPop text="Each dot is one candidate. The fall-off from rank 1 shows how concentrated the edge is — a flat top means many configs converge to similar performance (real plateau). A sharp spike means the winner is lonely." />
+        </div>
+        <div className="flex items-center gap-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: accent }} /> passes
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "rgba(224, 82, 82, 0.6)" }} /> reject
+          </span>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={180}>
+        <ScatterChart margin={{ top: 8, right: 12, bottom: 12, left: 0 }}>
+          <XAxis type="number" dataKey="rank" name="Rank" tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={{ stroke: "var(--cb-border-dim)" }} />
+          <YAxis type="number" dataKey="value" name={metricName} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} width={48} />
+          <ZAxis range={[18, 18]} />
+          <RechartsTooltip
+            cursor={{ strokeDasharray: "3 3", stroke: "var(--cb-border-std)" }}
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null
+              const p = payload[0].payload
+              return (
+                <div style={{
+                  background: "rgba(10, 14, 31, 0.97)",
+                  border: "1px solid rgba(110, 135, 210, 0.22)",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                  fontSize: 11,
+                }}>
+                  <div style={{ color: "var(--cb-text-tertiary)", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>
+                    Rank {p.rank}
+                  </div>
+                  <div style={{ color: "var(--cb-text-primary)", fontFamily: "var(--font-mono)" }}>{p.value.toFixed(4)}</div>
+                  <div style={{ color: p.selected ? "var(--cb-green)" : p.passes ? "var(--cb-text-tertiary)" : "var(--cb-red)", fontSize: 10, marginTop: 2 }}>
+                    {p.selected ? "WINNER" : p.passes ? "passes gates" : "rejected"}
+                  </div>
+                </div>
+              )
+            }}
+          />
+          <Scatter data={data} fill={accent} isAnimationActive={false}>
+            {data.map((entry, i) => (
+              <Cell
+                key={i}
+                fill={entry.selected ? "var(--cb-green)" : entry.passes ? accent : "rgba(224, 82, 82, 0.55)"}
+                fillOpacity={entry.selected ? 1 : entry.passes ? 0.85 : 0.55}
+              />
+            ))}
+          </Scatter>
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
 // ─── Leaderboard table ───────────────────────────────────────────────────────
 type SortKey = "rank" | "primary_metric_value" | "net_total_compounded_return_pct" | "median_era_sharpe" | "minimum_era_sharpe" | "max_single_era_pnl_share_pct"
 
-function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
+function Leaderboard({ rows, primaryMetric, accent }: { rows: LeaderboardRow[]; primaryMetric: string; accent: string }) {
   const [sortKey, setSortKey] = useState<SortKey>("rank")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
   const [filterPasses, setFilterPasses] = useState(false)
   const [showAll, setShowAll] = useState(false)
 
-  const filtered = useMemo(() => {
-    return filterPasses ? rows.filter(r => r.passes_hard_reject_rules) : rows
-  }, [rows, filterPasses])
+  const filtered = useMemo(
+    () => filterPasses ? rows.filter(r => r.passes_hard_reject_rules) : rows,
+    [rows, filterPasses]
+  )
 
   const sorted = useMemo(() => {
     const copy = [...filtered]
@@ -378,84 +709,69 @@ function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
   const visible = showAll ? sorted : sorted.slice(0, 25)
 
   const toggleSort = (k: SortKey) => {
-    if (sortKey === k) {
-      setSortDir(d => (d === "asc" ? "desc" : "asc"))
-    } else {
-      setSortKey(k)
-      setSortDir(k === "rank" ? "asc" : "desc")
-    }
+    if (sortKey === k) setSortDir(d => (d === "asc" ? "desc" : "asc"))
+    else { setSortKey(k); setSortDir(k === "rank" ? "asc" : "desc") }
   }
 
   return (
-    <div className="cb-card-t2 px-0 py-0 overflow-hidden">
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--cb-border-dim)" }}>
-        <div className="flex items-center gap-2">
-          <span className="cb-label">Leaderboard</span>
-          <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-            {filtered.length} of {rows.length} candidates
-          </span>
+    <div>
+      <LeaderboardDistribution rows={rows} metricName={primaryMetric} accent={accent} />
+      <div className="cb-card-t2 px-0 py-0 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 flex-wrap gap-2" style={{ borderBottom: "1px solid var(--cb-border-dim)" }}>
+          <div className="flex items-center gap-2">
+            <span className="cb-label">Leaderboard</span>
+            <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+              {filtered.length} of {rows.length} candidates
+            </span>
+          </div>
+          <button
+            onClick={() => setFilterPasses(v => !v)}
+            className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
+            style={{
+              background: filterPasses ? "rgba(16, 185, 129, 0.16)" : "transparent",
+              border: `1px solid ${filterPasses ? "rgba(16, 185, 129, 0.4)" : "var(--cb-border-std)"}`,
+              color: filterPasses ? "var(--cb-green)" : "var(--cb-text-secondary)",
+            }}
+          >
+            Pass hard-reject only
+          </button>
         </div>
-        <button
-          onClick={() => setFilterPasses(v => !v)}
-          className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
-          style={{
-            background: filterPasses ? "rgba(16, 185, 129, 0.16)" : "transparent",
-            border: `1px solid ${filterPasses ? "rgba(16, 185, 129, 0.4)" : "var(--cb-border-std)"}`,
-            color: filterPasses ? "var(--cb-green)" : "var(--cb-text-secondary)",
-          }}
-        >
-          Pass hard-reject only
-        </button>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px]" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
+            <thead>
+              <tr style={{ color: "var(--cb-text-tertiary)" }}>
+                <Th onClick={() => toggleSort("rank")} active={sortKey === "rank"} dir={sortDir} align="left">#</Th>
+                <Th align="left">Config</Th>
+                <Th align="left">Status</Th>
+                <Th onClick={() => toggleSort("primary_metric_value")} active={sortKey === "primary_metric_value"} dir={sortDir}>Primary</Th>
+                <Th onClick={() => toggleSort("net_total_compounded_return_pct")} active={sortKey === "net_total_compounded_return_pct"} dir={sortDir}>Net Return</Th>
+                <Th onClick={() => toggleSort("median_era_sharpe")} active={sortKey === "median_era_sharpe"} dir={sortDir}>Med Era</Th>
+                <Th onClick={() => toggleSort("minimum_era_sharpe")} active={sortKey === "minimum_era_sharpe"} dir={sortDir}>Min Era</Th>
+                <Th onClick={() => toggleSort("max_single_era_pnl_share_pct")} active={sortKey === "max_single_era_pnl_share_pct"} dir={sortDir}>Max Era %</Th>
+                <Th align="right">Trades</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map(r => <LeaderboardRow key={r.config_id} row={r} />)}
+            </tbody>
+          </table>
+        </div>
+        {filtered.length > 25 && (
+          <button
+            onClick={() => setShowAll(v => !v)}
+            className="w-full py-2 text-[11px] hover:opacity-80 transition-opacity"
+            style={{ color: "var(--cb-text-secondary)", borderTop: "1px solid var(--cb-border-dim)" }}
+          >
+            {showAll ? "Show top 25" : `Show all ${filtered.length}`}
+          </button>
+        )}
       </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-[11px]" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
-          <thead>
-            <tr style={{ color: "var(--cb-text-tertiary)" }}>
-              <Th onClick={() => toggleSort("rank")} active={sortKey === "rank"} dir={sortDir} align="left">#</Th>
-              <Th align="left">Config</Th>
-              <Th align="left">Status</Th>
-              <Th onClick={() => toggleSort("primary_metric_value")} active={sortKey === "primary_metric_value"} dir={sortDir}>Primary</Th>
-              <Th onClick={() => toggleSort("net_total_compounded_return_pct")} active={sortKey === "net_total_compounded_return_pct"} dir={sortDir}>Net Return</Th>
-              <Th onClick={() => toggleSort("median_era_sharpe")} active={sortKey === "median_era_sharpe"} dir={sortDir}>Med Era Sharpe</Th>
-              <Th onClick={() => toggleSort("minimum_era_sharpe")} active={sortKey === "minimum_era_sharpe"} dir={sortDir}>Min Era Sharpe</Th>
-              <Th onClick={() => toggleSort("max_single_era_pnl_share_pct")} active={sortKey === "max_single_era_pnl_share_pct"} dir={sortDir}>Max Era %</Th>
-              <Th align="right">Trades</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map(r => (
-              <LeaderboardRow key={r.config_id} row={r} />
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Show more */}
-      {filtered.length > 25 && (
-        <button
-          onClick={() => setShowAll(v => !v)}
-          className="w-full py-2 text-[11px] hover:opacity-80 transition-opacity"
-          style={{
-            color: "var(--cb-text-secondary)",
-            borderTop: "1px solid var(--cb-border-dim)",
-          }}
-        >
-          {showAll ? "Show top 25" : `Show all ${filtered.length}`}
-        </button>
-      )}
     </div>
   )
 }
 
 function Th({ children, onClick, active, dir, align = "right" }: {
-  children: React.ReactNode
-  onClick?: () => void
-  active?: boolean
-  dir?: "asc" | "desc"
-  align?: "left" | "right"
+  children: React.ReactNode; onClick?: () => void; active?: boolean; dir?: "asc" | "desc"; align?: "left" | "right"
 }) {
   const interactive = !!onClick
   return (
@@ -463,16 +779,9 @@ function Th({ children, onClick, active, dir, align = "right" }: {
       onClick={onClick}
       className={interactive ? "cursor-pointer hover:text-[var(--cb-text-primary)] transition-colors" : ""}
       style={{
-        textAlign: align,
-        padding: "8px 10px",
-        fontWeight: 500,
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-        fontSize: 9,
-        color: active ? "var(--cb-text-primary)" : undefined,
-        whiteSpace: "nowrap",
-        borderBottom: "1px solid var(--cb-border-dim)",
-        background: "var(--cb-surface-1)",
+        textAlign: align, padding: "8px 10px", fontWeight: 500, letterSpacing: "0.06em",
+        textTransform: "uppercase", fontSize: 9, color: active ? "var(--cb-text-primary)" : undefined,
+        whiteSpace: "nowrap", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)",
       }}
     >
       <span className="inline-flex items-center gap-1">
@@ -499,22 +808,14 @@ function LeaderboardRow({ row }: { row: LeaderboardRow }) {
           background: isWinner ? "rgba(16, 185, 129, 0.04)" : undefined,
         }}
       >
-        <Td align="left" style={{ fontWeight: isWinner ? 600 : 400, color: isWinner ? "var(--cb-green)" : undefined }}>
-          {row.rank}
-        </Td>
-        <Td align="left" mono color={isWinner ? "var(--cb-text-primary)" : undefined}>
-          {shortHash(row.config_id, 10)}
-        </Td>
+        <Td align="left" style={{ fontWeight: isWinner ? 600 : 400, color: isWinner ? "var(--cb-green)" : undefined }}>{row.rank}</Td>
+        <Td align="left" mono color={isWinner ? "var(--cb-text-primary)" : undefined}>{shortHash(row.config_id, 10)}</Td>
         <Td align="left">
-          {isWinner && (
-            <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", color: "var(--cb-green)" }}>WINNER</span>
-          )}
-          {!isWinner && passes && (
-            <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)" }}>PASS</span>
-          )}
-          {!passes && (
-            <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", color: "var(--cb-red)" }}>REJECT</span>
-          )}
+          {isWinner
+            ? <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: "0.06em", color: "var(--cb-green)" }}>WINNER</span>
+            : passes
+              ? <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)" }}>PASS</span>
+              : <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", color: "var(--cb-red)" }}>REJECT</span>}
         </Td>
         <Td>{fmtNum(row.primary_metric_value)}</Td>
         <Td>{fmtPct(row.net_total_compounded_return_pct)}</Td>
@@ -535,7 +836,6 @@ function LeaderboardRow({ row }: { row: LeaderboardRow }) {
                 </div>
               ))}
             </div>
-            {/* Benchmark-relative row, shown only if any value is populated */}
             {(row.excess_return_vs_benchmark_pct != null || row.sharpe_delta_vs_benchmark != null) && (
               <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)" }}>
                 <div className="cb-label mb-2">vs {row.benchmark_id ?? "benchmark"}</div>
@@ -555,22 +855,14 @@ function LeaderboardRow({ row }: { row: LeaderboardRow }) {
 }
 
 function Td({ children, align = "right", mono, color, style }: {
-  children: React.ReactNode
-  align?: "left" | "right"
-  mono?: boolean
-  color?: string
-  style?: React.CSSProperties
+  children: React.ReactNode; align?: "left" | "right"; mono?: boolean; color?: string; style?: React.CSSProperties
 }) {
   return (
     <td
       className={mono ? "font-mono" : ""}
       style={{
-        textAlign: align,
-        padding: "8px 10px",
-        whiteSpace: "nowrap",
-        color: color ?? "var(--cb-text-secondary)",
-        borderBottom: "1px solid var(--cb-border-dim)",
-        ...style,
+        textAlign: align, padding: "8px 10px", whiteSpace: "nowrap",
+        color: color ?? "var(--cb-text-secondary)", borderBottom: "1px solid var(--cb-border-dim)", ...style,
       }}
     >
       {children}
@@ -584,40 +876,166 @@ function BenchmarkDelta({ label, value, suffix = "", digits = 2 }: { label: stri
   return (
     <div className="flex justify-between gap-3">
       <span style={{ color: "var(--cb-text-tertiary)" }}>{label}</span>
-      <span
-        className="font-mono"
-        style={{
-          color: isPos ? "var(--cb-green)" : isNeg ? "var(--cb-red)" : "var(--cb-text-tertiary)",
-        }}
-      >
+      <span className="font-mono" style={{ color: isPos ? "var(--cb-green)" : isNeg ? "var(--cb-red)" : "var(--cb-text-tertiary)" }}>
         {value == null ? "—" : `${value > 0 ? "+" : ""}${value.toFixed(digits)}${suffix}`}
       </span>
     </div>
   )
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | null }) {
-  const [index, setIndex] = useState<BenchIndex | null>(initialIndex)
-  const [refreshing, setRefreshing] = useState(false)
-  const [selected, setSelected] = useState<{ bench_id: string; run_id: string } | null>(null)
+// ─── Home view ───────────────────────────────────────────────────────────────
+function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToSleeve: (tab: BenchTab) => void }) {
+  const sleeves: BenchTab[] = ["stocks", "options", "crypto"]
+  const bySleeve = useMemo(() => {
+    const m = new Map<string, BenchIndexEntry[]>()
+    for (const r of index.runs) {
+      const key = r.sleeve ?? "UNKNOWN"
+      if (!m.has(key)) m.set(key, [])
+      m.get(key)!.push(r)
+    }
+    return m
+  }, [index])
+
+  const totalRuns = index.runs.length
+  const totalBenches = new Set(index.runs.map(r => r.bench_id)).size
+  const totalEvaluated = index.runs.reduce((acc, r) => acc + (r.evaluated_candidate_count ?? 0), 0)
+
+  return (
+    <div className="space-y-6">
+      {/* Overview hero */}
+      <div className="cb-card-t1 px-5 py-5">
+        <div className="cb-label mb-2">The bench</div>
+        <div style={{ fontSize: 18, fontWeight: 500, color: "var(--cb-text-primary)", lineHeight: 1.3, letterSpacing: "-0.01em" }}>
+          Validate before you trade.
+        </div>
+        <div className="mt-3" style={{ fontSize: 13, color: "var(--cb-text-secondary)", lineHeight: 1.6 }}>
+          Every strategy lives on the bench before it sees real capital. A bench spec declares a dataset (with named eras),
+          a strategy family with parameter sweep dimensions, a cost model, and evaluation gates. The runner sweeps the
+          parameter grid, scores each candidate across all eras, and only promotes configs that clear the hard-reject rules
+          and pass the plateau check. If nothing clears, the bench reports no winner — that&rsquo;s a feature, not a bug.
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mt-5">
+          <HomeMetric label="Runs" value={fmtCount(totalRuns)} />
+          <HomeMetric label="Benches" value={fmtCount(totalBenches)} />
+          <HomeMetric label="Candidates evaluated" value={fmtCount(totalEvaluated)} />
+        </div>
+      </div>
+
+      {/* Per-sleeve summary cards */}
+      <div>
+        <div className="cb-label mb-3">By sleeve</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {sleeves.map(tab => {
+            const meta = TAB_META[tab]
+            const runs = bySleeve.get(meta.sleeveKey!) ?? []
+            const benches = new Set(runs.map(r => r.bench_id)).size
+            const latest = runs.reduce<BenchIndexEntry | null>((acc, r) => {
+              if (!acc) return r
+              const tr = r.generated_at ? new Date(r.generated_at).getTime() : 0
+              const ta = acc.generated_at ? new Date(acc.generated_at).getTime() : 0
+              return tr > ta ? r : acc
+            }, null)
+            return (
+              <button
+                key={tab}
+                onClick={() => onJumpToSleeve(tab)}
+                className="text-left rounded-xl px-4 py-4 transition-all"
+                style={{
+                  background: `radial-gradient(circle at 12% 10%, ${meta.accent}14, transparent 48%), var(--cb-surface-0)`,
+                  border: `1px solid ${meta.accent}33`,
+                  boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.03), 0 2px 10px rgba(5, 8, 26, 0.4)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: meta.accent }} />
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+                    {meta.label}
+                  </span>
+                </div>
+                {runs.length > 0 ? (
+                  <>
+                    <div className="flex items-baseline gap-4">
+                      <div>
+                        <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-primary)" }}>{benches}</div>
+                        <div className="cb-label">benches</div>
+                      </div>
+                      <div>
+                        <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-primary)" }}>{runs.length}</div>
+                        <div className="cb-label">runs</div>
+                      </div>
+                    </div>
+                    {latest && (
+                      <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+                        Latest · {latest.title} · {timeAgo(latest.generated_at)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>No {meta.label.toLowerCase()} benches yet</div>
+                    <div className="mt-1" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+                      Will appear here when a {meta.label.toLowerCase()} spec runs
+                    </div>
+                  </>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* What a bench spec looks like */}
+      <div className="cb-card-t2 px-5 py-4">
+        <div className="cb-label mb-2">What defines a bench spec</div>
+        <ul className="space-y-2" style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+          <SpecDefLine term="Dataset" def="Asset, venue, timeframe, and a named era catalog. Eras aren't time buckets — they're labeled regimes (e.g. 2017 Mania, 2021-22 Bear Reset) so a candidate has to earn its rank across regime shifts." />
+          <SpecDefLine term="Strategy" def="A family (e.g. TIME_SERIES_MOMENTUM) with base parameters and sweep dimensions. Each dimension declares the values to explore; the total grid is the search space." />
+          <SpecDefLine term="Run config" def="Search mode (bounded / grid / random), fill model, exposure model, capital base, train/test windows." />
+          <SpecDefLine term="Cost model" def="Round-trip fees and one-way slippage in basis points, plus per-trade dollar fees. Every candidate pays these." />
+          <SpecDefLine term="Evaluation" def="Hard-reject rules (minimum trade count, worst-era Sharpe floor, single-era PnL concentration cap) and the plateau rule. A candidate must clear all of them AND have enough passing neighbors to be promoted." />
+          <SpecDefLine term="Baselines" def="Reference curves like BUY_AND_HOLD_BTC and NO_TRADE. Candidate metrics are compared against these — beating buy-and-hold on Sharpe but not net return is a different story from beating it on both." />
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function HomeMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="cb-number" style={{ fontSize: 22, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>{value}</div>
+      <div className="cb-label mt-1">{label}</div>
+    </div>
+  )
+}
+
+function SpecDefLine({ term, def }: { term: string; def: string }) {
+  return (
+    <li className="flex gap-3">
+      <span className="shrink-0" style={{ color: "var(--cb-text-primary)", fontWeight: 500, minWidth: 100 }}>{term}</span>
+      <span style={{ color: "var(--cb-text-secondary)" }}>{def}</span>
+    </li>
+  )
+}
+
+// ─── Sleeve view (index rail + run detail) ───────────────────────────────────
+function SleeveView({
+  tab, runs, selected, onSelect,
+}: {
+  tab: BenchTab
+  runs: BenchIndexEntry[]
+  selected: { bench_id: string; run_id: string } | null
+  onSelect: (s: { bench_id: string; run_id: string }) => void
+}) {
   const [detail, setDetail] = useState<BenchRunDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  // Default-select the most recent run on first load
-  useEffect(() => {
-    if (selected || !index?.runs?.length) return
-    const sorted = [...index.runs].sort((a, b) => {
-      const ta = a.generated_at ? new Date(a.generated_at).getTime() : 0
-      const tb = b.generated_at ? new Date(b.generated_at).getTime() : 0
-      return tb - ta
-    })
-    setSelected({ bench_id: sorted[0].bench_id, run_id: sorted[0].run_id })
-  }, [index, selected])
+  const meta = TAB_META[tab]
 
-  // Fetch detail when selection changes
   useEffect(() => {
+    setDetail(null)
     if (!selected) return
     let cancelled = false
     setDetailLoading(true)
@@ -630,6 +1048,62 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
     return () => { cancelled = true }
   }, [selected])
 
+  if (!runs.length) {
+    return (
+      <div className="cb-card-t2 cb-tone-medium px-6 py-12 text-center">
+        <div style={{ fontSize: 14, color: "var(--cb-text-primary)", marginBottom: 8 }}>No {meta.label.toLowerCase()} benches yet</div>
+        <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
+          This sleeve will populate as soon as a {meta.label.toLowerCase()} bench spec runs and publishes results.
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
+      <aside className="space-y-2 lg:max-h-[calc(100vh-220px)] lg:overflow-y-auto lg:pr-1">
+        <div className="cb-label mb-2">Runs</div>
+        {runs.map(entry => (
+          <BenchIndexCard
+            key={`${entry.bench_id}/${entry.run_id}`}
+            entry={entry}
+            active={selected?.bench_id === entry.bench_id && selected?.run_id === entry.run_id}
+            onClick={() => onSelect({ bench_id: entry.bench_id, run_id: entry.run_id })}
+          />
+        ))}
+      </aside>
+
+      <main className="space-y-4 min-w-0">
+        {detailLoading && !detail && (
+          <div className="cb-card-t2 px-6 py-12 text-center" style={{ color: "var(--cb-text-tertiary)", fontSize: 12 }}>
+            Loading run…
+          </div>
+        )}
+        {detailError && (
+          <div className="cb-card-t2 cb-tone-bad px-6 py-8" style={{ color: "var(--cb-text-secondary)", fontSize: 12 }}>
+            Couldn&rsquo;t load this run: {detailError}
+          </div>
+        )}
+        {detail && (
+          <>
+            <RunSummary detail={detail} />
+            <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
+          </>
+        )}
+      </main>
+    </div>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | null }) {
+  const [index, setIndex] = useState<BenchIndex | null>(initialIndex)
+  const [refreshing, setRefreshing] = useState(false)
+  const [activeTab, setActiveTab] = useState<BenchTab>("home")
+
+  // Per-tab selection so switching tabs preserves your pick
+  const [selectedBySleeve, setSelectedBySleeve] = useState<Record<string, { bench_id: string; run_id: string } | null>>({})
+
   const refresh = useCallback(async () => {
     setRefreshing(true)
     try {
@@ -640,16 +1114,36 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
     }
   }, [])
 
-  const sortedRuns = useMemo(() => {
-    if (!index?.runs) return []
-    return [...index.runs].sort((a, b) => {
+  // Sorted newest-first runs, per-sleeve filter
+  const runsByTab = useMemo(() => {
+    if (!index?.runs) return {} as Record<BenchTab, BenchIndexEntry[]>
+    const sorted = [...index.runs].sort((a, b) => {
       const ta = a.generated_at ? new Date(a.generated_at).getTime() : 0
       const tb = b.generated_at ? new Date(b.generated_at).getTime() : 0
       return tb - ta
     })
+    return {
+      home:    sorted,
+      stocks:  sorted.filter(r => r.sleeve?.toUpperCase() === "STOCKS"),
+      options: sorted.filter(r => r.sleeve?.toUpperCase() === "OPTIONS"),
+      crypto:  sorted.filter(r => r.sleeve?.toUpperCase() === "CRYPTO"),
+    } as Record<BenchTab, BenchIndexEntry[]>
   }, [index])
 
-  // Empty / waiting state
+  // Auto-select newest run for a sleeve tab when entering it for the first time
+  useEffect(() => {
+    if (activeTab === "home") return
+    if (selectedBySleeve[activeTab]) return
+    const list = runsByTab[activeTab] ?? []
+    if (list.length) {
+      setSelectedBySleeve(prev => ({
+        ...prev,
+        [activeTab]: { bench_id: list[0].bench_id, run_id: list[0].run_id },
+      }))
+    }
+  }, [activeTab, runsByTab, selectedBySleeve])
+
+  // Empty state
   if (!index || !index.runs?.length) {
     return (
       <div className="min-h-screen text-[var(--cb-text-primary)] font-sans pb-16 sm:pb-0">
@@ -658,9 +1152,8 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
           <div className="cb-card-t2 cb-tone-medium px-6 py-12 text-center">
             <div style={{ fontSize: 14, color: "var(--cb-text-primary)", marginBottom: 8 }}>No bench runs yet</div>
             <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.5 }}>
-              Run <span className="font-mono">scripts/pull-bench-data.py</span> locally to ingest from
-              trading-bot, or wait for Codex&rsquo;s push pipeline to publish into
-              <span className="font-mono"> data/bench/</span>.
+              Run <span className="font-mono">scripts/pull-bench-data.py</span> locally to ingest from trading-bot,
+              or wait for Codex&rsquo;s push pipeline to publish into <span className="font-mono">data/bench/</span>.
             </div>
           </div>
         </div>
@@ -672,72 +1165,42 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
     <div className="min-h-screen text-[var(--cb-text-primary)] font-sans pb-16 sm:pb-0">
       <Nav active="bench" />
 
-      {/* Sticky header strip — bench-page command bar */}
+      {/* Sticky command strip */}
       <div
         className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 backdrop-blur-md sticky top-0 z-30"
-        style={{
-          borderBottom: "1px solid rgba(90, 110, 180, 0.14)",
-          background: "rgba(5, 8, 26, 0.92)",
-        }}
+        style={{ borderBottom: "1px solid rgba(90, 110, 180, 0.14)", background: "rgba(5, 8, 26, 0.92)" }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="min-w-0">
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "var(--cb-text-primary)" }}>
-              Bench
-            </div>
-            <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              {index.runs.length} run{index.runs.length !== 1 ? "s" : ""} · {Object.keys(index.runs.reduce((acc, r) => ({ ...acc, [r.bench_id]: 1 }), {})).length} bench{index.runs.length !== 1 ? "es" : ""}
-            </div>
+        <div className="min-w-0">
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.04em", color: "var(--cb-text-primary)" }}>Bench</div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+            {index.runs.length} run{index.runs.length !== 1 ? "s" : ""} · {new Set(index.runs.map(r => r.bench_id)).size} bench{index.runs.length !== 1 ? "es" : ""}
           </div>
         </div>
-        <button
-          onClick={refresh}
-          disabled={refreshing}
-          className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity"
-          style={{ color: "var(--cb-text-tertiary)" }}
-        >
+        <button onClick={refresh} disabled={refreshing} className="flex items-center gap-1.5 text-[10px] hover:opacity-80 transition-opacity" style={{ color: "var(--cb-text-tertiary)" }}>
           <span className="hidden sm:inline">{index.source === "local_dev_pull" ? "local dev pull" : index.source} · {timeAgo(index.generated_at)}</span>
           <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin" : ""}`} />
         </button>
       </div>
 
-      <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-          {/* Index rail */}
-          <aside className="space-y-2 lg:max-h-[calc(100vh-180px)] lg:overflow-y-auto lg:pr-1">
-            <div className="cb-label mb-2">Runs</div>
-            {sortedRuns.map(entry => (
-              <BenchIndexCard
-                key={`${entry.bench_id}/${entry.run_id}`}
-                entry={entry}
-                active={selected?.bench_id === entry.bench_id && selected?.run_id === entry.run_id}
-                onClick={() => setSelected({ bench_id: entry.bench_id, run_id: entry.run_id })}
-              />
-            ))}
-          </aside>
-
-          {/* Detail */}
-          <main className="space-y-6 min-w-0">
-            {detailLoading && !detail && (
-              <div className="cb-card-t2 px-6 py-12 text-center" style={{ color: "var(--cb-text-tertiary)", fontSize: 12 }}>
-                Loading run…
-              </div>
-            )}
-
-            {detailError && (
-              <div className="cb-card-t2 cb-tone-bad px-6 py-8" style={{ color: "var(--cb-text-secondary)", fontSize: 12 }}>
-                Couldn&rsquo;t load this run: {detailError}
-              </div>
-            )}
-
-            {detail && (
-              <>
-                <RunSummary detail={detail} />
-                <Leaderboard rows={detail.leaderboard} />
-              </>
-            )}
-          </main>
+      {/* Sticky tabs */}
+      <div className="sticky z-[29] backdrop-blur-md" style={{ top: 48, background: "rgba(5, 8, 26, 0.92)" }}>
+        <div className="px-4 sm:px-6 max-w-7xl mx-auto">
+          <BenchTabs active={activeTab} onChange={setActiveTab} />
         </div>
+      </div>
+
+      <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
+        {activeTab === "home" && (
+          <BenchHomeView index={index} onJumpToSleeve={setActiveTab} />
+        )}
+        {activeTab !== "home" && (
+          <SleeveView
+            tab={activeTab}
+            runs={runsByTab[activeTab] ?? []}
+            selected={selectedBySleeve[activeTab] ?? null}
+            onSelect={s => setSelectedBySleeve(prev => ({ ...prev, [activeTab]: s }))}
+          />
+        )}
       </div>
     </div>
   )
