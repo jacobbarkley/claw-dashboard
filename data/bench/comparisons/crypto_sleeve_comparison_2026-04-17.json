@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-04-17T01:00:00-04:00",
+  "source": "manual_from_codex_commits_33da387",
+  "sleeve": "CRYPTO",
+  "title": "BTC Sleeve Comparison — 10-Year Real Tape",
+  "dataset": {
+    "symbol": "BTC/USD",
+    "provider": "ccxt",
+    "venue": "coinbase",
+    "start_date": "2016-01-01",
+    "end_date": "2026-04-15"
+  },
+  "lanes": [
+    {
+      "lane_id": "hodl",
+      "label": "Buy & Hold BTC",
+      "role": "benchmark",
+      "net_return_pct": 17172.31,
+      "sharpe": null,
+      "calmar": null,
+      "max_drawdown_pct": 85.0,
+      "trades": 0,
+      "exposure_pct": 100.0,
+      "note": "Perfect HODL — the formal bench benchmark. Raw return king."
+    },
+    {
+      "lane_id": "binary_core",
+      "label": "Binary Core Regime",
+      "role": "layer_1_binary",
+      "net_return_pct": 4007.53,
+      "sharpe": 0.9682,
+      "calmar": 0.5919,
+      "max_drawdown_pct": 73.45,
+      "trades": 32,
+      "exposure_pct": 53.3,
+      "note": "Daily regime, binary in/out. Captures 23% of HODL's return. Superseded by graduated."
+    },
+    {
+      "lane_id": "graduated_core",
+      "label": "Graduated Core Regime",
+      "role": "layer_1_graduated",
+      "net_return_pct": 10510.72,
+      "sharpe": 1.1291,
+      "calmar": 0.8330,
+      "max_drawdown_pct": 68.82,
+      "trades": null,
+      "exposure_pct": null,
+      "note": "RISK_ON=100%, ACCUMULATE=50%, RISK_OFF=0%. Captures 61% of HODL. Beats HODL on Sharpe and Calmar."
+    },
+    {
+      "lane_id": "tactical",
+      "label": "Tactical 4H TSMOM",
+      "role": "layer_2_standalone",
+      "net_return_pct": 6.01,
+      "sharpe": null,
+      "calmar": null,
+      "max_drawdown_pct": null,
+      "trades": 36,
+      "exposure_pct": null,
+      "note": "Standalone tactical — not viable as primary sleeve. Overlay only."
+    },
+    {
+      "lane_id": "core_gated_tactical",
+      "label": "Core-Gated Tactical",
+      "role": "combined_binary",
+      "net_return_pct": 29.12,
+      "sharpe": null,
+      "calmar": null,
+      "max_drawdown_pct": null,
+      "trades": null,
+      "exposure_pct": null,
+      "note": "Binary core gates the tactical overlay. Better than tactical standalone."
+    }
+  ]
+}

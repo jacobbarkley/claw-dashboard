@@ -35,11 +35,32 @@ interface BenchSpecEntry {
   has_runs: boolean
 }
 
+interface ComparisonLane {
+  lane_id: string
+  label: string
+  role: string
+  net_return_pct: number | null
+  sharpe: number | null
+  calmar: number | null
+  max_drawdown_pct: number | null
+  trades: number | null
+  exposure_pct: number | null
+  note: string | null
+}
+
+interface SleeveComparison {
+  title: string
+  sleeve: string
+  dataset: { symbol?: string; start_date?: string; end_date?: string }
+  lanes: ComparisonLane[]
+}
+
 interface BenchIndex {
   generated_at: string
   source: string
   runs: BenchIndexEntry[]
   specs?: BenchSpecEntry[]
+  comparisons?: SleeveComparison[]
 }
 
 interface LeaderboardRow {
@@ -209,6 +230,12 @@ const GLOSSARY: Record<string, string> = {
   plateau_rule: "Promotion requires a local plateau in the parameter grid — the winning candidate plus at least N neighbors must all pass the gates. Stops spiky single-point winners from being promoted.",
   primary_metric: "The metric the bench uses to rank candidates. Usually something era-aware like median-era Sharpe so a config has to earn its rank across the whole catalog, not just one regime.",
   truncated: "The runner hit its candidate cap before exhausting the search space. Common for bounded sweeps. If the top ranks cluster near the cap, the spec is likely worth re-running with a higher cap.",
+  col_primary: "The metric the bench ranks candidates by — usually median-era Sharpe. A config must earn its rank across every era, not just one favorable regime.",
+  col_net_return: "Total compounded net return after fees and slippage over the full backtest period (e.g., 2016–2026). Raw headline number, not risk-adjusted.",
+  col_med_era: "Median Sharpe ratio across all named eras. The bench's primary quality signal — it shows how consistently the config performs across different market regimes (mania, winter, recovery, etc.).",
+  col_min_era: "Worst-era Sharpe — the config's weakest performance in any single era. The hard-reject rule requires this ≥ 0, meaning the config can't lose money in its worst regime.",
+  col_max_era_pct: "Maximum percentage of total PnL coming from a single era. Capped at 50% by a hard-reject rule — if more than half the profit comes from one era, the edge may not be durable.",
+  col_trades: "Total number of trades across all eras. Hard-reject minimum of 30 ensures enough data points for statistical confidence.",
 }
 
 function InfoPop({ text }: { text: string }) {
@@ -477,6 +504,9 @@ function RunSummary({ detail, previousRun, onJumpToPrevious }: {
           </div>
           <div style={{ fontSize: 11, color: "var(--cb-text-tertiary)", marginTop: 2 }}>
             {bundle.run_id} · generated {timeAgo(bundle.generated_at)}
+            {spec.dataset?.start_date && spec.dataset?.end_date && (
+              <span> · {spec.dataset.start_date} → {spec.dataset.end_date}</span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -891,12 +921,12 @@ function Leaderboard({ rows, primaryMetric, accent }: { rows: LeaderboardRow[]; 
                 <Th onClick={() => toggleSort("rank")} active={sortKey === "rank"} dir={sortDir} align="left">#</Th>
                 <Th align="left">Config</Th>
                 <Th align="left">Status</Th>
-                <Th onClick={() => toggleSort("primary_metric_value")} active={sortKey === "primary_metric_value"} dir={sortDir}>Primary</Th>
-                <Th onClick={() => toggleSort("net_total_compounded_return_pct")} active={sortKey === "net_total_compounded_return_pct"} dir={sortDir}>Net Return</Th>
-                <Th onClick={() => toggleSort("median_era_sharpe")} active={sortKey === "median_era_sharpe"} dir={sortDir}>Med Era</Th>
-                <Th onClick={() => toggleSort("minimum_era_sharpe")} active={sortKey === "minimum_era_sharpe"} dir={sortDir}>Min Era</Th>
-                <Th onClick={() => toggleSort("max_single_era_pnl_share_pct")} active={sortKey === "max_single_era_pnl_share_pct"} dir={sortDir}>Max Era %</Th>
-                <Th align="right">Trades</Th>
+                <Th onClick={() => toggleSort("primary_metric_value")} active={sortKey === "primary_metric_value"} dir={sortDir}>Primary <InfoPop text={GLOSSARY.col_primary} /></Th>
+                <Th onClick={() => toggleSort("net_total_compounded_return_pct")} active={sortKey === "net_total_compounded_return_pct"} dir={sortDir}>Net Return <InfoPop text={GLOSSARY.col_net_return} /></Th>
+                <Th onClick={() => toggleSort("median_era_sharpe")} active={sortKey === "median_era_sharpe"} dir={sortDir}>Med Era Sharpe <InfoPop text={GLOSSARY.col_med_era} /></Th>
+                <Th onClick={() => toggleSort("minimum_era_sharpe")} active={sortKey === "minimum_era_sharpe"} dir={sortDir}>Min Era Sharpe <InfoPop text={GLOSSARY.col_min_era} /></Th>
+                <Th onClick={() => toggleSort("max_single_era_pnl_share_pct")} active={sortKey === "max_single_era_pnl_share_pct"} dir={sortDir}>Max Era PnL <InfoPop text={GLOSSARY.col_max_era_pct} /></Th>
+                <Th align="right">Trades <InfoPop text={GLOSSARY.col_trades} /></Th>
               </tr>
             </thead>
             <tbody>
@@ -1195,13 +1225,102 @@ function SpecDefLine({ term, def }: { term: string; def: string }) {
   )
 }
 
-// ─── Sleeve view (index rail + run detail) ───────────────────────────────────
+// ─── Strategy comparison card ────────────────────────────────────────────────
+// Surfaces the 5-way comparison (HODL / binary / graduated / tactical / combined)
+// that the bench's parameter sweep doesn't capture. This is the portfolio question.
+function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
+  const accent = sleeveAccent(comparison.sleeve)
+  return (
+    <div
+      className="rounded-xl px-5 py-5 mb-6"
+      style={{
+        background: `radial-gradient(circle at 12% 10%, ${accent}18, transparent 45%), var(--cb-surface-0)`,
+        border: `1px solid ${accent}44`,
+        boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.04), 0 4px 20px rgba(5, 8, 26, 0.45)",
+      }}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: accent, boxShadow: `0 0 8px ${accent}80` }} />
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+          Strategy comparison
+        </span>
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 500, color: "var(--cb-text-primary)", letterSpacing: "-0.01em" }}>
+        {comparison.title}
+      </div>
+      <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 2 }}>
+        {comparison.dataset.symbol} · {comparison.dataset.start_date} → {comparison.dataset.end_date}
+      </div>
+
+      {/* Comparison table */}
+      <div className="overflow-x-auto mt-4">
+        <table className="w-full text-[11px]" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
+          <thead>
+            <tr style={{ color: "var(--cb-text-tertiary)" }}>
+              <th style={{ textAlign: "left", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Strategy</th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Net Return</th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Sharpe <InfoPop text="Risk-adjusted return. Higher = better return per unit of risk. Above 1.0 is strong." /></th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Calmar <InfoPop text="Return divided by max drawdown. Higher = better compensation for pain endured. Our primary success metric for crypto." /></th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Max DD</th>
+              <th style={{ textAlign: "right", padding: "6px 10px", fontSize: 9, fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase", borderBottom: "1px solid var(--cb-border-dim)", background: "var(--cb-surface-1)" }}>Exposure</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparison.lanes.map(lane => {
+              const isBenchmark = lane.role === "benchmark"
+              const isGraduated = lane.role === "layer_1_graduated"
+              const isStandalone = lane.role === "layer_2_standalone"
+              return (
+                <tr
+                  key={lane.lane_id}
+                  className="transition-colors"
+                  style={{
+                    background: isGraduated ? "rgba(16, 185, 129, 0.04)" : undefined,
+                    opacity: isStandalone ? 0.6 : 1,
+                  }}
+                >
+                  <td style={{ textAlign: "left", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: isGraduated ? "var(--cb-green)" : isBenchmark ? "var(--cb-text-primary)" : "var(--cb-text-secondary)", fontWeight: isGraduated || isBenchmark ? 500 : 400 }}>
+                    {lane.label}
+                    {isGraduated && <span style={{ fontSize: 8, marginLeft: 6, color: "var(--cb-green)", fontWeight: 600, letterSpacing: "0.08em" }}>LEAD</span>}
+                    {isStandalone && <span style={{ fontSize: 8, marginLeft: 6, color: "var(--cb-text-tertiary)", fontWeight: 500 }}>OVERLAY ONLY</span>}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: "var(--cb-text-secondary)", fontFamily: "var(--font-mono)" }}>
+                    {lane.net_return_pct != null ? `+${lane.net_return_pct.toLocaleString("en-US", { maximumFractionDigits: 1 })}%` : "—"}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: isGraduated ? "var(--cb-green)" : "var(--cb-text-secondary)", fontFamily: "var(--font-mono)" }}>
+                    {lane.sharpe != null ? lane.sharpe.toFixed(2) : "—"}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: isGraduated ? "var(--cb-green)" : "var(--cb-text-secondary)", fontFamily: "var(--font-mono)", fontWeight: isGraduated ? 600 : 400 }}>
+                    {lane.calmar != null ? lane.calmar.toFixed(2) : "—"}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: "var(--cb-text-secondary)", fontFamily: "var(--font-mono)" }}>
+                    {lane.max_drawdown_pct != null ? `${lane.max_drawdown_pct.toFixed(1)}%` : "—"}
+                  </td>
+                  <td style={{ textAlign: "right", padding: "8px 10px", borderBottom: "1px solid var(--cb-border-dim)", color: "var(--cb-text-secondary)", fontFamily: "var(--font-mono)" }}>
+                    {lane.exposure_pct != null ? `${lane.exposure_pct.toFixed(0)}%` : "—"}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 11, color: "var(--cb-text-tertiary)", lineHeight: 1.5 }}>
+        Graduated core is the lead candidate — beats HODL on Sharpe and Calmar while capturing 61% of net return. Tactical is an overlay, not a standalone sleeve.
+      </div>
+    </div>
+  )
+}
+
+// ─── Sleeve view (index dropdown + run detail) ──────────────────────────────
 function SleeveView({
-  tab, runs, specs, selected, onSelect,
+  tab, runs, specs, comparisons, selected, onSelect,
 }: {
   tab: BenchTab
   runs: BenchIndexEntry[]
   specs: BenchSpecEntry[]
+  comparisons: SleeveComparison[]
   selected: { bench_id: string; run_id: string } | null
   onSelect: (s: { bench_id: string; run_id: string }) => void
 }) {
@@ -1247,9 +1366,15 @@ function SleeveView({
 
   const specsWithoutRuns = specs.filter(s => !s.has_runs)
 
+  // Default filter: show SUCCEEDED runs, fall back to all if none succeeded
+  const succeededRuns = runs.filter(r => r.status?.toUpperCase() === "SUCCEEDED" || r.status?.toUpperCase() === "COMPLETED")
+  const [showPartials, setShowPartials] = useState(succeededRuns.length === 0)
+  const visibleRuns = showPartials ? runs : (succeededRuns.length > 0 ? succeededRuns : runs)
+
   if (!runs.length) {
     return (
       <div className="space-y-4">
+        {comparisons.length > 0 && comparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
         {specsWithoutRuns.length > 0 ? (
           specsWithoutRuns.map(s => (
             <div
@@ -1298,41 +1423,76 @@ function SleeveView({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-      <aside className="space-y-2 lg:max-h-[calc(100vh-220px)] lg:overflow-y-auto lg:pr-1">
-        <div className="cb-label mb-2">Runs</div>
-        {runs.map(entry => (
-          <BenchIndexCard
-            key={`${entry.bench_id}/${entry.run_id}`}
-            entry={entry}
-            active={selected?.bench_id === entry.bench_id && selected?.run_id === entry.run_id}
-            onClick={() => onSelect({ bench_id: entry.bench_id, run_id: entry.run_id })}
-          />
-        ))}
-      </aside>
+    <div className="space-y-6">
+      {/* Strategy comparison — the portfolio question (if available) */}
+      {comparisons.length > 0 && comparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
 
-      <main className="space-y-4 min-w-0">
-        {detailLoading && !detail && (
-          <div className="cb-card-t2 px-6 py-12 text-center" style={{ color: "var(--cb-text-tertiary)", fontSize: 12 }}>
-            Loading run…
-          </div>
+      {/* Run selector — dropdown instead of scrolling card rail */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="cb-label">Run</div>
+        <select
+          value={selected ? `${selected.bench_id}/${selected.run_id}` : ""}
+          onChange={e => {
+            const [bid, rid] = e.target.value.split("/")
+            if (bid && rid) onSelect({ bench_id: bid, run_id: rid })
+          }}
+          className="cursor-pointer focus:outline-none rounded-lg px-3 py-1.5"
+          style={{
+            background: "var(--cb-surface-1)",
+            border: "1px solid var(--cb-border-std)",
+            color: "var(--cb-text-primary)",
+            fontSize: 12,
+            minWidth: 200,
+            maxWidth: "100%",
+          }}
+        >
+          {visibleRuns.map(entry => (
+            <option
+              key={`${entry.bench_id}/${entry.run_id}`}
+              value={`${entry.bench_id}/${entry.run_id}`}
+              style={{ background: "var(--cb-surface-1)" }}
+            >
+              {entry.title} · {entry.run_id} · {entry.status} · {fmtCount(entry.evaluated_candidate_count)}/{fmtCount(entry.search_space_size)}
+            </option>
+          ))}
+        </select>
+
+        {runs.length !== succeededRuns.length && (
+          <button
+            onClick={() => setShowPartials(v => !v)}
+            className="text-[11px] px-2.5 py-1 rounded-full transition-colors"
+            style={{
+              background: showPartials ? "rgba(212, 194, 138, 0.16)" : "transparent",
+              border: `1px solid ${showPartials ? "rgba(212, 194, 138, 0.4)" : "var(--cb-border-std)"}`,
+              color: showPartials ? "var(--cb-amber)" : "var(--cb-text-secondary)",
+            }}
+          >
+            {showPartials ? `Showing all ${runs.length} runs` : `${runs.length - succeededRuns.length} partial runs hidden`}
+          </button>
         )}
-        {detailError && (
-          <div className="cb-card-t2 cb-tone-bad px-6 py-8" style={{ color: "var(--cb-text-secondary)", fontSize: 12 }}>
-            Couldn&rsquo;t load this run: {detailError}
-          </div>
-        )}
-        {detail && (
-          <>
-            <RunSummary
-              detail={detail}
-              previousRun={previousRun}
-              onJumpToPrevious={() => previousRun && onSelect({ bench_id: previousRun.bench_id, run_id: previousRun.run_id })}
-            />
-            <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
-          </>
-        )}
-      </main>
+      </div>
+
+      {/* Run detail */}
+      {detailLoading && !detail && (
+        <div className="cb-card-t2 px-6 py-12 text-center" style={{ color: "var(--cb-text-tertiary)", fontSize: 12 }}>
+          Loading run…
+        </div>
+      )}
+      {detailError && (
+        <div className="cb-card-t2 cb-tone-bad px-6 py-8" style={{ color: "var(--cb-text-secondary)", fontSize: 12 }}>
+          Couldn&rsquo;t load this run: {detailError}
+        </div>
+      )}
+      {detail && (
+        <>
+          <RunSummary
+            detail={detail}
+            previousRun={previousRun}
+            onJumpToPrevious={() => previousRun && onSelect({ bench_id: previousRun.bench_id, run_id: previousRun.run_id })}
+          />
+          <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
+        </>
+      )}
     </div>
   )
 }
@@ -1440,6 +1600,7 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
             tab={activeTab}
             runs={runsByTab[activeTab] ?? []}
             specs={(index?.specs ?? []).filter(s => s.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
+            comparisons={(index?.comparisons ?? []).filter((c: SleeveComparison) => c.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
             selected={selectedBySleeve[activeTab] ?? null}
             onSelect={s => setSelectedBySleeve(prev => ({ ...prev, [activeTab]: s }))}
           />
