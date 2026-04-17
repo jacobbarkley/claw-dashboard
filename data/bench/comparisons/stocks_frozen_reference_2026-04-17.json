@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-04-17T02:40:00-04:00",
+  "source": "manual_from_codex_commit_5ca9a77",
+  "sleeve": "STOCKS",
+  "title": "Stocks Frozen Reference — Regime-Aware Momentum vs SPY",
+  "dataset": {
+    "symbol": "6-name large-cap universe",
+    "provider": "Alpaca",
+    "venue": "US equities",
+    "start_date": "2022-01-01",
+    "end_date": "2026-03-31"
+  },
+  "lanes": [
+    {
+      "lane_id": "spy_hodl",
+      "label": "SPY Buy & Hold",
+      "role": "benchmark",
+      "net_return_pct": 80.448,
+      "sharpe": null,
+      "calmar": null,
+      "max_drawdown_pct": null,
+      "trades": 0,
+      "exposure_pct": 100.0,
+      "note": "S&P 500 buy-and-hold over the same window — the formal stock benchmark."
+    },
+    {
+      "lane_id": "stop_5_target_15",
+      "label": "Regime-Aware Momentum (stop 5% / target 15%)",
+      "role": "winner",
+      "net_return_pct": 90.4969,
+      "sharpe": null,
+      "calmar": 2.5465,
+      "max_drawdown_pct": 8.8878,
+      "trades": 235,
+      "exposure_pct": null,
+      "note": "Frozen 6-name large-cap momentum with SPY regime gating. Beats SPY on net return (+10.0%) with dramatically lower max drawdown (8.9% vs SPY's ~25-34%). Selected by the bench as the stock winner."
+    }
+  ]
+}

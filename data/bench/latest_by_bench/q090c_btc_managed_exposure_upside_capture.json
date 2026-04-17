@@ -1,0 +1,17 @@
+{
+  "bench_id": "q090c_btc_managed_exposure_upside_capture",
+  "run_id": "q090c-upside-capture-finalists-20260417",
+  "title": "BTC Managed Exposure Upside-Capture Lead",
+  "sleeve": "CRYPTO",
+  "engine": "CUSTOM",
+  "promotion_target": "BENCH",
+  "status": "SUCCEEDED",
+  "selected_config_id": "BTC_GRADUATED_CORE_REGIME",
+  "evaluated_candidate_count": 5,
+  "search_space_size": 5,
+  "candidate_cap": null,
+  "sweep_truncated": false,
+  "primary_metric": "calmar_ratio",
+  "primary_metric_value": 0.9134,
+  "generated_at": "2026-04-17T02:10:32.487005-04:00"
+}

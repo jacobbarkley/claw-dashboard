@@ -1,0 +1,28 @@
+{
+  "run_id": "smoke-spec-run",
+  "bench_id": "q090b_btc_4h_tsmom_sweep",
+  "generated_at": "2026-04-16T13:27:28.898504-04:00",
+  "status": "SUCCEEDED",
+  "spec_path": "backtest/bench/specs/q090b_btc_4h_tsmom_sweep.bench_spec.json",
+  "spec_hash": "e857171b923455fbe092347d2b3a1623117ffba31efd3e35e8b406ad98b2bd6b",
+  "code_ref": null,
+  "selected_config_id": "base",
+  "artifact_refs": [
+    {
+      "artifact_id": "crypto_bench_report",
+      "artifact_type": "REPORT",
+      "path": "backtest/bench/results/q090b_btc_4h_tsmom_sweep/smoke-spec-run/crypto_bench_report.json",
+      "description": "Primary BTC bench report generated from the structured bench spec."
+    },
+    {
+      "artifact_id": "bench_spec_snapshot",
+      "artifact_type": "SPEC_SNAPSHOT",
+      "path": "backtest/bench/results/q090b_btc_4h_tsmom_sweep/smoke-spec-run/bench_spec.snapshot.json",
+      "description": "Bench spec snapshot used for the run."
+    }
+  ],
+  "notes": [
+    "First bench-spec-driven crypto report bundle.",
+    "Base config only for now; sweep expansion should append more artifact refs later."
+  ]
+}

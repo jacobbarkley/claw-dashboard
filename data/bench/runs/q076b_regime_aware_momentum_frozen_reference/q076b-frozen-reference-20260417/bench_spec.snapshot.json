@@ -1,0 +1,176 @@
+{
+  "schema_version": "bench_spec.v1",
+  "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+  "title": "Regime-Aware Momentum Frozen Reference",
+  "hypothesis": "A six-name large-cap momentum sleeve with SPY regime gating can earn stock-sleeve promotion through risk-aware participation instead of index mimicry.",
+  "sleeve": "STOCKS",
+  "engine": "VALIDATION_CAMPAIGN",
+  "promotion_target": "FROZEN_CONFIRMATION",
+  "dataset": {
+    "provider": "yahoo_finance",
+    "venue": "usa_equities",
+    "primary_instrument_type": "EQUITY",
+    "symbol": null,
+    "universe_symbols": [
+      "AAPL",
+      "AVGO",
+      "COST",
+      "LLY",
+      "META",
+      "NVDA"
+    ],
+    "universe_ref": null,
+    "benchmark_symbol": "SPY",
+    "dataset_ref": null,
+    "contract_legs": [],
+    "contract_metadata": {},
+    "start_date": "2022-01-01",
+    "end_date": "2026-03-31",
+    "source_timeframe": "1D",
+    "target_timeframe": "1D",
+    "anchor_timezone": "America/New_York",
+    "era_catalog_ref": null,
+    "eras": [
+      {
+        "era_id": "2022_bear",
+        "label": "2022 Bear Reset",
+        "start_date": "2022-01-01",
+        "end_date": "2022-12-31",
+        "regime_character": "BEAR_MARKET",
+        "rationale": "Stress period for proving the sleeve can defend during broad equity weakness."
+      },
+      {
+        "era_id": "2023_repair",
+        "label": "2023 Repair",
+        "start_date": "2023-01-01",
+        "end_date": "2023-12-31",
+        "regime_character": "RECOVERY",
+        "rationale": "Checks whether the sleeve re-engages cleanly as leadership broadens off the lows."
+      },
+      {
+        "era_id": "2024_expansion",
+        "label": "2024 Expansion",
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "regime_character": "BULL_EXPANSION",
+        "rationale": "Strong momentum tape where the sleeve should participate without excessive churn."
+      },
+      {
+        "era_id": "2025_2026_current",
+        "label": "2025-2026 Current Tape",
+        "start_date": "2025-01-01",
+        "end_date": "2026-03-31",
+        "regime_character": "CURRENT_RUNTIME",
+        "rationale": "Current live-era context for the promoted stock sleeve reference."
+      }
+    ],
+    "notes": [
+      "This is a dashboard-friendly stock reference spec, not a fresh optimization mandate on the frozen training tape.",
+      "The actual production-facing stock sleeve is the frozen stop_5_target_15 winner built from the six-name optimized cohort."
+    ]
+  },
+  "strategy": {
+    "strategy_id": "regime_aware_momentum_frozen_stop_5_target_15",
+    "strategy_family": "REGIME_AWARE_MOMENTUM",
+    "module_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
+    "registry_strategy_id": "regime_aware_momentum",
+    "registry_preset_id": "frozen_confirmation",
+    "base_parameters": {
+      "lookback_days": 20,
+      "min_symbol_return_pct": 8.0,
+      "max_symbol_volatility_pct": 45.0,
+      "benchmark_trend_days": 50,
+      "benchmark_min_return_pct": 0.0,
+      "benchmark_max_volatility_pct": 25.0,
+      "stop_loss_pct": 5.0,
+      "target_pct": 15.0,
+      "max_hold_days": 10,
+      "max_positions": 4,
+      "risk_pct_per_trade": 1.0
+    },
+    "sweep_dimensions": [],
+    "tuning_rules": [],
+    "notes": [
+      "Frozen winner reference only; reruns should move the date window forward instead of retuning on the original tape.",
+      "Dashboard consumers should treat this as the stock-side canonical bench spec example."
+    ]
+  },
+  "run": {
+    "search_mode": "FIXED",
+    "fill_model": "NEXT_DAY_OPEN",
+    "exposure_model": {
+      "mode": "LONG_ONLY",
+      "max_concurrent_positions": 4,
+      "max_gross_exposure_pct": 100.0,
+      "max_net_exposure_pct": 100.0,
+      "description": "Long-only multi-position equity sleeve with capped simultaneous names."
+    },
+    "capital_base_usd": 50000.0,
+    "train_window_days": 126,
+    "test_window_days": 21,
+    "step_size_days": 21,
+    "artifacts_root": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference",
+    "notes": [
+      "This stock reference spec is designed for dashboard contract parity with crypto, not yet as the source for a bench-spec-native stock runner."
+    ]
+  },
+  "cost_model": {
+    "fee_bps_round_trip": 0.0,
+    "fee_per_trade_usd": 0.0,
+    "slippage_bps_one_way": 5.0,
+    "slippage_sweep_bps": [
+      5.0,
+      10.0,
+      15.0
+    ],
+    "notes": [
+      "SPY remains the correct benchmark for this broad long-only stock sleeve."
+    ]
+  },
+  "evaluation": {
+    "baseline_ids": [
+      "SPY_BUY_AND_HOLD",
+      "NO_TRADE"
+    ],
+    "selection_metric": "CALMAR",
+    "secondary_metrics": [
+      "TOTAL_RETURN_PCT",
+      "MAX_DRAWDOWN_PCT",
+      "PROFITABLE_FOLD_PCT",
+      "TRADE_COUNT"
+    ],
+    "hard_reject_rules": [
+      {
+        "gate_id": "min_trade_count",
+        "metric": "total_trades",
+        "scope": "ROLLUP",
+        "operator": ">=",
+        "value": 30,
+        "description": "Reference contract still expects enough realized trades to be decision-grade."
+      },
+      {
+        "gate_id": "drawdown_cap",
+        "metric": "max_drawdown_pct",
+        "scope": "ROLLUP",
+        "operator": "<=",
+        "value": 20.0,
+        "description": "The stock sleeve should stay within the established drawdown ceiling."
+      }
+    ],
+    "plateau_rule": null,
+    "notes": [
+      "This is a fixed frozen reference, so no plateau rule is needed here."
+    ]
+  },
+  "tags": [
+    "stocks",
+    "equities",
+    "regime_aware_momentum",
+    "frozen_reference",
+    "q076b"
+  ],
+  "notes": [
+    "This file gives the dashboard and bench surfaces a canonical stock-side contract alongside the crypto examples.",
+    "Future stock result bundles should snapshot this spec instead of depending on campaign_config.json alone."
+  ]
+}

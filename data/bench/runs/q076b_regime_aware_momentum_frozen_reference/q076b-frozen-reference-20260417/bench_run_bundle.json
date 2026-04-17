@@ -1,0 +1,59 @@
+{
+  "run_id": "q076b-frozen-reference-20260417",
+  "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+  "generated_at": "2026-04-17T06:40:56.170805Z",
+  "status": "SUCCEEDED",
+  "spec_path": "backtest/bench/specs/q076b_regime_aware_momentum_frozen_reference.bench_spec.json",
+  "spec_hash": null,
+  "code_ref": null,
+  "selected_config_id": "stop_5_target_15",
+  "variant_count": 6,
+  "evaluated_candidate_count": 6,
+  "search_space_size": 6,
+  "candidate_cap": null,
+  "sweep_truncated": false,
+  "candidate_config_ids": [
+    "stop_5_target_15",
+    "stop_5_target_14",
+    "stop_475_target_14",
+    "baseline_near_miss",
+    "stop_45_target_14",
+    "stop_5_target_15_hold_9"
+  ],
+  "baseline_ids": [
+    "SPY_BUY_AND_HOLD",
+    "NO_TRADE"
+  ],
+  "era_ids": [
+    "2022_bear",
+    "2023_repair",
+    "2024_expansion",
+    "2025_2026_current"
+  ],
+  "primary_metric": "CALMAR",
+  "primary_metric_value": 2.5465,
+  "artifact_refs": [
+    {
+      "artifact_id": "stock_bench_report",
+      "artifact_type": "REPORT",
+      "path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json",
+      "description": "Fixed stock bench report packaged from a validation campaign summary."
+    },
+    {
+      "artifact_id": "stock_bench_leaderboard",
+      "artifact_type": "ROW_SET",
+      "path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_leaderboard.json",
+      "description": "Flattened stock campaign leaderboard for dashboard rendering."
+    },
+    {
+      "artifact_id": "bench_spec_snapshot",
+      "artifact_type": "SPEC_SNAPSHOT",
+      "path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/bench_spec.snapshot.json",
+      "description": "Bench spec snapshot used for the packaged stock run."
+    }
+  ],
+  "notes": [
+    "Packaged from validation campaign q076b_regime_aware_momentum_opt_02/2026-04-11-q076b-regime-opt-02.",
+    "Selected variant: stop_5_target_15."
+  ]
+}

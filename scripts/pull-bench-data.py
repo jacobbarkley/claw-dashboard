@@ -31,11 +31,15 @@ TRADING_BOT_BENCH_RESULTS = Path.home() / ".openclaw/workspace/trading-bot/backt
 TRADING_BOT_BENCH_SPECS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/specs"
 DASHBOARD_BENCH_DATA = Path.home() / "claude/claw-dashboard/data/bench"
 
-WORKING_SET = (
+# Required files per run — at minimum we need the spec snapshot + bundle.
+# The leaderboard/report names vary by sleeve (crypto_bench_*, stock_bench_*).
+REQUIRED_FILES = (
     "bench_spec.snapshot.json",
     "bench_run_bundle.json",
-    "crypto_bench_leaderboard.json",
 )
+
+# Additional files to copy if present (any *_leaderboard.json or *_report.json)
+OPTIONAL_PATTERNS = ("*_leaderboard.json", "*_report.json", "*_comparison_report.json")
 
 
 def parse_iso(ts: str | None) -> datetime:
@@ -68,16 +72,25 @@ def pull() -> None:
                 continue
             run_id = run_dir.name
 
-            # Verify the working set is present — skip incomplete runs
-            missing = [f for f in WORKING_SET if not (run_dir / f).exists()]
+            # Verify required files are present — skip incomplete runs
+            missing = [f for f in REQUIRED_FILES if not (run_dir / f).exists()]
             if missing:
                 print(f"  skip {bench_id}/{run_id} (missing: {missing})")
                 continue
 
             dest = runs_dir / bench_id / run_id
             dest.mkdir(parents=True, exist_ok=True)
-            for fname in WORKING_SET:
+
+            # Copy required files
+            for fname in REQUIRED_FILES:
                 shutil.copy2(run_dir / fname, dest / fname)
+
+            # Copy optional files (leaderboards, reports — names vary by sleeve)
+            import glob as _glob
+            for pattern in OPTIONAL_PATTERNS:
+                for match in run_dir.glob(pattern):
+                    if match.stat().st_size < 50_000_000:  # skip >50MB files
+                        shutil.copy2(match, dest / match.name)
 
             # Pull headline fields for the index
             with (run_dir / "bench_run_bundle.json").open() as fh:

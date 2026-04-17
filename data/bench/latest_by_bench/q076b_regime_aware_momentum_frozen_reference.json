@@ -1,0 +1,17 @@
+{
+  "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+  "run_id": "q076b-frozen-reference-20260417",
+  "title": "Regime-Aware Momentum Frozen Reference",
+  "sleeve": "STOCKS",
+  "engine": "VALIDATION_CAMPAIGN",
+  "promotion_target": "FROZEN_CONFIRMATION",
+  "status": "SUCCEEDED",
+  "selected_config_id": "stop_5_target_15",
+  "evaluated_candidate_count": 6,
+  "search_space_size": 6,
+  "candidate_cap": null,
+  "sweep_truncated": false,
+  "primary_metric": "CALMAR",
+  "primary_metric_value": 2.5465,
+  "generated_at": "2026-04-17T06:40:56.170805Z"
+}

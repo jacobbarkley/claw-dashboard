@@ -1,0 +1,52 @@
+{
+  "run_id": "q090c-risk-adjusted-finalists-20260417",
+  "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+  "generated_at": "2026-04-17T02:10:32.446321-04:00",
+  "status": "SUCCEEDED",
+  "spec_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
+  "spec_hash": null,
+  "code_ref": null,
+  "selected_config_id": "BTC_GRADUATED_CORE_PLUS_TACTICAL",
+  "variant_count": 5,
+  "evaluated_candidate_count": 5,
+  "search_space_size": 5,
+  "candidate_cap": null,
+  "sweep_truncated": false,
+  "candidate_config_ids": [
+    "BTC_CORE_REGIME",
+    "BTC_GRADUATED_CORE_REGIME",
+    "BTC_TACTICAL_TSMOM",
+    "BTC_CORE_GATED_TSMOM",
+    "BTC_GRADUATED_CORE_PLUS_TACTICAL"
+  ],
+  "baseline_ids": [
+    "BUY_AND_HOLD_BTC"
+  ],
+  "era_ids": [],
+  "primary_metric": "calmar_ratio",
+  "primary_metric_value": 0.9568,
+  "artifact_refs": [
+    {
+      "artifact_id": "crypto_sleeve_comparison_report",
+      "artifact_type": "REPORT",
+      "path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/crypto_sleeve_comparison_report.json",
+      "description": "Full fixed crypto sleeve comparison report."
+    },
+    {
+      "artifact_id": "crypto_sleeve_comparison_rows",
+      "artifact_type": "ROW_SET",
+      "path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/crypto_sleeve_comparison_rows.json",
+      "description": "Flattened comparison rows for dashboard rendering."
+    },
+    {
+      "artifact_id": "bench_spec_snapshot",
+      "artifact_type": "SPEC_SNAPSHOT",
+      "path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/bench_spec.snapshot.json",
+      "description": "Bench spec snapshot used for this fixed comparison run."
+    }
+  ],
+  "notes": [
+    "Fixed crypto portfolio-construction comparison run.",
+    "Selected config is the non-benchmark sleeve with the strongest requested primary metric."
+  ]
+}

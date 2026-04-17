@@ -1,0 +1,121 @@
+{
+  "schema_version": "bench_spec.v1",
+  "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+  "title": "BTC Managed Exposure Risk-Adjusted Lead",
+  "hypothesis": "A graduated BTC core regime with an 80/70/0 exposure ladder plus an optional tactical top-up can beat HODL on risk-adjusted metrics while materially reducing drawdown.",
+  "sleeve": "CRYPTO",
+  "engine": "CUSTOM",
+  "promotion_target": "BENCH",
+  "dataset": {
+    "provider": "ccxt",
+    "venue": "coinbase",
+    "primary_instrument_type": "CRYPTO_SPOT",
+    "symbol": "BTC/USD",
+    "universe_symbols": [],
+    "universe_ref": null,
+    "benchmark_symbol": "BTC/USD",
+    "dataset_ref": "backtest/experiments/q090b_btc_4h_longhistory/dataset_freezes/2026-04-16T032009Z/crypto_historical_dataset.json",
+    "contract_legs": [],
+    "contract_metadata": {},
+    "start_date": "2016-01-01",
+    "end_date": "2026-04-15",
+    "source_timeframe": "1H",
+    "target_timeframe": "4H",
+    "anchor_timezone": "UTC",
+    "era_catalog_ref": null,
+    "eras": [],
+    "notes": [
+      "This fixed comparison reuses the long-history Coinbase BTC/USD dataset that already anchors the crypto research lane.",
+      "The benchmark remains perfect buy-and-hold BTC over the exact same tape."
+    ]
+  },
+  "strategy": {
+    "strategy_id": "btc_managed_exposure_v1",
+    "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+    "module_path": "src/openclaw_core/validation/crypto_compare.py",
+    "registry_strategy_id": null,
+    "registry_preset_id": null,
+    "base_parameters": {
+      "core_regime_sma_bars": 200,
+      "core_regime_slope_bars": 20,
+      "risk_on_exposure_pct": 80.0,
+      "accumulate_exposure_pct": 70.0,
+      "risk_off_exposure_pct": 0.0,
+      "fast_ema_bars": 20,
+      "slow_ema_bars": 60,
+      "regime_sma_bars": 200,
+      "regime_slope_bars": 20,
+      "atr_bars": 22,
+      "natr_bars": 14,
+      "natr_floor_pct": 1.5,
+      "natr_ceiling_pct": 8.0,
+      "chandelier_multiplier": 3.0,
+      "max_hold_bars": 30,
+      "min_progress_atr": 1.0,
+      "target_annual_vol_pct": 40.0,
+      "realized_vol_lookback_bars": 42
+    },
+    "sweep_dimensions": [],
+    "tuning_rules": [],
+    "notes": [
+      "This is a fixed finalist comparison contract, not an open-ended search spec.",
+      "The tactical layer is evaluated only as an additive top-up to the graduated core, never as a standalone replacement for managed BTC exposure."
+    ]
+  },
+  "run": {
+    "search_mode": "FIXED",
+    "fill_model": "NEXT_BAR_OPEN",
+    "exposure_model": {
+      "mode": "CUSTOM",
+      "max_concurrent_positions": 1,
+      "max_gross_exposure_pct": 100.0,
+      "max_net_exposure_pct": 100.0,
+      "description": "Graduated BTC core with a tactical top-up overlay that can lift total exposure to 100% but never override risk-off."
+    },
+    "capital_base_usd": 50000,
+    "train_window_days": null,
+    "test_window_days": null,
+    "step_size_days": null,
+    "artifacts_root": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted",
+    "notes": [
+      "This run should emit a fixed comparison bundle rather than a multi-variant sweep leaderboard."
+    ]
+  },
+  "cost_model": {
+    "fee_bps_round_trip": 20.0,
+    "fee_per_trade_usd": 0.0,
+    "slippage_bps_one_way": 5.0,
+    "slippage_sweep_bps": [],
+    "notes": [
+      "Uses the same production-minded crypto fee/slippage assumptions as the earlier BTC bench work."
+    ]
+  },
+  "evaluation": {
+    "baseline_ids": [
+      "BUY_AND_HOLD_BTC"
+    ],
+    "selection_metric": "calmar_ratio",
+    "secondary_metrics": [
+      "sharpe_ratio",
+      "net_total_compounded_return_pct",
+      "max_drawdown_pct"
+    ],
+    "hard_reject_rules": [],
+    "plateau_rule": null,
+    "notes": [
+      "Success is defined as risk-adjusted participation, not beating HODL on raw return.",
+      "This risk-adjusted finalist is expected to win on Sharpe, Calmar, and drawdown control rather than raw terminal wealth."
+    ]
+  },
+  "tags": [
+    "crypto",
+    "btc",
+    "managed-exposure",
+    "risk-adjusted",
+    "q090c"
+  ],
+  "notes": [
+    "This is one of the two finalist crypto portfolio-construction candidates.",
+    "It represents the strongest current managed-BTC story for a consumer-facing product."
+  ]
+}

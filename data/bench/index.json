@@ -1,7 +1,24 @@
 {
-  "generated_at": "2026-04-17T00:47:19.653178-04:00",
+  "generated_at": "2026-04-17T02:46:15.828880-04:00",
   "source": "local_dev_pull",
   "runs": [
+    {
+      "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+      "run_id": "q076b-frozen-reference-20260417",
+      "title": "Regime-Aware Momentum Frozen Reference",
+      "sleeve": "STOCKS",
+      "engine": "VALIDATION_CAMPAIGN",
+      "promotion_target": "FROZEN_CONFIRMATION",
+      "status": "SUCCEEDED",
+      "selected_config_id": "stop_5_target_15",
+      "evaluated_candidate_count": 6,
+      "search_space_size": 6,
+      "candidate_cap": null,
+      "sweep_truncated": false,
+      "primary_metric": "CALMAR",
+      "primary_metric_value": 2.5465,
+      "generated_at": "2026-04-17T06:40:56.170805Z"
+    },
     {
       "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
       "run_id": "q090b-neighborhood-20260416",
@@ -120,6 +137,74 @@
       "primary_metric": "median_era_sharpe",
       "primary_metric_value": 0.0505,
       "generated_at": "2026-04-16T14:22:22.940864-04:00"
+    },
+    {
+      "bench_id": "q090b_btc_4h_tsmom_sweep",
+      "run_id": "smoke-spec-run",
+      "title": "BTC 4H TSMOM Sweep",
+      "sleeve": "CRYPTO",
+      "engine": "CRYPTO_RESEARCH_SWEEP",
+      "promotion_target": "BENCH",
+      "status": "SUCCEEDED",
+      "selected_config_id": "base",
+      "evaluated_candidate_count": null,
+      "search_space_size": null,
+      "candidate_cap": null,
+      "sweep_truncated": null,
+      "primary_metric": null,
+      "primary_metric_value": null,
+      "generated_at": "2026-04-16T13:27:28.898504-04:00"
+    },
+    {
+      "bench_id": "q090b_btc_4h_tsmom_sweep",
+      "run_id": "smoke-spec-run-2",
+      "title": "BTC 4H TSMOM Sweep",
+      "sleeve": "CRYPTO",
+      "engine": "CRYPTO_RESEARCH_SWEEP",
+      "promotion_target": "BENCH",
+      "status": "SUCCEEDED",
+      "selected_config_id": "base",
+      "evaluated_candidate_count": null,
+      "search_space_size": null,
+      "candidate_cap": null,
+      "sweep_truncated": null,
+      "primary_metric": "net_total_compounded_return_pct",
+      "primary_metric_value": 6.0105,
+      "generated_at": "2026-04-16T13:31:38.884325-04:00"
+    },
+    {
+      "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+      "run_id": "q090c-risk-adjusted-finalists-20260417",
+      "title": "BTC Managed Exposure Risk-Adjusted Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "promotion_target": "BENCH",
+      "status": "SUCCEEDED",
+      "selected_config_id": "BTC_GRADUATED_CORE_PLUS_TACTICAL",
+      "evaluated_candidate_count": 5,
+      "search_space_size": 5,
+      "candidate_cap": null,
+      "sweep_truncated": false,
+      "primary_metric": "calmar_ratio",
+      "primary_metric_value": 0.9568,
+      "generated_at": "2026-04-17T02:10:32.446321-04:00"
+    },
+    {
+      "bench_id": "q090c_btc_managed_exposure_upside_capture",
+      "run_id": "q090c-upside-capture-finalists-20260417",
+      "title": "BTC Managed Exposure Upside-Capture Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "promotion_target": "BENCH",
+      "status": "SUCCEEDED",
+      "selected_config_id": "BTC_GRADUATED_CORE_REGIME",
+      "evaluated_candidate_count": 5,
+      "search_space_size": 5,
+      "candidate_cap": null,
+      "sweep_truncated": false,
+      "primary_metric": "calmar_ratio",
+      "primary_metric_value": 0.9134,
+      "generated_at": "2026-04-17T02:10:32.487005-04:00"
     }
   ],
   "specs": [
@@ -129,7 +214,7 @@
       "sleeve": "STOCKS",
       "engine": "VALIDATION_CAMPAIGN",
       "hypothesis": "A six-name large-cap momentum sleeve with SPY regime gating can earn stock-sleeve promotion through risk-aware participation instead of index mimicry.",
-      "has_runs": false
+      "has_runs": true
     },
     {
       "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
@@ -145,6 +230,22 @@
       "sleeve": "CRYPTO",
       "engine": "CRYPTO_RESEARCH_SWEEP",
       "hypothesis": "Long-only BTC 4H time-series momentum with a trend regime filter can survive fees and slippage across multiple crypto eras.",
+      "has_runs": true
+    },
+    {
+      "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+      "title": "BTC Managed Exposure Risk-Adjusted Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "hypothesis": "A graduated BTC core regime with an 80/70/0 exposure ladder plus an optional tactical top-up can beat HODL on risk-adjusted metrics while materially reducing drawdown.",
+      "has_runs": true
+    },
+    {
+      "bench_id": "q090c_btc_managed_exposure_upside_capture",
+      "title": "BTC Managed Exposure Upside-Capture Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "hypothesis": "A graduated BTC core regime with a 100/70/0 exposure ladder can stay much closer to HODL's upside while still improving risk-adjusted metrics and drawdown.",
       "has_runs": true
     }
   ]
