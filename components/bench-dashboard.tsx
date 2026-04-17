@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import { Nav } from "@/components/nav"
 import { ChevronDown, ChevronUp, RefreshCw, Info } from "lucide-react"
 import {
-  ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, ZAxis, Cell,
+  ScatterChart, Scatter, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, ZAxis, Cell, ReferenceLine,
 } from "recharts"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -698,44 +698,96 @@ function BenchExplainer({ spec }: { spec: BenchSpec }) {
 }
 
 // ─── Leaderboard distribution chart ──────────────────────────────────────────
-// Scatter of primary_metric_value by rank — shows how the sample spreads and
-// where the top cluster converges (or doesn't).
+// Zoomed scatter of top candidates — the chart tells the story of WHERE passing
+// configs live relative to the nearest rejects, not a meaningless 2000-dot soup.
 function LeaderboardDistribution({ rows, metricName, accent }: {
   rows: LeaderboardRow[]; metricName: string; accent: string
 }) {
-  const data = useMemo(() => rows
+  const [showAll, setShowAll] = useState(false)
+
+  const allData = useMemo(() => rows
     .filter(r => r.primary_metric_value != null && Number.isFinite(r.primary_metric_value))
     .map(r => ({
       rank: r.rank,
       value: r.primary_metric_value as number,
       passes: r.passes_hard_reject_rules,
       selected: r.selected,
+      configId: r.config_id,
     })),
     [rows])
 
-  if (!data.length) return null
+  const passCount = allData.filter(d => d.passes).length
+  const rejectCount = allData.length - passCount
+
+  // Default zoom: top 50 candidates (shows the pass/reject boundary clearly)
+  const data = showAll ? allData : allData.slice(0, Math.max(50, passCount + 20))
+
+  if (!allData.length) return null
+
+  // Human-readable metric label
+  const metricLabel = metricName === "median_era_sharpe" ? "Median Era Sharpe"
+    : metricName.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())
 
   return (
     <div className="cb-card-t2 px-4 py-3 mb-3">
-      <div className="flex items-center justify-between mb-2">
-        <div className="cb-label flex items-center gap-1">
-          <span>{metricName} distribution</span>
-          <InfoPop text="Each dot is one candidate. The fall-off from rank 1 shows how concentrated the edge is — a flat top means many configs converge to similar performance (real plateau). A sharp spike means the winner is lonely." />
+      {/* Header with legend */}
+      <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
+        <div>
+          <div className="cb-label flex items-center gap-1">
+            <span>Candidate quality distribution</span>
+            <InfoPop text="Shows the primary metric for each candidate by rank. Zoomed to the top 50 by default so you can see where passing configs cluster relative to rejects. A flat top means many configs converge to similar performance (real plateau). A sharp drop means the edge is fragile." />
+          </div>
+          <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 2 }}>
+            {passCount} pass{passCount !== 1 ? "" : "es"} · {rejectCount} reject{rejectCount !== 1 ? "s" : ""} · showing {showAll ? "all" : `top ${data.length}`}
+          </div>
         </div>
-        <div className="flex items-center gap-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: accent }} /> passes
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "rgba(224, 82, 82, 0.6)" }} /> reject
-          </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+            {passCount > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: accent }} />
+                Passes gates ({passCount})
+              </span>
+            )}
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "rgba(224, 82, 82, 0.55)" }} />
+              Rejected
+            </span>
+          </div>
+          <button
+            onClick={() => setShowAll(v => !v)}
+            className="text-[10px] hover:opacity-80 transition-opacity"
+            style={{ color: "var(--cb-text-secondary)" }}
+          >
+            {showAll ? "Zoom to top 50" : `Show all ${allData.length}`}
+          </button>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={180}>
-        <ScatterChart margin={{ top: 8, right: 12, bottom: 12, left: 0 }}>
-          <XAxis type="number" dataKey="rank" name="Rank" tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={{ stroke: "var(--cb-border-dim)" }} />
-          <YAxis type="number" dataKey="value" name={metricName} tick={{ fontSize: 10, fill: "#7b7892" }} tickLine={false} axisLine={false} width={48} />
-          <ZAxis range={[18, 18]} />
+
+      <ResponsiveContainer width="100%" height={200}>
+        <ScatterChart margin={{ top: 8, right: 16, bottom: 28, left: 8 }}>
+          <XAxis
+            type="number"
+            dataKey="rank"
+            name="Rank"
+            tick={{ fontSize: 10, fill: "#7b7892" }}
+            tickLine={false}
+            axisLine={{ stroke: "var(--cb-border-dim)" }}
+            label={{ value: "Candidate rank", position: "bottom", offset: 12, style: { fontSize: 10, fill: "#5c6281", letterSpacing: "0.04em" } }}
+          />
+          <YAxis
+            type="number"
+            dataKey="value"
+            name={metricLabel}
+            tick={{ fontSize: 10, fill: "#7b7892" }}
+            tickLine={false}
+            axisLine={false}
+            width={52}
+            label={{ value: metricLabel, angle: -90, position: "insideLeft", offset: 4, style: { fontSize: 10, fill: "#5c6281", letterSpacing: "0.04em" } }}
+          />
+          {/* Zero reference line — worst-era Sharpe floor */}
+          <ReferenceLine y={0} stroke="rgba(224, 82, 82, 0.3)" strokeDasharray="4 3" />
+          <ZAxis dataKey="passes" range={[12, 40]} />
           <RechartsTooltip
             cursor={{ strokeDasharray: "3 3", stroke: "var(--cb-border-std)" }}
             content={({ active, payload }) => {
@@ -750,11 +802,11 @@ function LeaderboardDistribution({ rows, metricName, accent }: {
                   fontSize: 11,
                 }}>
                   <div style={{ color: "var(--cb-text-tertiary)", fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 4 }}>
-                    Rank {p.rank}
+                    Rank {p.rank} · {shortHash(p.configId, 10)}
                   </div>
-                  <div style={{ color: "var(--cb-text-primary)", fontFamily: "var(--font-mono)" }}>{p.value.toFixed(4)}</div>
-                  <div style={{ color: p.selected ? "var(--cb-green)" : p.passes ? "var(--cb-text-tertiary)" : "var(--cb-red)", fontSize: 10, marginTop: 2 }}>
-                    {p.selected ? "WINNER" : p.passes ? "passes gates" : "rejected"}
+                  <div style={{ color: "var(--cb-text-primary)", fontFamily: "var(--font-mono)", fontSize: 14 }}>{p.value.toFixed(4)}</div>
+                  <div style={{ color: p.selected ? "var(--cb-green)" : p.passes ? accent : "var(--cb-red)", fontSize: 10, marginTop: 3, fontWeight: 500 }}>
+                    {p.selected ? "WINNER — cleared all gates + plateau" : p.passes ? "PASSES — cleared hard-reject rules" : "REJECTED — failed at least one gate"}
                   </div>
                 </div>
               )
@@ -764,8 +816,9 @@ function LeaderboardDistribution({ rows, metricName, accent }: {
             {data.map((entry, i) => (
               <Cell
                 key={i}
-                fill={entry.selected ? "var(--cb-green)" : entry.passes ? accent : "rgba(224, 82, 82, 0.55)"}
-                fillOpacity={entry.selected ? 1 : entry.passes ? 0.85 : 0.55}
+                fill={entry.selected ? "var(--cb-green)" : entry.passes ? accent : "rgba(224, 82, 82, 0.45)"}
+                fillOpacity={entry.selected ? 1 : entry.passes ? 0.9 : 0.4}
+                r={entry.passes ? 6 : 3}
               />
             ))}
           </Scatter>
