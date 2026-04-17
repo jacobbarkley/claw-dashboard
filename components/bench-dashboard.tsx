@@ -355,8 +355,88 @@ function BenchIndexCard({
   )
 }
 
+// ─── Run delta strip ─────────────────────────────────────────────────────────
+// Shows a compact "vs previous run" comparison when there's an earlier run for
+// the same bench_id. Three signals a first-timer needs to know if things are
+// improving: evaluated count, primary metric, winner state.
+function RunDelta({ current, previous, onJumpToPrevious }: {
+  current: BenchRunBundle
+  previous: BenchIndexEntry
+  onJumpToPrevious: () => void
+}) {
+  const evalDelta = (current.evaluated_candidate_count ?? 0) - (previous.evaluated_candidate_count ?? 0)
+  const hasMetric = current.primary_metric_value != null && previous.primary_metric_value != null
+  const metricDelta = hasMetric ? (current.primary_metric_value as number) - (previous.primary_metric_value as number) : null
+
+  let winnerChange: { label: string; tone: "good" | "medium" | "bad" } = { label: "no change", tone: "medium" }
+  if (current.selected_config_id && !previous.selected_config_id) {
+    winnerChange = { label: "winner found", tone: "good" }
+  } else if (!current.selected_config_id && previous.selected_config_id) {
+    winnerChange = { label: "winner lost", tone: "bad" }
+  } else if (current.selected_config_id && previous.selected_config_id && current.selected_config_id !== previous.selected_config_id) {
+    winnerChange = { label: "winner changed", tone: "medium" }
+  } else if (!current.selected_config_id && !previous.selected_config_id) {
+    winnerChange = { label: "still no winner", tone: "medium" }
+  }
+
+  return (
+    <div
+      className="mt-3 px-3 py-2 rounded-lg flex items-center gap-3 flex-wrap"
+      style={{ background: "rgba(212, 194, 138, 0.06)", border: "1px solid rgba(212, 194, 138, 0.18)" }}
+    >
+      <button
+        onClick={onJumpToPrevious}
+        className="text-left hover:opacity-80 transition-opacity shrink-0"
+        style={{ fontSize: 10, color: "var(--cb-text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}
+      >
+        vs previous · {shortHash(previous.run_id, 24)}
+      </button>
+      <div className="flex items-center gap-2.5 flex-wrap">
+        <DeltaChip
+          label={`${evalDelta >= 0 ? "+" : ""}${fmtCount(Math.abs(evalDelta))} evaluated`}
+          tone={evalDelta > 0 ? "good" : evalDelta < 0 ? "bad" : "medium"}
+          arrow={evalDelta > 0 ? "up" : evalDelta < 0 ? "down" : "flat"}
+        />
+        {metricDelta != null && (
+          <DeltaChip
+            label={`${metricDelta >= 0 ? "+" : ""}${metricDelta.toFixed(4)} ${current.primary_metric ?? "primary"}`}
+            tone={metricDelta > 0 ? "good" : metricDelta < 0 ? "bad" : "medium"}
+            arrow={metricDelta > 0 ? "up" : metricDelta < 0 ? "down" : "flat"}
+          />
+        )}
+        <DeltaChip label={winnerChange.label} tone={winnerChange.tone} arrow={winnerChange.tone === "good" ? "up" : winnerChange.tone === "bad" ? "down" : "flat"} />
+      </div>
+    </div>
+  )
+}
+
+function DeltaChip({ label, tone, arrow }: {
+  label: string; tone: "good" | "medium" | "bad"; arrow: "up" | "down" | "flat"
+}) {
+  const color = tone === "good" ? "var(--cb-green)" : tone === "bad" ? "var(--cb-red)" : "var(--cb-text-secondary)"
+  const arrowChar = arrow === "up" ? "↑" : arrow === "down" ? "↓" : "·"
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+      style={{
+        fontSize: 11,
+        background: `${color === "var(--cb-text-secondary)" ? "rgba(155, 160, 188, 0.08)" : tone === "good" ? "rgba(16, 185, 129, 0.10)" : "rgba(224, 82, 82, 0.10)"}`,
+        color,
+        border: `1px solid ${tone === "good" ? "rgba(16, 185, 129, 0.22)" : tone === "bad" ? "rgba(224, 82, 82, 0.22)" : "rgba(155, 160, 188, 0.18)"}`,
+      }}
+    >
+      <span style={{ opacity: 0.7, fontSize: 10 }}>{arrowChar}</span>
+      {label}
+    </span>
+  )
+}
+
 // ─── Run summary + strategy explanation ─────────────────────────────────────
-function RunSummary({ detail }: { detail: BenchRunDetail }) {
+function RunSummary({ detail, previousRun, onJumpToPrevious }: {
+  detail: BenchRunDetail
+  previousRun: BenchIndexEntry | null
+  onJumpToPrevious: () => void
+}) {
   const { bundle, spec } = detail
   const accent = sleeveAccent(spec.sleeve)
   const evaluatedPct = bundle.search_space_size
@@ -429,6 +509,11 @@ function RunSummary({ detail }: { detail: BenchRunDetail }) {
           infoText={bundle.selected_config_id ? GLOSSARY.winner : GLOSSARY.no_winner}
         />
       </div>
+
+      {/* Run-to-run delta strip */}
+      {previousRun && (
+        <RunDelta current={bundle} previous={previousRun} onJumpToPrevious={onJumpToPrevious} />
+      )}
 
       {/* Hypothesis — always visible, short */}
       {spec.hypothesis && (
@@ -1034,6 +1119,26 @@ function SleeveView({
 
   const meta = TAB_META[tab]
 
+  // Find the previous run for the selected bench_id (one before by generated_at).
+  // Used to render the "vs previous run" delta strip on RunSummary.
+  const previousRun = useMemo<BenchIndexEntry | null>(() => {
+    if (!selected) return null
+    const sameBench = runs
+      .filter(r => r.bench_id === selected.bench_id && r.run_id !== selected.run_id)
+      .sort((a, b) => {
+        const ta = a.generated_at ? new Date(a.generated_at).getTime() : 0
+        const tb = b.generated_at ? new Date(b.generated_at).getTime() : 0
+        return tb - ta  // newest first
+      })
+    // Pick the newest run that's older than the currently selected one
+    const currentEntry = runs.find(r => r.bench_id === selected.bench_id && r.run_id === selected.run_id)
+    const currentTime = currentEntry?.generated_at ? new Date(currentEntry.generated_at).getTime() : 0
+    return sameBench.find(r => {
+      const t = r.generated_at ? new Date(r.generated_at).getTime() : 0
+      return t < currentTime
+    }) ?? null
+  }, [selected, runs])
+
   useEffect(() => {
     setDetail(null)
     if (!selected) return
@@ -1086,7 +1191,11 @@ function SleeveView({
         )}
         {detail && (
           <>
-            <RunSummary detail={detail} />
+            <RunSummary
+              detail={detail}
+              previousRun={previousRun}
+              onJumpToPrevious={() => previousRun && onSelect({ bench_id: previousRun.bench_id, run_id: previousRun.run_id })}
+            />
             <Leaderboard rows={detail.leaderboard} primaryMetric={detail.bundle.primary_metric ?? "primary"} accent={meta.accent} />
           </>
         )}

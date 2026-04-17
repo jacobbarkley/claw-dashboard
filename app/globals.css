@@ -207,9 +207,11 @@
   border-top: 1px solid var(--cb-border-dim);
 }
 
-/* Tier 1 — sleeve-header / hero card. Prominent accent gradient. */
+/* Tier 1 — sleeve-header / hero card. Prominent accent gradient.
+   Default accent is champagne gold so info/no-sentiment cards still feel warm
+   instead of cold-neutral. Tone modifiers (.cb-tone-good / -bad) override. */
 .cb-card-t1 {
-  --cb-card-accent: rgba(120, 140, 200, 0.10);
+  --cb-card-accent: rgba(212, 194, 138, 0.13);
   background:
     radial-gradient(circle at 15% 10%, var(--cb-card-accent), transparent 42%),
     var(--cb-surface-0);
@@ -222,7 +224,7 @@
 
 /* Tier 2 — charts, positions, plan. Moderate accent gradient. */
 .cb-card-t2 {
-  --cb-card-accent: rgba(120, 140, 200, 0.08);
+  --cb-card-accent: rgba(212, 194, 138, 0.10);
   background:
     radial-gradient(circle at 12% 14%, var(--cb-card-accent), transparent 44%),
     var(--cb-surface-0);
@@ -235,7 +237,7 @@
 
 /* Tier 3 — metric tiles. Subtle accent, compact. */
 .cb-card-t3 {
-  --cb-card-accent: rgba(120, 140, 200, 0.06);
+  --cb-card-accent: rgba(212, 194, 138, 0.08);
   background:
     radial-gradient(circle at 15% 15%, var(--cb-card-accent), transparent 48%),
     var(--cb-surface-1);
@@ -245,7 +247,7 @@
 
 /* Borderless metric readout — analytics/utility only */
 .cb-metric {
-  --cb-card-accent: rgba(120, 140, 200, 0.06);
+  --cb-card-accent: rgba(212, 194, 138, 0.08);
   background:
     radial-gradient(circle at 15% 20%, var(--cb-card-accent), transparent 48%),
     rgba(255, 255, 255, 0.018);
