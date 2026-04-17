@@ -2525,16 +2525,65 @@ function CryptoSleeve() {
   return (
     <div className="space-y-8">
       <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-        Crypto sleeve · 24/7 research · SHADOW · paper data pending
+        Crypto sleeve · two-layer architecture · SHADOW · paper data pending
       </p>
 
-      {/* Crypto capital banner — templated */}
+      {/* Crypto capital banner — two-layer architecture */}
       <SleeveCapitalPlaceholder
         accent={meta.accent}
         title="Deployed capital"
-        message="$0 deployed in crypto. Integration lands after equities checkpoint 05 passes and the first crypto campaign closes a promoted backtest."
-        sub={`First strategy family: crypto_regime_aware_momentum. Data provider: Alpaca (paper) with Coinbase planned for live.`}
+        message="$0 deployed in crypto. The crypto sleeve uses a two-layer architecture: a daily core regime monitor decides whether BTC should be structurally owned, and a 4H tactical overlay trades inside the regime."
+        sub="Integration lands after the core regime family clears the bench on risk-adjusted metrics. Data provider: Alpaca (paper) with Coinbase planned for live."
       />
+
+      {/* Two-layer architecture cards */}
+      <section>
+        <div className="cb-label mb-3">Architecture</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div
+            className="rounded-xl px-4 py-4"
+            style={{
+              background: `radial-gradient(circle at 12% 10%, ${meta.accent}18, transparent 45%), var(--cb-surface-0)`,
+              border: `1px solid ${meta.accent}44`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: meta.accent }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+                Layer 1 · Core regime
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+              Daily BTC regime monitor. Outputs <span className="font-mono" style={{ fontSize: 11 }}>RISK_ON</span> / <span className="font-mono" style={{ fontSize: 11 }}>RISK_OFF</span> / <span className="font-mono" style={{ fontSize: 11 }}>ACCUMULATE</span>.
+              Decides whether BTC should be structurally owned. Benchmarked against buy-and-hold BTC.
+            </div>
+            <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+              10-year backtest: +4,007% net · 53% exposure · 10.7% max DD improvement vs HODL
+            </div>
+          </div>
+          <div
+            className="rounded-xl px-4 py-4"
+            style={{
+              background: `radial-gradient(circle at 12% 10%, ${meta.accent}10, transparent 45%), var(--cb-surface-0)`,
+              border: `1px solid var(--cb-border-std)`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: meta.accent, opacity: 0.5 }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-secondary)" }}>
+                Layer 2 · Tactical overlay
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+              4H time-series momentum (TSMOM). Only runs when core regime is <span className="font-mono" style={{ fontSize: 11 }}>RISK_ON</span>.
+              Not a standalone strategy — adds or reduces exposure around the core position.
+            </div>
+            <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+              Core-gated tactical: +29% net · better DD than standalone · overlay value proven
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Crypto charts — placeholders */}
       <section>
@@ -2544,11 +2593,11 @@ function CryptoSleeve() {
         </div>
       </section>
 
-      {/* Crypto KPIs — placeholder grid */}
+      {/* KPIs — reframed for risk-adjusted metrics */}
       <section>
-        <div className="cb-label mb-3">Strategy KPIs</div>
+        <div className="cb-label mb-3">Risk-adjusted metrics</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {["Win rate", "Profit factor", "Expectancy", "Max drawdown"].map(label => (
+          {["Calmar ratio", "Max drawdown", "Bull capture %", "Bear avoidance %"].map(label => (
             <div key={label} className="cb-metric cb-tone-medium">
               <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
               <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
@@ -2570,12 +2619,13 @@ function CryptoSleeve() {
           }}
         >
           <div style={{ fontSize: 12, color: "var(--cb-text-secondary)" }}>
-            No crypto positions yet.
+            No crypto positions yet. Sleeve is in SHADOW mode while the core regime
+            family runs on the bench.
           </div>
         </div>
       </section>
 
-      {/* Today's plan + bench summary */}
+      {/* Bench status + plan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="cb-card-t3 cb-tone-medium px-4 py-3">
           <div className="cb-label mb-1">Today&rsquo;s plan</div>
@@ -2587,12 +2637,12 @@ function CryptoSleeve() {
           </div>
         </div>
         <div className="cb-card-t3 cb-tone-medium px-4 py-3">
-          <div className="cb-label mb-1">Bench summary</div>
+          <div className="cb-label mb-1">Bench progress</div>
           <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
-            No bench runs queued
+            4-way comparison in progress
           </div>
           <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
-            Will populate from Q-077 overnight runs
+            HODL vs core regime vs tactical vs combined
           </div>
         </div>
       </div>
@@ -2619,14 +2669,15 @@ function CryptoSleeve() {
         </div>
       </section>
 
-      {/* Active strategy — bottom */}
+      {/* Strategy architecture — bottom (both layers shown, tactical clearly secondary) */}
       <div className="cb-card-t3 cb-tone-medium px-4 py-3">
-        <div className="cb-label mb-1">Active strategy</div>
+        <div className="cb-label mb-1">Strategy status</div>
         <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
-          None promoted yet
+          Core regime + tactical overlay
         </div>
-        <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4 }}>
-          Awaiting first clean bench run
+        <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)", marginTop: 4, lineHeight: 1.5 }}>
+          Core regime family is the primary sleeve candidate. Tactical TSMOM is frozen as the overlay.
+          Success = risk-adjusted participation, not beating HODL on raw return.
         </div>
       </div>
     </div>
@@ -2661,9 +2712,10 @@ function contextChipsForTab(tab: TradingTab): string[] {
       ]
     case "crypto":
       return [
-        "When does crypto come online?",
-        "Explain the planned crypto universe",
-        "What's checkpoint 05?",
+        "Explain the two-layer crypto architecture",
+        "How does the core regime differ from HODL?",
+        "What does the tactical overlay add?",
+        "When does crypto go live?",
       ]
   }
 }
