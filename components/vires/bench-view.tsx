@@ -172,20 +172,27 @@ function FeaturedStrategy({ strategy, passportHref }: { strategy: ActiveStrategy
         {passportHref && (
           <Link
             href={passportHref}
+            aria-label="Open Strategy Passport"
             className="t-eyebrow"
             style={{
-              fontSize: 9,
+              fontSize: 10,
               color: "var(--vr-gold)",
               display: "inline-flex",
               alignItems: "center",
-              gap: 4,
+              gap: 5,
               textDecoration: "none",
               marginLeft: "auto",
+              padding: "8px 12px",
+              border: "1px solid var(--vr-gold-line)",
+              borderRadius: 3,
+              background: "var(--vr-gold-soft)",
+              touchAction: "manipulation",
+              minHeight: 32,
             }}
           >
             Passport
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-              <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.2" />
+            <svg width="10" height="10" viewBox="0 0 8 8" fill="none">
+              <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
             </svg>
           </Link>
         )}

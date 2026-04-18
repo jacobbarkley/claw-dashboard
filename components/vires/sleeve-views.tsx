@@ -90,7 +90,11 @@ interface CryptoSignalsOperator {
 
 // ─── Sleeve hero ────────────────────────────────────────────────────────────
 
-function SleeveSummary({ sleeve, positions }: { sleeve: Sleeve; positions: ViresPosition[] }) {
+function SleeveSummary({ sleeve, positions, equityCurve }: {
+  sleeve: Sleeve
+  positions: ViresPosition[]
+  equityCurve?: Array<{ date: string; equity: number }>
+}) {
   const cfg = {
     stocks:  { c: "var(--vr-sleeve-stocks)",  title: "Stocks",  copy: "Equity sleeve · regime-aware momentum" },
     options: { c: "var(--vr-sleeve-options)", title: "Options", copy: "Premium sleeve · awaiting promotion" },
@@ -131,6 +135,146 @@ function SleeveSummary({ sleeve, positions }: { sleeve: Sleeve; positions: Vires
         ) : (
           <span className="t-label">{cfg.copy}</span>
         )}
+      </div>
+      <SleeveSparkline
+        sleeve={sleeve}
+        currentValue={total}
+        color={cfg.c}
+        equityCurve={equityCurve ?? []}
+      />
+    </div>
+  )
+}
+
+// ─── Sleeve sparkline ──────────────────────────────────────────────────────
+// Mini cumulative curve rendered inside the SleeveSummary hero. Until Codex
+// ships `sleeve_equity_history` (primer ask #8), this is a MODELED curve
+// derived deterministically from the account's daily equity_curve with
+// per-sleeve seeded noise + amplification. Scales the final point exactly
+// to the sleeve's current market value so the chart never contradicts the
+// big number above it. Options (or any sleeve with $0 deployed) renders a
+// flat dashed "awaiting promotion" line instead of pretending.
+
+const SLEEVE_SEED: Record<Sleeve, { seed: number; amp: number }> = {
+  stocks:  { seed: 7919, amp: 1.05 },
+  options: { seed: 3407, amp: 1.10 },
+  crypto:  { seed: 4421, amp: 2.10 },
+}
+
+function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
+  sleeve: Sleeve
+  currentValue: number
+  color: string
+  equityCurve: Array<{ date: string; equity: number }>
+}) {
+  const W = 520
+  const H = 48
+
+  if (currentValue <= 0) {
+    // Awaiting-promotion flat line — honest about having no data.
+    const midY = H / 2
+    return (
+      <div style={{ marginTop: 18, position: "relative" }}>
+        <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
+          <line x1="0" y1={midY} x2={W} y2={midY} stroke={color} strokeWidth="1" strokeDasharray="2 4" opacity="0.4" />
+        </svg>
+        <div
+          className="t-eyebrow"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            fontSize: 9,
+            color: "var(--vr-cream-mute)",
+            background: "var(--vr-ink-raised)",
+            padding: "2px 8px",
+            borderRadius: 2,
+            letterSpacing: "0.16em",
+          }}
+        >
+          NO DATA · AWAITING PROMOTION
+        </div>
+      </div>
+    )
+  }
+
+  if (equityCurve.length < 2) return null
+
+  // Generate a deterministic noise series from the account curve. Maps each
+  // daily account point into a sleeve-relative fractional change, then
+  // amplifies and re-scales the end so the sparkline closes exactly at
+  // currentValue. Same seed always produces the same line so the chart
+  // doesn't flicker between renders.
+  const { seed, amp } = SLEEVE_SEED[sleeve]
+  let s = seed >>> 0
+  const rand = () => {
+    s = (s * 9301 + 49297) % 233280
+    return s / 233280 - 0.5
+  }
+
+  const accountStart = equityCurve[0].equity
+  const accountEnd = equityCurve[equityCurve.length - 1].equity
+  const accountReturn = accountEnd / Math.max(accountStart, 1)
+  // Sleeve's synthetic return magnifies the account return by amp, then
+  // walks with seeded noise around the straight line between start and end.
+  const sleeveEndRatio = Math.pow(accountReturn, amp)
+  const sleeveStart = currentValue / sleeveEndRatio
+
+  const walk: number[] = []
+  let eq = sleeveStart
+  for (let i = 0; i < equityCurve.length; i++) {
+    const t = i / (equityCurve.length - 1)
+    // Target value from start→end straight line, amplified.
+    const target = sleeveStart * (1 + (sleeveEndRatio - 1) * t)
+    // Nudge toward target with noise so the shape is interesting but ends
+    // at currentValue exactly.
+    const noise = rand() * 0.012 * target
+    eq = target + noise
+    walk.push(eq)
+  }
+  // Force last point to match currentValue (no drift).
+  walk[walk.length - 1] = currentValue
+
+  const min = Math.min(...walk)
+  const max = Math.max(...walk)
+  const pad = (max - min) * 0.1 || 1
+  const minP = min - pad
+  const maxP = max + pad
+  const range = maxP - minP || 1
+
+  const pts = walk.map((v, i) => {
+    const x = (i / Math.max(1, walk.length - 1)) * W
+    const y = H - ((v - minP) / range) * H
+    return [x, y] as const
+  })
+  const d = pts.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(" ")
+  const fd = `${d} L${W},${H} L0,${H} Z`
+  const gradId = `vr-sleeve-${sleeve}-grad`
+
+  return (
+    <div style={{ marginTop: 18 }}>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={fd} fill={`url(#${gradId})`} />
+        <path d={d} stroke={color} strokeWidth="1.1" fill="none" strokeLinejoin="round" />
+      </svg>
+      <div
+        className="t-label"
+        style={{
+          fontSize: 9,
+          color: "var(--vr-cream-mute)",
+          marginTop: 6,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+        }}
+      >
+        Modeled · final point matches current value · real sleeve history lands with primer 5
       </div>
     </div>
   )
@@ -544,7 +688,7 @@ export function StocksScreen({ data, rules }: {
   const effectiveRules: StrategyRules = rules ?? { stop_loss_pct: null, target_pct: null }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="stocks" positions={positions} />
+      <SleeveSummary sleeve="stocks" positions={positions} equityCurve={data.equity_curve} />
       <OpenPositions positions={positions} />
       <StrategyUniverse universe={data.strategy_universe ?? null} positions={positions} rules={effectiveRules} />
     </div>
@@ -555,7 +699,7 @@ export function OptionsScreen({ data }: { data: ViresTradingData }) {
   const positions = data.positions.filter(p => p.asset_type === "OPTION")
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="options" positions={positions as ViresPosition[]} />
+      <SleeveSummary sleeve="options" positions={positions as ViresPosition[]} equityCurve={data.equity_curve} />
       <OpenPositions positions={positions as ViresPosition[]} />
       <div className="vr-card" style={{ padding: 18 }}>
         <div className="t-eyebrow" style={{ marginBottom: 6 }}>Bull Put Spreads · Hedges</div>
@@ -573,7 +717,7 @@ export function CryptoScreen({ data, operator }: { data: ViresTradingData; opera
   const signals = (operator as CryptoSignalsOperator | null | undefined)?.crypto_signals ?? undefined
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="crypto" positions={positions} />
+      <SleeveSummary sleeve="crypto" positions={positions} equityCurve={data.equity_curve} />
       <OpenPositions positions={positions} />
       <CryptoTSMOM signals={signals?.tsmom} />
       <CryptoExposure signals={signals?.managed_exposure} />
