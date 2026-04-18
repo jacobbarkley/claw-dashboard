@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vires Capital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Geist:wght@100..900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="vires.css?v=4"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+    #app-frame {
+      width: 402px; height: 874px;
+      border-radius: 52px; overflow: hidden; position: relative;
+      background: var(--vr-ink);
+      box-shadow:
+        0 0 0 11px #07080f,
+        0 0 0 12px rgba(200,169,104,0.18),
+        0 50px 120px rgba(0,0,0,0.6);
+    }
+    .vr-status {
+      height: 52px; padding: 18px 32px 0;
+      display: flex; justify-content: space-between; align-items: center;
+      color: var(--vr-cream);
+      font-size: 15px; font-weight: 600;
+      position: relative; z-index: 40;
+      font-family: -apple-system, system-ui;
+    }
+    .vr-island {
+      position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+      width: 108px; height: 34px; border-radius: 20px; background: #000; z-index: 50;
+    }
+    .vr-home {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      width: 130px; height: 4px; border-radius: 100px; background: rgba(241,236,224,0.35); z-index: 60;
+    }
+    .vr-scroll { height: calc(100% - 52px - 22px); overflow-y: auto; }
+    .vr-scroll::-webkit-scrollbar { width: 0; display: none; }
+
+    /* Tweaks panel */
+    #tweaks {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(10, 11, 20, 0.97);
+      border: 1px solid var(--vr-line-hi); border-radius: 6px;
+      padding: 14px 16px; width: 240px;
+      backdrop-filter: blur(20px); display: none; z-index: 999;
+    }
+    #tweaks.on { display: block; }
+    #tweaks h3 { margin: 0 0 10px; font-family: var(--ff-serif); font-size: 16px; font-weight: 500; color: var(--vr-gold); }
+    #tweaks label {
+      display: block; font-size: 9px; font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--vr-cream-mute); margin: 12px 0 6px;
+    }
+    #tweaks .opts { display: flex; gap: 3px; }
+    #tweaks .opts button {
+      flex: 1; padding: 6px 8px; border-radius: 3px;
+      background: rgba(241,236,224,0.03); border: 1px solid var(--vr-line);
+      color: var(--vr-cream-dim); font-size: 10px; cursor: pointer;
+      font-family: var(--ff-sans);
+    }
+    #tweaks .opts button.active {
+      background: var(--vr-gold); color: var(--vr-ink);
+      border-color: var(--vr-gold); font-weight: 600;
+    }
+
+    /* Variant: Obsidian — cooler, steel-blue accent, no gold */
+    body.variant-obsidian {
+      --vr-gold:      #9fb8cc;
+      --vr-gold-deep: #5a7a8e;
+      --vr-gold-soft: rgba(159, 184, 204, 0.09);
+      --vr-gold-line: rgba(159, 184, 204, 0.22);
+      --vr-sleeve-stocks: #8fc2a6;
+      --vr-sleeve-options:#9fb8cc;
+      --vr-sleeve-crypto: #b4a4d9;
+    }
+    body.variant-obsidian #app-frame {
+      box-shadow:
+        0 0 0 11px #07080f,
+        0 0 0 12px rgba(159,184,204,0.2),
+        0 50px 120px rgba(0,0,0,0.6);
+    }
+
+    /* Variant: Ivory — dramatic inversion, parchment on deep ink */
+    body.variant-ivory {
+      --vr-ink:        #101018;
+      --vr-ink-raised: #17171f;
+      --vr-ink-sunken: #0b0b12;
+      --vr-cream:      #f5efe0;
+      --vr-cream-dim:  #d2cab8;
+      --vr-gold:       #b18d4f;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-frame">
+    <div class="vr-island"></div>
+    <div class="vr-status">
+      <span>9:41</span>
+      <span></span>
+      <span style="font-size: 12px;">●●●</span>
+    </div>
+    <div class="vr-scroll" id="scroll-root">
+      <div id="root"></div>
+    </div>
+    <div class="vr-home"></div>
+  </div>
+
+  <div id="tweaks">
+    <h3>Tweaks</h3>
+    <label>Identity</label>
+    <div class="opts" id="variant-opts">
+      <button data-v="default" class="active">Champagne</button>
+      <button data-v="obsidian">Obsidian</button>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script type="text/babel" src="vires-shared.jsx"></script>
+  <script type="text/babel" src="vires-trading.jsx"></script>
+  <script type="text/babel" src="vires-bench.jsx"></script>
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "variant": "default",
+      "page": "trading"
+    }/*EDITMODE-END*/;
+
+    function App() {
+      const [page, setPage] = React.useState(() => localStorage.getItem('vr-page') || TWEAK_DEFAULTS.page);
+      React.useEffect(() => {
+        localStorage.setItem('vr-page', page);
+        document.getElementById('scroll-root').scrollTop = 0;
+      }, [page]);
+      return (
+        <div>
+          <CommandStrip onNav={setPage} page={page} />
+          {page === 'trading' ? <TradingPage /> : <BenchPage />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+    // Tweaks
+    const tweaks = document.getElementById('tweaks');
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === '__activate_edit_mode') tweaks.classList.add('on');
+      if (e.data?.type === '__deactivate_edit_mode') tweaks.classList.remove('on');
+    });
+    window.parent.postMessage({type: '__edit_mode_available'}, '*');
+
+    const applyVariant = (v) => {
+      document.body.classList.remove('variant-obsidian', 'variant-ivory');
+      if (v && v !== 'default') document.body.classList.add(`variant-${v}`);
+    };
+    const iv = localStorage.getItem('vr-variant') || TWEAK_DEFAULTS.variant;
+    applyVariant(iv);
+    document.querySelectorAll('#variant-opts button').forEach(b => b.classList.toggle('active', b.dataset.v === iv));
+    document.querySelectorAll('#variant-opts button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#variant-opts button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      applyVariant(b.dataset.v);
+      localStorage.setItem('vr-variant', b.dataset.v);
+      window.parent.postMessage({type: '__edit_mode_set_keys', edits: {variant: b.dataset.v}}, '*');
+    }));
+
+    // Live tick simulation
+    setInterval(() => {
+      const a = window.VIRES_DATA.account;
+      a.today_pnl += (Math.random() - 0.5) * 5;
+      a.today_pnl_pct = (a.today_pnl / a.base_value) * 100;
+      a.equity = a.base_value + a.total_pnl + a.today_pnl;
+    }, 5000);
+  </script>
+</body>
+</html>

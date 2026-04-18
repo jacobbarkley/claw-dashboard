@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Primer 04 — Parameter Stability · Vires Capital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Geist:wght@100..900&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="vires.css?v=9"/>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <style>
+    html, body { background: var(--vr-ink); }
+    body { margin: 0; min-height: 100vh; overflow-x: hidden; }
+
+    /* Starfield — primer version, fills the whole page behind content */
+    .primer-starfield {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .primer-starfield .star {
+      position: absolute; border-radius: 50%;
+      animation: vr-twinkle var(--td, 5s) var(--tdel, 0s) ease-in-out infinite;
+    }
+    @keyframes vr-twinkle {
+      0%, 100% { opacity: var(--tmin, 0.15); }
+      50%      { opacity: var(--tmax, 0.6); }
+    }
+    .primer-neb {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 900px 500px at 20% 10%, rgba(200,169,104,0.06), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 82% 70%, rgba(138,180,248,0.04), transparent 60%);
+    }
+
+    /* Tweaks panel (consistent with main app) */
+    #tweaks {
+      position: fixed; bottom: 20px; right: 20px;
+      background: rgba(10, 11, 20, 0.97);
+      border: 1px solid var(--vr-line-hi); border-radius: 6px;
+      padding: 14px 16px; width: 240px;
+      backdrop-filter: blur(20px); display: none; z-index: 999;
+    }
+    #tweaks.on { display: block; }
+    #tweaks h3 { margin: 0 0 10px; font-family: var(--ff-serif); font-size: 16px; font-weight: 500; color: var(--vr-gold); }
+    #tweaks label {
+      display: block; font-size: 9px; font-weight: 500;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--vr-cream-mute); margin: 12px 0 6px;
+    }
+    #tweaks .opts { display: flex; gap: 3px; flex-wrap: wrap; }
+    #tweaks .opts button {
+      flex: 1 1 auto; padding: 6px 8px; border-radius: 3px;
+      background: rgba(241,236,224,0.03); border: 1px solid var(--vr-line);
+      color: var(--vr-cream-dim); font-size: 10px; cursor: pointer;
+      font-family: var(--ff-sans); white-space: nowrap;
+    }
+    #tweaks .opts button.active {
+      background: var(--vr-gold); color: var(--vr-ink);
+      border-color: var(--vr-gold); font-weight: 600;
+    }
+
+    /* Variant: Obsidian */
+    body.variant-obsidian {
+      --vr-gold:      #9fb8cc;
+      --vr-gold-deep: #5a7a8e;
+      --vr-gold-soft: rgba(159, 184, 204, 0.09);
+      --vr-gold-line: rgba(159, 184, 204, 0.22);
+    }
+
+    /* ─── Mobile pass ───────────────────────────────────────── */
+
+    /* Tablet: rail drops under the grid, grid card widens to fit */
+    @media (max-width: 960px) {
+      .pr-page            { padding: 48px 24px 64px !important; }
+      .pr-primary-card    { width: 100% !important; max-width: 720px; margin: 0 auto; padding: 22px !important; }
+      .pr-grid-rail       { grid-template-columns: 1fr !important; gap: 18px !important; }
+      .pr-rail            {
+        padding-left: 0 !important;
+        border-left: none !important;
+        border-top: 1px solid var(--vr-line);
+        padding-top: 18px !important;
+        min-height: 0 !important;
+        min-width: 0 !important;
+      }
+      .pr-summary-row     { grid-template-columns: 1fr 1fr !important; }
+      .pr-summary-row > *:first-child { grid-column: 1 / -1; }
+      .pr-h1              { font-size: 34px !important; }
+    }
+
+    /* Mobile: stack everything, shrink paddings, compact the grid */
+    @media (max-width: 640px) {
+      .pr-page            { padding: 64px 14px 56px !important; }
+      .pr-intro           { margin-bottom: 32px !important; }
+      .pr-h1              { font-size: 26px !important; line-height: 1.15 !important; }
+      .pr-intro .t-read   { font-size: 13px !important; }
+
+      .pr-primary-card    { padding: 16px !important; border-radius: 6px; }
+      .pr-primary-header  {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+      }
+      .pr-primary-header .t-h3 { font-size: 18px !important; }
+
+      /* Let the SVG grid scale down to container width */
+      .pr-grid-rail > div:first-child > svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .pr-summary-row     { grid-template-columns: 1fr !important; gap: 10px !important; }
+      .pr-summary-row > *:first-child { grid-column: auto; }
+
+      .pr-also-considered { margin-top: 48px !important; }
+      .pr-mini-grid       { grid-template-columns: 1fr !important; gap: 16px !important; }
+      .pr-mini-grid > div > div > svg {
+        max-width: 100%; height: auto;
+      }
+
+      .pr-annotations     { margin-top: 56px !important; }
+      .pr-annotations-grid{ grid-template-columns: 1fr !important; gap: 12px !important; }
+
+      /* Back-home button: nudge so it doesn't collide with the content */
+      #back-home          { top: 10px !important; left: 10px !important; padding: 6px 10px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="primer-neb"></div>
+  <div class="primer-starfield" id="starfield"></div>
+
+  <div id="root" style="position: relative; z-index: 1;"></div>
+
+  <!-- Back-home strip: small, matches CommandStrip tone -->
+  <a href="Vires Capital v2.html" id="back-home" style="
+    position: fixed; top: 16px; left: 18px; z-index: 40;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 12px 7px 10px; border-radius: 3px;
+    background: rgba(10, 11, 20, 0.75); backdrop-filter: blur(20px);
+    border: 1px solid var(--vr-line-hi);
+    text-decoration: none; cursor: pointer;
+    font-family: var(--ff-sans); font-size: 10px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-cream-mute);
+    transition: color 0.15s, border-color 0.15s;
+  " onmouseover="this.style.color='var(--vr-cream)'; this.style.borderColor='var(--vr-gold-line)';"
+    onmouseout="this.style.color='var(--vr-cream-mute)'; this.style.borderColor='var(--vr-line-hi)';">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="display:block;">
+      <path d="M6.5 1.5 L3 5 L6.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>Vires</span>
+  </a>
+
+  <div id="tweaks">
+    <h3>Tweaks</h3>
+    <label>Identity</label>
+    <div class="opts" id="variant-opts">
+      <button data-v="auto" class="active">Auto · Sun / Moon</button>
+      <button data-v="default">Champagne</button>
+      <button data-v="obsidian">Obsidian</button>
+    </div>
+  </div>
+
+  <script src="primer-stability-data.js"></script>
+  <script type="text/babel" src="primer-stability-shared.jsx"></script>
+  <script type="text/babel" src="primer-stability-views.jsx"></script>
+  <script type="text/babel">
+    // Simple starfield for the primer (not portal'd — just fills the page)
+    (function () {
+      const host = document.getElementById('starfield');
+      let s = 7;
+      const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+      const count = 110;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('span');
+        el.className = 'star';
+        const r = rand();
+        const size = r > 0.92 ? 1.6 : r > 0.6 ? 1.0 : 0.6;
+        const gold = r > 0.90;
+        el.style.left = (rand() * 100) + '%';
+        el.style.top = (rand() * 100) + '%';
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+        el.style.background = gold ? 'var(--vr-gold)' : 'var(--vr-cream)';
+        el.style.boxShadow = gold ? '0 0 5px rgba(200,169,104,0.5)' : '0 0 3px rgba(241,236,224,0.4)';
+        el.style.setProperty('--td', (3 + rand() * 5) + 's');
+        el.style.setProperty('--tdel', (rand() * 7) + 's');
+        el.style.setProperty('--tmin', (0.05 + rand() * 0.12).toFixed(2));
+        el.style.setProperty('--tmax', (0.3 + rand() * 0.4).toFixed(2));
+        host.appendChild(el);
+      }
+    })();
+
+    // Shim Starfield so the view's reference to it is a no-op here
+    window.Starfield = () => null;
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PlateauPrimer/>);
+
+    // Tweaks
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "variant": "auto"
+    }/*EDITMODE-END*/;
+    const tweaks = document.getElementById('tweaks');
+    window.addEventListener('message', (e) => {
+      if (e.data?.type === '__activate_edit_mode') tweaks.classList.add('on');
+      if (e.data?.type === '__deactivate_edit_mode') tweaks.classList.remove('on');
+    });
+    window.parent.postMessage({type: '__edit_mode_available'}, '*');
+
+    const resolveVariant = (v) => {
+      if (v !== 'auto') return v;
+      const h = new Date().getHours();
+      return (h >= 6 && h < 18) ? 'default' : 'obsidian';
+    };
+    const applyVariant = (v) => {
+      document.body.classList.remove('variant-obsidian');
+      const resolved = resolveVariant(v);
+      if (resolved && resolved !== 'default') document.body.classList.add(`variant-${resolved}`);
+    };
+    const iv = localStorage.getItem('vr-variant') || TWEAK_DEFAULTS.variant;
+    applyVariant(iv);
+    document.querySelectorAll('#variant-opts button').forEach(b => b.classList.toggle('active', b.dataset.v === iv));
+    document.querySelectorAll('#variant-opts button').forEach(b => b.addEventListener('click', () => {
+      document.querySelectorAll('#variant-opts button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      applyVariant(b.dataset.v);
+      localStorage.setItem('vr-variant', b.dataset.v);
+      window.parent.postMessage({type: '__edit_mode_set_keys', edits: {variant: b.dataset.v}}, '*');
+    }));
+  </script>
+</body>
+</html>
