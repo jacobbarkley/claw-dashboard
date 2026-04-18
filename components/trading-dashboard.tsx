@@ -489,14 +489,20 @@ interface TradingData {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+// Locale-aware fixed-decimal formatting so larger numbers (BTC at $76,942.32,
+// account equity, etc.) get thousands separators. Use this everywhere a
+// number renders to a user-facing string.
+const fmtFixed = (n: number, decimals: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+
 const fmt = (n: number | null | undefined, prefix = "", suffix = "", decimals = 2) =>
-  n == null ? "—" : `${prefix}${n.toFixed(decimals)}${suffix}`
+  n == null ? "—" : `${prefix}${fmtFixed(n, decimals)}${suffix}`
 
 // Accounting notation: negatives in (parens), positives with optional +
 const fmtAcct = (n: number | null | undefined, prefix = "", suffix = "", decimals = 2, showPlus = false) =>
   n == null ? "—" : n < 0
-    ? `(${prefix}${Math.abs(n).toFixed(decimals)}${suffix})`
-    : `${showPlus && n > 0 ? "+" : ""}${prefix}${n.toFixed(decimals)}${suffix}`
+    ? `(${prefix}${fmtFixed(Math.abs(n), decimals)}${suffix})`
+    : `${showPlus && n > 0 ? "+" : ""}${prefix}${fmtFixed(n, decimals)}${suffix}`
 
 const pnlColor = (n: number | null | undefined) =>
   n == null ? "text-[var(--cb-text-secondary)]"
@@ -1694,7 +1700,7 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
               ) : (
                 <>
                   <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-                    {p.qty} sh · avg ${p.entry_price?.toFixed(2) ?? "—"} · ${p.market_value?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"} value
+                    {p.qty} sh · avg {fmt(p.entry_price, "$", "", 2)} · ${p.market_value?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"} value
                   </span>
                   {exitLabel && <span style={{ color: "var(--cb-border-std)" }}>·</span>}
                 </>
@@ -1718,7 +1724,7 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
             ) : (
               <>
                 <div className="text-base font-medium text-[var(--cb-text-primary)]">
-                  ${p.current_price?.toFixed(2) ?? "—"}
+                  {fmt(p.current_price, "$", "", 2)}
                 </div>
                 <div className={`text-xs font-medium cb-number ${pnlColor(p.unrealized_pnl)}`}>
                   {fmtAcct(p.unrealized_pnl, "$", "", 2, true)}
@@ -1755,11 +1761,11 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Premium sold</div>
-                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2)}/sh</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{fmt(p.entry_price, "$", "/sh", 2)}</div>
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Current value</div>
-                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.current_price?.toFixed(2)}/sh</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{fmt(p.current_price, "$", "/sh", 2)}</div>
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Option today</div>
@@ -1793,7 +1799,7 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
             <>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Market Value</div>
-                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.market_value?.toFixed(2) ?? "—"}</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{fmt(p.market_value, "$", "", 2)}</div>
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Today</div>
@@ -1803,7 +1809,7 @@ function PositionRow({ p, exitDecision, underlyingChangePct }: {
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Entry</div>
-                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>${p.entry_price?.toFixed(2) ?? "—"}</div>
+                <div className="font-medium" style={{ color: "var(--cb-text-primary)" }}>{fmt(p.entry_price, "$", "", 2)}</div>
               </div>
               <div>
                 <div style={{ color: "var(--cb-text-tertiary)" }}>Side</div>
