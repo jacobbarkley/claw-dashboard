@@ -7,8 +7,10 @@
 // position list. Future BTC TSMOM / exposure ladder cards will plug in once
 // Codex ships the crypto signal data in the operator feed.
 
+import { useState } from "react"
 import { Delta, StatusPill, fmtCurrency, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 import type { ViresTradingData } from "./trading-home"
+import { useSharedTimeframe, TIMEFRAMES, type Timeframe } from "./timeframe-context"
 
 interface ViresPosition {
   symbol: string
@@ -154,6 +156,13 @@ function SleeveSummary({ sleeve, positions, equityCurve }: {
 // to the sleeve's current market value so the chart never contradicts the
 // big number above it. Options (or any sleeve with $0 deployed) renders a
 // flat dashed "awaiting promotion" line instead of pretending.
+//
+// Two interactive controls:
+//   - Timeframe pills (1D / 1W / 1M / 3M / 1Y / ALL) — shared across every
+//     chart on /vires via useSharedTimeframe; pick on any card, all chart
+//     windows agree.
+//   - RET / MV toggle — local per-card. RET shows cumulative return % from
+//     the window start (zero line drawn); MV shows dollar market value.
 
 const SLEEVE_SEED: Record<Sleeve, { seed: number; amp: number }> = {
   stocks:  { seed: 7919, amp: 1.05 },
@@ -168,7 +177,9 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
   equityCurve: Array<{ date: string; equity: number }>
 }) {
   const W = 520
-  const H = 48
+  const H = 58
+  const { tf, setTf } = useSharedTimeframe()
+  const [mode, setMode] = useState<"RET" | "MV">("MV")
 
   if (currentValue <= 0) {
     // Awaiting-promotion flat line — honest about having no data.
@@ -201,50 +212,59 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
 
   if (equityCurve.length < 2) return null
 
-  // Generate a deterministic noise series from the account curve. Maps each
-  // daily account point into a sleeve-relative fractional change, then
-  // amplifies and re-scales the end so the sparkline closes exactly at
-  // currentValue. Same seed always produces the same line so the chart
-  // doesn't flicker between renders.
+  // Slice the account curve by the shared timeframe. For ALL use the whole
+  // series; otherwise take the last N days. We keep at least 2 points so
+  // the walk has a span to draw against.
+  const tfMeta = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
+  const window =
+    tfMeta.days === Infinity
+      ? equityCurve
+      : equityCurve.slice(-Math.max(2, Math.min(equityCurve.length, tfMeta.days + 1)))
+
+  // Generate a deterministic noise series from the windowed account curve.
+  // Seed incorporates the TF key so changing timeframes reshuffles noise
+  // (otherwise every window draws the same wobble at different scales).
   const { seed, amp } = SLEEVE_SEED[sleeve]
-  let s = seed >>> 0
+  let s = (seed ^ tf.charCodeAt(0) * 131) >>> 0
   const rand = () => {
     s = (s * 9301 + 49297) % 233280
     return s / 233280 - 0.5
   }
 
-  const accountStart = equityCurve[0].equity
-  const accountEnd = equityCurve[equityCurve.length - 1].equity
+  const accountStart = window[0].equity
+  const accountEnd = window[window.length - 1].equity
   const accountReturn = accountEnd / Math.max(accountStart, 1)
   // Sleeve's synthetic return magnifies the account return by amp, then
   // walks with seeded noise around the straight line between start and end.
   const sleeveEndRatio = Math.pow(accountReturn, amp)
-  const sleeveStart = currentValue / sleeveEndRatio
+  const sleeveStart = currentValue / Math.max(sleeveEndRatio, 0.0001)
 
   const walk: number[] = []
-  let eq = sleeveStart
-  for (let i = 0; i < equityCurve.length; i++) {
-    const t = i / (equityCurve.length - 1)
-    // Target value from start→end straight line, amplified.
+  for (let i = 0; i < window.length; i++) {
+    const t = i / (window.length - 1)
     const target = sleeveStart * (1 + (sleeveEndRatio - 1) * t)
-    // Nudge toward target with noise so the shape is interesting but ends
-    // at currentValue exactly.
     const noise = rand() * 0.012 * target
-    eq = target + noise
-    walk.push(eq)
+    walk.push(target + noise)
   }
   // Force last point to match currentValue (no drift).
   walk[walk.length - 1] = currentValue
 
-  const min = Math.min(...walk)
-  const max = Math.max(...walk)
+  // Convert to display series. MV = dollars. RET = cumulative return %
+  // from the window start.
+  const series =
+    mode === "MV"
+      ? walk
+      : walk.map(v => (v / walk[0] - 1) * 100)
+
+  const min = Math.min(...series)
+  const max = Math.max(...series)
   const pad = (max - min) * 0.1 || 1
   const minP = min - pad
   const maxP = max + pad
   const range = maxP - minP || 1
 
-  const pts = walk.map((v, i) => {
-    const x = (i / Math.max(1, walk.length - 1)) * W
+  const pts = series.map((v, i) => {
+    const x = (i / Math.max(1, series.length - 1)) * W
     const y = H - ((v - minP) / range) * H
     return [x, y] as const
   })
@@ -252,8 +272,43 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
   const fd = `${d} L${W},${H} L0,${H} Z`
   const gradId = `vr-sleeve-${sleeve}-grad`
 
+  // Zero line (only for RET when zero is within the visible range).
+  const zeroInRange = mode === "RET" && 0 >= minP && 0 <= maxP
+  const zeroY = zeroInRange ? H - ((0 - minP) / range) * H : null
+
+  const lastValue = series[series.length - 1]
+  const firstValue = series[0]
+  const periodPct = mode === "MV" ? ((lastValue - firstValue) / firstValue) * 100 : lastValue
+
   return (
     <div style={{ marginTop: 18 }}>
+      {/* Controls row: period delta + timeframe pills + RET/MV toggle */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 8,
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <div className="t-num" style={{ fontSize: 11, color: toneColor(toneOf(periodPct)), fontWeight: 500 }}>
+          {periodPct >= 0 ? "+" : ""}{periodPct.toFixed(2)}%
+          <span
+            className="t-label"
+            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginLeft: 5, letterSpacing: "0.12em", textTransform: "uppercase" }}
+          >
+            {tf} {mode === "RET" ? "return" : "value"}
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <TimeframePills tf={tf} onChange={setTf} />
+          <RetMvToggle mode={mode} onChange={setMode} />
+        </div>
+      </div>
+
+      {/* The line + area */}
       <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
@@ -261,9 +316,13 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
+        {zeroY != null && (
+          <line x1="0" y1={zeroY} x2={W} y2={zeroY} stroke="var(--vr-cream-faint)" strokeWidth="0.6" strokeDasharray="2 3" />
+        )}
         <path d={fd} fill={`url(#${gradId})`} />
         <path d={d} stroke={color} strokeWidth="1.1" fill="none" strokeLinejoin="round" />
       </svg>
+
       <div
         className="t-label"
         style={{
@@ -274,8 +333,87 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
           textTransform: "uppercase",
         }}
       >
-        Modeled · final point matches current value · real sleeve history lands with primer 5
+        Modeled · final point matches current value · real history lands with primer 5
       </div>
+    </div>
+  )
+}
+
+function TimeframePills({ tf, onChange }: { tf: Timeframe; onChange: (v: Timeframe) => void }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        padding: 2,
+        gap: 0,
+        background: "rgba(241,236,224,0.03)",
+        border: "1px solid var(--vr-line)",
+        borderRadius: 3,
+      }}
+    >
+      {TIMEFRAMES.map(t => {
+        const active = t.k === tf
+        return (
+          <button
+            key={t.k}
+            type="button"
+            onClick={() => onChange(t.k)}
+            className="t-eyebrow"
+            style={{
+              padding: "3px 7px",
+              border: "none",
+              borderRadius: 2,
+              cursor: "pointer",
+              background: active ? "var(--vr-gold)" : "transparent",
+              color: active ? "var(--vr-ink)" : "var(--vr-cream-mute)",
+              fontWeight: 600,
+              fontSize: 9,
+            }}
+          >
+            {t.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function RetMvToggle({ mode, onChange }: { mode: "RET" | "MV"; onChange: (m: "RET" | "MV") => void }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        padding: 2,
+        gap: 0,
+        background: "rgba(241,236,224,0.03)",
+        border: "1px solid var(--vr-line)",
+        borderRadius: 3,
+      }}
+    >
+      {(["RET", "MV"] as const).map(m => {
+        const active = m === mode
+        return (
+          <button
+            key={m}
+            type="button"
+            onClick={() => onChange(m)}
+            className="t-eyebrow"
+            style={{
+              padding: "3px 8px",
+              border: "none",
+              borderRadius: 2,
+              cursor: "pointer",
+              background: active ? "var(--vr-cream)" : "transparent",
+              color: active ? "var(--vr-ink)" : "var(--vr-cream-mute)",
+              fontWeight: 600,
+              fontSize: 9,
+            }}
+            aria-label={m === "RET" ? "Show cumulative return" : "Show market value"}
+          >
+            {m}
+          </button>
+        )
+      })}
     </div>
   )
 }

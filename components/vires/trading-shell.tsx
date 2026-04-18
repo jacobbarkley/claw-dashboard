@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
+import { ViresTimeframeProvider } from "./timeframe-context"
 
 // Opaque operator shape — passed through to home-extras which owns its own
 // narrow types. Keeping it untyped here avoids re-declaring the same shape
@@ -198,7 +199,7 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   }
 
   return (
-    <>
+    <ViresTimeframeProvider>
       <SubNav tab={tab} onTab={setTab} />
       <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
         {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
@@ -206,6 +207,6 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
         {tab === "options" && <OptionsScreen data={currentData} />}
         {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
       </div>
-    </>
+    </ViresTimeframeProvider>
   )
 }

@@ -23,6 +23,7 @@ import {
 } from "./shared"
 import { ElevatedStrategies, MarketRegime, DeskStatus } from "./home-extras"
 import { useViresTalon } from "./talon"
+import { useSharedTimeframe, TIMEFRAMES as SHARED_TIMEFRAMES, type Timeframe } from "./timeframe-context"
 
 // ─── Types matching the operator feed subset this page consumes ────────────
 // Keep narrow on purpose so a downstream feed change only breaks the screens
@@ -362,16 +363,12 @@ function SleeveCard({ sleeve, total, count, todayPct, onOpen }: {
 // short windows. 1M / 3M / 1Y / ALL stay at daily resolution — the real
 // data is plenty honest at those scales. Intraday detail is modeled, not
 // live-tick (see Codex primer for when real bars land).
-const TIMEFRAMES = [
-  { k: "1D",  label: "1D",  days: 1,        intradaySteps: 78 },  // 78 bars ≈ 5-min session
-  { k: "1W",  label: "1W",  days: 7,        intradaySteps: 26 },
-  { k: "1M",  label: "1M",  days: 30,       intradaySteps: 0 },
-  { k: "3M",  label: "3M",  days: 90,       intradaySteps: 0 },
-  { k: "1Y",  label: "1Y",  days: 365,      intradaySteps: 0 },
-  { k: "ALL", label: "ALL", days: Infinity, intradaySteps: 0 },
-] as const
+//
+// TIMEFRAMES are imported from timeframe-context so the shared state +
+// sleeve sparklines all agree on the same window definitions.
+const TIMEFRAMES = SHARED_TIMEFRAMES
 
-type TfKey = (typeof TIMEFRAMES)[number]["k"]
+type TfKey = Timeframe
 
 interface CurvePoint {
   date: string
@@ -435,7 +432,7 @@ function EquityChart({ curve, baseValue }: {
   curve: ViresTradingData["equity_curve"]
   baseValue: number | null
 }) {
-  const [tf, setTf] = useState<TfKey>("1W")
+  const { tf, setTf } = useSharedTimeframe()
   const [tfMenu, setTfMenu] = useState(false)
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
