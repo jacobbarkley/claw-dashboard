@@ -308,3 +308,194 @@ export function SleeveChip({ sleeve, label }: { sleeve: Sleeve; label?: string }
 }
 
 export const sleeveColor = (sleeve: Sleeve): string => SLEEVE_MAP[sleeve].color
+
+// ─── Glossary + InfoPop ─────────────────────────────────────────────────────
+// Inline "i" button that opens a definition modal. Good for jargon that
+// doesn't fit in a card subtitle but should be one tap away. Ported from
+// the design handoff's vires-shared.jsx.
+
+export interface GlossaryEntry {
+  title: string
+  full: string
+  body: string
+}
+
+export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
+  VIX: {
+    title: "VIX",
+    full: "Cboe Volatility Index",
+    body: "Market\u2019s 30-day forward expectation of S&P 500 volatility, derived from option prices. Often called the \u201Cfear gauge.\u201D Below 15 is calm; 15\u201325 is normal; 25\u201335 is elevated; above 35 is stressed.",
+  },
+  HMM: {
+    title: "HMM",
+    full: "Hidden Markov Model",
+    body: "A statistical model that infers the current \u201Cregime\u201D of the market (e.g. trend, mean-reverting, chaotic) from observable price / volume signals. We use it to gate which strategies are allowed to trade.",
+  },
+  Jump: {
+    title: "Jump Variation",
+    full: "Realized Jump Stress",
+    body: "A measure of how much of recent price action came from sudden discontinuous moves (gaps, news shocks) versus smooth diffusion. High jump stress means the market is being driven by surprise events, not orderly flow.",
+  },
+  Sharpe: {
+    title: "Sharpe Ratio",
+    full: "Risk-Adjusted Return",
+    body: "Return per unit of volatility. Above 1.0 is strong; above 2.0 is excellent. Tells you whether returns came from skill or just from taking more risk.",
+  },
+  Sortino: {
+    title: "Sortino Ratio",
+    full: "Downside-Adjusted Return",
+    body: "Like Sharpe, but only penalizes downside volatility. Rewards strategies that have big up days but controlled losses.",
+  },
+  Calmar: {
+    title: "Calmar Ratio",
+    full: "Return \u00F7 Max Drawdown",
+    body: "Annualized return divided by worst peak-to-trough loss. Answers: \u201Cwas the ride worth the dip?\u201D Our primary success metric for crypto.",
+  },
+  MaxDD: {
+    title: "Max Drawdown",
+    full: "Worst Peak-to-Trough Loss",
+    body: "The largest percentage decline from a portfolio peak before recovering. Lower is better \u2014 measures the worst pain you would have endured holding the strategy.",
+  },
+  ProfitFactor: {
+    title: "Profit Factor",
+    full: "Gross Profit \u00F7 Gross Loss",
+    body: "Total winning P&L divided by total losing P&L. Above 1.5 is healthy; above 2.0 is excellent. A direct measure of how much winners outweigh losers.",
+  },
+  WinRate: {
+    title: "Win Rate",
+    full: "Percentage of Profitable Trades",
+    body: "Share of trades that closed positive. High win rate doesn\u2019t guarantee profitability \u2014 combine with average win / loss size for the full picture.",
+  },
+  Plateau: {
+    title: "Parameter Plateau",
+    full: "Local Stability Check",
+    body: "Backtests rank candidates by score \u2014 but the highest score is often a lucky peak that collapses under small parameter shifts. A plateau is a region where many nearby configurations all do well. The bench\u2019s plateau gate separates real edge from lucky parameter alignment.",
+  },
+}
+
+export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {
+  const [open, setOpen] = useState(false)
+  const def = VIRES_GLOSSARY[term]
+  if (!def) return null
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen(true) }}
+        aria-label={`What is ${def.title}?`}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: size,
+          height: size,
+          borderRadius: "50%",
+          background: "rgba(241, 236, 224, 0.06)",
+          border: "1px solid var(--vr-line)",
+          color: "var(--vr-cream-mute)",
+          fontSize: Math.max(9, size - 4),
+          fontFamily: "var(--ff-serif)",
+          fontStyle: "italic",
+          fontWeight: 500,
+          cursor: "pointer",
+          padding: 0,
+          marginLeft: 5,
+          verticalAlign: "middle",
+          lineHeight: 1,
+        }}
+      >
+        i
+      </button>
+      {open && <DefinitionModal def={def} onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+function DefinitionModal({ def, onClose }: { def: GlossaryEntry; onClose: () => void }) {
+  // Escape closes.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(6, 7, 14, 0.68)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        zIndex: 70,
+        animation: "vr-def-fade 180ms ease",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Definition: ${def.title}`}
+        style={{
+          width: "100%",
+          maxWidth: 340,
+          padding: "20px 22px",
+          background: "var(--vr-ink-raised)",
+          border: "1px solid var(--vr-gold-line)",
+          borderRadius: "var(--r-card)",
+          boxShadow: "0 30px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(200, 169, 104, 0.08)",
+          animation: "vr-def-pop 220ms cubic-bezier(.2, .9, .3, 1.2)",
+        }}
+      >
+        <div className="t-eyebrow" style={{ color: "var(--vr-gold)", marginBottom: 6 }}>
+          Definition
+        </div>
+        <div className="t-h3" style={{ marginBottom: 2 }}>{def.title}</div>
+        <div
+          className="t-label"
+          style={{
+            fontSize: 11,
+            fontStyle: "italic",
+            color: "var(--vr-cream-mute)",
+            marginBottom: 12,
+          }}
+        >
+          {def.full}
+        </div>
+        <div
+          className="t-read"
+          style={{ fontSize: 13, lineHeight: 1.55, color: "var(--vr-cream-dim)" }}
+        >
+          {def.body}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            marginTop: 18,
+            width: "100%",
+            padding: "9px 12px",
+            background: "transparent",
+            border: "1px solid var(--vr-line-hi)",
+            color: "var(--vr-cream)",
+            fontFamily: "var(--ff-sans)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            borderRadius: 2,
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  )
+}

@@ -6,7 +6,7 @@
 // these (the earlier primer flagged regime as a Codex ask; turned out
 // the feed already carries it under operator.regime).
 
-import { SectionHeader, SleeveChip, StatusPill } from "./shared"
+import { InfoPop, SectionHeader, SleeveChip, StatusPill } from "./shared"
 
 // ─── Types (narrow, pulled from operator feed observation) ──────────────────
 
@@ -206,8 +206,9 @@ function displayNameFromFamily(family?: string | null): string | null {
 
 // ─── Market Regime ──────────────────────────────────────────────────────────
 
-function RegimeTile({ label, value, sub, first = false }: {
+function RegimeTile({ label, term, value, sub, first = false }: {
   label: string
+  term?: string  // glossary key — when present the tile gets an ⓘ button
   value: string
   sub: string
   first?: boolean
@@ -219,7 +220,13 @@ function RegimeTile({ label, value, sub, first = false }: {
         borderLeft: first ? "none" : "1px solid var(--vr-line)",
       }}
     >
-      <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 6 }}>{label}</div>
+      <div
+        className="t-eyebrow"
+        style={{ fontSize: 9, marginBottom: 6, display: "flex", alignItems: "center" }}
+      >
+        {label}
+        {term && <InfoPop term={term} size={11} />}
+      </div>
       <div className="t-h3" style={{ fontSize: 16, textTransform: "capitalize" }}>{value}</div>
       <div className="t-label" style={{ fontSize: 10, marginTop: 3 }}>{sub}</div>
     </div>
@@ -241,10 +248,10 @@ export function MarketRegime({ operator }: { operator: OperatorBundle | null }) 
     )
   }
 
-  const items = [
-    { l: "VIX",  v: r.vix_level != null ? r.vix_level.toFixed(2) : "—", s: (r.vix_regime ?? "—").toLowerCase() },
-    { l: "HMM",  v: (r.hmm_regime ?? "—").toLowerCase(),                s: "regime state" },
-    { l: "Jump", v: (r.jump_variation_regime ?? "—").toLowerCase().replace("jump_", ""), s: "stress" },
+  const items: Array<{ l: string; term: string; v: string; s: string }> = [
+    { l: "VIX",  term: "VIX",  v: r.vix_level != null ? r.vix_level.toFixed(2) : "—", s: (r.vix_regime ?? "—").toLowerCase() },
+    { l: "HMM",  term: "HMM",  v: (r.hmm_regime ?? "—").toLowerCase(),                s: "regime state" },
+    { l: "Jump", term: "Jump", v: (r.jump_variation_regime ?? "—").toLowerCase().replace("jump_", ""), s: "stress" },
   ]
 
   return (
@@ -256,7 +263,7 @@ export function MarketRegime({ operator }: { operator: OperatorBundle | null }) 
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", borderTop: "1px solid var(--vr-line)" }}>
           {items.map((it, i) => (
-            <RegimeTile key={it.l} label={it.l} value={it.v} sub={it.s} first={i === 0} />
+            <RegimeTile key={it.l} label={it.l} term={it.term} value={it.v} sub={it.s} first={i === 0} />
           ))}
         </div>
       </div>
