@@ -134,6 +134,23 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
 
         if (cancelled) return
 
+        // /api/trading/live returns positions with `avg_entry`, but the
+        // Vires components expect `entry_price` (from the operator feed
+        // shape). Normalize the field name + coerce numeric types when we
+        // merge so every sleeve view sees a consistent ViresPosition.
+        const normalizeLivePosition = (lp: Record<string, unknown>) => ({
+          symbol: lp.symbol,
+          qty: Number(lp.qty ?? 0),
+          side: lp.side,
+          entry_price: Number(lp.avg_entry ?? lp.entry_price ?? 0),
+          current_price: Number(lp.current_price ?? 0),
+          market_value: Number(lp.market_value ?? 0),
+          unrealized_pnl: Number(lp.unrealized_pnl ?? 0),
+          unrealized_pct: lp.unrealized_pct == null ? null : Number(lp.unrealized_pct),
+          change_today_pct: Number(lp.change_today_pct ?? 0),
+          asset_type: (lp.asset_type as string) ?? "EQUITY",
+        })
+
         const merged = nextLive
           ? {
               ...nextFeed,
@@ -141,7 +158,9 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
                 ...nextFeed.account,
                 ...nextLive.account,
               },
-              positions: Array.isArray(nextLive.positions) ? nextLive.positions : nextFeed.positions,
+              positions: Array.isArray(nextLive.positions)
+                ? nextLive.positions.map(normalizeLivePosition)
+                : nextFeed.positions,
             }
           : nextFeed
 
