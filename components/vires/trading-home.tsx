@@ -12,12 +12,10 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import {
-  AnimatedNumber,
   Delta,
   EquityDisplay,
   OrbitRing,
   Starfield,
-  ViresMark,
   fmtCurrency,
   fmtPct,
   toneColor,
@@ -45,42 +43,6 @@ export interface ViresTradingData {
     asset_type?: string
   }>
   equity_curve: Array<{ date: string; equity: number }>
-}
-
-// ─── Command strip ──────────────────────────────────────────────────────────
-function CommandStrip({ mode = "PAPER" }: { mode?: "PAPER" | "LIVE" }) {
-  const isPaper = mode === "PAPER"
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "14px 18px",
-        borderBottom: "1px solid var(--vr-line)",
-        background: "rgba(10, 11, 20, 0.75)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        position: "sticky",
-        top: 0,
-        zIndex: 30,
-      }}
-    >
-      <ViresMark size={16} />
-      <span
-        className="t-eyebrow"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 5,
-          color: isPaper ? "var(--vr-gold)" : "var(--vr-up)",
-        }}
-      >
-        <span className="vr-pulse-dot" style={{ background: isPaper ? "var(--vr-gold)" : "var(--vr-up)" }} />
-        {mode}
-      </span>
-    </div>
-  )
 }
 
 // ─── Celestial ──────────────────────────────────────────────────────────────
@@ -539,25 +501,11 @@ function EquityChart({ curve, baseValue }: {
   )
 }
 
-// ─── Page composition ──────────────────────────────────────────────────────
-export function ViresTradingHome({ data }: { data: ViresTradingData | null }) {
-  // Fall back to a minimal empty-state when no feed exists, e.g. on a fresh
-  // Vercel deploy before the data file is committed.
-  if (!data) {
-    return (
-      <div style={{ padding: 32 }}>
-        <CommandStrip />
-        <div className="vr-card" style={{ marginTop: 24, padding: 32 }}>
-          <div className="t-eyebrow" style={{ marginBottom: 8 }}>No data</div>
-          <div className="t-label">
-            data/operator-feed.json was not found.{" "}
-            Run scripts/prepare-production-operator-feed.sh to generate it.
-          </div>
-        </div>
-      </div>
-    )
-  }
-
+// ─── Home view composition ──────────────────────────────────────────────────
+// Renders the Trading > Home tab: hero + sleeve cards + equity chart. The
+// inner Vires nav (Trading/Bench/Plateau) is rendered by app/vires/layout.tsx
+// and the sub-nav (Home/Stocks/Options/Crypto) by ViresTradingShell.
+export function ViresTradingHome({ data }: { data: ViresTradingData }) {
   const stockPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY")
   const cryptoPositions = data.positions.filter(p => p.asset_type === "CRYPTO")
   const optionPositions = data.positions.filter(p => p.asset_type === "OPTION")
@@ -570,18 +518,7 @@ export function ViresTradingHome({ data }: { data: ViresTradingData | null }) {
 
   return (
     <>
-      <CommandStrip mode="PAPER" />
-      <div
-        className="vr-screen"
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 14,
-        }}
-      >
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <HomeHero
           account={data.account}
           onOpenTalon={() => {

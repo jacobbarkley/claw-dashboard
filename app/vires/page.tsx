@@ -1,6 +1,6 @@
 import { promises as fs } from "fs"
 import path from "path"
-import { ViresTradingHome } from "@/components/vires/trading-home"
+import { ViresTradingShell } from "@/components/vires/trading-shell"
 
 // Server-side loader matches the existing /trading page so the new design
 // reads the same operator-feed.json source of truth — no data forking.
@@ -18,10 +18,10 @@ async function getInitialData() {
 }
 
 export const metadata = {
-  title: "Vires Capital — Preview",
+  title: "Vires Capital — Trading",
 }
 
-export default async function ViresPreviewPage() {
+export default async function ViresTradingPage() {
   const data = await getInitialData()
-  return <ViresTradingHome data={data} />
+  return <ViresTradingShell data={data} />
 }

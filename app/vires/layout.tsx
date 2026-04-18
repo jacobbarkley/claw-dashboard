@@ -1,5 +1,6 @@
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google"
 import "../vires.css"
+import { ViresInnerNav } from "@/components/vires/inner-nav"
 
 // Vires Capital design system fonts — loaded only inside /vires routes so
 // the existing /trading, /bench, /queue surfaces keep their DM_Sans + DM_Mono.
@@ -38,6 +39,7 @@ export default function ViresLayout({ children }: { children: React.ReactNode })
         ["--ff-mono" as string]: `var(--vr-font-mono), ui-monospace, SFMono-Regular, Menlo, monospace`,
       }}
     >
+      <ViresInnerNav mode="PAPER" />
       {children}
     </div>
   )
