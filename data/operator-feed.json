@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-18T03:37:44.558263+00:00",
+  "generated_at": "2026-04-18T04:36:14.966725+00:00",
   "as_of_date": "2026-04-17",
   "source_context": {
     "mode": "canonical",
@@ -16,8 +16,8 @@
     "base_value": 100000.0,
     "total_pnl": -14504.23,
     "total_pnl_pct": -14.5042,
-    "today_pnl": 60.05,
-    "today_pnl_pct": 0.0703,
+    "today_pnl": null,
+    "today_pnl_pct": null,
     "positions_value": 54751.57,
     "equity_deployed": 54508.47,
     "crypto_deployed": 243.1,
@@ -74,7 +74,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-18T03:37:44.558861+00:00"
+    "audit_written_at": "2026-04-18T04:36:14.966910+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -751,6 +751,75 @@
       "profit_loss_pct": -0.01
     }
   ],
+  "strategy_universe": {
+    "as_of": "2026-04-17T20:06:20.614979869Z",
+    "source": "alpaca_market_data_snapshots",
+    "symbols": [
+      {
+        "symbol": "AAPL",
+        "current_price": 270.205,
+        "prior_close": 263.325,
+        "change_usd": 6.88,
+        "change_pct": 2.6127,
+        "in_position": false,
+        "position_qty": 0.0
+      },
+      {
+        "symbol": "AVGO",
+        "current_price": 406.5,
+        "prior_close": 398.26,
+        "change_usd": 8.24,
+        "change_pct": 2.069,
+        "in_position": false,
+        "position_qty": 0.0
+      },
+      {
+        "symbol": "COST",
+        "current_price": 999.775,
+        "prior_close": 987.04,
+        "change_usd": 12.735,
+        "change_pct": 1.2902,
+        "in_position": false,
+        "position_qty": 0.0
+      },
+      {
+        "symbol": "LLY",
+        "current_price": 927.055,
+        "prior_close": 903.83,
+        "change_usd": 23.225,
+        "change_pct": 2.5696,
+        "in_position": false,
+        "position_qty": 0.0
+      },
+      {
+        "symbol": "META",
+        "current_price": 688.46,
+        "prior_close": 676.87,
+        "change_usd": 11.59,
+        "change_pct": 1.7123,
+        "in_position": false,
+        "position_qty": 0.0
+      },
+      {
+        "symbol": "NVDA",
+        "current_price": 201.5,
+        "prior_close": 198.26,
+        "change_usd": 3.24,
+        "change_pct": 1.6342,
+        "in_position": true,
+        "position_qty": 16.0
+      },
+      {
+        "symbol": "SGOV",
+        "current_price": 100.57,
+        "prior_close": 100.535,
+        "change_usd": 0.035,
+        "change_pct": 0.0348,
+        "in_position": true,
+        "position_qty": 510.0
+      }
+    ]
+  },
   "watchlist": {
     "items": [
       {

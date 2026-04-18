@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 from typing import Optional
+import urllib.error
+import urllib.parse
+import urllib.request
 from zoneinfo import ZoneInfo
 
 WORKSPACE = Path(os.environ.get('OPENCLAW_WORKSPACE', str(Path.home() / '.openclaw/workspace/trading-bot')))
@@ -29,8 +32,11 @@ APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(RE
 STRATEGY_BANK_PATH = Path(os.environ.get('OPENCLAW_STRATEGY_BANK_PATH', str(REBUILD_LATEST / 'strategy_bank.json')))
 ACTIVE_STRATEGY_PATH = Path(os.environ.get('OPENCLAW_ACTIVE_STRATEGY_PATH', str(REBUILD_LATEST / 'active_strategy.json')))
 BROKER_SNAPSHOT_PATH = Path(os.environ.get('OPENCLAW_BROKER_SNAPSHOT_PATH', str(REBUILD_LATEST / 'broker_snapshot.json')))
+ALPACA_CREDS_PATH = Path(os.environ.get('OPENCLAW_ALPACA_CREDS_PATH', str(Path.home() / '.openclaw/creds/alpaca-paper.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
+ALPACA_REQUIRED_KEYS = ('ALPACA_API_KEY_ID', 'ALPACA_API_SECRET_KEY')
+ALPACA_DATA_BASE_URL = 'https://data.alpaca.markets'
 OVERRIDE_ENV_KEYS = [
     'OPENCLAW_WORKSPACE',
     'OPENCLAW_REBUILD_LATEST',
@@ -78,6 +84,44 @@ def safe_float(value, default=None):
         return float(value) if value is not None else default
     except (TypeError, ValueError):
         return default
+
+
+def load_alpaca_creds(path: Path = ALPACA_CREDS_PATH) -> Optional[dict]:
+    payload = load(path)
+    if not isinstance(payload, dict):
+        return None
+    if not all(payload.get(key) for key in ALPACA_REQUIRED_KEYS):
+        return None
+    return payload
+
+
+def alpaca_data_request(creds: dict, path: str, *, params: Optional[dict] = None):
+    url = f'{ALPACA_DATA_BASE_URL}{path}'
+    if params:
+        query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None})
+        if query:
+            url = f'{url}?{query}'
+
+    request = urllib.request.Request(url)
+    request.add_header('APCA-API-KEY-ID', creds['ALPACA_API_KEY_ID'])
+    request.add_header('APCA-API-SECRET-KEY', creds['ALPACA_API_SECRET_KEY'])
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return json.loads(response.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        return None
+
+
+def fetch_stock_snapshots(symbols: list[str], creds: Optional[dict]) -> dict[str, dict]:
+    if creds is None or not symbols:
+        return {}
+    payload = alpaca_data_request(creds, '/v2/stocks/snapshots', params={'symbols': ','.join(symbols)})
+    if not isinstance(payload, dict):
+        return {}
+    snapshots = payload.get('snapshots')
+    if isinstance(snapshots, dict):
+        return snapshots
+    return payload
 
 
 def summarize_symbols(items: list[dict], key: str = 'symbol', limit: int = 5) -> list[str]:
@@ -333,6 +377,111 @@ def build_positions(market: dict, legacy_snapshot: dict, broker_snapshot: dict) 
             'asset_type': item.get('asset_type', 'EQUITY'),
         })
     return positions
+
+
+def build_strategy_universe(
+    market: dict,
+    active_strategy: dict,
+    positions: list[dict],
+    research_dataset: dict,
+) -> dict:
+    active_record = active_strategy.get('record', {}) if isinstance(active_strategy, dict) else {}
+    planning_profile = active_record.get('planning_profile', {}) if isinstance(active_record, dict) else {}
+    configured_symbols = planning_profile.get('symbols', [])
+    active_symbols = [str(symbol).strip().upper() for symbol in configured_symbols if symbol]
+    if not active_symbols:
+        active_symbols = [str(symbol).strip().upper() for symbol in market.get('tradable_symbols', []) if symbol]
+
+    held_equity_symbols = [
+        str(item.get('symbol')).strip().upper()
+        for item in positions
+        if item.get('symbol') and item.get('asset_type') == 'EQUITY'
+    ]
+
+    ordered_symbols: list[str] = []
+    for symbol in [*active_symbols, *held_equity_symbols]:
+        if symbol and symbol not in ordered_symbols:
+            ordered_symbols.append(symbol)
+
+    if not ordered_symbols:
+        return {
+            'as_of': None,
+            'source': 'alpaca_market_data_snapshots',
+            'symbols': [],
+        }
+
+    research_items = research_dataset.get('items', []) if isinstance(research_dataset, dict) else []
+    research_map = {
+        str(item.get('symbol')).strip().upper(): item
+        for item in research_items
+        if item.get('symbol')
+    }
+    position_map = {
+        str(item.get('symbol')).strip().upper(): item
+        for item in positions
+        if item.get('symbol')
+    }
+
+    creds = load_alpaca_creds()
+    snapshots = fetch_stock_snapshots(ordered_symbols, creds)
+    source = 'alpaca_market_data_snapshots' if snapshots else 'rebuild_research_dataset_fallback'
+    as_of_candidates: list[str] = []
+    items: list[dict] = []
+
+    for symbol in ordered_symbols:
+        snapshot = snapshots.get(symbol, {}) if isinstance(snapshots, dict) else {}
+        latest_trade = snapshot.get('latestTrade', {}) if isinstance(snapshot, dict) else {}
+        latest_quote = snapshot.get('latestQuote', {}) if isinstance(snapshot, dict) else {}
+        daily_bar = snapshot.get('dailyBar', {}) if isinstance(snapshot, dict) else {}
+        prev_daily_bar = snapshot.get('prevDailyBar', {}) if isinstance(snapshot, dict) else {}
+        research_item = research_map.get(symbol, {})
+        position_item = position_map.get(symbol, {})
+
+        current_price = safe_float(latest_trade.get('p'))
+        if current_price is None:
+            current_price = safe_float(daily_bar.get('c'))
+        if current_price is None:
+            current_price = safe_float(research_item.get('price'))
+        if current_price is None:
+            current_price = safe_float(position_item.get('current_price'))
+
+        prior_close = safe_float(prev_daily_bar.get('c'))
+        if prior_close is None:
+            held_change_pct = safe_float(position_item.get('change_today_pct'))
+            if held_change_pct not in (None, -100.0) and current_price is not None:
+                prior_close = current_price / (1 + held_change_pct / 100)
+
+        change_usd = None
+        change_pct = None
+        if current_price is not None and prior_close not in (None, 0):
+            change_usd = current_price - prior_close
+            change_pct = change_usd / prior_close * 100
+
+        timestamp = (
+            latest_trade.get('t')
+            or latest_quote.get('t')
+            or daily_bar.get('t')
+            or prev_daily_bar.get('t')
+        )
+        if isinstance(timestamp, str):
+            as_of_candidates.append(timestamp)
+
+        position_qty = safe_float(position_item.get('qty'), 0.0)
+        items.append({
+            'symbol': symbol,
+            'current_price': round(current_price, 4) if current_price is not None else None,
+            'prior_close': round(prior_close, 4) if prior_close is not None else None,
+            'change_usd': round(change_usd, 4) if change_usd is not None else None,
+            'change_pct': round(change_pct, 4) if change_pct is not None else None,
+            'in_position': symbol in position_map,
+            'position_qty': position_qty if position_qty is not None else 0.0,
+        })
+
+    return {
+        'as_of': max(as_of_candidates) if as_of_candidates else datetime.now(ET).isoformat(),
+        'source': source,
+        'symbols': items,
+    }
 
 
 def build_account(market: dict, legacy_snapshot: dict, positions: list[dict], source_context: dict, as_of_date: str) -> dict:
@@ -666,6 +815,7 @@ def main():
     session = load(REBUILD_LATEST / 'session_context.json')
     market = load(REBUILD_LATEST / 'market_snapshot.json')
     broker_snapshot = load(BROKER_SNAPSHOT_PATH)
+    research_dataset = load(REBUILD_LATEST / 'research_dataset.json')
     thesis_set = load(REBUILD_LATEST / 'thesis_set.json')
     pre_gate = load(REBUILD_LATEST / 'pre_gate_intent.json')
     trade_plan = load(REBUILD_LATEST / 'trade_plan.json')
@@ -696,6 +846,7 @@ def main():
         'kpis': build_kpis(legacy_kpis, len(positions)),
         'daily_performance': build_daily_performance(),
         'equity_curve': build_equity_curve(legacy_positions),
+        'strategy_universe': build_strategy_universe(market, active_strategy, positions, research_dataset),
         'watchlist': build_watchlist(pre_gate, trade_plan, thesis_set, held_symbols),
         'exit_candidates': [],
         'tunables': build_tunables(policy, session, mode_state),
