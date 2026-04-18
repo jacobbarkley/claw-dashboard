@@ -2801,11 +2801,13 @@ function AssistantSheet({ open, onClose, activeTab }: {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — z-[55] so it sits above the mobile bottom nav (z-50)
+          and dims it; the sheet itself is z-[60] so its close button is
+          always reachable above both. */}
       <div
         aria-hidden
         onClick={onClose}
-        className="fixed inset-0 z-[45] transition-opacity duration-200"
+        className="fixed inset-0 z-[55] transition-opacity duration-200"
         style={{
           background: "rgba(5, 8, 26, 0.40)",
           backdropFilter: "blur(6px)",
@@ -2818,8 +2820,10 @@ function AssistantSheet({ open, onClose, activeTab }: {
       {/* Sheet — desktop right overlay / mobile bottom sheet */}
       <div
         role="dialog"
+        aria-modal={open}
+        aria-hidden={!open}
         aria-label="ClawBoy Assistant"
-        className={`fixed z-[50] flex flex-col transition-transform duration-300 ease-out
+        className={`fixed z-[60] flex flex-col transition-transform duration-300 ease-out
           sm:top-0 sm:right-0 sm:bottom-0 sm:h-auto sm:w-[420px] sm:max-w-[94vw] sm:rounded-none
           left-0 right-0 bottom-0 h-[78vh] rounded-t-3xl
           ${open
@@ -2833,6 +2837,11 @@ function AssistantSheet({ open, onClose, activeTab }: {
           borderTop: "1px solid var(--cb-border-hi)",
           borderLeft: "1px solid var(--cb-border-hi)",
           boxShadow: "0 -20px 60px rgba(5, 8, 26, 0.6), -20px 0 60px rgba(5, 8, 26, 0.55)",
+          // When closed, ensure the sheet (still in DOM, just translated
+          // off-screen) can't capture pointer events that would shadow the
+          // page beneath it. The z-[60] also keeps it above the mobile
+          // bottom nav (z-50) so the close button is never occluded.
+          pointerEvents: open ? "auto" : "none",
         }}
       >
         {/* Mobile grab handle */}
@@ -2857,19 +2866,25 @@ function AssistantSheet({ open, onClose, activeTab }: {
           <div className="flex items-center gap-1">
             {chat.messages.length > 0 && (
               <button
-                onClick={() => chat.setMessages([])}
+                type="button"
+                onClick={(e) => { e.stopPropagation(); chat.setMessages([]) }}
                 aria-label="Clear conversation"
-                className="p-1.5 rounded-md hover:bg-white/5 transition-colors"
+                className="p-2.5 -m-1 rounded-md hover:bg-white/5 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" style={{ color: "var(--cb-text-tertiary)" }} />
+                <Trash2 className="w-4 h-4" style={{ color: "var(--cb-text-tertiary)" }} />
               </button>
             )}
             <button
-              onClick={onClose}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onClose() }}
               aria-label="Close assistant"
-              className="p-1.5 rounded-md hover:bg-white/5 transition-colors"
+              // Padding sized for a 44x44 touch target per iOS guidelines.
+              // The icon stays visually 18px; the negative margin keeps the
+              // header from growing.
+              className="p-3 -m-1 rounded-md hover:bg-white/5 transition-colors"
+              style={{ touchAction: "manipulation" }}
             >
-              <X className="w-4 h-4" style={{ color: "var(--cb-text-tertiary)" }} />
+              <X className="w-[18px] h-[18px]" style={{ color: "var(--cb-text-primary)" }} />
             </button>
           </div>
         </div>
@@ -3013,17 +3028,9 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
   const [activeTab, setActiveTab] = useState<TradingTab>("home")
   const [assistantOpen, setAssistantOpen] = useState(false)
 
-  // Cmd+J / Ctrl+J toggles assistant
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
-        e.preventDefault()
-        setAssistantOpen(v => !v)
-      }
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [])
+  // No keyboard toggle. The previous Cmd+J / Ctrl+J shortcut was suspected of
+  // auto-opening the assistant on mobile via spurious modifier+letter events
+  // from soft keyboards. The pill in CommandStrip is the only entry point.
 
   const refresh = useCallback(async () => {
     setRefreshing(true)

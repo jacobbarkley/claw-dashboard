@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 # Keep data dir but ignore stale json placeholder
 logs/*.log
+
+# python bytecode from scripts/
+__pycache__/
+*.pyc
+
+# transient diagnostic output from queue-reconciler.py — surface report
+# in CLI, do not commit the snapshot
+data/queue-reconciliation.json
