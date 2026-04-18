@@ -2723,6 +2723,114 @@ function OptionsSleeve({ data }: { data: TradingData }) {
   )
 }
 
+// Compact two-layer strategy summary for the crypto sleeve. Replaces the
+// previous side-by-side wall-of-text architecture cards. Default state is
+// glanceable — the visual flow + one performance line. A tap reveals the
+// per-layer detail for the reader who wants the full picture.
+function CryptoStrategyOverview({ accent }: { accent: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <section>
+      <div
+        className="rounded-xl px-5 py-4"
+        style={{
+          background: `radial-gradient(circle at 12% 10%, ${accent}14, transparent 48%), var(--cb-surface-0)`,
+          border: `1px solid ${accent}33`,
+        }}
+      >
+        <div className="cb-label mb-3">How it works</div>
+
+        {/* Visual flow — three nodes, two arrows, one line each.
+            Reads left-to-right on every screen size. */}
+        <div className="flex items-center gap-2 sm:gap-3" style={{ fontSize: 11, color: "var(--cb-text-primary)" }}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: accent, boxShadow: `0 0 6px ${accent}99` }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+                Core regime
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.4 }}>
+              Daily · own BTC?
+            </div>
+          </div>
+          <span style={{ color: "var(--cb-text-tertiary)", fontSize: 14 }}>→</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: accent, opacity: 0.55 }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cb-text-secondary)" }}>
+                Tactical overlay
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.4 }}>
+              4H · trim or add
+            </div>
+          </div>
+          <span style={{ color: "var(--cb-text-tertiary)", fontSize: 14 }}>→</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--cb-text-tertiary)" }} />
+              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--cb-text-secondary)" }}>
+                Position
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.4 }}>
+              Held in BTC
+            </div>
+          </div>
+        </div>
+
+        {/* One-line backtest headline — keeps the proof point glanceable. */}
+        <div className="mt-3 pt-3" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+          10-yr backtest · <span style={{ color: "var(--cb-text-secondary)" }}>+8,410% net</span> · max DD <span style={{ color: "var(--cb-text-secondary)" }}>58%</span> vs HODL <span style={{ color: "var(--cb-text-secondary)" }}>84%</span>
+        </div>
+
+        {/* Tap-to-expand for the full per-layer description. */}
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          className="mt-3 inline-flex items-center gap-1 transition-colors hover:opacity-80"
+          aria-expanded={open}
+          style={{
+            fontSize: 10,
+            color: accent,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          {open ? "Hide details" : "Show details"}
+          <span style={{ fontSize: 12, lineHeight: 1 }}>{open ? "−" : "+"}</span>
+        </button>
+
+        {open && (
+          <div className="mt-3 pt-3 space-y-3" style={{ borderTop: "1px solid var(--cb-border-dim)" }}>
+            <div>
+              <div className="cb-label mb-1" style={{ color: "var(--cb-text-primary)" }}>Layer 1 · Core regime (daily)</div>
+              <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+                Decides whether BTC should be structurally owned. Outputs{" "}
+                <span className="font-mono" style={{ fontSize: 10 }}>RISK_ON</span>,{" "}
+                <span className="font-mono" style={{ fontSize: 10 }}>RISK_OFF</span>, or{" "}
+                <span className="font-mono" style={{ fontSize: 10 }}>ACCUMULATE</span>. Benchmarked
+                against buy-and-hold BTC.
+              </div>
+            </div>
+            <div>
+              <div className="cb-label mb-1" style={{ color: "var(--cb-text-primary)" }}>Layer 2 · Tactical overlay (4H)</div>
+              <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+                4H time-series momentum. Only runs when the core regime is{" "}
+                <span className="font-mono" style={{ fontSize: 10 }}>RISK_ON</span>. Not a standalone
+                strategy — adjusts size around the core position rather than acting on its own.
+                Adds risk management, not standalone return.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function CryptoSleeve({ data }: { data: TradingData }) {
   const meta = SLEEVE_META.crypto
   const universe = ["BTC", "ETH", "SOL", "LINK", "AVAX", "ADA", "XRP", "DOGE", "LTC", "BCH"]
@@ -2792,54 +2900,10 @@ function CryptoSleeve({ data }: { data: TradingData }) {
         </section>
       )}
 
-      {/* Two-layer architecture cards */}
-      <section>
-        <div className="cb-label mb-3">Architecture</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div
-            className="rounded-xl px-4 py-4"
-            style={{
-              background: `radial-gradient(circle at 12% 10%, ${meta.accent}18, transparent 45%), var(--cb-surface-0)`,
-              border: `1px solid ${meta.accent}44`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: meta.accent }} />
-              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
-                Layer 1 · Core regime
-              </span>
-            </div>
-            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
-              Daily BTC regime monitor. Outputs <span className="font-mono" style={{ fontSize: 11 }}>RISK_ON</span> / <span className="font-mono" style={{ fontSize: 11 }}>RISK_OFF</span> / <span className="font-mono" style={{ fontSize: 11 }}>ACCUMULATE</span>.
-              Decides whether BTC should be structurally owned. Benchmarked against buy-and-hold BTC.
-            </div>
-            <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              10-year backtest: +8,410% net · Sharpe 1.19 · Calmar 0.92 · max DD 58% (vs HODL 84%)
-            </div>
-          </div>
-          <div
-            className="rounded-xl px-4 py-4"
-            style={{
-              background: `radial-gradient(circle at 12% 10%, ${meta.accent}10, transparent 45%), var(--cb-surface-0)`,
-              border: `1px solid var(--cb-border-std)`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-block rounded-full" style={{ width: 7, height: 7, background: meta.accent, opacity: 0.5 }} />
-              <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-secondary)" }}>
-                Layer 2 · Tactical overlay
-              </span>
-            </div>
-            <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
-              4H time-series momentum (TSMOM). Only runs when core regime is <span className="font-mono" style={{ fontSize: 11 }}>RISK_ON</span>.
-              Not a standalone strategy — adds or reduces exposure around the core position.
-            </div>
-            <div className="mt-3" style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-              Core-gated tactical: +29% net · overlay adds risk management, not standalone return
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* How it works — compact two-layer summary. The full per-layer
+          breakdown lives behind a tap so the default view stays glanceable. */}
+      <CryptoStrategyOverview accent={meta.accent} />
+
 
       {/* Crypto charts — deferred until Codex's sleeve_equity_history slice
           lands. Showing account-level equity here would be dishonest because
@@ -2902,23 +2966,10 @@ function CryptoSleeve({ data }: { data: TradingData }) {
         </div>
       </div>
 
-      {/* Risk-adjusted metrics — bottom of the sleeve, mirroring where the
-          Execution Quality KPIs sit on Stocks. Crypto's KPI shape is
-          intentionally different (Calmar / max DD / capture) because raw
-          equity-style metrics would mis-frame the sleeve. */}
-      <section>
-        <div className="cb-label mb-3">Risk-adjusted metrics</div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {["Calmar ratio", "Max drawdown", "Bull capture %", "Bear avoidance %"].map(label => (
-            <div key={label} className="cb-metric cb-tone-medium">
-              <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
-              <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
-                {label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Risk-adjusted metrics intentionally hidden until the bench
+          publishes live numbers. An empty grid of em-dashes is visual
+          noise, not information; this section will return once Calmar,
+          max DD, bull capture, and bear avoidance have real values. */}
     </div>
   )
 }
@@ -3285,7 +3336,12 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
           try {
             const live = await liveRes.json()
             if (live.positions && !live.error) {
-              // Replace equity positions with live data (options separated)
+              // Replace equity + crypto positions with live data. The live
+              // route returns both in `positions`, each tagged with
+              // asset_type (EQUITY | CRYPTO) so per-sleeve filters in
+              // StocksSleeve / CryptoSleeve route them correctly. Options
+              // come back in options_positions and are merged separately
+              // below.
               json.positions = live.positions.map((lp: Record<string, unknown>) => ({
                 symbol: lp.symbol,
                 qty: lp.qty,
@@ -3296,6 +3352,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                 unrealized_pnl: lp.unrealized_pnl,
                 unrealized_pct: lp.unrealized_pct,
                 change_today_pct: lp.change_today_pct ?? 0,
+                asset_type: (lp.asset_type as string) ?? "EQUITY",
               }))
               // Merge live options positions — route to Wheel (CSP/sold) or Hedges (long puts)
               if (live.options_positions?.length > 0) {
@@ -3351,6 +3408,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
                   buying_power: live.account.buying_power,
                   positions_value: live.account.positions_value,
                   equity_deployed: live.account.equity_deployed ?? null,
+                  crypto_deployed: live.account.crypto_deployed ?? null,
                   options_deployed: live.account.options_deployed ?? null,
                   total_pnl: live.account.equity - (json.account.base_value ?? 100000),
                   total_pnl_pct: ((live.account.equity - (json.account.base_value ?? 100000)) / (json.account.base_value ?? 100000)) * 100,

@@ -55,26 +55,51 @@ export async function GET() {
       alpacaFetch("/orders?status=closed&limit=50", key, secret),
     ])
 
-    // Split equity and options positions
+    // Normalize Alpaca's asset_class string into the asset_type tag the
+    // dashboard uses everywhere downstream. Mirrors broker_snapshot.py's
+    // _infer_asset_type so equity/crypto/option classification stays
+    // consistent across the live route, the operator feed, and the rebuild
+    // core.
+    const inferAssetType = (rawClass: string | undefined): "EQUITY" | "CRYPTO" | "OPTION" => {
+      const c = (rawClass ?? "").toLowerCase()
+      if (c === "crypto" || c === "cryptocurrency" || c === "us_crypto" || c === "crypto_spot") return "CRYPTO"
+      if (c === "option" || c === "options" || c === "us_option") return "OPTION"
+      return "EQUITY"
+    }
+
+    const mapEquityLikePosition = (p: Record<string, string>, assetType: "EQUITY" | "CRYPTO") => ({
+      symbol: p.symbol,
+      qty: Number(p.qty),
+      side: p.side,
+      avg_entry: Number(p.avg_entry_price),
+      current_price: Number(p.current_price),
+      market_value: Number(p.market_value),
+      unrealized_pnl: Number(p.unrealized_pl),
+      unrealized_pct: Number(p.unrealized_plpc) * 100,
+      change_today: Number(p.change_today),
+      change_today_pct: Number(p.change_today) !== 0 && Number(p.current_price) !== 0
+        ? (Number(p.change_today) / (Number(p.current_price) - Number(p.change_today))) * 100
+        : 0,
+      asset_type: assetType,
+    })
+
+    // Equity and crypto both render as cash-position cards on the dashboard
+    // (one row per symbol with qty/entry/market_value/PnL). Options have a
+    // bespoke OCC parser and live in a separate array. Returning crypto
+    // alongside equity in `positions` means the dashboard's bulk-replace
+    // merge no longer drops BTC.
     const equityPositions = positions
-      .filter((p: Record<string, string>) => p.asset_class === "us_equity")
-      .map((p: Record<string, string>) => ({
-        symbol: p.symbol,
-        qty: Number(p.qty),
-        side: p.side,
-        avg_entry: Number(p.avg_entry_price),
-        current_price: Number(p.current_price),
-        market_value: Number(p.market_value),
-        unrealized_pnl: Number(p.unrealized_pl),
-        unrealized_pct: Number(p.unrealized_plpc) * 100,
-        change_today: Number(p.change_today),
-        change_today_pct: Number(p.change_today) !== 0 && Number(p.current_price) !== 0
-          ? (Number(p.change_today) / (Number(p.current_price) - Number(p.change_today))) * 100
-          : 0,
-      }))
+      .filter((p: Record<string, string>) => inferAssetType(p.asset_class) === "EQUITY")
+      .map((p: Record<string, string>) => mapEquityLikePosition(p, "EQUITY"))
+
+    const cryptoPositions = positions
+      .filter((p: Record<string, string>) => inferAssetType(p.asset_class) === "CRYPTO")
+      .map((p: Record<string, string>) => mapEquityLikePosition(p, "CRYPTO"))
+
+    const allCashPositions = [...equityPositions, ...cryptoPositions]
 
     const optionsPositions = positions
-      .filter((p: Record<string, string>) => p.asset_class === "us_option")
+      .filter((p: Record<string, string>) => inferAssetType(p.asset_class) === "OPTION")
       .map((p: Record<string, string>) => {
         const parsed = parseOccSymbol(p.symbol)
         return {
@@ -164,13 +189,16 @@ export async function GET() {
     const equityValue = equityPositions.reduce(
       (s: number, p: { market_value: number }) => s + p.market_value, 0
     )
+    const cryptoValue = cryptoPositions.reduce(
+      (s: number, p: { market_value: number }) => s + p.market_value, 0
+    )
     const optionsValue = optionsPositions.reduce(
       (s: number, p: { market_value: number }) => s + Math.abs(p.market_value), 0
     )
 
     return NextResponse.json({
       fetched_at: new Date().toISOString(),
-      positions: equityPositions,
+      positions: allCashPositions,
       options_positions: optionsPositions,
       kpis,
       account: {
@@ -178,8 +206,9 @@ export async function GET() {
         cash: Number(account.cash),
         buying_power: Number(account.buying_power),
         portfolio_value: Number(account.portfolio_value),
-        positions_value: equityValue + optionsValue,
+        positions_value: equityValue + cryptoValue + optionsValue,
         equity_deployed: equityValue,
+        crypto_deployed: cryptoValue,
         options_deployed: optionsValue,
       },
     }, {
