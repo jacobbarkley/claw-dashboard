@@ -2273,67 +2273,6 @@ function SleeveCapitalPlaceholder({ accent, title, message, sub }: {
   )
 }
 
-// Live crypto deployed-capital card. Shows total deployed across crypto
-// positions plus a per-position breakdown. Renders only when the operator
-// feed has at least one position tagged asset_type=CRYPTO; otherwise the
-// crypto sleeve falls back to SleeveCapitalPlaceholder.
-function CryptoDeployedCard({ accent, positions, cryptoDeployed }: {
-  accent: string
-  positions: Position[]
-  cryptoDeployed: number
-}) {
-  // Prefer the operator-feed-computed total; fall back to summing positions
-  // directly so the UI stays honest if the field is missing on an old feed.
-  const computedTotal = positions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const total = cryptoDeployed > 0 ? cryptoDeployed : computedTotal
-  const fmt = (v: number) =>
-    `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-
-  return (
-    <div
-      className="rounded-xl px-5 py-5"
-      style={{
-        background: `radial-gradient(circle at 12% 10%, ${accent}18, transparent 48%), var(--cb-surface-0)`,
-        border: `1px solid ${accent}44`,
-      }}
-    >
-      <div className="cb-label mb-2">Deployed capital</div>
-      <div className="cb-number" style={{ fontSize: 28, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>
-        {fmt(total)}
-      </div>
-      <div className="mt-1" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
-        across {positions.length} position{positions.length === 1 ? "" : "s"} · two-layer architecture (daily core + 4H tactical overlay)
-      </div>
-
-      <div className="mt-4 space-y-2">
-        {positions.map(p => {
-          const pnlGood = (p.unrealized_pnl ?? 0) >= 0
-          return (
-            <div
-              key={p.symbol}
-              className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2"
-              style={{ background: "var(--cb-surface-1)", border: "1px solid var(--cb-border-dim)" }}
-            >
-              <div className="min-w-0">
-                <div className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--cb-text-primary)" }}>{p.symbol}</div>
-                <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
-                  {p.qty.toLocaleString("en-US", { maximumFractionDigits: 8 })} @ {fmt(p.entry_price)}
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="cb-number" style={{ fontSize: 14, color: "var(--cb-text-primary)" }}>{fmt(p.market_value)}</div>
-                <div style={{ fontSize: 10, color: pnlGood ? "var(--cb-green)" : "var(--cb-red)" }}>
-                  {pnlGood ? "+" : ""}{fmt(p.unrealized_pnl)} ({p.unrealized_pct?.toFixed(2) ?? "—"}%)
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 // Placeholder chart card for sleeves without data yet.
 function ChartPlaceholder({ label, height = 160 }: { label: string; height?: number }) {
   return (
@@ -2789,10 +2728,27 @@ function CryptoSleeve({ data }: { data: TradingData }) {
   const universe = ["BTC", "ETH", "SOL", "LINK", "AVAX", "ADA", "XRP", "DOGE", "LTC", "BCH"]
 
   const cryptoPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "CRYPTO")
-  const cryptoDeployed = data.account.crypto_deployed ?? 0
+  const cryptoDeployed = data.account.crypto_deployed
+    ?? cryptoPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
   const hasCrypto = cryptoPositions.length > 0 || cryptoDeployed > 0
+
+  // Same per-position derivation Stocks uses — exact identity P_now - P_prev
+  // from market_value × pct/(100 + pct). Account-level today_pnl is portfolio
+  // wide so we recompute scoped to crypto.
+  const cryptoTodayChangeUsd = cryptoPositions.reduce((acc, p) => {
+    const pct = p.change_today_pct ?? 0
+    if (!pct) return acc
+    return acc + (p.market_value ?? 0) * (pct / (100 + pct))
+  }, 0)
+  const cryptoTodayChangePct = cryptoDeployed > 0
+    ? (cryptoTodayChangeUsd / (cryptoDeployed - cryptoTodayChangeUsd)) * 100
+    : null
+
+  const totalEquity = data.account.equity ?? 0
+  const allocationPct = totalEquity > 0 ? (cryptoDeployed / totalEquity) * 100 : null
+
   const subLabel = hasCrypto
-    ? `Crypto sleeve · two-layer architecture · ${cryptoPositions.length} position${cryptoPositions.length === 1 ? "" : "s"}`
+    ? `Crypto sleeve · two-layer architecture · ${allocationPct != null ? `${allocationPct.toFixed(2)}% of portfolio` : `${cryptoPositions.length} position${cryptoPositions.length === 1 ? "" : "s"}`}`
     : "Crypto sleeve · two-layer architecture · SHADOW · paper data pending"
 
   return (
@@ -2801,10 +2757,20 @@ function CryptoSleeve({ data }: { data: TradingData }) {
         {subLabel}
       </p>
 
-      {/* Crypto capital banner — switches between live and placeholder based on
-          whether the operator feed has surfaced crypto positions yet. */}
+      {/* Sleeve-scoped header — same pattern as Stocks. Switches to the
+          full placeholder only when no crypto exposure exists at all. */}
       {hasCrypto ? (
-        <CryptoDeployedCard accent={meta.accent} positions={cryptoPositions} cryptoDeployed={cryptoDeployed} />
+        <section>
+          <SleeveSummaryHeader
+            accent={meta.accent}
+            label="Crypto Holdings"
+            holdingsValue={cryptoDeployed}
+            todayChangeUsd={cryptoTodayChangeUsd}
+            todayChangePct={cryptoTodayChangePct}
+            allocationPct={allocationPct}
+            positionCount={cryptoPositions.length}
+          />
+        </section>
       ) : (
         <SleeveCapitalPlaceholder
           accent={meta.accent}
@@ -2812,6 +2778,18 @@ function CryptoSleeve({ data }: { data: TradingData }) {
           message="$0 deployed in crypto. The crypto sleeve uses a two-layer architecture: a daily core regime monitor decides whether BTC should be structurally owned, and a 4H tactical overlay trades inside the regime."
           sub="Integration lands after the core regime family clears the bench on risk-adjusted metrics. Data provider: Alpaca (paper) with Coinbase planned for live."
         />
+      )}
+
+      {/* Crypto positions — render the actual holdings prominently. The
+          two-layer architecture context lives below, where a reader can dig
+          in once they know what they own. */}
+      {hasCrypto && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">Open Positions · {cryptoPositions.length}</span>
+          </div>
+          <PositionsList positions={cryptoPositions} exitCandidates={[]} />
+        </section>
       )}
 
       {/* Two-layer architecture cards */}
@@ -2863,45 +2841,10 @@ function CryptoSleeve({ data }: { data: TradingData }) {
         </div>
       </section>
 
-      {/* Crypto charts — placeholders */}
-      <section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <ChartPlaceholder label="Crypto sleeve equity" />
-          <ChartPlaceholder label="Crypto daily P&L" height={120} />
-        </div>
-      </section>
-
-      {/* KPIs — reframed for risk-adjusted metrics */}
-      <section>
-        <div className="cb-label mb-3">Risk-adjusted metrics</div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {["Calmar ratio", "Max drawdown", "Bull capture %", "Bear avoidance %"].map(label => (
-            <div key={label} className="cb-metric cb-tone-medium">
-              <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
-              <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
-                {label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Positions placeholder */}
-      <section>
-        <div className="cb-label mb-3">Open Positions · 0</div>
-        <div
-          className="rounded-xl px-5 py-4"
-          style={{
-            background: `radial-gradient(circle at 12% 10%, ${meta.accent}10, transparent 48%), var(--cb-surface-0)`,
-            border: `1px solid var(--cb-border-std)`,
-          }}
-        >
-          <div style={{ fontSize: 12, color: "var(--cb-text-secondary)" }}>
-            No crypto positions yet. Sleeve is in SHADOW mode while the core regime
-            family runs on the bench.
-          </div>
-        </div>
-      </section>
+      {/* Crypto charts — deferred until Codex's sleeve_equity_history slice
+          lands. Showing account-level equity here would be dishonest because
+          the account is ~99.7% stocks today; the chart would say nothing
+          about the crypto sleeve's behavior. */}
 
       {/* Bench status + plan */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2947,7 +2890,7 @@ function CryptoSleeve({ data }: { data: TradingData }) {
         </div>
       </section>
 
-      {/* Strategy architecture — bottom (both layers shown, tactical clearly secondary) */}
+      {/* Strategy status */}
       <div className="cb-card-t3 cb-tone-medium px-4 py-3">
         <div className="cb-label mb-1">Strategy status</div>
         <div style={{ fontSize: 13, color: "var(--cb-text-primary)" }}>
@@ -2958,6 +2901,24 @@ function CryptoSleeve({ data }: { data: TradingData }) {
           Success = risk-adjusted participation, not beating HODL on raw return.
         </div>
       </div>
+
+      {/* Risk-adjusted metrics — bottom of the sleeve, mirroring where the
+          Execution Quality KPIs sit on Stocks. Crypto's KPI shape is
+          intentionally different (Calmar / max DD / capture) because raw
+          equity-style metrics would mis-frame the sleeve. */}
+      <section>
+        <div className="cb-label mb-3">Risk-adjusted metrics</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {["Calmar ratio", "Max drawdown", "Bull capture %", "Bear avoidance %"].map(label => (
+            <div key={label} className="cb-metric cb-tone-medium">
+              <div className="cb-number" style={{ fontSize: 20, fontWeight: 300, color: "var(--cb-text-tertiary)" }}>—</div>
+              <div className="flex items-center gap-1 mt-1.5" style={{ fontSize: 9, color: "var(--cb-text-secondary)", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.7 }}>
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
