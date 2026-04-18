@@ -29,7 +29,18 @@ from pathlib import Path
 
 TRADING_BOT_BENCH_RESULTS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/results"
 TRADING_BOT_BENCH_SPECS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/specs"
+TRADING_BOT_BENCH_MANIFESTS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/manifests"
+TRADING_BOT_REBUILD_LATEST = Path.home() / ".openclaw/workspace/trading-bot/state/rebuild_latest"
 DASHBOARD_BENCH_DATA = Path.home() / "claude/claw-dashboard/data/bench"
+
+# Runtime artifacts copied verbatim — used to render promotion provenance and
+# tie an executed strategy back to its checked-in manifest. Optional: any file
+# that is missing on this revision of the rebuild is silently skipped.
+RUNTIME_ARTIFACT_FILES = (
+    "active_strategy.json",
+    "execution_manifest.json",
+    "session_context.json",
+)
 
 # Required files per run — at minimum we need the spec snapshot + bundle.
 # The leaderboard/report names vary by sleeve (crypto_bench_*, stock_bench_*).
@@ -145,6 +156,46 @@ def pull() -> None:
             })
             print(f"  spec {spec_file.name}  sleeve={spec.get('sleeve'):8s}  has_runs={has_runs}")
 
+    # Copy checked-in execution manifests (the promotion bridge)
+    manifests_dest = DASHBOARD_BENCH_DATA / "manifests"
+    manifests_dest.mkdir(parents=True, exist_ok=True)
+    manifest_entries: list[dict] = []
+    if TRADING_BOT_BENCH_MANIFESTS.exists():
+        for manifest_file in sorted(TRADING_BOT_BENCH_MANIFESTS.glob("*.execution_manifest.json")):
+            shutil.copy2(manifest_file, manifests_dest / manifest_file.name)
+            with manifest_file.open() as fh:
+                manifest = json.load(fh)
+            manifest_entries.append({
+                "manifest_id": manifest.get("manifest_id"),
+                "title": manifest.get("title"),
+                "sleeve": manifest.get("sleeve"),
+                "sleeve_id": manifest.get("sleeve_id"),
+                "strategy_id": manifest.get("strategy_id"),
+                "strategy_family": manifest.get("strategy_family"),
+                "deployment_config_id": manifest.get("deployment_config_id"),
+                "runtime_contract": manifest.get("runtime_contract"),
+                "cadence": manifest.get("cadence"),
+                "asset_type": manifest.get("asset_type"),
+                "broker_adapter": (manifest.get("broker") or {}).get("broker_adapter"),
+                "broker_environment": (manifest.get("broker") or {}).get("broker_environment"),
+                # source_kind is what dashboards must render distinctly
+                "source_kind": "CHECKED_IN",
+                "bench_id": (manifest.get("source") or {}).get("bench_id"),
+                "filename": manifest_file.name,
+            })
+            print(f"  manifest {manifest_file.name}  sleeve={manifest.get('sleeve'):8s}  source=CHECKED_IN")
+
+    # Copy runtime artifacts that anchor manifest provenance to the live runtime
+    runtime_dest = DASHBOARD_BENCH_DATA / "runtime"
+    runtime_dest.mkdir(parents=True, exist_ok=True)
+    runtime_present: list[str] = []
+    for fname in RUNTIME_ARTIFACT_FILES:
+        src = TRADING_BOT_REBUILD_LATEST / fname
+        if src.exists():
+            shutil.copy2(src, runtime_dest / fname)
+            runtime_present.append(fname)
+            print(f"  runtime {fname}")
+
     # Write convenience manifests
     index_path = DASHBOARD_BENCH_DATA / "index.json"
     with index_path.open("w") as fh:
@@ -153,6 +204,8 @@ def pull() -> None:
             "source": "local_dev_pull",
             "runs": index_entries,
             "specs": spec_entries,
+            "manifests": manifest_entries,
+            "runtime_artifacts": runtime_present,
         }, fh, indent=2)
 
     for bench_id, entry in latest_by_bench.items():

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T02:46:15.828880-04:00",
+  "generated_at": "2026-04-17T20:40:08.356442-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -248,5 +248,45 @@
       "hypothesis": "A graduated BTC core regime with a 100/70/0 exposure ladder can stay much closer to HODL's upside while still improving risk-adjusted metrics and drawdown.",
       "has_runs": true
     }
+  ],
+  "manifests": [
+    {
+      "manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+      "title": "Regime-Aware Momentum Frozen Reference Paper v1",
+      "sleeve": "STOCKS",
+      "sleeve_id": "stock_regime_aware_momentum",
+      "strategy_id": "regime_aware_momentum_frozen_stop_5_target_15",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "deployment_config_id": "stop_5_target_15",
+      "runtime_contract": "POSITION_CANDIDATES",
+      "cadence": "DAILY",
+      "asset_type": "EQUITY",
+      "broker_adapter": "alpaca_equities",
+      "broker_environment": "PAPER",
+      "source_kind": "CHECKED_IN",
+      "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+      "filename": "q076b_regime_aware_momentum_frozen_reference.execution_manifest.json"
+    },
+    {
+      "manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+      "title": "BTC Managed Exposure Daily Core Paper v1",
+      "sleeve": "CRYPTO",
+      "sleeve_id": "btc_managed_exposure",
+      "strategy_id": "btc_managed_exposure_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "deployment_config_id": "BTC_GRADUATED_CORE_REGIME",
+      "runtime_contract": "TARGET_EXPOSURE",
+      "cadence": "DAILY",
+      "asset_type": "CRYPTO_SPOT",
+      "broker_adapter": "alpaca_crypto_paper",
+      "broker_environment": "PAPER",
+      "source_kind": "CHECKED_IN",
+      "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+      "filename": "q090c_btc_managed_exposure_risk_adjusted.execution_manifest.json"
+    }
+  ],
+  "runtime_artifacts": [
+    "active_strategy.json",
+    "session_context.json"
   ]
 }

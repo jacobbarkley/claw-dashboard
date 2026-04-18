@@ -61,6 +61,83 @@ interface BenchIndex {
   runs: BenchIndexEntry[]
   specs?: BenchSpecEntry[]
   comparisons?: SleeveComparison[]
+  manifests?: ExecutionManifest[]
+  runtime?: RuntimeBundle
+}
+
+// Promotion bridge from bench → runtime. Shape mirrors
+// backtest/bench/manifests/*.execution_manifest.json (schema_version "execution_manifest.v1").
+interface ExecutionManifest {
+  schema_version?: string
+  manifest_id: string
+  title?: string | null
+  generated_at?: string | null
+  sleeve: string
+  sleeve_id?: string | null
+  strategy_id: string
+  strategy_family?: string | null
+  deployment_config_id?: string | null
+  // POSITION_CANDIDATES (stocks) | TARGET_EXPOSURE (crypto) | MULTI_LEG_TARGETS (options, future)
+  runtime_contract: string
+  // DAILY | FOUR_HOUR | WEEKLY
+  cadence: string
+  order_style?: string | null
+  asset_type?: string | null
+  symbol?: string | null
+  universe_symbols?: string[]
+  benchmark_symbol?: string | null
+  broker?: {
+    broker_adapter?: string
+    broker_environment?: string  // PAPER | LIVE
+    venue?: string
+    paper_only?: boolean
+  } | null
+  target_spec?: {
+    mode?: string
+    sleeve_allocation_pct?: number | null
+    max_account_exposure_pct?: number | null
+    min_rebalance_notional_usd?: number | null
+    max_order_notional_usd?: number | null
+    allowed_sides?: string[]
+    allow_short?: boolean
+    description?: string
+  } | null
+  source?: {
+    // CHECKED_IN | STRATEGY_BANK_FALLBACK. Defaults to CHECKED_IN when absent
+    // because checked-in manifest files don't yet declare it explicitly on disk.
+    source_kind?: string
+    bench_id?: string | null
+    selected_config_id?: string | null
+    rationale?: string | null
+  } | null
+  notes?: string[]
+}
+
+interface ActiveStrategyRecord {
+  schema_version?: string
+  resolved_at?: string
+  record?: {
+    record_id?: string
+    strategy_id?: string
+    variant_id?: string
+    strategy_family?: string
+    display_name?: string
+    promotion_stage?: string
+    signal_source?: string
+  } | null
+}
+
+interface RuntimeBundle {
+  active_strategy: ActiveStrategyRecord | null
+  // state/rebuild_latest/execution_manifest.json — only present once the runtime
+  // has produced one (manifest-aware runs after Codex's d794c42).
+  execution_manifest: ExecutionManifest | null
+  // session_context will carry execution_manifest_id + execution_manifest_source_kind
+  // after the same change. Treated as optional until the runtime regenerates.
+  session_context: {
+    execution_manifest_id?: string
+    execution_manifest_source_kind?: string
+  } | null
 }
 
 interface LeaderboardRow {
@@ -1162,6 +1239,16 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
     return m
   }, [index])
 
+  const manifestsBySleeve = useMemo(() => {
+    const m = new Map<string, ExecutionManifest[]>()
+    for (const x of (index.manifests ?? [])) {
+      const key = (x.sleeve ?? "UNKNOWN").toUpperCase()
+      if (!m.has(key)) m.set(key, [])
+      m.get(key)!.push(x)
+    }
+    return m
+  }, [index])
+
   const totalRuns = index.runs.length
   const totalBenches = new Set(index.runs.map(r => r.bench_id)).size
   const totalEvaluated = index.runs.reduce((acc, r) => acc + (r.evaluated_candidate_count ?? 0), 0)
@@ -1196,6 +1283,9 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
             const meta = TAB_META[tab]
             const runs = bySleeve.get(meta.sleeveKey!) ?? []
             const specs = specsBySleeve.get(meta.sleeveKey!) ?? []
+            const sleeveManifests = manifestsBySleeve.get(meta.sleeveKey!) ?? []
+            const checkedInCount = sleeveManifests.filter(m => resolveSourceKind(m) === "CHECKED_IN").length
+            const fallbackCount = sleeveManifests.filter(m => resolveSourceKind(m) === "STRATEGY_BANK_FALLBACK").length
             const specsWithoutRuns = specs.filter(s => !s.has_runs)
             const benches = new Set(runs.map(r => r.bench_id)).size
             const latest = runs.reduce<BenchIndexEntry | null>((acc, r) => {
@@ -1215,11 +1305,49 @@ function BenchHomeView({ index, onJumpToSleeve }: { index: BenchIndex; onJumpToS
                   boxShadow: "inset 0 1px 0 rgba(180, 195, 235, 0.03), 0 2px 10px rgba(5, 8, 26, 0.4)",
                 }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: meta.accent }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
-                    {meta.label}
-                  </span>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: meta.accent }} />
+                    <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+                      {meta.label}
+                    </span>
+                  </div>
+                  {/* Promotion presence chip — distinct treatment per source kind */}
+                  {checkedInCount > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                      style={{
+                        background: `${meta.accent}22`,
+                        border: `1px solid ${meta.accent}55`,
+                        fontSize: 9,
+                        fontWeight: 600,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--cb-text-primary)",
+                      }}
+                      title={`${checkedInCount} checked-in promoted manifest${checkedInCount > 1 ? "s" : ""}`}
+                    >
+                      <span className="inline-block rounded-full" style={{ width: 4, height: 4, background: meta.accent }} />
+                      Promoted
+                    </span>
+                  )}
+                  {checkedInCount === 0 && fallbackCount > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5"
+                      style={{
+                        background: "transparent",
+                        border: "1px dashed var(--cb-border)",
+                        fontSize: 9,
+                        fontWeight: 500,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--cb-text-secondary)",
+                      }}
+                      title="Runtime is using a synthesized strategy-bank fallback, not a checked-in promotion"
+                    >
+                      Bank fallback
+                    </span>
+                  )}
                 </div>
                 {runs.length > 0 ? (
                   <>
@@ -1391,6 +1519,277 @@ function ComparisonCard({ comparison }: { comparison: SleeveComparison }) {
   )
 }
 
+// ─── Promotion section ──────────────────────────────────────────────────────
+// The bridge between bench evidence and runtime execution. Renders one card
+// per promoted execution manifest for this sleeve, with provenance always
+// visible (CHECKED_IN strong vs STRATEGY_BANK_FALLBACK transitional). Ties the
+// runtime active strategy back to its source manifest where the manifest_id
+// has been threaded through session_context (post manifest-aware runs).
+//
+// Per CLAUDE_DASHBOARD_PRIMER.md: the dashboard must NOT collapse
+// CHECKED_IN and STRATEGY_BANK_FALLBACK into one badge. This component
+// visually weights them differently.
+function resolveSourceKind(m: ExecutionManifest): "CHECKED_IN" | "STRATEGY_BANK_FALLBACK" {
+  const declared = m.source?.source_kind?.toUpperCase()
+  if (declared === "STRATEGY_BANK_FALLBACK") return "STRATEGY_BANK_FALLBACK"
+  // Default to CHECKED_IN: every manifest pulled from
+  // backtest/bench/manifests/ is a checked-in promotion until the schema
+  // formally carries source_kind.
+  return "CHECKED_IN"
+}
+
+function ProvenanceBadge({ kind, accent }: { kind: "CHECKED_IN" | "STRATEGY_BANK_FALLBACK"; accent: string }) {
+  if (kind === "CHECKED_IN") {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+        style={{
+          background: `${accent}22`,
+          border: `1px solid ${accent}66`,
+          color: "var(--cb-text-primary)",
+          fontSize: 9,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: accent, boxShadow: `0 0 6px ${accent}aa` }} />
+        Checked in
+      </span>
+    )
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+      style={{
+        background: "transparent",
+        border: "1px dashed var(--cb-border)",
+        color: "var(--cb-text-secondary)",
+        fontSize: 9,
+        fontWeight: 500,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+      }}
+    >
+      <span className="inline-block rounded-full" style={{ width: 6, height: 6, background: "var(--cb-text-tertiary)" }} />
+      Bank fallback · transitional
+    </span>
+  )
+}
+
+function ManifestField({ label, value, mono }: { label: string; value: string | null | undefined; mono?: boolean }) {
+  return (
+    <div>
+      <div className="cb-label">{label}</div>
+      <div
+        className={mono ? "font-mono" : ""}
+        style={{
+          fontSize: 12,
+          color: value ? "var(--cb-text-primary)" : "var(--cb-text-tertiary)",
+          marginTop: 2,
+          wordBreak: "break-word",
+        }}
+      >
+        {value ?? "—"}
+      </div>
+    </div>
+  )
+}
+
+function PromotionCard({ manifest, accent, runtime }: {
+  manifest: ExecutionManifest
+  accent: string
+  runtime: RuntimeBundle | undefined
+}) {
+  const kind = resolveSourceKind(manifest)
+  const broker = manifest.broker ?? {}
+  const target = manifest.target_spec ?? {}
+
+  // Three ways the runtime can be tied to this manifest:
+  //   1. session_context carries execution_manifest_id (post manifest-aware runs)
+  //   2. runtime execution_manifest is present and matches
+  //   3. fallback: active_strategy.record matches by strategy_id / family
+  const sessionManifestId = runtime?.session_context?.execution_manifest_id
+  const runtimeManifestId = runtime?.execution_manifest?.manifest_id
+  const activeRecord = runtime?.active_strategy?.record
+  const matchedBySession = sessionManifestId === manifest.manifest_id
+  const matchedByRuntimeManifest = runtimeManifestId === manifest.manifest_id
+  const matchedByStrategy =
+    !!activeRecord &&
+    (activeRecord.strategy_family === manifest.strategy_family ||
+      activeRecord.strategy_id === manifest.strategy_id ||
+      manifest.strategy_id?.includes(activeRecord.strategy_id ?? "") === true)
+  const isRuntimeActive = matchedBySession || matchedByRuntimeManifest || matchedByStrategy
+  const tieReason = matchedBySession || matchedByRuntimeManifest
+    ? "Bound by manifest id"
+    : matchedByStrategy
+      ? "Inferred from strategy bank"
+      : null
+
+  return (
+    <div
+      className="rounded-xl px-5 py-5"
+      style={{
+        background: kind === "CHECKED_IN"
+          ? `radial-gradient(circle at 12% 10%, ${accent}18, transparent 45%), var(--cb-surface-0)`
+          : "var(--cb-surface-0)",
+        border: kind === "CHECKED_IN"
+          ? `1px solid ${accent}44`
+          : "1px dashed var(--cb-border)",
+        boxShadow: kind === "CHECKED_IN"
+          ? "inset 0 1px 0 rgba(180, 195, 235, 0.04), 0 4px 20px rgba(5, 8, 26, 0.45)"
+          : "none",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: accent, boxShadow: kind === "CHECKED_IN" ? `0 0 8px ${accent}80` : "none" }} />
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-primary)" }}>
+              Promoted manifest
+            </span>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 500, color: "var(--cb-text-primary)", letterSpacing: "-0.01em", lineHeight: 1.3 }}>
+            {manifest.title ?? manifest.manifest_id}
+          </div>
+          <div className="font-mono mt-1" style={{ fontSize: 10, color: accent, wordBreak: "break-all" }}>
+            {manifest.manifest_id}
+          </div>
+        </div>
+        <div className="shrink-0 flex flex-col items-end gap-2">
+          <ProvenanceBadge kind={kind} accent={accent} />
+          {isRuntimeActive && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5"
+              style={{
+                background: "rgba(16, 185, 129, 0.12)",
+                border: "1px solid rgba(16, 185, 129, 0.4)",
+                color: "var(--cb-green)",
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+              title={tieReason ?? undefined}
+            >
+              <span className="inline-block rounded-full" style={{ width: 5, height: 5, background: "var(--cb-green)" }} />
+              Active in runtime
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Contract grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 mt-4">
+        <ManifestField label="Runtime contract" value={manifest.runtime_contract} />
+        <ManifestField label="Cadence" value={manifest.cadence} />
+        <ManifestField label="Order style" value={manifest.order_style} />
+        <ManifestField label="Asset" value={manifest.asset_type} />
+        <ManifestField label="Deployment config" value={manifest.deployment_config_id} mono />
+        <ManifestField label="Strategy family" value={titleizeFamily(manifest.strategy_family)} />
+        <ManifestField label="Broker adapter" value={broker.broker_adapter} mono />
+        <ManifestField
+          label="Environment"
+          value={broker.broker_environment ? `${broker.broker_environment}${broker.paper_only ? " · paper-only" : ""}` : null}
+        />
+      </div>
+
+      {/* Target spec strip */}
+      {(target.mode || target.sleeve_allocation_pct != null || target.allowed_sides?.length) && (
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--cb-border-dim)" }}>
+          <div className="cb-label mb-2">Target spec</div>
+          <div className="flex flex-wrap items-center gap-3" style={{ fontSize: 11, color: "var(--cb-text-secondary)" }}>
+            {target.mode && <span><span style={{ color: "var(--cb-text-tertiary)" }}>mode:</span> <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{target.mode}</span></span>}
+            {target.sleeve_allocation_pct != null && <span><span style={{ color: "var(--cb-text-tertiary)" }}>sleeve:</span> <span style={{ color: "var(--cb-text-primary)" }}>{fmtPct(target.sleeve_allocation_pct, 1)}</span></span>}
+            {target.max_account_exposure_pct != null && <span><span style={{ color: "var(--cb-text-tertiary)" }}>max account:</span> <span style={{ color: "var(--cb-text-primary)" }}>{fmtPct(target.max_account_exposure_pct, 1)}</span></span>}
+            {target.allowed_sides?.length && <span><span style={{ color: "var(--cb-text-tertiary)" }}>sides:</span> <span style={{ color: "var(--cb-text-primary)" }}>{target.allowed_sides.join(", ")}</span></span>}
+            {target.min_rebalance_notional_usd != null && <span><span style={{ color: "var(--cb-text-tertiary)" }}>min rebalance:</span> <span style={{ color: "var(--cb-text-primary)" }}>${target.min_rebalance_notional_usd.toLocaleString("en-US")}</span></span>}
+          </div>
+          {target.description && (
+            <div className="mt-2" style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+              {target.description}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Source / rationale */}
+      {(manifest.source?.bench_id || manifest.source?.rationale) && (
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--cb-border-dim)" }}>
+          <div className="cb-label mb-2">Source</div>
+          {manifest.source?.bench_id && (
+            <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", marginBottom: 4 }}>
+              <span style={{ color: "var(--cb-text-tertiary)" }}>bench:</span>{" "}
+              <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{manifest.source.bench_id}</span>
+              {manifest.source.selected_config_id && (
+                <>
+                  {" · "}
+                  <span style={{ color: "var(--cb-text-tertiary)" }}>winner:</span>{" "}
+                  <span className="font-mono" style={{ color: "var(--cb-text-primary)" }}>{manifest.source.selected_config_id}</span>
+                </>
+              )}
+            </div>
+          )}
+          {manifest.source?.rationale && (
+            <div style={{ fontSize: 11, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+              {manifest.source.rationale}
+            </div>
+          )}
+        </div>
+      )}
+
+      {kind === "STRATEGY_BANK_FALLBACK" && (
+        <div className="mt-4 pt-4" style={{ borderTop: "1px solid var(--cb-border-dim)", fontSize: 11, color: "var(--cb-text-tertiary)", lineHeight: 1.55 }}>
+          This manifest is synthesized from the active strategy-bank record.
+          It exists for parity and traceability while the runtime moves toward
+          manifest-native execution. It is not a first-class promotion.
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PromotionSection({ manifests, runtime, accent, sleeveLabel }: {
+  manifests: ExecutionManifest[]
+  runtime: RuntimeBundle | undefined
+  accent: string
+  sleeveLabel: string
+}) {
+  if (!manifests.length) {
+    // Honest empty state — promotion is the bridge that may not exist yet.
+    return (
+      <div
+        className="rounded-xl px-5 py-4"
+        style={{
+          background: "var(--cb-surface-0)",
+          border: "1px dashed var(--cb-border)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className="inline-block rounded-full" style={{ width: 8, height: 8, background: "var(--cb-text-tertiary)" }} />
+          <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.10em", textTransform: "uppercase", color: "var(--cb-text-secondary)" }}>
+            No promoted manifest
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: "var(--cb-text-secondary)", lineHeight: 1.55 }}>
+          {sleeveLabel} has bench evidence but no checked-in execution manifest yet.
+          A manifest encodes one intentional promotion (deployment config, runtime
+          contract, cadence, broker) and is the contract the runtime executes against.
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {manifests.map(m => (
+        <PromotionCard key={m.manifest_id} manifest={m} accent={accent} runtime={runtime} />
+      ))}
+    </div>
+  )
+}
+
 // ─── Run selector — styled card dropdown ────────────────────────────────────
 // Replaces the native <select> with a proper card-based selector that shows
 // the current run's info clearly and reads as an interactive element.
@@ -1526,12 +1925,14 @@ function RunSelector({ runs, selected, onSelect, showPartials, onTogglePartials,
 
 // ─── Sleeve view (index dropdown + run detail) ──────────────────────────────
 function SleeveView({
-  tab, runs, specs, comparisons, selected, onSelect,
+  tab, runs, specs, comparisons, manifests, runtime, selected, onSelect,
 }: {
   tab: BenchTab
   runs: BenchIndexEntry[]
   specs: BenchSpecEntry[]
   comparisons: SleeveComparison[]
+  manifests: ExecutionManifest[]
+  runtime: RuntimeBundle | undefined
   selected: { bench_id: string; run_id: string } | null
   onSelect: (s: { bench_id: string; run_id: string }) => void
 }) {
@@ -1586,6 +1987,7 @@ function SleeveView({
     return (
       <div className="space-y-4">
         {comparisons.length > 0 && comparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
+        <PromotionSection manifests={manifests} runtime={runtime} accent={meta.accent} sleeveLabel={meta.label} />
         {specsWithoutRuns.length > 0 ? (
           specsWithoutRuns.map(s => (
             <div
@@ -1637,6 +2039,9 @@ function SleeveView({
     <div className="space-y-6">
       {/* Strategy comparison — the portfolio question (if available) */}
       {comparisons.length > 0 && comparisons.map((c, i) => <ComparisonCard key={i} comparison={c} />)}
+
+      {/* Promoted manifest(s) — the bridge between bench evidence and runtime execution */}
+      <PromotionSection manifests={manifests} runtime={runtime} accent={meta.accent} sleeveLabel={meta.label} />
 
       {/* Run selector — custom card dropdown */}
       <RunSelector
@@ -1780,6 +2185,8 @@ export function BenchDashboard({ initialIndex }: { initialIndex: BenchIndex | nu
             runs={runsByTab[activeTab] ?? []}
             specs={(index?.specs ?? []).filter(s => s.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
             comparisons={(index?.comparisons ?? []).filter((c: SleeveComparison) => c.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
+            manifests={(index?.manifests ?? []).filter(m => m.sleeve?.toUpperCase() === TAB_META[activeTab].sleeveKey)}
+            runtime={index?.runtime}
             selected={selectedBySleeve[activeTab] ?? null}
             onSelect={s => setSelectedBySleeve(prev => ({ ...prev, [activeTab]: s }))}
           />

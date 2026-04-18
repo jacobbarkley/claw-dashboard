@@ -1,0 +1,14 @@
+{
+  "run_id": "2026-04-17-shadow-midday-01",
+  "trading_date": "2026-04-17",
+  "phase": "INTRADAY",
+  "entry_mode": "OPEN",
+  "operator_mode": "AUTONOMOUS_PAPER",
+  "active_strategy_record_id": "regime_aware_momentum::stop_5_target_15",
+  "active_strategy_id": "regime_aware_momentum",
+  "active_strategy_variant_id": "stop_5_target_15",
+  "active_strategy_signal_source": "validation_strategy",
+  "entry_mode_advisory": null,
+  "policy_version": "0.1.0",
+  "started_at": "2026-04-17T11:45:16.093320-04:00"
+}

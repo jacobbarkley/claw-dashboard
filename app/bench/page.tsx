@@ -27,7 +27,33 @@ async function getInitialIndex() {
     }
   } catch { /* no comparisons dir yet */ }
 
-  return { ...index, comparisons }
+  // Load checked-in execution manifests — the promotion bridge between bench
+  // results and runtime. Surfaced per sleeve in the Promotion section.
+  const manifests: unknown[] = []
+  try {
+    const manifestsDir = path.join(process.cwd(), "data/bench/manifests")
+    const files = await fs.readdir(manifestsDir)
+    for (const f of files.filter(f => f.endsWith(".execution_manifest.json"))) {
+      const data = await readJson(`data/bench/manifests/${f}`)
+      if (data) manifests.push(data)
+    }
+  } catch { /* no manifests dir yet */ }
+
+  // Runtime tie-ins — anchor a manifest to what the runtime is actually doing
+  const runtimeActiveStrategy = await readJson("data/bench/runtime/active_strategy.json")
+  const runtimeExecutionManifest = await readJson("data/bench/runtime/execution_manifest.json")
+  const runtimeSessionContext = await readJson("data/bench/runtime/session_context.json")
+
+  return {
+    ...index,
+    comparisons,
+    manifests,
+    runtime: {
+      active_strategy: runtimeActiveStrategy,
+      execution_manifest: runtimeExecutionManifest,
+      session_context: runtimeSessionContext,
+    },
+  }
 }
 
 export default async function BenchPage() {
