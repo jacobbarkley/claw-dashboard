@@ -23,5 +23,6 @@ export const metadata = {
 
 export default async function ViresTradingPage() {
   const data = await getInitialData()
-  return <ViresTradingShell data={data} />
+  const operator = data?.operator ?? null
+  return <ViresTradingShell data={data} operator={operator} />
 }

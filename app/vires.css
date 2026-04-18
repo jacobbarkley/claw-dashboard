@@ -58,6 +58,40 @@
   --r-inset: 4px;
 }
 
+/* ─── Obsidian variant ──────────────────────────────────────────────
+   Night identity (6pm – 6am local). Cooler cream, gold shifted to a
+   silver-blue. Champagne (default above) is the day identity. The
+   data-vr-theme attribute is toggled on .vires-root by the layout. */
+[data-vr-theme="obsidian"] {
+  --vr-cream:       #e8ecf3;
+  --vr-cream-dim:   #bbc2cf;
+  --vr-cream-mute:  #7f8596;
+  --vr-cream-faint: #484d5c;
+
+  --vr-gold:        #8fa7c6;  /* silver-blue replaces warm gold */
+  --vr-gold-deep:   #516c92;
+  --vr-gold-soft:   rgba(143, 167, 198, 0.10);
+  --vr-gold-line:   rgba(143, 167, 198, 0.24);
+
+  --vr-sleeve-options: #8fa7c6;  /* tracks the accent shift */
+
+  --vr-line:        rgba(232, 236, 243, 0.06);
+  --vr-line-hi:     rgba(232, 236, 243, 0.12);
+}
+
+/* Italicize gold accents a touch harder in Obsidian so the wordmark
+   and .t-accent reads as a distinct night identity, not just a palette
+   recolor. The italic is baked into .t-accent already; obsidian nudges
+   the display italic forward on the main wordmark + h1/h2 scale. */
+[data-vr-theme="obsidian"] .t-display,
+[data-vr-theme="obsidian"] .t-h1,
+[data-vr-theme="obsidian"] .t-h2 {
+  font-style: italic;
+}
+[data-vr-theme="obsidian"] .t-accent {
+  font-style: italic;
+}
+
 /* Scoped to .vires-root so this stylesheet does not override pages that
    aren't yet on the Vires design system. The :root variables above stay
    global (inert until referenced). */

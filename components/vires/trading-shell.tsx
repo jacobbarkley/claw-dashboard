@@ -9,6 +9,29 @@ import { useState } from "react"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
 
+// Opaque operator shape — passed through to home-extras which owns its own
+// narrow types. Keeping it untyped here avoids re-declaring the same shape
+// in two places.
+type OperatorBlock = unknown
+
+// Pull the active strategy's stop_loss_pct / target_pct out of the operator
+// block so StocksScreen's Qualified Universe can render SL / TP for held
+// names. Returns nulls when the operator field isn't populated yet.
+function extractStrategyRules(operator: OperatorBlock): { stop_loss_pct: number | null; target_pct: number | null } {
+  const o = operator as {
+    strategy_bank?: {
+      active?: {
+        planning_profile?: { stop_loss_pct?: number; target_pct?: number } | null
+      } | null
+    } | null
+  } | null
+  const profile = o?.strategy_bank?.active?.planning_profile
+  return {
+    stop_loss_pct: typeof profile?.stop_loss_pct === "number" ? profile.stop_loss_pct : null,
+    target_pct: typeof profile?.target_pct === "number" ? profile.target_pct : null,
+  }
+}
+
 type SubTab = "home" | "stocks" | "options" | "crypto"
 
 const TABS: Array<{ key: SubTab; label: string }> = [
@@ -74,7 +97,10 @@ function SubNav({ tab, onTab }: { tab: SubTab; onTab: (t: SubTab) => void }) {
   )
 }
 
-export function ViresTradingShell({ data }: { data: ViresTradingData | null }) {
+export function ViresTradingShell({ data, operator }: {
+  data: ViresTradingData | null
+  operator?: OperatorBlock
+}) {
   const [tab, setTab] = useState<SubTab>("home")
 
   if (!data) {
@@ -94,8 +120,8 @@ export function ViresTradingShell({ data }: { data: ViresTradingData | null }) {
     <>
       <SubNav tab={tab} onTab={setTab} />
       <div className="vr-screen" style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
-        {tab === "home"    && <ViresTradingHome data={data} />}
-        {tab === "stocks"  && <StocksScreen data={data} />}
+        {tab === "home"    && <ViresTradingHome data={data} operator={operator as never} onNavigateSleeve={setTab} />}
+        {tab === "stocks"  && <StocksScreen data={data} rules={extractStrategyRules(operator)} />}
         {tab === "options" && <OptionsScreen data={data} />}
         {tab === "crypto"  && <CryptoScreen data={data} />}
       </div>

@@ -21,6 +21,7 @@ import {
   toneColor,
   toneOf,
 } from "./shared"
+import { ElevatedStrategies, MarketRegime, DeskStatus } from "./home-extras"
 
 // ─── Types matching the operator feed subset this page consumes ────────────
 // Keep narrow on purpose so a downstream feed change only breaks the screens
@@ -182,9 +183,10 @@ function Celestial({
 }
 
 // ─── Hero: Account Equity + allocation bar + celestial ─────────────────────
-function HomeHero({ account, onOpenTalon }: {
+function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
   account: ViresTradingData["account"]
   onOpenTalon?: () => void
+  onNavigateSleeve?: (sleeve: "stocks" | "crypto" | "options") => void
 }) {
   const [px, setPx] = useState({ x: 0, y: 0 })
   const heroRef = useRef<HTMLDivElement>(null)
@@ -197,7 +199,12 @@ function HomeHero({ account, onOpenTalon }: {
     })
   }
 
-  const alloc = [
+  const alloc: Array<{
+    k: "stocks" | "crypto" | "options" | "cash"
+    label: string
+    value: number
+    color: string
+  }> = [
     { k: "stocks",  label: "Stocks",  value: account.equity_deployed ?? 0, color: "var(--vr-sleeve-stocks)" },
     { k: "crypto",  label: "Crypto",  value: account.crypto_deployed ?? 0, color: "var(--vr-sleeve-crypto)" },
     { k: "options", label: "Options", value: account.options_deployed ?? 0, color: "var(--vr-sleeve-options)" },
@@ -213,9 +220,11 @@ function HomeHero({ account, onOpenTalon }: {
       onMouseMove={handleMouse}
       onMouseLeave={() => setPx({ x: 0, y: 0 })}
     >
-      <Starfield count={28} seed={42} />
-      <OrbitRing size={220} offsetX={-90} offsetY={-100} />
-      <OrbitRing size={340} offsetX={-180} offsetY={-180} />
+      <Starfield count={14} seed={42} />
+      {/* Single orbit ring, positioned closer in — arc sits roughly
+          halfway between the Account Equity number and the celestial
+          (previously two concentric rings felt busy). */}
+      <OrbitRing size={170} offsetX={-40} offsetY={-50} />
       <Celestial parallax={px} onOpenTalon={onOpenTalon} />
 
       <div className="t-eyebrow" style={{ marginBottom: 10, position: "relative", zIndex: 2 }}>
@@ -251,26 +260,44 @@ function HomeHero({ account, onOpenTalon }: {
           ))}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0, marginTop: 14 }}>
-          {alloc.map((x, i) => (
-            <div
-              key={x.k}
-              style={{
-                padding: i > 0 ? "0 0 0 12px" : "0 12px 0 0",
-                borderLeft: i > 0 ? "1px solid var(--vr-line)" : "none",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                <span style={{ width: 4, height: 4, background: x.color }} />
-                <span className="t-eyebrow" style={{ fontSize: 9 }}>{x.label}</span>
-              </div>
-              <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
-                {fmtCurrency(x.value, { compact: true })}
-              </div>
-              <div className="t-num" style={{ fontSize: 10, color: "var(--vr-cream-mute)", marginTop: 2 }}>
-                {((x.value / total) * 100).toFixed(1)}%
-              </div>
-            </div>
-          ))}
+          {alloc.map((x, i) => {
+            // Non-cash segments jump to their sleeve sub-tab. Cash stays
+            // display-only — it's not a tab.
+            const clickable = x.k !== "cash" && !!onNavigateSleeve
+            const Inner = (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                  <span style={{ width: 4, height: 4, background: x.color }} />
+                  <span className="t-eyebrow" style={{ fontSize: 9 }}>{x.label}</span>
+                </div>
+                <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
+                  {fmtCurrency(x.value, { compact: true })}
+                </div>
+                <div className="t-num" style={{ fontSize: 10, color: "var(--vr-cream-mute)", marginTop: 2 }}>
+                  {((x.value / total) * 100).toFixed(1)}%
+                </div>
+              </>
+            )
+            const commonStyle: React.CSSProperties = {
+              padding: i > 0 ? "0 0 0 12px" : "0 12px 0 0",
+              borderLeft: i > 0 ? "1px solid var(--vr-line)" : "none",
+              textAlign: "left",
+              background: "transparent",
+            }
+            return clickable ? (
+              <button
+                key={x.k}
+                type="button"
+                onClick={() => onNavigateSleeve!(x.k as "stocks" | "crypto" | "options")}
+                style={{ ...commonStyle, border: "none", cursor: "pointer", color: "inherit", font: "inherit" }}
+                aria-label={`Open ${x.label} sleeve`}
+              >
+                {Inner}
+              </button>
+            ) : (
+              <div key={x.k} style={commonStyle}>{Inner}</div>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -278,20 +305,25 @@ function HomeHero({ account, onOpenTalon }: {
 }
 
 // ─── Sleeve quick-link card ─────────────────────────────────────────────────
-function SleeveCard({ sleeve, total, count, todayPct }: {
+function SleeveCard({ sleeve, total, count, todayPct, onOpen }: {
   sleeve: "stocks" | "options" | "crypto"
   total: number
   count: number
   todayPct: number | null
+  onOpen?: (sleeve: "stocks" | "options" | "crypto") => void
 }) {
   const cfg = {
     stocks:  { c: "var(--vr-sleeve-stocks)",  l: "Stocks"  },
     options: { c: "var(--vr-sleeve-options)", l: "Options" },
     crypto:  { c: "var(--vr-sleeve-crypto)",  l: "Crypto"  },
   }[sleeve]
+  const clickable = !!onOpen
+  const Tag = clickable ? "button" : "div"
   return (
-    <div
+    <Tag
       className="vr-card"
+      type={clickable ? "button" : undefined}
+      onClick={clickable ? () => onOpen!(sleeve) : undefined}
       style={{
         padding: 16,
         textAlign: "left",
@@ -299,6 +331,11 @@ function SleeveCard({ sleeve, total, count, todayPct }: {
         display: "flex",
         flexDirection: "column",
         gap: 6,
+        cursor: clickable ? "pointer" : "default",
+        background: "transparent",
+        color: "inherit",
+        font: "inherit",
+        width: "100%",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -317,34 +354,114 @@ function SleeveCard({ sleeve, total, count, todayPct }: {
         </span>
         {todayPct !== null && <Delta value={todayPct} size="11px" />}
       </div>
-    </div>
+    </Tag>
   )
 }
 
 // ─── Equity chart ──────────────────────────────────────────────────────────
+// Timeframe selector covers a full spectrum: 1D and 1W are upsampled to
+// intraday with deterministic seeded noise so the chart reads "live" on
+// short windows. 1M / 3M / 1Y / ALL stay at daily resolution — the real
+// data is plenty honest at those scales. Intraday detail is modeled, not
+// live-tick (see Codex primer for when real bars land).
 const TIMEFRAMES = [
-  { k: "1M",  label: "1M",  days: 30 },
-  { k: "3M",  label: "3M",  days: 90 },
-  { k: "1Y",  label: "1Y",  days: 365 },
-  { k: "ALL", label: "ALL", days: Infinity },
+  { k: "1D",  label: "1D",  days: 1,        intradaySteps: 78 },  // 78 bars ≈ 5-min session
+  { k: "1W",  label: "1W",  days: 7,        intradaySteps: 26 },
+  { k: "1M",  label: "1M",  days: 30,       intradaySteps: 0 },
+  { k: "3M",  label: "3M",  days: 90,       intradaySteps: 0 },
+  { k: "1Y",  label: "1Y",  days: 365,      intradaySteps: 0 },
+  { k: "ALL", label: "ALL", days: Infinity, intradaySteps: 0 },
 ] as const
 
 type TfKey = (typeof TIMEFRAMES)[number]["k"]
+
+interface CurvePoint {
+  date: string
+  hour?: string
+  equity: number
+}
+
+// Deterministic seeded noise used for intraday upsampling. Pure function —
+// same seed always produces the same sequence so the chart doesn't flicker
+// between renders.
+function makeRand(seed: number): () => number {
+  let t = seed >>> 0
+  return () => {
+    t = (t + 0x6D2B79F5) >>> 0
+    let r = t
+    r = Math.imul(r ^ (r >>> 15), r | 1)
+    r ^= r + Math.imul(r ^ (r >>> 7), r | 61)
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Insert `steps` intraday points between each pair of consecutive daily
+// closes. Anchors on the exact daily closes so the final headline number
+// matches the daily series. Adds a mild intraday U-shape + seeded noise for
+// realistic jaggedness. Returns a new array with `hour` strings on
+// intraday points; daily anchors keep their original shape.
+function upsampleIntraday(daily: CurvePoint[], stepsPerDay: number): CurvePoint[] {
+  if (!daily || daily.length < 2 || stepsPerDay <= 0) return daily ?? []
+  const rand = makeRand(0xC0FFEE)
+  const mean = daily.reduce((a, b) => a + b.equity, 0) / daily.length || 100000
+  const sigma = mean * (stepsPerDay >= 30 ? 0.0009 : 0.0018)
+  const out: CurvePoint[] = []
+  for (let i = 0; i < daily.length - 1; i++) {
+    const a = daily[i]
+    const b = daily[i + 1]
+    for (let s = 0; s < stepsPerDay; s++) {
+      const t = s / stepsPerDay
+      const base = a.equity + (b.equity - a.equity) * t
+      const env = Math.sin(Math.PI * t) // 0 at endpoints, 1 mid — mutes noise at closes
+      const n1 = (rand() - 0.5) * 2
+      const n2 = (rand() - 0.5) * 2
+      const noise = (n1 * 0.8 + n2 * 0.4) * sigma * env
+      const uShape = Math.sin(Math.PI * 2 * t - 0.3) * sigma * 0.35 * env
+      const hrFloat = 9.5 + t * 6.5 // 9:30 → 16:00
+      const hour = Math.floor(hrFloat)
+      const mins = Math.round((hrFloat - hour) * 60)
+      out.push({
+        date: a.date,
+        hour: `${hour.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`,
+        equity: base + noise + uShape,
+      })
+    }
+    out.push({ date: a.date, hour: "16:00", equity: a.equity })
+  }
+  const last = daily[daily.length - 1]
+  out.push({ date: last.date, hour: "16:00", equity: last.equity })
+  return out
+}
 
 function EquityChart({ curve, baseValue }: {
   curve: ViresTradingData["equity_curve"]
   baseValue: number | null
 }) {
-  const [tf, setTf] = useState<TfKey>("ALL")
+  const [tf, setTf] = useState<TfKey>("1W")
   const [tfMenu, setTfMenu] = useState(false)
-  const [hover, setHover] = useState<{ date: string; equity: number } | null>(null)
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
   const tfMeta = TIMEFRAMES.find(t => t.k === tf)!
-  const visible = useMemo(() => {
-    if (!curve.length) return curve
-    if (tfMeta.days === Infinity) return curve
-    return curve.slice(-Math.max(2, tfMeta.days))
-  }, [curve, tfMeta.days])
+
+  const visible: CurvePoint[] = useMemo(() => {
+    if (!curve.length) return []
+    const daily: CurvePoint[] = curve.map(p => ({ date: p.date, equity: p.equity }))
+    // Daily window: ALL = full history, otherwise slice to the window size + 1
+    // (need one extra prior-close anchor when we upsample).
+    const windowDays = tfMeta.days === Infinity ? daily.length : Math.max(2, Math.min(daily.length, tfMeta.days + 1))
+    const windowed = tfMeta.days === Infinity ? daily : daily.slice(-windowDays)
+
+    if (tfMeta.intradaySteps <= 0) return windowed
+
+    // Upsample. For 1D, keep only today's session bars (from the last
+    // prior-close anchor forward).
+    const upsampled = upsampleIntraday(windowed, tfMeta.intradaySteps)
+    if (tf === "1D") {
+      const anchorIdx = upsampled.findIndex(p => p.date === windowed[windowed.length - 2]?.date)
+      return anchorIdx >= 0 ? upsampled.slice(anchorIdx) : upsampled
+    }
+    return upsampled
+  }, [curve, tf, tfMeta.days, tfMeta.intradaySteps])
 
   if (!visible.length) {
     return (
@@ -374,6 +491,7 @@ function EquityChart({ curve, baseValue }: {
   const baseInRange = baseY != null && baseY >= 0 && baseY <= H
   const last = visible[visible.length - 1]
   const periodPct = ((last.equity - visible[0].equity) / visible[0].equity) * 100
+  const hover = hoverIdx != null && hoverIdx >= 0 && hoverIdx < visible.length ? visible[hoverIdx] : null
 
   return (
     <div className="vr-card" style={{ padding: 18 }}>
@@ -384,7 +502,11 @@ function EquityChart({ curve, baseValue }: {
             {fmtCurrency(hover ? hover.equity : last.equity)}
           </div>
           <div className="t-label" style={{ fontSize: 10, marginTop: 3 }}>
-            {hover ? hover.date : tfMeta.label}
+            {hover
+              ? `${hover.date}${hover.hour ? ` · ${hover.hour}` : ""}`
+              : tfMeta.intradaySteps > 0
+                ? `${tfMeta.label} · modeled intraday`
+                : tfMeta.label}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
@@ -430,7 +552,7 @@ function EquityChart({ curve, baseValue }: {
                   <button
                     key={t.k}
                     type="button"
-                    onClick={() => { setTf(t.k); setTfMenu(false); setHover(null) }}
+                    onClick={() => { setTf(t.k); setTfMenu(false); setHoverIdx(null) }}
                     style={{
                       display: "block",
                       width: "100%",
@@ -460,12 +582,12 @@ function EquityChart({ curve, baseValue }: {
         height={H}
         viewBox={`0 0 ${W} ${H}`}
         style={{ overflow: "visible" }}
-        onMouseLeave={() => setHover(null)}
+        onMouseLeave={() => setHoverIdx(null)}
         onMouseMove={(e) => {
           const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
           const x = ((e.clientX - rect.left) / rect.width) * W
           const i = Math.max(0, Math.min(visible.length - 1, Math.round((x / W) * (visible.length - 1))))
-          setHover(visible[i])
+          setHoverIdx(i)
         }}
       >
         <defs>
@@ -485,10 +607,8 @@ function EquityChart({ curve, baseValue }: {
         <path d={fd} fill="url(#vrEqGrad)" />
         <path d={d} stroke="var(--vr-gold)" strokeWidth="2.4" fill="none" strokeLinejoin="round" opacity="0.18" />
         <path d={d} stroke="var(--vr-gold)" strokeWidth="1.1" fill="none" strokeLinejoin="round" />
-        {hover && (() => {
-          const i = visible.indexOf(hover)
-          if (i < 0) return null
-          const [x, y] = pts[i]
+        {hoverIdx != null && hoverIdx >= 0 && hoverIdx < pts.length && (() => {
+          const [x, y] = pts[hoverIdx]
           return (
             <g>
               <line x1={x} y1={0} x2={x} y2={H} stroke="var(--vr-cream-faint)" strokeWidth="0.6" strokeDasharray="1 3" />
@@ -505,7 +625,11 @@ function EquityChart({ curve, baseValue }: {
 // Renders the Trading > Home tab: hero + sleeve cards + equity chart. The
 // inner Vires nav (Trading/Bench/Plateau) is rendered by app/vires/layout.tsx
 // and the sub-nav (Home/Stocks/Options/Crypto) by ViresTradingShell.
-export function ViresTradingHome({ data }: { data: ViresTradingData }) {
+export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
+  data: ViresTradingData
+  operator?: Parameters<typeof ElevatedStrategies>[0]["operator"]
+  onNavigateSleeve?: (sleeve: "stocks" | "options" | "crypto") => void
+}) {
   const stockPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY")
   const cryptoPositions = data.positions.filter(p => p.asset_type === "CRYPTO")
   const optionPositions = data.positions.filter(p => p.asset_type === "OPTION")
@@ -521,6 +645,7 @@ export function ViresTradingHome({ data }: { data: ViresTradingData }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <HomeHero
           account={data.account}
+          onNavigateSleeve={onNavigateSleeve}
           onOpenTalon={() => {
             // Talon stub. Full chat panel ports in a follow-up commit.
             if (typeof window !== "undefined") {
@@ -535,11 +660,13 @@ export function ViresTradingHome({ data }: { data: ViresTradingData }) {
             total={stockPositions.reduce((s, p) => s + (p.market_value ?? 0), 0)}
             count={stockPositions.length}
             todayPct={pctMove(stockPositions)}
+            onOpen={onNavigateSleeve}
           />
           <SleeveCard
             sleeve="options"
             total={optionPositions.reduce((s, p) => s + (p.market_value ?? 0), 0)}
             count={optionPositions.length}
+            onOpen={onNavigateSleeve}
             todayPct={pctMove(optionPositions)}
           />
           <SleeveCard
@@ -547,10 +674,17 @@ export function ViresTradingHome({ data }: { data: ViresTradingData }) {
             total={cryptoPositions.reduce((s, p) => s + (p.market_value ?? 0), 0)}
             count={cryptoPositions.length}
             todayPct={pctMove(cryptoPositions)}
+            onOpen={onNavigateSleeve}
           />
         </div>
 
         <EquityChart curve={data.equity_curve} baseValue={data.account.base_value} />
+
+        {/* Lower-home sections. All three read from operator.* fields
+            already present in the feed — no backend work needed. */}
+        <ElevatedStrategies operator={operator ?? null} />
+        <MarketRegime operator={operator ?? null} />
+        <DeskStatus operator={operator ?? null} />
       </div>
     </>
   )

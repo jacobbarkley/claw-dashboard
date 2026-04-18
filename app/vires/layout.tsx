@@ -1,6 +1,7 @@
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google"
 import "../vires.css"
 import { ViresInnerNav } from "@/components/vires/inner-nav"
+import { ViresFrame } from "@/components/vires/frame"
 
 // Vires Capital design system fonts — loaded only inside /vires routes so
 // the existing /trading, /bench, /queue surfaces keep their DM_Sans + DM_Mono.
@@ -27,20 +28,11 @@ const geistMono = Geist_Mono({
 
 export default function ViresLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      id="vires-frame"
-      className={`vires-root ${cormorant.variable} ${geistSans.variable} ${geistMono.variable}`}
-      style={{
-        // Bind the design tokens vires.css references to the loaded font
-        // variables. Override here so the Cormorant / Geist Google fonts
-        // get used in place of the raw family names declared in vires.css.
-        ["--ff-serif" as string]: `var(--vr-font-serif), 'Iowan Old Style', Palatino, serif`,
-        ["--ff-sans" as string]: `var(--vr-font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif`,
-        ["--ff-mono" as string]: `var(--vr-font-mono), ui-monospace, SFMono-Regular, Menlo, monospace`,
-      }}
-    >
-      <ViresInnerNav mode="PAPER" />
-      {children}
+    <div className={`${cormorant.variable} ${geistSans.variable} ${geistMono.variable}`}>
+      <ViresFrame>
+        <ViresInnerNav mode="PAPER" />
+        {children}
+      </ViresFrame>
     </div>
   )
 }
