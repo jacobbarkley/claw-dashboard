@@ -1303,7 +1303,11 @@ function cutoffForTf(tf: Timeframe): string | null {
   return d.toISOString().slice(0, 10)
 }
 
-function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; baseValue?: number | null }) {
+function EquityCurve({ data, baseValue, label = "Account Equity" }: {
+  data: TradingData["equity_curve"]
+  baseValue?: number | null
+  label?: string
+}) {
   const [tf, setTf] = useState<Timeframe>("ALL")
 
   const displayData = useMemo(() => {
@@ -1314,7 +1318,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
 
   if (!data.length) return (
     <div className="cb-card-t2 px-4 pt-4 pb-6">
-      <div className="cb-label mb-3">Account Equity</div>
+      <div className="cb-label mb-3">{label}</div>
       <div className="flex items-center justify-center h-[140px]">
         <p className="text-xs" style={{ color: "var(--cb-text-tertiary)" }}>No history available yet</p>
       </div>
@@ -1339,7 +1343,7 @@ function EquityCurve({ data, baseValue }: { data: TradingData["equity_curve"]; b
     <div className={`cb-card-t2 ${toneClass(tone)} px-4 pt-4 pb-4`}>
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="cb-label">
-          Account Equity
+          {label}
           {baseValue && <span className="ml-2 font-normal normal-case" style={{ color: "var(--cb-text-tertiary)" }}>started ${baseValue.toLocaleString()}</span>}
         </span>
         <select
@@ -2183,6 +2187,67 @@ function TradingTabs({ active, onChange }: { active: TradingTab; onChange: (t: T
   )
 }
 
+// Slim sleeve header. Shows total deployed in the sleeve, today's change in
+// dollars and percent (computed from per-position market_value × today's %),
+// and what share of total portfolio equity the sleeve represents. Use this in
+// place of CapitalHero on a sleeve tab so we're not duplicating the
+// portfolio-wide number from Home.
+function SleeveSummaryHeader({ accent, label, holdingsValue, todayChangeUsd, todayChangePct, allocationPct, positionCount }: {
+  accent: string
+  label: string  // e.g. "Stock Holdings", "Crypto Holdings"
+  holdingsValue: number
+  todayChangeUsd: number | null
+  todayChangePct: number | null
+  allocationPct: number | null  // sleeve as % of account equity
+  positionCount: number
+}) {
+  const fmtUsd = (v: number) =>
+    `${v < 0 ? "-" : ""}$${Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const fmtSignedUsd = (v: number) =>
+    `${v >= 0 ? "+" : "−"}$${Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const moveTone: "good" | "medium" | "bad" =
+    todayChangeUsd == null ? "medium" : todayChangeUsd >= 0 ? "good" : "bad"
+  const moveColor =
+    moveTone === "good" ? "var(--cb-green)" : moveTone === "bad" ? "var(--cb-red)" : "var(--cb-text-secondary)"
+
+  return (
+    <div
+      className="rounded-xl px-5 py-4"
+      style={{
+        background: `radial-gradient(circle at 12% 10%, ${accent}18, transparent 48%), var(--cb-surface-0)`,
+        border: `1px solid ${accent}44`,
+      }}
+    >
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="cb-label">{label}</div>
+        {allocationPct != null && (
+          <div className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+            {allocationPct.toFixed(1)}% of portfolio
+          </div>
+        )}
+      </div>
+      <div className="cb-number" style={{ fontSize: 28, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>
+        {fmtUsd(holdingsValue)}
+      </div>
+      <div className="mt-1 flex items-baseline gap-2">
+        {todayChangeUsd != null && (
+          <span style={{ fontSize: 12, color: moveColor, fontWeight: 500 }}>
+            {fmtSignedUsd(todayChangeUsd)}
+            {todayChangePct != null && (
+              <span className="ml-1" style={{ color: moveColor, opacity: 0.85 }}>
+                ({todayChangePct >= 0 ? "+" : ""}{todayChangePct.toFixed(2)}%)
+              </span>
+            )}
+          </span>
+        )}
+        <span style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+          today · {positionCount} position{positionCount === 1 ? "" : "s"}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 // Compact placeholder banner for sleeves without real capital/data.
 function SleeveCapitalPlaceholder({ accent, title, message, sub }: {
   accent: string; title: string; message: string; sub?: string
@@ -2304,9 +2369,9 @@ function HomeView({ data }: { data: TradingData }) {
         />
       </section>
 
-      <section>
-        <PerformanceGrid kpis={data.kpis} />
-      </section>
+      {/* PerformanceGrid (Execution Quality KPIs) intentionally lives at the
+          bottom of the Stocks sleeve now — it's an equity-only metric set,
+          so it belongs with the sleeve it describes, not on Home. */}
 
       <section>
         <OperatorOverview data={data} tunables={data.tunables} />
@@ -2471,18 +2536,35 @@ function SleevePositionsChart({ positions }: { positions: Position[] }) {
 }
 
 function StocksSleeve({ data }: { data: TradingData }) {
-  const equityPositions = data.positions.filter(p => !parseOptionSymbol(p.symbol))
+  const meta = SLEEVE_META.stocks
+  const equityPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY" && !parseOptionSymbol(p.symbol))
   const equitySymbols = new Set(equityPositions.map(p => p.symbol))
   const equityExits = data.exit_candidates.filter(e => equitySymbols.has(e.symbol) || !data.positions.find(p => p.symbol === e.symbol && parseOptionSymbol(p.symbol)))
 
-  const allocation = data.account.equity_deployed
+  // Sleeve totals — prefer the operator-feed-computed equity_deployed, fall
+  // back to summing positions directly so the header stays honest if the
+  // field is ever missing.
+  const stockHoldings = data.account.equity_deployed
     ?? equityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const totalDeployed = data.account.positions_value ?? 0
-  const deployedPct = totalDeployed > 0 ? (allocation / totalDeployed) * 100 : null
 
-  const modeLabel = data.operator?.mode?.current_mode
-    ? titleizeToken(data.operator.mode.current_mode)
-    : titleizeToken(data.tunables.trading_mode)
+  // Today's $ change for stocks — derived per-position from market_value and
+  // change_today_pct using the exact identity P_now - P_prev. The portfolio
+  // today_pnl on `account` is account-level (includes options/crypto), so we
+  // recompute for the sleeve to stay scoped.
+  const stocksTodayChangeUsd = equityPositions.reduce((acc, p) => {
+    const pct = p.change_today_pct ?? 0
+    if (!pct) return acc
+    return acc + (p.market_value ?? 0) * (pct / (100 + pct))
+  }, 0)
+  const stocksTodayChangePct = stockHoldings > 0
+    ? (stocksTodayChangeUsd / (stockHoldings - stocksTodayChangeUsd)) * 100
+    : null
+
+  // Allocation as % of total account equity (NOT positions_value — we want
+  // "stocks vs total portfolio including cash", which is the question a
+  // glance at the sleeve actually wants answered).
+  const totalEquity = data.account.equity ?? 0
+  const allocationPct = totalEquity > 0 ? (stockHoldings / totalEquity) * 100 : null
 
   // Strategy universe — always show when an active strategy has symbols.
   // Annotate each symbol with its status today (held / qualified today / awaiting).
@@ -2527,32 +2609,37 @@ function StocksSleeve({ data }: { data: TradingData }) {
     ? `Strategy Universe · ${strategySymbols.length} names`
     : `Qualified Setups · ${data.watchlist.items.length}`
 
-  // Suppress unused-var warnings — allocation/deployedPct/modeLabel still useful
-  // if SleeveHeader is reintroduced later; kept computed for v2 feed transition.
-  void allocation; void deployedPct; void modeLabel;
-
   return (
     <div className="space-y-8">
       <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-        Stocks sleeve · regime-aware equities · showing portfolio-level figures until feed v2 lands per-sleeve
+        Stocks sleeve · regime-aware equities · {allocationPct != null ? `${allocationPct.toFixed(1)}% of portfolio` : "allocation pending"}
       </p>
 
-      {/* Stocks capital banner — today duplicates portfolio since ~100% stocks */}
+      {/* Sleeve-scoped header — replaces the duplicate CapitalHero */}
       <section>
-        <CapitalHero account={data.account} />
+        <SleeveSummaryHeader
+          accent={meta.accent}
+          label="Stock Holdings"
+          holdingsValue={stockHoldings}
+          todayChangeUsd={stocksTodayChangeUsd}
+          todayChangePct={stocksTodayChangePct}
+          allocationPct={allocationPct}
+          positionCount={equityPositions.length}
+        />
       </section>
 
-      {/* Stocks performance charts — duplicate of home until feed v2 splits per-sleeve */}
+      {/* Swipeable chart card — Stock Holdings ↔ Daily P&L. Reuses the
+          carousel from Home but with a sleeve-scoped equity label. The
+          underlying series is still account-level until Codex lands
+          sleeve_equity_history; until then this is honest because the
+          portfolio is ~100% stocks, but the renaming sets up the contract. */}
       <section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
-          <DailyPnlChart data={data.daily_performance} />
-        </div>
-      </section>
-
-      {/* Strategy KPIs for stocks */}
-      <section>
-        <PerformanceGrid kpis={data.kpis} />
+        <SwipeChartCarousel
+          pages={[
+            { key: "holdings", label: "Holdings",  node: <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} label="Stock Holdings" /> },
+            { key: "dailypnl", label: "Daily P&L", node: <DailyPnlChart data={data.daily_performance} /> },
+          ]}
+        />
       </section>
 
       {/* Open positions */}
@@ -2583,7 +2670,9 @@ function StocksSleeve({ data }: { data: TradingData }) {
         </section>
       )}
 
-      {/* Strategy universe — always visible when an active strategy exists */}
+      {/* Strategy universe — current price + daily move per symbol will become
+          richer once Codex's strategy_universe feed slice lands; today this
+          renders held / qualified / awaiting badges from existing data. */}
       {universeItems.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -2602,8 +2691,15 @@ function StocksSleeve({ data }: { data: TradingData }) {
         </section>
       )}
 
-      {/* Active strategy — bottom of sleeve */}
+      {/* Active strategy */}
       <PromotedStrategy bank={data.operator?.strategy_bank} />
+
+      {/* Execution-quality KPIs — now at the bottom of the sleeve. They're
+          equity-only metrics today, so they live with the sleeve they
+          actually describe rather than on Home. */}
+      <section>
+        <PerformanceGrid kpis={data.kpis} />
+      </section>
     </div>
   )
 }
