@@ -319,6 +319,7 @@ def build_account(market: dict, legacy_snapshot: dict, positions: list[dict], so
     history = legacy_snapshot.get('portfolio_history', {})
     positions_value = round(sum(safe_float(p.get('market_value'), 0.0) for p in positions), 2)
     equity_deployed = round(sum(safe_float(p.get('market_value'), 0.0) for p in positions if p.get('asset_type') == 'EQUITY'), 2)
+    crypto_deployed = round(sum(safe_float(p.get('market_value'), 0.0) for p in positions if p.get('asset_type') == 'CRYPTO'), 2)
     options_deployed = round(sum(abs(safe_float(p.get('market_value'), 0.0)) for p in positions if p.get('asset_type') == 'OPTION'), 2)
     unrealized_pnl = round(sum(safe_float(p.get('unrealized_pnl'), 0.0) for p in positions), 2)
     entry_basis = positions_value - unrealized_pnl
@@ -344,6 +345,7 @@ def build_account(market: dict, legacy_snapshot: dict, positions: list[dict], so
         'today_pnl_pct': today_pnl_pct,
         'positions_value': positions_value,
         'equity_deployed': equity_deployed,
+        'crypto_deployed': crypto_deployed,
         'options_deployed': options_deployed,
         'unrealized_pnl': unrealized_pnl,
         'unrealized_pnl_pct': unrealized_pct,
