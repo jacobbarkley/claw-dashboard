@@ -77,7 +77,7 @@ function StrategyRow({ chip, eyebrow, title, subtitle, metrics, promotedOn, tone
   eyebrow: string
   title: string
   subtitle?: string
-  metrics: Array<{ label: string; value: string; color?: string }>
+  metrics: Array<{ label: string; value: string; color?: string; term?: string }>
   promotedOn?: string | null
   tone?: "gold" | "neutral"
 }) {
@@ -113,7 +113,10 @@ function StrategyRow({ chip, eyebrow, title, subtitle, metrics, promotedOn, tone
       >
         {metrics.map(m => (
           <div key={m.label}>
-            <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>{m.label}</div>
+            <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, display: "flex", alignItems: "center" }}>
+              {m.label}
+              {m.term && <InfoPop term={m.term} size={10} />}
+            </div>
             <div className="t-num" style={{ fontSize: 14, color: m.color ?? "var(--vr-cream)", fontWeight: 500 }}>
               {m.value}
             </div>
@@ -150,8 +153,8 @@ export function ElevatedStrategies({ operator }: { operator: OperatorBundle | nu
             title={displayNameFromFamily(active.strategy_family) ?? active.display_name ?? "Active Strategy"}
             subtitle={`${active.symbols?.slice(0, 6).join(", ") ?? ""} · ${active.variant_id ?? ""}`}
             metrics={[
-              { label: "Calmar",  value: perf.calmar_ratio != null ? perf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
-              { label: "Sharpe",  value: perf.sharpe_ratio != null ? perf.sharpe_ratio.toFixed(2) : "—" },
+              { label: "Calmar", term: "Calmar", value: perf.calmar_ratio != null ? perf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
+              { label: "Sharpe", term: "Sharpe", value: perf.sharpe_ratio != null ? perf.sharpe_ratio.toFixed(2) : "—" },
             ]}
             promotedOn={promotedDate}
             tone="gold"
@@ -172,8 +175,8 @@ export function ElevatedStrategies({ operator }: { operator: OperatorBundle | nu
           title="BTC 4H TSMOM"
           subtitle="4-hour time-series momentum · trend filter"
           metrics={[
-            { label: "Med Era Sharpe", value: "—" },
-            { label: "Plateau",        value: "pending" },
+            { label: "Med Era Sharpe", term: "MedEraSharpe", value: "—" },
+            { label: "Plateau",        term: "Plateau",      value: "pending" },
           ]}
           tone="neutral"
         />
@@ -184,8 +187,8 @@ export function ElevatedStrategies({ operator }: { operator: OperatorBundle | nu
           title="BTC Managed Exposure"
           subtitle="Graduated 80 / 70 / 0 ladder + tactical top-up"
           metrics={[
-            { label: "Calmar",  value: "—" },
-            { label: "vs HODL", value: "—" },
+            { label: "Calmar",  term: "Calmar", value: "—" },
+            { label: "vs HODL", term: "VsHODL", value: "—" },
           ]}
           tone="neutral"
         />

@@ -371,6 +371,26 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
     full: "Local Stability Check",
     body: "Backtests rank candidates by score \u2014 but the highest score is often a lucky peak that collapses under small parameter shifts. A plateau is a region where many nearby configurations all do well. The bench\u2019s plateau gate separates real edge from lucky parameter alignment.",
   },
+  MedEraSharpe: {
+    title: "Med Era Sharpe",
+    full: "Median Sharpe Across Eras",
+    body: "Median of the per-era Sharpe ratios across the bench\u2019s catalog of regime windows (e.g. 2017 Mania, 2021\u201322 Bear Reset). A high single-era Sharpe doesn\u2019t survive regime change; the median forces the candidate to earn its rank across every era, not just one favorable slice.",
+  },
+  TotalReturn: {
+    title: "Total Return",
+    full: "Net Compounded Return",
+    body: "Full-period net return after modeled fees and slippage. A headline number \u2014 loud but not risk-aware. Always read alongside max drawdown and Sharpe to avoid confusing \u201Cbig number\u201D with \u201Cgood strategy.\u201D",
+  },
+  VsBench: {
+    title: "vs Benchmark",
+    full: "Excess Return Over Benchmark",
+    body: "Strategy return minus the benchmark\u2019s return over the same window. For stocks, the benchmark is usually SPY; for crypto, buy-and-hold BTC. A positive number alone is not enough \u2014 the excess has to come with comparable or lower risk.",
+  },
+  VsHODL: {
+    title: "vs HODL",
+    full: "Excess Return Over Buy-and-Hold",
+    body: "Strategy return minus the naive buy-and-hold return. For crypto specifically, beating HODL on raw return is not the goal \u2014 risk-adjusted participation is. A Calmar improvement with modest or even negative excess can still be the right trade.",
+  },
 }
 
 export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {

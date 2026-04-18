@@ -9,7 +9,7 @@
 // commits will plug into the existing slots here.
 
 import { useState } from "react"
-import { AnimatedNumber, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
+import { AnimatedNumber, InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
 import { useLivePoll } from "./use-live-poll"
 
 // ─── Types — narrow on purpose ──────────────────────────────────────────────
@@ -125,13 +125,13 @@ function FeaturedStrategy({ strategy }: { strategy: ActiveStrategy | null }) {
   }
 
   const p = strategy.performance ?? {}
-  const metrics = [
-    { l: "Total Return", v: p.totalReturn != null ? `${p.totalReturn.toFixed(1)}%` : "—", c: "var(--vr-up)" },
-    { l: "vs Bench",     v: p.excess != null ? `${p.excess >= 0 ? "+" : ""}${p.excess.toFixed(1)}%` : "—", c: p.excess != null && p.excess >= 0 ? "var(--vr-up)" : "var(--vr-down)" },
-    { l: "Sharpe",       v: p.sharpe != null ? p.sharpe.toFixed(2) : "—", c: "var(--vr-cream)" },
-    { l: "Calmar",       v: p.calmar != null ? p.calmar.toFixed(2) : "—", c: "var(--vr-gold)" },
-    { l: "Max DD",       v: p.maxDD != null ? `${p.maxDD.toFixed(2)}%` : "—", c: "var(--vr-down)" },
-    { l: "Win Rate",     v: p.winRate != null ? `${p.winRate.toFixed(1)}%` : "—", c: "var(--vr-cream)" },
+  const metrics: Array<{ l: string; term?: string; v: string; c: string }> = [
+    { l: "Total Return", term: "TotalReturn", v: p.totalReturn != null ? `${p.totalReturn.toFixed(1)}%` : "—", c: "var(--vr-up)" },
+    { l: "vs Bench",     term: "VsBench",     v: p.excess != null ? `${p.excess >= 0 ? "+" : ""}${p.excess.toFixed(1)}%` : "—", c: p.excess != null && p.excess >= 0 ? "var(--vr-up)" : "var(--vr-down)" },
+    { l: "Sharpe",       term: "Sharpe",      v: p.sharpe != null ? p.sharpe.toFixed(2) : "—", c: "var(--vr-cream)" },
+    { l: "Calmar",       term: "Calmar",      v: p.calmar != null ? p.calmar.toFixed(2) : "—", c: "var(--vr-gold)" },
+    { l: "Max DD",       term: "MaxDD",       v: p.maxDD != null ? `${p.maxDD.toFixed(2)}%` : "—", c: "var(--vr-down)" },
+    { l: "Win Rate",     term: "WinRate",     v: p.winRate != null ? `${p.winRate.toFixed(1)}%` : "—", c: "var(--vr-cream)" },
   ]
 
   return (
@@ -181,7 +181,10 @@ function FeaturedStrategy({ strategy }: { strategy: ActiveStrategy | null }) {
               borderBottom: i < 3 ? "1px solid var(--vr-line)" : "none",
             }}
           >
-            <div className="t-eyebrow" style={{ fontSize: 9 }}>{m.l}</div>
+            <div className="t-eyebrow" style={{ fontSize: 9, display: "flex", alignItems: "center" }}>
+              {m.l}
+              {m.term && <InfoPop term={m.term} size={10} />}
+            </div>
             <div className="t-num" style={{ fontSize: 15, color: m.c, fontWeight: 500, marginTop: 4 }}>{m.v}</div>
           </div>
         ))}
