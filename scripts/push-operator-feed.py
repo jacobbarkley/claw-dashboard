@@ -4,9 +4,11 @@
 Writes: data/operator-feed.json
 """
 
+from __future__ import annotations
+
 from collections import deque
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
 from typing import Optional
@@ -32,11 +34,27 @@ APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(RE
 STRATEGY_BANK_PATH = Path(os.environ.get('OPENCLAW_STRATEGY_BANK_PATH', str(REBUILD_LATEST / 'strategy_bank.json')))
 ACTIVE_STRATEGY_PATH = Path(os.environ.get('OPENCLAW_ACTIVE_STRATEGY_PATH', str(REBUILD_LATEST / 'active_strategy.json')))
 BROKER_SNAPSHOT_PATH = Path(os.environ.get('OPENCLAW_BROKER_SNAPSHOT_PATH', str(REBUILD_LATEST / 'broker_snapshot.json')))
+CRYPTO_EXECUTION_PLAN_PATH = Path(
+    os.environ.get('OPENCLAW_CRYPTO_EXECUTION_PLAN_PATH', str(REBUILD_LATEST / 'crypto_execution_plan.json'))
+)
+CRYPTO_EXECUTION_REPORT_PATH = Path(
+    os.environ.get('OPENCLAW_CRYPTO_EXECUTION_REPORT_PATH', str(REBUILD_LATEST / 'crypto_execution_report.json'))
+)
+BENCH_MANIFESTS_DIR = Path(os.environ.get('OPENCLAW_BENCH_MANIFESTS_DIR', str(WORKSPACE / 'backtest/bench/manifests')))
 ALPACA_CREDS_PATH = Path(os.environ.get('OPENCLAW_ALPACA_CREDS_PATH', str(Path.home() / '.openclaw/creds/alpaca-paper.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
 ALPACA_REQUIRED_KEYS = ('ALPACA_API_KEY_ID', 'ALPACA_API_SECRET_KEY')
 ALPACA_DATA_BASE_URL = 'https://data.alpaca.markets'
+BENCH_COMPARISON_KEYS = (
+    'benchmark',
+    'benchmark_baseline',
+    'core_regime',
+    'graduated_core',
+    'tactical',
+    'core_gated_tactical',
+    'graduated_core_tactical_overlay',
+)
 OVERRIDE_ENV_KEYS = [
     'OPENCLAW_WORKSPACE',
     'OPENCLAW_REBUILD_LATEST',
@@ -50,6 +68,9 @@ OVERRIDE_ENV_KEYS = [
     'OPENCLAW_STRATEGY_BANK_PATH',
     'OPENCLAW_ACTIVE_STRATEGY_PATH',
     'OPENCLAW_BROKER_SNAPSHOT_PATH',
+    'OPENCLAW_CRYPTO_EXECUTION_PLAN_PATH',
+    'OPENCLAW_CRYPTO_EXECUTION_REPORT_PATH',
+    'OPENCLAW_BENCH_MANIFESTS_DIR',
 ]
 
 
@@ -122,6 +143,70 @@ def fetch_stock_snapshots(symbols: list[str], creds: Optional[dict]) -> dict[str
     if isinstance(snapshots, dict):
         return snapshots
     return payload
+
+
+def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dict[str, float]:
+    if creds is None or not symbols:
+        return {}
+
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=45)
+    payload = alpaca_data_request(
+        creds,
+        '/v2/stocks/bars',
+        params={
+            'symbols': ','.join(symbols),
+            'timeframe': '1Day',
+            'start': start.isoformat().replace('+00:00', 'Z'),
+            'end': end.isoformat().replace('+00:00', 'Z'),
+            'limit': 30,
+            'adjustment': 'raw',
+            'sort': 'asc',
+        },
+    )
+    if not isinstance(payload, dict):
+        return {}
+
+    raw_bars = payload.get('bars')
+    grouped: dict[str, list[dict]] = {}
+
+    if isinstance(raw_bars, dict):
+        grouped = {
+            str(symbol).upper(): bars
+            for symbol, bars in raw_bars.items()
+            if isinstance(bars, list)
+        }
+    elif isinstance(raw_bars, list):
+        for bar in raw_bars:
+            if not isinstance(bar, dict):
+                continue
+            symbol = str(bar.get('S') or bar.get('symbol') or '').upper()
+            if not symbol:
+                continue
+            grouped.setdefault(symbol, []).append(bar)
+
+    out: dict[str, float] = {}
+    for symbol, bars in grouped.items():
+        closes = [safe_float(bar.get('c')) for bar in bars]
+        closes = [value for value in closes if value not in (None, 0)]
+        if len(closes) < 2:
+            continue
+        anchor_idx = -21 if len(closes) >= 21 else 0
+        start_close = closes[anchor_idx]
+        end_close = closes[-1]
+        if start_close in (None, 0) or end_close is None:
+            continue
+        out[symbol] = round((end_close / start_close - 1) * 100, 4)
+    return out
+
+
+def load_workspace_relative_json(path_value: Optional[str]) -> dict:
+    if not path_value:
+        return {}
+    path = Path(path_value)
+    if not path.is_absolute():
+        path = WORKSPACE / path
+    return load(path)
 
 
 def summarize_symbols(items: list[dict], key: str = 'symbol', limit: int = 5) -> list[str]:
@@ -253,6 +338,8 @@ def summarize_strategy_record(record: dict, active_record_id: str | None) -> dic
         'description': record.get('description'),
         'promotion_stage': record.get('promotion_stage'),
         'signal_source': record.get('signal_source'),
+        'selected_at': record.get('selected_at'),
+        'registered_at': record.get('registered_at'),
         'allowed_sides': profile.get('allowed_sides', []),
         'symbols': profile.get('symbols', []),
         'max_positions': profile.get('max_positions'),
@@ -292,7 +379,91 @@ def summarize_strategy_record(record: dict, active_record_id: str | None) -> dic
     }
 
 
-def build_strategy_bank(active_strategy: dict, strategy_bank: dict) -> dict:
+def summarize_manifest_performance(manifest: dict) -> dict | None:
+    source = manifest.get('source', {}) if isinstance(manifest, dict) else {}
+    report = load_workspace_relative_json(source.get('source_report_path'))
+    if not isinstance(report, dict):
+        return None
+
+    if isinstance(report.get('selected_result'), dict):
+        selected = report.get('selected_result', {})
+        return {
+            'total_return_pct': safe_float(selected.get('total_return_pct')),
+            'benchmark_return_pct': safe_float(selected.get('benchmark_return_pct')),
+            'excess_return_pct': safe_float(selected.get('excess_return_pct')),
+            'sharpe_ratio': safe_float(selected.get('sharpe_ratio')),
+            'calmar_ratio': safe_float(selected.get('calmar_ratio')),
+            'max_drawdown_pct': safe_float(selected.get('max_drawdown_pct')),
+            'profit_factor': safe_float(selected.get('profit_factor')),
+            'win_rate_pct': safe_float(selected.get('win_rate_pct')),
+            'trade_count': selected.get('total_trades'),
+            'days': selected.get('evaluated_trading_days'),
+        }
+
+    selected_id = manifest.get('deployment_config_id') or source.get('selected_config_id')
+    for key in BENCH_COMPARISON_KEYS:
+        lane = report.get(key)
+        if not isinstance(lane, dict):
+            continue
+        if selected_id and lane.get('sleeve_id') != selected_id:
+            continue
+        summary = lane.get('summary', {}) if isinstance(lane.get('summary'), dict) else {}
+        comparison = lane.get('benchmark_comparison', {}) if isinstance(lane.get('benchmark_comparison'), dict) else {}
+        return {
+            'total_return_pct': safe_float(summary.get('net_total_compounded_return_pct')),
+            'benchmark_return_pct': safe_float((report.get('benchmark', {}) or {}).get('summary', {}).get('net_total_compounded_return_pct')),
+            'excess_return_pct': safe_float(comparison.get('excess_return_pct')),
+            'sharpe_ratio': safe_float(summary.get('sharpe_ratio')),
+            'calmar_ratio': safe_float(summary.get('calmar_ratio')),
+            'max_drawdown_pct': safe_float(summary.get('max_drawdown_pct')),
+            'profit_factor': None,
+            'win_rate_pct': safe_float(summary.get('net_win_rate_pct')),
+            'trade_count': summary.get('trade_count'),
+            'days': report.get('daily_bar_count'),
+        }
+    return None
+
+
+def load_promoted_manifests() -> list[dict]:
+    if not BENCH_MANIFESTS_DIR.exists():
+        return []
+
+    manifests: list[dict] = []
+    for path in sorted(BENCH_MANIFESTS_DIR.glob('*.execution_manifest.json')):
+        manifest = load(path)
+        if not isinstance(manifest, dict):
+            continue
+        performance_summary = summarize_manifest_performance(manifest)
+        manifests.append({
+            'manifest_id': manifest.get('manifest_id'),
+            'title': manifest.get('title'),
+            'sleeve': manifest.get('sleeve'),
+            'strategy_id': manifest.get('strategy_id'),
+            'strategy_family': manifest.get('strategy_family'),
+            'deployment_config_id': manifest.get('deployment_config_id'),
+            'runtime_contract': manifest.get('runtime_contract'),
+            'cadence': manifest.get('cadence'),
+            'benchmark_symbol': manifest.get('benchmark_symbol'),
+            'generated_at': manifest.get('generated_at'),
+            'broker': manifest.get('broker', {}),
+            'target_spec': manifest.get('target_spec', {}),
+            'source_kind': 'CHECKED_IN',
+            'source': manifest.get('source', {}),
+            'strategy_parameters': manifest.get('strategy_parameters', {}),
+            'performance_summary': performance_summary,
+        })
+
+    manifests.sort(
+        key=lambda item: (
+            0 if item.get('sleeve') == 'STOCKS' else 1,
+            str(item.get('generated_at') or ''),
+        ),
+        reverse=False,
+    )
+    return manifests
+
+
+def build_strategy_bank(active_strategy: dict, strategy_bank: dict, promoted_manifests: list[dict]) -> dict:
     active_record = active_strategy.get('record') if isinstance(active_strategy, dict) else None
     active_record_id = strategy_bank.get('active_record_id') if isinstance(strategy_bank, dict) else None
     strategy_records = strategy_bank.get('strategies', []) if isinstance(strategy_bank, dict) else []
@@ -303,8 +474,133 @@ def build_strategy_bank(active_strategy: dict, strategy_bank: dict) -> dict:
         'strategy_count': len(records),
         'active': active_summary,
         'banked_strategies': records,
+        'promoted': promoted_manifests,
         'narrative': build_strategy_bank_narrative(active_summary, records),
     }
+
+
+def build_crypto_signals(
+    positions: list[dict],
+    promoted_manifests: list[dict],
+    crypto_execution_plan: dict,
+    crypto_execution_report: dict,
+) -> dict:
+    crypto_manifest = next((item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO'), None)
+    crypto_positions = [item for item in positions if item.get('asset_type') == 'CRYPTO']
+    params = crypto_manifest.get('strategy_parameters', {}) if isinstance(crypto_manifest, dict) else {}
+    state_to_exposure = {
+        'RISK_ON': safe_float(params.get('risk_on_exposure_pct')),
+        'ACCUMULATE': safe_float(params.get('accumulate_exposure_pct')),
+        'RISK_OFF': safe_float(params.get('risk_off_exposure_pct')),
+    }
+    current_state = (
+        crypto_execution_plan.get('active_regime_state')
+        or crypto_execution_plan.get('regime_state')
+        or crypto_execution_plan.get('state')
+    )
+    current_exposure_pct = state_to_exposure.get(current_state) if current_state else None
+
+    ladder = [
+        {
+            'state': 'RISK_ON',
+            'label': 'Tier 1',
+            'exposure_pct': state_to_exposure.get('RISK_ON'),
+            'note': 'Constructive regime',
+            'active': current_state == 'RISK_ON',
+        },
+        {
+            'state': 'ACCUMULATE',
+            'label': 'Tier 2',
+            'exposure_pct': state_to_exposure.get('ACCUMULATE'),
+            'note': 'Neutral regime',
+            'active': current_state == 'ACCUMULATE',
+        },
+        {
+            'state': 'RISK_OFF',
+            'label': 'Tier 3',
+            'exposure_pct': state_to_exposure.get('RISK_OFF'),
+            'note': 'Risk-off',
+            'active': current_state == 'RISK_OFF',
+        },
+    ]
+
+    tracked_assets = []
+    tier_label = next((item.get('label') for item in ladder if item.get('active')), None)
+    for position in crypto_positions:
+        tracked_assets.append({
+            'symbol': position.get('symbol'),
+            'lane': 'CORE',
+            'state': current_state,
+            'tier_label': tier_label,
+            'target_exposure_pct': current_exposure_pct,
+            'market_value': safe_float(position.get('market_value')),
+            'qty': safe_float(position.get('qty')),
+            'status': crypto_execution_report.get('status'),
+        })
+
+    return {
+        'tsmom': {
+            'status': 'RESEARCH_ONLY',
+            'promoted': False,
+            'cadence': '4H',
+            'bar': '4H',
+            'direction': None,
+            'last_cross_at': None,
+            'signal_strength_pct': None,
+            'signal_strength_label': 'Bench only',
+            'note': 'The 4H tactical overlay remains bench-only until a dedicated 4H execution manifest is promoted.',
+        },
+        'managed_exposure': {
+            'status': 'PROMOTED' if crypto_manifest else 'NOT_PROMOTED',
+            'manifest_id': crypto_manifest.get('manifest_id') if crypto_manifest else None,
+            'title': crypto_manifest.get('title') if crypto_manifest else None,
+            'strategy_family': crypto_manifest.get('strategy_family') if crypto_manifest else None,
+            'cadence': crypto_manifest.get('cadence') if crypto_manifest else None,
+            'current_state': current_state,
+            'current_exposure_pct': current_exposure_pct,
+            'target_notional_usd': safe_float(crypto_execution_plan.get('target_notional_usd')),
+            'action': crypto_execution_plan.get('action'),
+            'last_report_status': crypto_execution_report.get('status'),
+            'performance_summary': crypto_manifest.get('performance_summary') if crypto_manifest else None,
+            'ladder': ladder,
+            'overlay_status': 'RESEARCH_ONLY',
+            'note': (
+                'Daily graduated core is the promoted crypto lane. Tactical remains an overlay candidate.'
+                if crypto_manifest
+                else 'No promoted crypto manifest is available yet.'
+            ),
+        },
+        'tracked_assets': tracked_assets,
+    }
+
+
+def validate_output_contract(output: dict) -> None:
+    strategy_universe = output.get('strategy_universe', {})
+    if not isinstance(strategy_universe, dict):
+        raise RuntimeError('operator feed contract violation: strategy_universe missing')
+
+    symbols = strategy_universe.get('symbols')
+    if not isinstance(symbols, list):
+        raise RuntimeError('operator feed contract violation: strategy_universe.symbols missing')
+
+    for item in symbols:
+        if not isinstance(item, dict):
+            raise RuntimeError('operator feed contract violation: strategy_universe.symbols contains non-object entries')
+        for key in ('return_20d_pct', 'strategy_member'):
+            if key not in item:
+                raise RuntimeError(f'operator feed contract violation: strategy_universe.symbols[].{key} missing')
+
+    operator = output.get('operator', {})
+    if not isinstance(operator, dict):
+        raise RuntimeError('operator feed contract violation: operator missing')
+
+    strategy_bank = operator.get('strategy_bank', {})
+    if not isinstance(strategy_bank, dict) or 'promoted' not in strategy_bank or not isinstance(strategy_bank.get('promoted'), list):
+        raise RuntimeError('operator feed contract violation: operator.strategy_bank.promoted missing')
+
+    crypto_signals = operator.get('crypto_signals')
+    if not isinstance(crypto_signals, dict):
+        raise RuntimeError('operator feed contract violation: operator.crypto_signals missing')
 
 
 def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
@@ -424,6 +720,7 @@ def build_strategy_universe(
 
     creds = load_alpaca_creds()
     snapshots = fetch_stock_snapshots(ordered_symbols, creds)
+    return_20d_map = fetch_stock_return_20d_map(ordered_symbols, creds)
     source = 'alpaca_market_data_snapshots' if snapshots else 'rebuild_research_dataset_fallback'
     as_of_candidates: list[str] = []
     items: list[dict] = []
@@ -473,7 +770,9 @@ def build_strategy_universe(
             'prior_close': round(prior_close, 4) if prior_close is not None else None,
             'change_usd': round(change_usd, 4) if change_usd is not None else None,
             'change_pct': round(change_pct, 4) if change_pct is not None else None,
+            'return_20d_pct': return_20d_map.get(symbol),
             'in_position': symbol in position_map,
+            'strategy_member': symbol in active_symbols,
             'position_qty': position_qty if position_qty is not None else 0.0,
         })
 
@@ -689,7 +988,25 @@ def build_mode_history(events: list[dict]) -> dict:
     }
 
 
-def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict, trade_plan: dict, gate_attr: dict, daily_eval: dict, checkpoint05: dict, mode_state: dict, mode_history: dict, approval_queue: dict, active_strategy: dict, strategy_bank: dict) -> dict:
+def build_operator(
+    session: dict,
+    market: dict,
+    thesis_set: dict,
+    pre_gate: dict,
+    trade_plan: dict,
+    gate_attr: dict,
+    daily_eval: dict,
+    checkpoint05: dict,
+    mode_state: dict,
+    mode_history: dict,
+    approval_queue: dict,
+    active_strategy: dict,
+    strategy_bank: dict,
+    positions: list[dict],
+    promoted_manifests: list[dict],
+    crypto_execution_plan: dict,
+    crypto_execution_report: dict,
+) -> dict:
     theses = thesis_set.get('items', [])
     regime = market.get('regime', {})
     vix_level = safe_float(regime.get('vix_level'))
@@ -804,7 +1121,13 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
             'pregate_report': checkpoint05.get('pregate_report_path'),
         },
         'approval': approval_summary,
-        'strategy_bank': build_strategy_bank(active_strategy, strategy_bank),
+        'strategy_bank': build_strategy_bank(active_strategy, strategy_bank, promoted_manifests),
+        'crypto_signals': build_crypto_signals(
+            positions,
+            promoted_manifests,
+            crypto_execution_plan,
+            crypto_execution_report,
+        ),
         'mode_history': mode_history,
         'incident_flags': daily_eval.get('incident_flags', []),
         'notes': daily_eval.get('notes', []),
@@ -827,6 +1150,9 @@ def main():
     approval_queue = load(APPROVAL_QUEUE_PATH)
     strategy_bank = load(STRATEGY_BANK_PATH)
     active_strategy = load(ACTIVE_STRATEGY_PATH)
+    promoted_manifests = load_promoted_manifests()
+    crypto_execution_plan = load(CRYPTO_EXECUTION_PLAN_PATH)
+    crypto_execution_report = load(CRYPTO_EXECUTION_REPORT_PATH)
     legacy_positions = load(WORKSPACE / 'state/positions_snapshot.json')
     legacy_kpis = load(WORKSPACE / 'state/pipeline_kpis_v1.json')
     policy = load(POLICY_PATH)
@@ -853,9 +1179,28 @@ def main():
         'options': None,
         'hedges': None,
         'bps': None,
-        'operator': build_operator(session, market, thesis_set, pre_gate, trade_plan, gate_attr, daily_eval, checkpoint05, mode_state, mode_history, approval_queue, active_strategy, strategy_bank),
+        'operator': build_operator(
+            session,
+            market,
+            thesis_set,
+            pre_gate,
+            trade_plan,
+            gate_attr,
+            daily_eval,
+            checkpoint05,
+            mode_state,
+            mode_history,
+            approval_queue,
+            active_strategy,
+            strategy_bank,
+            positions,
+            promoted_manifests,
+            crypto_execution_plan,
+            crypto_execution_report,
+        ),
     }
     output['kpis']['positions_count'] = len(positions)
+    validate_output_contract(output)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(output, indent=2, default=str), encoding='utf-8')
     print(f'Wrote operator-feed.json -> {OUTPUT}')

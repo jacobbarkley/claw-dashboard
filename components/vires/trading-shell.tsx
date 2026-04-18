@@ -5,7 +5,7 @@
 // switches body content client-side. Keeps the inner Trading/Bench/Plateau
 // nav (rendered by app/vires/layout.tsx) above this.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
 
@@ -102,8 +102,65 @@ export function ViresTradingShell({ data, operator }: {
   operator?: OperatorBlock
 }) {
   const [tab, setTab] = useState<SubTab>("home")
+  const [liveData, setLiveData] = useState<ViresTradingData | null>(data)
+  const [liveOperator, setLiveOperator] = useState<OperatorBlock | undefined>(operator)
 
-  if (!data) {
+  useEffect(() => {
+    setLiveData(data)
+  }, [data])
+
+  useEffect(() => {
+    setLiveOperator(operator)
+  }, [operator])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function refresh() {
+      try {
+        const [feedRes, liveRes] = await Promise.all([
+          fetch("/api/trading", { cache: "no-store" }),
+          fetch("/api/trading/live", { cache: "no-store" }).catch(() => null),
+        ])
+        if (!feedRes.ok) return
+
+        const nextFeed = await feedRes.json()
+        const nextLive = liveRes && liveRes.ok ? await liveRes.json() : null
+
+        if (cancelled) return
+
+        const merged = nextLive
+          ? {
+              ...nextFeed,
+              account: {
+                ...nextFeed.account,
+                ...nextLive.account,
+              },
+              positions: Array.isArray(nextLive.positions) ? nextLive.positions : nextFeed.positions,
+            }
+          : nextFeed
+
+        setLiveData(merged)
+        setLiveOperator(merged?.operator ?? null)
+      } catch {
+        // Leave the initial server payload in place if refresh fails.
+      }
+    }
+
+    void refresh()
+    const interval = window.setInterval(refresh, 60_000)
+    window.addEventListener("focus", refresh)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener("focus", refresh)
+    }
+  }, [])
+
+  const currentData = liveData ?? data
+  const currentOperator = liveOperator ?? operator
+
+  if (!currentData) {
     return (
       <div style={{ padding: 32 }}>
         <div className="vr-card" style={{ padding: 32 }}>
@@ -119,11 +176,11 @@ export function ViresTradingShell({ data, operator }: {
   return (
     <>
       <SubNav tab={tab} onTab={setTab} />
-      <div className="vr-screen" style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
-        {tab === "home"    && <ViresTradingHome data={data} operator={operator as never} onNavigateSleeve={setTab} />}
-        {tab === "stocks"  && <StocksScreen data={data} rules={extractStrategyRules(operator)} />}
-        {tab === "options" && <OptionsScreen data={data} />}
-        {tab === "crypto"  && <CryptoScreen data={data} />}
+    <div className="vr-screen" style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
+        {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
+        {tab === "stocks"  && <StocksScreen data={currentData} rules={extractStrategyRules(currentOperator)} />}
+        {tab === "options" && <OptionsScreen data={currentData} />}
+        {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
       </div>
     </>
   )
