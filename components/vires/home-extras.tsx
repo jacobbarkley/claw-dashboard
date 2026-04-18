@@ -43,6 +43,7 @@ interface OperatorBundle {
   strategy_bank?: {
     active?: BankedStrategy | null
     banked_strategies?: BankedStrategy[]
+    promoted?: PromotedManifest[]
   } | null
 }
 
@@ -64,6 +65,25 @@ interface BankedStrategy {
   } | null
   selected_at?: string
   registered_at?: string
+}
+
+interface PromotedManifest {
+  manifest_id?: string
+  title?: string
+  sleeve?: string
+  strategy_family?: string
+  deployment_config_id?: string
+  cadence?: string
+  source_kind?: string
+  generated_at?: string
+  performance_summary?: {
+    total_return_pct?: number | null
+    excess_return_pct?: number | null
+    sharpe_ratio?: number | null
+    calmar_ratio?: number | null
+    max_drawdown_pct?: number | null
+    win_rate_pct?: number | null
+  } | null
 }
 
 // ─── Elevated Strategies ────────────────────────────────────────────────────
@@ -135,8 +155,10 @@ function StrategyRow({ chip, eyebrow, title, subtitle, metrics, promotedOn, tone
 
 export function ElevatedStrategies({ operator }: { operator: OperatorBundle | null }) {
   const active = operator?.strategy_bank?.active ?? null
+  const promoted = operator?.strategy_bank?.promoted ?? []
   const perf = active?.performance_summary ?? {}
-  const promotedDate = active?.selected_at ? active.selected_at.slice(0, 10) : null
+  const promotedDate = active?.selected_at?.slice(0, 10) ?? active?.registered_at?.slice(0, 10) ?? null
+  const secondaryPromoted = promoted.filter(item => item.sleeve !== "STOCKS")
 
   return (
     <section>
@@ -169,29 +191,51 @@ export function ElevatedStrategies({ operator }: { operator: OperatorBundle | nu
           />
         )}
 
-        <StrategyRow
-          chip={<SleeveChip sleeve="crypto" />}
-          eyebrow="bench research · awaiting promotion"
-          title="BTC 4H TSMOM"
-          subtitle="4-hour time-series momentum · trend filter"
-          metrics={[
-            { label: "Med Era Sharpe", term: "MedEraSharpe", value: "—" },
-            { label: "Plateau",        term: "Plateau",      value: "pending" },
-          ]}
-          tone="neutral"
-        />
+        {secondaryPromoted.length > 0 ? secondaryPromoted.map(item => {
+          const itemPerf = item.performance_summary ?? {}
+          const sleeve = item.sleeve === "CRYPTO" ? "crypto" : "options"
+          return (
+            <StrategyRow
+              key={item.manifest_id ?? item.title ?? sleeve}
+              chip={<SleeveChip sleeve={sleeve} />}
+              eyebrow={`promoted · ${(item.source_kind ?? "checked in").toLowerCase().replace(/_/g, " ")}`}
+              title={item.title ?? item.strategy_family ?? "Promoted sleeve"}
+              subtitle={[item.deployment_config_id, item.cadence].filter(Boolean).join(" · ")}
+              metrics={[
+                { label: "Calmar",   term: "Calmar",  value: itemPerf.calmar_ratio != null ? itemPerf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
+                { label: "vs Bench", term: "VsBench", value: itemPerf.excess_return_pct != null ? `${itemPerf.excess_return_pct >= 0 ? "+" : ""}${itemPerf.excess_return_pct.toFixed(1)}%` : "—" },
+              ]}
+              promotedOn={item.generated_at?.slice(0, 10) ?? "checked-in"}
+              tone="gold"
+            />
+          )
+        }) : (
+          <>
+            <StrategyRow
+              chip={<SleeveChip sleeve="crypto" />}
+              eyebrow="bench research · awaiting promotion"
+              title="BTC 4H TSMOM"
+              subtitle="4-hour time-series momentum · trend filter"
+              metrics={[
+                { label: "Med Era Sharpe", term: "MedEraSharpe", value: "—" },
+                { label: "Plateau",        term: "Plateau",      value: "pending" },
+              ]}
+              tone="neutral"
+            />
 
-        <StrategyRow
-          chip={<SleeveChip sleeve="crypto" />}
-          eyebrow="bench research · awaiting promotion"
-          title="BTC Managed Exposure"
-          subtitle="Graduated 80 / 70 / 0 ladder + tactical top-up"
-          metrics={[
-            { label: "Calmar",  term: "Calmar", value: "—" },
-            { label: "vs HODL", term: "VsHODL", value: "—" },
-          ]}
-          tone="neutral"
-        />
+            <StrategyRow
+              chip={<SleeveChip sleeve="crypto" />}
+              eyebrow="bench research · awaiting promotion"
+              title="BTC Managed Exposure"
+              subtitle="Graduated 80 / 70 / 0 ladder + tactical top-up"
+              metrics={[
+                { label: "Calmar",  term: "Calmar", value: "—" },
+                { label: "vs HODL", term: "VsHODL", value: "—" },
+              ]}
+              tone="neutral"
+            />
+          </>
+        )}
       </div>
     </section>
   )

@@ -4,10 +4,9 @@
 // view. Receives the operator feed from a server component loader for fast
 // first paint, then takes over with /api/trading polling (60s + on focus).
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
-import { useLivePoll } from "./use-live-poll"
 
 // Opaque operator shape — passed through to home-extras which owns its own
 // narrow types. Keeping it untyped here avoids re-declaring the same shape
@@ -97,32 +96,76 @@ function SubNav({ tab, onTab }: { tab: SubTab; onTab: (t: SubTab) => void }) {
   )
 }
 
-// The feed shape /api/trading serves — the subset we consume at least.
-interface FeedShape {
-  account?: ViresTradingData["account"]
-  positions?: ViresTradingData["positions"]
-  equity_curve?: ViresTradingData["equity_curve"]
-  operator?: OperatorBlock
-  strategy_universe?: unknown
-}
-
 export function ViresTradingShell({ data: initialData, operator: initialOperator }: {
   data: (ViresTradingData & { operator?: OperatorBlock; strategy_universe?: unknown }) | null
   operator?: OperatorBlock
 }) {
   const [tab, setTab] = useState<SubTab>("home")
+  const [liveData, setLiveData] = useState<ViresTradingData | null>(initialData)
+  const [liveOperator, setLiveOperator] = useState<OperatorBlock | undefined>(initialOperator)
 
-  // Live poll /api/trading. Pass the server-rendered initial feed so first
-  // paint is instant, then the hook refreshes every 60s + on focus.
-  const initialFeed: FeedShape | null = initialData
-    ? { ...initialData, operator: initialData.operator ?? initialOperator }
-    : null
-  const { data: live } = useLivePoll<FeedShape>("/api/trading", initialFeed)
+  // Keep local state in sync with server-rendered initial props when the
+  // parent re-mounts us with fresh data.
+  useEffect(() => {
+    setLiveData(initialData)
+  }, [initialData])
 
-  const data = (live as (ViresTradingData & { operator?: OperatorBlock; strategy_universe?: unknown }) | null) ?? initialData
-  const operator = data?.operator ?? initialOperator
+  useEffect(() => {
+    setLiveOperator(initialOperator)
+  }, [initialOperator])
 
-  if (!data) {
+  // Poll the operator feed + the live broker endpoint every 60s (and on
+  // focus). Codex's dual-fetch merges real-time Alpaca positions/account
+  // from /api/trading/live on top of the 5-min operator feed so the hub
+  // stays fresh without a redeploy.
+  useEffect(() => {
+    let cancelled = false
+
+    async function refresh() {
+      try {
+        const [feedRes, liveRes] = await Promise.all([
+          fetch("/api/trading", { cache: "no-store" }),
+          fetch("/api/trading/live", { cache: "no-store" }).catch(() => null),
+        ])
+        if (!feedRes.ok) return
+
+        const nextFeed = await feedRes.json()
+        const nextLive = liveRes && liveRes.ok ? await liveRes.json() : null
+
+        if (cancelled) return
+
+        const merged = nextLive
+          ? {
+              ...nextFeed,
+              account: {
+                ...nextFeed.account,
+                ...nextLive.account,
+              },
+              positions: Array.isArray(nextLive.positions) ? nextLive.positions : nextFeed.positions,
+            }
+          : nextFeed
+
+        setLiveData(merged)
+        setLiveOperator(merged?.operator ?? null)
+      } catch {
+        // Leave the initial server payload in place if refresh fails.
+      }
+    }
+
+    void refresh()
+    const interval = window.setInterval(refresh, 60_000)
+    window.addEventListener("focus", refresh)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener("focus", refresh)
+    }
+  }, [])
+
+  const currentData = liveData ?? initialData
+  const currentOperator = liveOperator ?? initialOperator
+
+  if (!currentData) {
     return (
       <div style={{ padding: 32 }}>
         <div className="vr-card" style={{ padding: 32 }}>
@@ -139,10 +182,10 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
     <>
       <SubNav tab={tab} onTab={setTab} />
       <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
-        {tab === "home"    && <ViresTradingHome data={data} operator={operator as never} onNavigateSleeve={setTab} />}
-        {tab === "stocks"  && <StocksScreen data={data as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(operator)} />}
-        {tab === "options" && <OptionsScreen data={data} />}
-        {tab === "crypto"  && <CryptoScreen data={data} />}
+        {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
+        {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} />}
+        {tab === "options" && <OptionsScreen data={currentData} />}
+        {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
       </div>
     </>
   )

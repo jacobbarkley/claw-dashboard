@@ -1,6 +1,7 @@
 import { promises as fs } from "fs"
 import path from "path"
 import { ViresBenchView } from "@/components/vires/bench-view"
+import { loadBenchIndexWithViresContracts } from "@/lib/vires-bench"
 
 async function readJson(filename: string) {
   try {
@@ -12,7 +13,7 @@ async function readJson(filename: string) {
 }
 
 async function getInitialBench() {
-  return await readJson("data/bench/index.json")
+  return await loadBenchIndexWithViresContracts()
 }
 
 async function getOperator() {

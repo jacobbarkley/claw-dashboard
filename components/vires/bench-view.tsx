@@ -8,9 +8,8 @@
 // the deeper wiring (leaderboards, era robustness matrix, etc.) that future
 // commits will plug into the existing slots here.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { AnimatedNumber, InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
-import { useLivePoll } from "./use-live-poll"
 
 // ─── Types — narrow on purpose ──────────────────────────────────────────────
 
@@ -45,6 +44,7 @@ interface ActiveStrategy {
   display_name?: string
   variant_id?: string
   symbols?: string[]
+  sleeve?: Sleeve
   performance?: {
     totalReturn?: number
     excess?: number
@@ -55,16 +55,32 @@ interface ActiveStrategy {
   }
 }
 
+interface PromotedManifest {
+  manifest_id?: string
+  sleeve?: string | null
+  title?: string | null
+  deployment_config_id?: string | null
+  generated_at?: string | null
+  performance_summary?: {
+    total_return_pct?: number | null
+    excess_return_pct?: number | null
+    sharpe_ratio?: number | null
+    calmar_ratio?: number | null
+    max_drawdown_pct?: number | null
+    win_rate_pct?: number | null
+  } | null
+}
+
 interface OperatorBundle {
   strategy_bank?: {
     active?: ActiveStrategy | null
+    promoted?: PromotedManifest[] | null
   } | null
 }
 
 // ─── Bench hero — headline + 4-stat strip ──────────────────────────────────
 
-function BenchHero({ runs }: { runs: BenchRun[] }) {
-  const promotedCount = 1 // single promoted strategy today; expand when bank grows
+function BenchHero({ runs, promotedCount }: { runs: BenchRun[]; promotedCount: number }) {
   const stats = [
     { label: "Runs",       value: runs.length },
     { label: "Succeeded",  value: runs.filter(r => r.status === "SUCCEEDED").length },
@@ -145,7 +161,7 @@ function FeaturedStrategy({ strategy }: { strategy: ActiveStrategy | null }) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <StatusPill tone="gold">Promoted</StatusPill>
-        <SleeveChip sleeve="stocks" />
+        <SleeveChip sleeve={strategy.sleeve ?? "stocks"} />
       </div>
       <div className="t-h3" style={{ marginTop: 6 }}>{strategy.display_name ?? "Active Strategy"}</div>
       {strategy.variant_id && (
@@ -297,19 +313,60 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
   operator: OperatorBundle | null
 }) {
   const [filter, setFilter] = useState<"ALL" | "STOCKS" | "CRYPTO">("ALL")
+  const [liveBenchData, setLiveBenchData] = useState<BenchData | null>(initialBench)
+  const [liveOperator, setLiveOperator] = useState<OperatorBundle | null>(initialOperator)
 
-  // Live poll both feeds. Bench index changes rarely but operator bundle
-  // (with strategy_bank.active performance) moves per-session.
-  const { data: liveBench } = useLivePoll<BenchData>("/api/bench/index", initialBench)
-  const { data: liveTrading } = useLivePoll<{ operator?: OperatorBundle | null }>("/api/trading", { operator: initialOperator })
+  // Keep local state in sync with server-rendered initial props.
+  useEffect(() => {
+    setLiveBenchData(initialBench)
+  }, [initialBench])
 
-  const benchData = liveBench ?? initialBench
-  const operator = liveTrading?.operator ?? initialOperator
+  useEffect(() => {
+    setLiveOperator(initialOperator)
+  }, [initialOperator])
 
-  if (!benchData?.runs?.length) {
+  // Poll /api/bench/index + /api/trading every 90s and on focus so the
+  // promoted card, counts, and runs update without a redeploy.
+  useEffect(() => {
+    let cancelled = false
+
+    async function refresh() {
+      try {
+        const [benchRes, tradingRes] = await Promise.all([
+          fetch("/api/bench/index", { cache: "no-store" }),
+          fetch("/api/trading", { cache: "no-store" }),
+        ])
+
+        if (benchRes.ok) {
+          const nextBench = await benchRes.json()
+          if (!cancelled) setLiveBenchData(nextBench)
+        }
+
+        if (tradingRes.ok) {
+          const nextTrading = await tradingRes.json()
+          if (!cancelled) setLiveOperator(nextTrading?.operator ?? null)
+        }
+      } catch {
+        // Keep the initial server payload if the refresh path fails.
+      }
+    }
+
+    void refresh()
+    const interval = window.setInterval(refresh, 90_000)
+    window.addEventListener("focus", refresh)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener("focus", refresh)
+    }
+  }, [])
+
+  const currentBenchData = liveBenchData ?? initialBench
+
+  if (!currentBenchData?.runs?.length) {
     return (
       <div className="vr-screen" style={{ padding: 16 }}>
-        <BenchHero runs={[]} />
+        <BenchHero runs={[]} promotedCount={0} />
         <div className="vr-card" style={{ padding: 24, marginTop: 14 }}>
           <div className="t-eyebrow" style={{ marginBottom: 6 }}>No bench runs</div>
           <div className="t-label">
@@ -322,18 +379,19 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
   }
 
   // Sort runs newest-first by generated_at
-  const sortedRuns = [...benchData.runs].sort((a, b) => {
+  const sortedRuns = [...currentBenchData.runs].sort((a, b) => {
     const ta = a.generated_at ? new Date(a.generated_at).getTime() : 0
     const tb = b.generated_at ? new Date(b.generated_at).getTime() : 0
     return tb - ta
   })
   const filtered = filter === "ALL" ? sortedRuns : sortedRuns.filter(r => (r.sleeve ?? "").toUpperCase() === filter)
 
-  const featured = mapActiveStrategy(operator?.strategy_bank?.active ?? null)
+  const featured = mapFeaturedStrategy(liveOperator)
+  const promotedCount = liveOperator?.strategy_bank?.promoted?.length ?? currentBenchData.manifests?.length ?? 0
 
   return (
     <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
-      <BenchHero runs={sortedRuns} />
+      <BenchHero runs={sortedRuns} promotedCount={promotedCount} />
 
       <SectionHeader eyebrow="Promoted" title="In production" />
       <FeaturedStrategy strategy={featured} />
@@ -384,12 +442,12 @@ function mapActiveStrategy(record: unknown): ActiveStrategy | null {
   if (!record || typeof record !== "object") return null
   const r = record as Record<string, unknown>
   const perf = (r.performance_summary ?? {}) as Record<string, unknown>
-  const planning = (r.planning_profile ?? {}) as Record<string, unknown>
   const num = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined)
   return {
     display_name: typeof r.display_name === "string" ? r.display_name : undefined,
     variant_id: typeof r.variant_id === "string" ? r.variant_id : undefined,
-    symbols: Array.isArray(planning.symbols) ? (planning.symbols as string[]) : undefined,
+    sleeve: "stocks",
+    symbols: Array.isArray(r.symbols) ? (r.symbols as string[]) : undefined,
     performance: {
       totalReturn: num(perf.total_return_pct),
       excess: num(perf.excess_return_pct),
@@ -399,4 +457,33 @@ function mapActiveStrategy(record: unknown): ActiveStrategy | null {
       winRate: num(perf.win_rate_pct),
     },
   }
+}
+
+function mapPromotedManifest(manifest: PromotedManifest | null | undefined): ActiveStrategy | null {
+  if (!manifest) return null
+  const perf = manifest.performance_summary ?? {}
+  const sleeveToken = typeof manifest.sleeve === "string" ? manifest.sleeve.toUpperCase() : null
+  const sleeve: Sleeve =
+    sleeveToken === "CRYPTO" ? "crypto" :
+    sleeveToken === "OPTIONS" ? "options" :
+    "stocks"
+  return {
+    display_name: manifest.title ?? undefined,
+    variant_id: manifest.deployment_config_id ?? undefined,
+    sleeve,
+    performance: {
+      totalReturn: typeof perf.total_return_pct === "number" ? perf.total_return_pct : undefined,
+      excess: typeof perf.excess_return_pct === "number" ? perf.excess_return_pct : undefined,
+      sharpe: typeof perf.sharpe_ratio === "number" ? perf.sharpe_ratio : undefined,
+      calmar: typeof perf.calmar_ratio === "number" ? perf.calmar_ratio : undefined,
+      maxDD: typeof perf.max_drawdown_pct === "number" ? perf.max_drawdown_pct : undefined,
+      winRate: typeof perf.win_rate_pct === "number" ? perf.win_rate_pct : undefined,
+    },
+  }
+}
+
+function mapFeaturedStrategy(operator: OperatorBundle | null): ActiveStrategy | null {
+  const active = mapActiveStrategy(operator?.strategy_bank?.active ?? null)
+  if (active) return active
+  return mapPromotedManifest(operator?.strategy_bank?.promoted?.[0] ?? null)
 }
