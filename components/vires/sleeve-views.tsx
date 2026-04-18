@@ -10,7 +10,7 @@
 import { useState } from "react"
 import { Delta, StatusPill, fmtCurrency, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 import type { ViresTradingData } from "./trading-home"
-import { useSharedTimeframe, TIMEFRAMES, type Timeframe } from "./timeframe-context"
+import { useSharedTimeframe, TimeframeDropdown, TIMEFRAMES } from "./timeframe-context"
 
 interface ViresPosition {
   symbol: string
@@ -178,7 +178,7 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
 }) {
   const W = 520
   const H = 58
-  const { tf, setTf } = useSharedTimeframe()
+  const { tf } = useSharedTimeframe()
   const [mode, setMode] = useState<"RET" | "MV">("MV")
 
   if (currentValue <= 0) {
@@ -303,7 +303,7 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
           </span>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-          <TimeframePills tf={tf} onChange={setTf} />
+          <TimeframeDropdown />
           <RetMvToggle mode={mode} onChange={setMode} />
         </div>
       </div>
@@ -335,45 +335,6 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
       >
         Modeled · final point matches current value · real history lands with primer 5
       </div>
-    </div>
-  )
-}
-
-function TimeframePills({ tf, onChange }: { tf: Timeframe; onChange: (v: Timeframe) => void }) {
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        padding: 2,
-        gap: 0,
-        background: "rgba(241,236,224,0.03)",
-        border: "1px solid var(--vr-line)",
-        borderRadius: 3,
-      }}
-    >
-      {TIMEFRAMES.map(t => {
-        const active = t.k === tf
-        return (
-          <button
-            key={t.k}
-            type="button"
-            onClick={() => onChange(t.k)}
-            className="t-eyebrow"
-            style={{
-              padding: "3px 7px",
-              border: "none",
-              borderRadius: 2,
-              cursor: "pointer",
-              background: active ? "var(--vr-gold)" : "transparent",
-              color: active ? "var(--vr-ink)" : "var(--vr-cream-mute)",
-              fontWeight: 600,
-              fontSize: 9,
-            }}
-          >
-            {t.label}
-          </button>
-        )
-      })}
     </div>
   )
 }

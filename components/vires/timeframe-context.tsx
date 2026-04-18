@@ -6,7 +6,7 @@
 // useSharedTimeframe pattern but via React Context instead of
 // localStorage + CustomEvents — cleaner within a single-page tree.
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
 
 export type Timeframe = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL"
 
@@ -45,4 +45,109 @@ export function useSharedTimeframe(): TimeframeContextValue {
     return { tf: "1W", setTf: () => {} }
   }
   return ctx
+}
+
+// ─── TimeframeDropdown ──────────────────────────────────────────────────────
+// Compact custom dropdown used by the main Equity Curve + every sleeve
+// sparkline so the selector looks and behaves identically everywhere.
+// Writes through the shared context so picking one updates all charts.
+export function TimeframeDropdown() {
+  const { tf, setTf } = useSharedTimeframe()
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDocClick = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
+    document.addEventListener("mousedown", onDocClick)
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("mousedown", onDocClick)
+      document.removeEventListener("keydown", onKey)
+    }
+  }, [open])
+
+  const active = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative", display: "inline-block" }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        className="t-eyebrow"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          padding: "5px 10px",
+          background: "rgba(241,236,224,0.04)",
+          border: "1px solid var(--vr-line)",
+          color: "var(--vr-cream-dim)",
+          fontFamily: "var(--ff-sans)",
+          fontSize: 10,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          cursor: "pointer",
+          borderRadius: 2,
+          touchAction: "manipulation",
+        }}
+      >
+        {active.label}
+        <span style={{ fontSize: 8, opacity: 0.6 }}>▾</span>
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            right: 0,
+            background: "var(--vr-ink-raised)",
+            border: "1px solid var(--vr-line-hi)",
+            borderRadius: 3,
+            padding: 4,
+            zIndex: 50,
+            boxShadow: "0 12px 28px rgba(0,0,0,0.45)",
+            minWidth: 84,
+          }}
+        >
+          {TIMEFRAMES.map(t => {
+            const isActive = t.k === tf
+            return (
+              <button
+                key={t.k}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                onClick={() => { setTf(t.k); setOpen(false) }}
+                className="t-eyebrow"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "right",
+                  padding: "6px 10px",
+                  background: isActive ? "rgba(200,169,104,0.08)" : "transparent",
+                  border: "none",
+                  color: isActive ? "var(--vr-gold)" : "var(--vr-cream-dim)",
+                  fontFamily: "var(--ff-sans)",
+                  fontSize: 10,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  borderRadius: 2,
+                }}
+              >
+                {t.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }

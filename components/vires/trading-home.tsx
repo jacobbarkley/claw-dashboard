@@ -23,7 +23,7 @@ import {
 } from "./shared"
 import { ElevatedStrategies, MarketRegime, DeskStatus } from "./home-extras"
 import { useViresTalon } from "./talon"
-import { useSharedTimeframe, TIMEFRAMES as SHARED_TIMEFRAMES, type Timeframe } from "./timeframe-context"
+import { useSharedTimeframe, TimeframeDropdown, TIMEFRAMES as SHARED_TIMEFRAMES, type Timeframe } from "./timeframe-context"
 
 // ─── Types matching the operator feed subset this page consumes ────────────
 // Keep narrow on purpose so a downstream feed change only breaks the screens
@@ -432,8 +432,7 @@ function EquityChart({ curve, baseValue }: {
   curve: ViresTradingData["equity_curve"]
   baseValue: number | null
 }) {
-  const { tf, setTf } = useSharedTimeframe()
-  const [tfMenu, setTfMenu] = useState(false)
+  const { tf } = useSharedTimeframe()
   const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
   const tfMeta = TIMEFRAMES.find(t => t.k === tf)!
@@ -506,70 +505,7 @@ function EquityChart({ curve, baseValue }: {
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
           <Delta value={periodPct} />
-          <div style={{ position: "relative" }}>
-            <button
-              type="button"
-              onClick={() => setTfMenu(v => !v)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "4px 8px",
-                background: "rgba(241,236,224,0.04)",
-                border: "1px solid var(--vr-line)",
-                color: "var(--vr-cream-dim)",
-                fontFamily: "var(--ff-sans)",
-                fontSize: 10,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                borderRadius: 2,
-              }}
-            >
-              {tfMeta.label} <span style={{ fontSize: 8, opacity: 0.6 }}>▾</span>
-            </button>
-            {tfMenu && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  right: 0,
-                  background: "var(--vr-ink-raised)",
-                  border: "1px solid var(--vr-line-hi)",
-                  borderRadius: 3,
-                  padding: 4,
-                  zIndex: 50,
-                  boxShadow: "0 12px 28px rgba(0,0,0,0.45)",
-                  minWidth: 70,
-                }}
-              >
-                {TIMEFRAMES.map(t => (
-                  <button
-                    key={t.k}
-                    type="button"
-                    onClick={() => { setTf(t.k); setTfMenu(false); setHoverIdx(null) }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "right",
-                      padding: "6px 10px",
-                      background: t.k === tf ? "rgba(200,169,104,0.08)" : "transparent",
-                      border: "none",
-                      color: t.k === tf ? "var(--vr-gold)" : "var(--vr-cream-dim)",
-                      fontFamily: "var(--ff-sans)",
-                      fontSize: 10,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                      cursor: "pointer",
-                      borderRadius: 2,
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <TimeframeDropdown />
         </div>
       </div>
       <svg
