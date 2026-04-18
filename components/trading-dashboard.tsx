@@ -2296,10 +2296,12 @@ function HomeView({ data }: { data: TradingData }) {
       </section>
 
       <section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} />
-          <DailyPnlChart data={data.daily_performance} />
-        </div>
+        <SwipeChartCarousel
+          pages={[
+            { key: "equity",  label: "Equity",      node: <EquityCurve data={data.equity_curve} baseValue={data.account.base_value} /> },
+            { key: "dailypnl", label: "Daily P&L",  node: <DailyPnlChart data={data.daily_performance} /> },
+          ]}
+        />
       </section>
 
       <section>
@@ -2309,6 +2311,109 @@ function HomeView({ data }: { data: TradingData }) {
       <section>
         <OperatorOverview data={data} tunables={data.tunables} />
       </section>
+    </div>
+  )
+}
+
+// ─── Swipeable chart carousel ────────────────────────────────────────────────
+// Shows one chart card at a time, full-width, with native CSS scroll-snap so
+// touch swipes feel right on mobile. Pill toggles above + page dots below give
+// a non-touch path (desktop) and current-page feedback.
+//
+// Each child chart already controls its own header/timeframe/styling — this
+// component is purely a one-card-at-a-time carousel. Don't pass cards that
+// have their own outer scroll behavior; they should be fixed-height cards.
+function SwipeChartCarousel({ pages }: { pages: Array<{ key: string; label: string; node: React.ReactNode }> }) {
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+
+  // Track which page is currently snapped into view as the user swipes.
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    let raf = 0
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const idx = Math.round(el.scrollLeft / el.clientWidth)
+        setActiveIdx(Math.max(0, Math.min(pages.length - 1, idx)))
+      })
+    }
+    el.addEventListener("scroll", onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      el.removeEventListener("scroll", onScroll)
+    }
+  }, [pages.length])
+
+  const goTo = useCallback((idx: number) => {
+    const el = scrollerRef.current
+    if (!el) return
+    el.scrollTo({ left: idx * el.clientWidth, behavior: "smooth" })
+  }, [])
+
+  return (
+    <div className="space-y-2">
+      {/* Pill toggles (work on touch and click) */}
+      <div className="flex items-center gap-1.5">
+        {pages.map((p, i) => {
+          const active = i === activeIdx
+          return (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => goTo(i)}
+              className="rounded-full px-3 py-1 transition-colors"
+              style={{
+                background: active ? "rgba(124, 58, 237, 0.18)" : "transparent",
+                border: `1px solid ${active ? "rgba(124, 58, 237, 0.45)" : "var(--cb-border-dim)"}`,
+                color: active ? "var(--cb-text-primary)" : "var(--cb-text-secondary)",
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              {p.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Snap scroller */}
+      <div
+        ref={scrollerRef}
+        className="flex overflow-x-auto snap-x snap-mandatory -mx-1 scroll-smooth"
+        style={{
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {pages.map(p => (
+          <div key={p.key} className="snap-start shrink-0 w-full px-1">
+            {p.node}
+          </div>
+        ))}
+      </div>
+
+      {/* Dot indicators */}
+      <div className="flex items-center justify-center gap-1.5 pt-1">
+        {pages.map((p, i) => (
+          <button
+            key={p.key}
+            type="button"
+            aria-label={`Show ${p.label}`}
+            onClick={() => goTo(i)}
+            className="rounded-full transition-all"
+            style={{
+              width: i === activeIdx ? 18 : 6,
+              height: 6,
+              background: i === activeIdx ? "rgba(124, 58, 237, 0.85)" : "var(--cb-border-std)",
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
