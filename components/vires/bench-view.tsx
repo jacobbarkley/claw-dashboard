@@ -10,6 +10,7 @@
 
 import { useState } from "react"
 import { AnimatedNumber, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
+import { useLivePoll } from "./use-live-poll"
 
 // ─── Types — narrow on purpose ──────────────────────────────────────────────
 
@@ -288,11 +289,19 @@ function RunCard({ run }: { run: BenchRun }) {
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
-export function ViresBenchView({ benchData, operator }: {
+export function ViresBenchView({ benchData: initialBench, operator: initialOperator }: {
   benchData: BenchData | null
   operator: OperatorBundle | null
 }) {
   const [filter, setFilter] = useState<"ALL" | "STOCKS" | "CRYPTO">("ALL")
+
+  // Live poll both feeds. Bench index changes rarely but operator bundle
+  // (with strategy_bank.active performance) moves per-session.
+  const { data: liveBench } = useLivePoll<BenchData>("/api/bench/index", initialBench)
+  const { data: liveTrading } = useLivePoll<{ operator?: OperatorBundle | null }>("/api/trading", { operator: initialOperator })
+
+  const benchData = liveBench ?? initialBench
+  const operator = liveTrading?.operator ?? initialOperator
 
   if (!benchData?.runs?.length) {
     return (
@@ -320,7 +329,7 @@ export function ViresBenchView({ benchData, operator }: {
   const featured = mapActiveStrategy(operator?.strategy_bank?.active ?? null)
 
   return (
-    <div className="vr-screen" style={{ maxWidth: 1100, margin: "0 auto", padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+    <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
       <BenchHero runs={sortedRuns} />
 
       <SectionHeader eyebrow="Promoted" title="In production" />

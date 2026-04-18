@@ -1,13 +1,13 @@
 "use client"
 
 // Vires Trading shell — sub-nav (Home / Stocks / Options / Crypto) + active
-// view. Receives the operator feed from a server component loader and
-// switches body content client-side. Keeps the inner Trading/Bench/Plateau
-// nav (rendered by app/vires/layout.tsx) above this.
+// view. Receives the operator feed from a server component loader for fast
+// first paint, then takes over with /api/trading polling (60s + on focus).
 
 import { useState } from "react"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
+import { useLivePoll } from "./use-live-poll"
 
 // Opaque operator shape — passed through to home-extras which owns its own
 // narrow types. Keeping it untyped here avoids re-declaring the same shape
@@ -97,11 +97,30 @@ function SubNav({ tab, onTab }: { tab: SubTab; onTab: (t: SubTab) => void }) {
   )
 }
 
-export function ViresTradingShell({ data, operator }: {
-  data: ViresTradingData | null
+// The feed shape /api/trading serves — the subset we consume at least.
+interface FeedShape {
+  account?: ViresTradingData["account"]
+  positions?: ViresTradingData["positions"]
+  equity_curve?: ViresTradingData["equity_curve"]
+  operator?: OperatorBlock
+  strategy_universe?: unknown
+}
+
+export function ViresTradingShell({ data: initialData, operator: initialOperator }: {
+  data: (ViresTradingData & { operator?: OperatorBlock; strategy_universe?: unknown }) | null
   operator?: OperatorBlock
 }) {
   const [tab, setTab] = useState<SubTab>("home")
+
+  // Live poll /api/trading. Pass the server-rendered initial feed so first
+  // paint is instant, then the hook refreshes every 60s + on focus.
+  const initialFeed: FeedShape | null = initialData
+    ? { ...initialData, operator: initialData.operator ?? initialOperator }
+    : null
+  const { data: live } = useLivePoll<FeedShape>("/api/trading", initialFeed)
+
+  const data = (live as (ViresTradingData & { operator?: OperatorBlock; strategy_universe?: unknown }) | null) ?? initialData
+  const operator = data?.operator ?? initialOperator
 
   if (!data) {
     return (
@@ -119,9 +138,9 @@ export function ViresTradingShell({ data, operator }: {
   return (
     <>
       <SubNav tab={tab} onTab={setTab} />
-      <div className="vr-screen" style={{ maxWidth: 1100, margin: "0 auto", padding: 16 }}>
+      <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
         {tab === "home"    && <ViresTradingHome data={data} operator={operator as never} onNavigateSleeve={setTab} />}
-        {tab === "stocks"  && <StocksScreen data={data} rules={extractStrategyRules(operator)} />}
+        {tab === "stocks"  && <StocksScreen data={data as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(operator)} />}
         {tab === "options" && <OptionsScreen data={data} />}
         {tab === "crypto"  && <CryptoScreen data={data} />}
       </div>

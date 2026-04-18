@@ -2,6 +2,7 @@ import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google"
 import "../vires.css"
 import { ViresInnerNav } from "@/components/vires/inner-nav"
 import { ViresFrame } from "@/components/vires/frame"
+import { ViresTalonProvider } from "@/components/vires/talon"
 
 // Vires Capital design system fonts — loaded only inside /vires routes so
 // the existing /trading, /bench, /queue surfaces keep their DM_Sans + DM_Mono.
@@ -30,8 +31,10 @@ export default function ViresLayout({ children }: { children: React.ReactNode })
   return (
     <div className={`${cormorant.variable} ${geistSans.variable} ${geistMono.variable}`}>
       <ViresFrame>
-        <ViresInnerNav mode="PAPER" />
-        {children}
+        <ViresTalonProvider>
+          <ViresInnerNav mode="PAPER" />
+          {children}
+        </ViresTalonProvider>
       </ViresFrame>
     </div>
   )

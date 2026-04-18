@@ -22,6 +22,7 @@ import {
   toneOf,
 } from "./shared"
 import { ElevatedStrategies, MarketRegime, DeskStatus } from "./home-extras"
+import { useViresTalon } from "./talon"
 
 // ─── Types matching the operator feed subset this page consumes ────────────
 // Keep narrow on purpose so a downstream feed change only breaks the screens
@@ -215,8 +216,8 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
   return (
     <div
       ref={heroRef}
-      className="vr-card-hero"
-      style={{ padding: "24px 22px 20px", overflow: "hidden", position: "relative" }}
+      className="vr-card-hero vires-hero-pad"
+      style={{ overflow: "hidden", position: "relative" }}
       onMouseMove={handleMouse}
       onMouseLeave={() => setPx({ x: 0, y: 0 })}
     >
@@ -259,7 +260,7 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
             />
           ))}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0, marginTop: 14 }}>
+        <div className="vires-alloc-grid">
           {alloc.map((x, i) => {
             // Non-cash segments jump to their sleeve sub-tab. Cash stays
             // display-only — it's not a tab.
@@ -630,6 +631,7 @@ export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
   operator?: Parameters<typeof ElevatedStrategies>[0]["operator"]
   onNavigateSleeve?: (sleeve: "stocks" | "options" | "crypto") => void
 }) {
+  const talon = useViresTalon()
   const stockPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY")
   const cryptoPositions = data.positions.filter(p => p.asset_type === "CRYPTO")
   const optionPositions = data.positions.filter(p => p.asset_type === "OPTION")
@@ -646,15 +648,10 @@ export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
         <HomeHero
           account={data.account}
           onNavigateSleeve={onNavigateSleeve}
-          onOpenTalon={() => {
-            // Talon stub. Full chat panel ports in a follow-up commit.
-            if (typeof window !== "undefined") {
-              window.alert("Talon: chat panel ports next. Click registered.")
-            }
-          }}
+          onOpenTalon={talon.open}
         />
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        <div className="vires-sleeve-card-row">
           <SleeveCard
             sleeve="stocks"
             total={stockPositions.reduce((s, p) => s + (p.market_value ?? 0), 0)}

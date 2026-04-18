@@ -322,3 +322,42 @@ button:focus-visible, a:focus-visible { outline: 1px solid var(--vr-gold); outli
   from { opacity: 0.3; transform: translateY(3px); }
   to   { opacity: 1;   transform: translateY(0); }
 }
+
+/* ─── Mobile tightening ─────────────────────────────────────────
+   Narrow viewports need the 4-column allocation grid collapsed to
+   2×2 and a bit of padding shaved from the hero. Everything else
+   flows naturally because the layout is mostly grid/flex. */
+.vires-alloc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 14px;
+}
+.vires-sleeve-card-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.vires-hero-pad {
+  padding: 24px 22px 20px;
+}
+.vires-screen-pad {
+  padding: 16px;
+}
+
+@media (max-width: 540px) {
+  .vires-alloc-grid {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 14px;
+  }
+  .vires-hero-pad {
+    padding: 18px 16px 16px;
+  }
+  .vires-screen-pad {
+    padding: 12px;
+  }
+}
+@media (max-width: 400px) {
+  .vires-sleeve-card-row {
+    grid-template-columns: 1fr;
+  }
+}
