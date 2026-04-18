@@ -25,6 +25,9 @@ interface Position {
   unrealized_pnl: number
   unrealized_pct: number
   change_today_pct: number
+  // EQUITY | CRYPTO | OPTION. Optional for backward compat with older
+  // operator-feed payloads written before the asset_type field landed.
+  asset_type?: string
 }
 
 interface ExitCandidate {
@@ -456,6 +459,7 @@ interface TradingData {
     // Positions breakdown
     positions_value: number
     equity_deployed: number | null
+    crypto_deployed?: number | null
     options_deployed: number | null
     unrealized_pnl: number
     unrealized_pnl_pct: number | null
@@ -2204,6 +2208,67 @@ function SleeveCapitalPlaceholder({ accent, title, message, sub }: {
   )
 }
 
+// Live crypto deployed-capital card. Shows total deployed across crypto
+// positions plus a per-position breakdown. Renders only when the operator
+// feed has at least one position tagged asset_type=CRYPTO; otherwise the
+// crypto sleeve falls back to SleeveCapitalPlaceholder.
+function CryptoDeployedCard({ accent, positions, cryptoDeployed }: {
+  accent: string
+  positions: Position[]
+  cryptoDeployed: number
+}) {
+  // Prefer the operator-feed-computed total; fall back to summing positions
+  // directly so the UI stays honest if the field is missing on an old feed.
+  const computedTotal = positions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  const total = cryptoDeployed > 0 ? cryptoDeployed : computedTotal
+  const fmt = (v: number) =>
+    `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  return (
+    <div
+      className="rounded-xl px-5 py-5"
+      style={{
+        background: `radial-gradient(circle at 12% 10%, ${accent}18, transparent 48%), var(--cb-surface-0)`,
+        border: `1px solid ${accent}44`,
+      }}
+    >
+      <div className="cb-label mb-2">Deployed capital</div>
+      <div className="cb-number" style={{ fontSize: 28, fontWeight: 300, color: "var(--cb-text-primary)", letterSpacing: "-0.02em" }}>
+        {fmt(total)}
+      </div>
+      <div className="mt-1" style={{ fontSize: 11, color: "var(--cb-text-tertiary)" }}>
+        across {positions.length} position{positions.length === 1 ? "" : "s"} · two-layer architecture (daily core + 4H tactical overlay)
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {positions.map(p => {
+          const pnlGood = (p.unrealized_pnl ?? 0) >= 0
+          return (
+            <div
+              key={p.symbol}
+              className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2"
+              style={{ background: "var(--cb-surface-1)", border: "1px solid var(--cb-border-dim)" }}
+            >
+              <div className="min-w-0">
+                <div className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--cb-text-primary)" }}>{p.symbol}</div>
+                <div style={{ fontSize: 10, color: "var(--cb-text-tertiary)" }}>
+                  {p.qty.toLocaleString("en-US", { maximumFractionDigits: 8 })} @ {fmt(p.entry_price)}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="cb-number" style={{ fontSize: 14, color: "var(--cb-text-primary)" }}>{fmt(p.market_value)}</div>
+                <div style={{ fontSize: 10, color: pnlGood ? "var(--cb-green)" : "var(--cb-red)" }}>
+                  {pnlGood ? "+" : ""}{fmt(p.unrealized_pnl)} ({p.unrealized_pct?.toFixed(2) ?? "—"}%)
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // Placeholder chart card for sleeves without data yet.
 function ChartPlaceholder({ label, height = 160 }: { label: string; height?: number }) {
   return (
@@ -2518,23 +2583,35 @@ function OptionsSleeve({ data }: { data: TradingData }) {
   )
 }
 
-function CryptoSleeve() {
+function CryptoSleeve({ data }: { data: TradingData }) {
   const meta = SLEEVE_META.crypto
   const universe = ["BTC", "ETH", "SOL", "LINK", "AVAX", "ADA", "XRP", "DOGE", "LTC", "BCH"]
+
+  const cryptoPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "CRYPTO")
+  const cryptoDeployed = data.account.crypto_deployed ?? 0
+  const hasCrypto = cryptoPositions.length > 0 || cryptoDeployed > 0
+  const subLabel = hasCrypto
+    ? `Crypto sleeve · two-layer architecture · ${cryptoPositions.length} position${cryptoPositions.length === 1 ? "" : "s"}`
+    : "Crypto sleeve · two-layer architecture · SHADOW · paper data pending"
 
   return (
     <div className="space-y-8">
       <p style={{ fontSize: 10, letterSpacing: "0.06em", color: "var(--cb-text-tertiary)", opacity: 0.55 }}>
-        Crypto sleeve · two-layer architecture · SHADOW · paper data pending
+        {subLabel}
       </p>
 
-      {/* Crypto capital banner — two-layer architecture */}
-      <SleeveCapitalPlaceholder
-        accent={meta.accent}
-        title="Deployed capital"
-        message="$0 deployed in crypto. The crypto sleeve uses a two-layer architecture: a daily core regime monitor decides whether BTC should be structurally owned, and a 4H tactical overlay trades inside the regime."
-        sub="Integration lands after the core regime family clears the bench on risk-adjusted metrics. Data provider: Alpaca (paper) with Coinbase planned for live."
-      />
+      {/* Crypto capital banner — switches between live and placeholder based on
+          whether the operator feed has surfaced crypto positions yet. */}
+      {hasCrypto ? (
+        <CryptoDeployedCard accent={meta.accent} positions={cryptoPositions} cryptoDeployed={cryptoDeployed} />
+      ) : (
+        <SleeveCapitalPlaceholder
+          accent={meta.accent}
+          title="Deployed capital"
+          message="$0 deployed in crypto. The crypto sleeve uses a two-layer architecture: a daily core regime monitor decides whether BTC should be structurally owned, and a 4H tactical overlay trades inside the regime."
+          sub="Integration lands after the core regime family clears the bench on risk-adjusted metrics. Data provider: Alpaca (paper) with Coinbase planned for live."
+        />
+      )}
 
       {/* Two-layer architecture cards */}
       <section>
@@ -3232,7 +3309,7 @@ export function TradingDashboard({ initialData }: { initialData: TradingData | n
         {activeTab === "home"    && <HomeView data={data} />}
         {activeTab === "stocks"  && <StocksSleeve data={data} />}
         {activeTab === "options" && <OptionsSleeve data={data} />}
-        {activeTab === "crypto"  && <CryptoSleeve />}
+        {activeTab === "crypto"  && <CryptoSleeve data={data} />}
       </div>
     </div>
   )
