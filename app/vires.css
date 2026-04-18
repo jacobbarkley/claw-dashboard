@@ -340,6 +340,21 @@ button:focus-visible, a:focus-visible { outline: 1px solid var(--vr-gold); outli
   grid-template-columns: repeat(4, 1fr);
   margin-top: 14px;
 }
+/* Per-cell spacing: every cell gets a left divider + left pad except
+   the first-of-row. In the 4-col layout the first-of-row is just the
+   1st cell. In the 2-col collapse (mobile) it's the 1st and 3rd. */
+.vires-alloc-grid > * {
+  padding: 0 0 0 12px;
+  border-left: 1px solid var(--vr-line);
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.vires-alloc-grid > *:first-child {
+  padding: 0 12px 0 0;
+  border-left: none;
+}
 .vires-sleeve-card-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -356,6 +371,16 @@ button:focus-visible, a:focus-visible { outline: 1px solid var(--vr-gold); outli
   .vires-alloc-grid {
     grid-template-columns: repeat(2, 1fr);
     row-gap: 14px;
+  }
+  /* In 2-col mode, the 3rd cell is the first-of-row too. Reset its
+     padding + border so Options aligns flush-left with Stocks. */
+  .vires-alloc-grid > *:nth-child(odd) {
+    padding: 0 12px 0 0;
+    border-left: none;
+  }
+  .vires-alloc-grid > *:nth-child(even) {
+    padding: 0 0 0 12px;
+    border-left: 1px solid var(--vr-line);
   }
   .vires-hero-pad {
     padding: 18px 16px 16px;

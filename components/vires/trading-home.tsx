@@ -261,7 +261,7 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
           ))}
         </div>
         <div className="vires-alloc-grid">
-          {alloc.map((x, i) => {
+          {alloc.map(x => {
             // Non-cash segments jump to their sleeve sub-tab. Cash stays
             // display-only — it's not a tab.
             const clickable = x.k !== "cash" && !!onNavigateSleeve
@@ -279,24 +279,21 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
                 </div>
               </>
             )
-            const commonStyle: React.CSSProperties = {
-              padding: i > 0 ? "0 0 0 12px" : "0 12px 0 0",
-              borderLeft: i > 0 ? "1px solid var(--vr-line)" : "none",
-              textAlign: "left",
-              background: "transparent",
-            }
+            // Cell padding + left-divider come from .vires-alloc-grid > *
+            // so media queries can flip it cleanly when the grid collapses
+            // to 2-col on mobile. See app/vires.css.
             return clickable ? (
               <button
                 key={x.k}
                 type="button"
                 onClick={() => onNavigateSleeve!(x.k as "stocks" | "crypto" | "options")}
-                style={{ ...commonStyle, border: "none", cursor: "pointer", color: "inherit", font: "inherit" }}
+                style={{ cursor: "pointer" }}
                 aria-label={`Open ${x.label} sleeve`}
               >
                 {Inner}
               </button>
             ) : (
-              <div key={x.k} style={commonStyle}>{Inner}</div>
+              <div key={x.k}>{Inner}</div>
             )
           })}
         </div>
@@ -677,10 +674,13 @@ export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
 
         <EquityChart curve={data.equity_curve} baseValue={data.account.base_value} />
 
-        {/* Lower-home sections. All three read from operator.* fields
+        {/* Market Regime sits directly under the equity curve — regime
+            context is the most-useful pairing with the curve reading. */}
+        <MarketRegime operator={operator ?? null} />
+
+        {/* Lower-home sections. All read from operator.* fields
             already present in the feed — no backend work needed. */}
         <ElevatedStrategies operator={operator ?? null} />
-        <MarketRegime operator={operator ?? null} />
         <DeskStatus operator={operator ?? null} />
       </div>
     </>
