@@ -486,6 +486,23 @@ interface TradingData {
   tunables: Tunables
   bps?: BpsData | null
   operator?: OperatorData
+  // Codex slice (33bdccb): per-symbol price + daily move for the active
+  // strategy universe plus any held equity orphans. Optional so the UI
+  // gracefully degrades to the prior held/qualified/awaiting derivation
+  // when the field is absent on an older feed.
+  strategy_universe?: {
+    as_of: string | null
+    source: string
+    symbols: Array<{
+      symbol: string
+      current_price: number | null
+      prior_close: number | null
+      change_usd: number | null
+      change_pct: number | null
+      in_position: boolean
+      position_qty: number
+    }>
+  } | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -1904,6 +1921,89 @@ const COMPANY_NAMES: Record<string, string> = {
   BIL: "SPDR 1-3M T-Bill ETF",
 }
 
+// ─── Strategy universe panel ──────────────────────────────────────────────────
+// Renders the live-priced strategy universe section on the Stocks sleeve.
+// One row per symbol with current price + today's $/% move, a HELD badge with
+// quantity when in_position is true, and a small visual emphasis on names that
+// are currently in the active strategy set vs orphan held positions.
+//
+// Sourced from operator-feed `strategy_universe` (Codex slice 33bdccb). The
+// older held/qualified/awaiting derivation in QualifiedSetups still ships as
+// a fallback when the feed doesn't carry this field yet.
+function StrategyUniversePanel({ universe, strategySymbols }: {
+  universe: NonNullable<TradingData["strategy_universe"]>
+  strategySymbols: Set<string>  // names declared in the active strategy planning_profile
+}) {
+  // Sort: held first, then by % change desc so movers cluster at the top.
+  const sorted = [...universe.symbols].sort((a, b) => {
+    if (a.in_position !== b.in_position) return a.in_position ? -1 : 1
+    return (b.change_pct ?? 0) - (a.change_pct ?? 0)
+  })
+
+  return (
+    <div className="space-y-1.5">
+      {sorted.map(s => {
+        const inStrategy = strategySymbols.has(s.symbol)
+        const orphan = s.in_position && !inStrategy
+        const pctTone: "good" | "medium" | "bad" =
+          s.change_pct == null ? "medium" : s.change_pct > 0 ? "good" : s.change_pct < 0 ? "bad" : "medium"
+        const pctColor =
+          pctTone === "good" ? "var(--cb-green)" : pctTone === "bad" ? "var(--cb-red)" : "var(--cb-text-secondary)"
+        return (
+          <div
+            key={s.symbol}
+            className="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+            style={{
+              background: "var(--cb-surface-1)",
+              border: `1px solid ${s.in_position ? "rgba(16, 185, 129, 0.30)" : "var(--cb-border-dim)"}`,
+            }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="font-mono" style={{ fontSize: 12, fontWeight: 600, color: "var(--cb-text-primary)" }}>
+                {s.symbol}
+              </div>
+              {s.in_position && (
+                <span
+                  className="inline-flex items-center rounded-full px-1.5 py-0.5"
+                  style={{
+                    background: "rgba(16, 185, 129, 0.12)",
+                    border: "1px solid rgba(16, 185, 129, 0.4)",
+                    color: "var(--cb-green)",
+                    fontSize: 9,
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Held · {s.position_qty.toLocaleString("en-US", { maximumFractionDigits: 4 })}
+                </span>
+              )}
+              {orphan && (
+                <span style={{ fontSize: 9, color: "var(--cb-text-tertiary)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                  · orphan
+                </span>
+              )}
+            </div>
+            <div className="flex items-baseline gap-3 shrink-0">
+              <div className="cb-number" style={{ fontSize: 12, color: "var(--cb-text-primary)" }}>
+                {s.current_price != null ? fmt(s.current_price, "$", "", 2) : "—"}
+              </div>
+              <div className="text-right" style={{ minWidth: 88 }}>
+                <div style={{ fontSize: 11, color: pctColor, fontWeight: 500 }}>
+                  {s.change_pct != null ? `${s.change_pct >= 0 ? "+" : ""}${fmtFixed(s.change_pct, 2)}%` : "—"}
+                </div>
+                <div style={{ fontSize: 9, color: "var(--cb-text-tertiary)" }}>
+                  {s.change_usd != null ? `${s.change_usd >= 0 ? "+" : "−"}${fmt(Math.abs(s.change_usd), "$", "", 2)}` : ""}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function QualifiedSetups({
   items,
   as_of,
@@ -2615,10 +2715,24 @@ function StocksSleeve({ data }: { data: TradingData }) {
         </section>
       )}
 
-      {/* Strategy universe — current price + daily move per symbol will become
-          richer once Codex's strategy_universe feed slice lands; today this
-          renders held / qualified / awaiting badges from existing data. */}
-      {universeItems.length > 0 && (
+      {/* Strategy universe — prefer Codex's per-symbol live-priced feed when
+          present (richer: current price + today's $/% per name). Fall back to
+          the held/qualified/awaiting derivation when the feed slice is
+          missing on an older payload. */}
+      {data.strategy_universe && data.strategy_universe.symbols.length > 0 ? (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="cb-label">Strategy Universe · {data.strategy_universe.symbols.length} names</span>
+            <span className="text-[10px]" style={{ color: "var(--cb-text-tertiary)" }}>
+              {data.strategy_universe.symbols.filter(s => s.in_position).length} held · live prices
+            </span>
+          </div>
+          <StrategyUniversePanel
+            universe={data.strategy_universe}
+            strategySymbols={new Set(strategySymbols)}
+          />
+        </section>
+      ) : universeItems.length > 0 ? (
         <section>
           <div className="flex items-center justify-between mb-3">
             <span className="cb-label">{universeLabel}</span>
@@ -2634,7 +2748,7 @@ function StocksSleeve({ data }: { data: TradingData }) {
             source={strategySymbols.length > 0 ? "active_strategy" : data.watchlist.source}
           />
         </section>
-      )}
+      ) : null}
 
       {/* Active strategy */}
       <PromotedStrategy bank={data.operator?.strategy_bank} />
