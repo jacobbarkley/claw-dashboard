@@ -261,9 +261,11 @@ function RunCard({ run }: { run: BenchRun }) {
   const total = run.search_space_size ?? 0
   const pct = total > 0 ? Math.min(100, (evaluated / total) * 100) : 0
   const tone = STATUS_TONE[(run.status ?? "").toUpperCase()] ?? "neutral"
+  const detailHref = `/vires/bench/run/${encodeURIComponent(run.bench_id)}/${encodeURIComponent(run.run_id)}`
 
   return (
-    <div
+    <Link
+      href={detailHref}
       className="vr-card"
       style={{
         padding: 14,
@@ -272,6 +274,8 @@ function RunCard({ run }: { run: BenchRun }) {
         gap: 10,
         background: "var(--vr-ink)",
         border: "1px solid var(--vr-line)",
+        textDecoration: "none",
+        color: "inherit",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
@@ -329,7 +333,7 @@ function RunCard({ run }: { run: BenchRun }) {
           </span>
         </div>
       )}
-    </div>
+    </Link>
   )
 }
 
