@@ -8,6 +8,7 @@
 // the deeper wiring (leaderboards, era robustness matrix, etc.) that future
 // commits will plug into the existing slots here.
 
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { AnimatedNumber, InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
 
@@ -35,9 +36,15 @@ interface ManifestSummary {
   source_kind?: string
 }
 
+interface PassportSummary {
+  id: string
+  sleeve?: string | null
+}
+
 interface BenchData {
   runs?: BenchRun[]
   manifests?: ManifestSummary[]
+  passports?: PassportSummary[]
 }
 
 interface ActiveStrategy {
@@ -127,7 +134,7 @@ function BenchHero({ runs, promotedCount }: { runs: BenchRun[]; promotedCount: n
 // active strategy record. Falls back to a "no promoted strategy" empty state
 // if the bank is empty.
 
-function FeaturedStrategy({ strategy }: { strategy: ActiveStrategy | null }) {
+function FeaturedStrategy({ strategy, passportHref }: { strategy: ActiveStrategy | null; passportHref?: string | null }) {
   if (!strategy) {
     return (
       <div className="vr-card" style={{ padding: 20 }}>
@@ -162,6 +169,26 @@ function FeaturedStrategy({ strategy }: { strategy: ActiveStrategy | null }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <StatusPill tone="gold">Promoted</StatusPill>
         <SleeveChip sleeve={strategy.sleeve ?? "stocks"} />
+        {passportHref && (
+          <Link
+            href={passportHref}
+            className="t-eyebrow"
+            style={{
+              fontSize: 9,
+              color: "var(--vr-gold)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 4,
+              textDecoration: "none",
+              marginLeft: "auto",
+            }}
+          >
+            Passport
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+              <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.2" />
+            </svg>
+          </Link>
+        )}
       </div>
       <div className="t-h3" style={{ marginTop: 6 }}>{strategy.display_name ?? "Active Strategy"}</div>
       {strategy.variant_id && (
@@ -389,12 +416,23 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
   const featured = mapFeaturedStrategy(liveOperator)
   const promotedCount = liveOperator?.strategy_bank?.promoted?.length ?? currentBenchData.manifests?.length ?? 0
 
+  // Find the passport that matches the featured strategy's sleeve so the
+  // "Passport" link routes to a real drill-in page. Defaults to the first
+  // STOCKS passport — today there's only one promoted stock strategy.
+  const featuredSleeve = (featured?.sleeve ?? "stocks").toLowerCase()
+  const featuredPassport = (currentBenchData.passports ?? []).find(p =>
+    (p.sleeve ?? "").toLowerCase() === featuredSleeve,
+  )
+  const passportHref = featuredPassport
+    ? `/vires/bench/passport/${encodeURIComponent(featuredPassport.id)}`
+    : null
+
   return (
     <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
       <BenchHero runs={sortedRuns} promotedCount={promotedCount} />
 
       <SectionHeader eyebrow="Promoted" title="In production" />
-      <FeaturedStrategy strategy={featured} />
+      <FeaturedStrategy strategy={featured} passportHref={passportHref} />
 
       <SectionHeader
         eyebrow="Research"
