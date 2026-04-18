@@ -6,6 +6,7 @@
 // no ReactDOM.createPortal targeting #app-frame, no React UMD assumptions.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
 
 // ─── Formatting helpers ──────────────────────────────────────────────────────
 
@@ -440,7 +441,14 @@ function DefinitionModal({ def, onClose }: { def: GlossaryEntry; onClose: () => 
     return () => window.removeEventListener("keydown", onKey)
   }, [onClose])
 
-  return (
+  // Portal into document.body so the fixed overlay escapes any
+  // backdrop-filter / transform / filter ancestor that would otherwise
+  // pin it to the card it was triggered from. Without this, .vr-card's
+  // backdrop-filter constrains the modal to the card and the CLOSE
+  // button gets clipped / other cards stack over it.
+  if (typeof document === "undefined") return null
+
+  const overlay = (
     <div
       onClick={onClose}
       style={{
@@ -453,7 +461,7 @@ function DefinitionModal({ def, onClose }: { def: GlossaryEntry; onClose: () => 
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        zIndex: 70,
+        zIndex: 1000,
         animation: "vr-def-fade 180ms ease",
       }}
     >
@@ -518,4 +526,6 @@ function DefinitionModal({ def, onClose }: { def: GlossaryEntry; onClose: () => 
       </div>
     </div>
   )
+
+  return createPortal(overlay, document.body)
 }
