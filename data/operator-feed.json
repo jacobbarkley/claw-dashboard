@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-18T01:08:27.184505+00:00",
+  "generated_at": "2026-04-18T03:37:44.558263+00:00",
   "as_of_date": "2026-04-17",
   "source_context": {
     "mode": "canonical",
@@ -18,24 +18,36 @@
     "total_pnl_pct": -14.5042,
     "today_pnl": 60.05,
     "today_pnl_pct": 0.0703,
-    "positions_value": 54503.99,
-    "equity_deployed": 54503.99,
-    "crypto_deployed": 0,
+    "positions_value": 54751.57,
+    "equity_deployed": 54508.47,
+    "crypto_deployed": 243.1,
     "options_deployed": 0,
-    "unrealized_pnl": 51.56,
-    "unrealized_pnl_pct": 0.09
+    "unrealized_pnl": 54.64,
+    "unrealized_pnl_pct": 0.1
   },
   "positions": [
+    {
+      "symbol": "BTCUSD",
+      "qty": 0.003149925,
+      "side": "long",
+      "entry_price": 77619.2,
+      "current_price": 77176.222,
+      "market_value": 243.099311,
+      "unrealized_pnl": -1.395348,
+      "unrealized_pct": -0.57,
+      "change_today_pct": 3.12,
+      "asset_type": "CRYPTO"
+    },
     {
       "symbol": "NVDA",
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 201.43,
-      "market_value": 3215.8432,
-      "unrealized_pnl": 33.8132,
-      "unrealized_pct": 1.06,
-      "change_today_pct": 1.55,
+      "current_price": 201.27,
+      "market_value": 3220.32,
+      "unrealized_pnl": 38.29,
+      "unrealized_pct": 1.2,
+      "change_today_pct": 1.47,
       "asset_type": "EQUITY"
     },
     {
@@ -62,7 +74,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-18T01:08:27.184560+00:00"
+    "audit_written_at": "2026-04-18T03:37:44.558861+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -77,7 +89,7 @@
     "max_win_streak": 1,
     "max_loss_streak": 10,
     "source": "legacy_pipeline_kpis_v1",
-    "positions_count": 2
+    "positions_count": 3
   },
   "daily_performance": [
     {

@@ -28,6 +28,7 @@ MODE_HISTORY_PATH = Path(os.environ.get('OPENCLAW_MODE_HISTORY_PATH', str(REBUIL
 APPROVAL_QUEUE_PATH = Path(os.environ.get('OPENCLAW_APPROVAL_QUEUE_PATH', str(REBUILD_LATEST / 'approval_queue.json')))
 STRATEGY_BANK_PATH = Path(os.environ.get('OPENCLAW_STRATEGY_BANK_PATH', str(REBUILD_LATEST / 'strategy_bank.json')))
 ACTIVE_STRATEGY_PATH = Path(os.environ.get('OPENCLAW_ACTIVE_STRATEGY_PATH', str(REBUILD_LATEST / 'active_strategy.json')))
+BROKER_SNAPSHOT_PATH = Path(os.environ.get('OPENCLAW_BROKER_SNAPSHOT_PATH', str(REBUILD_LATEST / 'broker_snapshot.json')))
 OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
 OVERRIDE_ENV_KEYS = [
@@ -42,6 +43,7 @@ OVERRIDE_ENV_KEYS = [
     'OPENCLAW_APPROVAL_QUEUE_PATH',
     'OPENCLAW_STRATEGY_BANK_PATH',
     'OPENCLAW_ACTIVE_STRATEGY_PATH',
+    'OPENCLAW_BROKER_SNAPSHOT_PATH',
 ]
 
 
@@ -285,7 +287,27 @@ def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
     return items
 
 
-def build_positions(market: dict, legacy_snapshot: dict) -> list[dict]:
+def build_positions(market: dict, legacy_snapshot: dict, broker_snapshot: dict) -> list[dict]:
+    broker_items = broker_snapshot.get('positions', []) if isinstance(broker_snapshot, dict) else []
+    if broker_items:
+        positions = []
+        for item in broker_items:
+            unrealized_pct = safe_float(item.get('unrealized_pnl_pct'))
+            change_today_pct = safe_float(item.get('change_today_pct'))
+            positions.append({
+                'symbol': item.get('symbol'),
+                'qty': safe_float(item.get('quantity'), 0.0),
+                'side': str(item.get('side', 'LONG')).lower(),
+                'entry_price': safe_float(item.get('avg_price_usd'), 0.0),
+                'current_price': safe_float(item.get('current_price_usd'), 0.0),
+                'market_value': safe_float(item.get('market_value_usd'), 0.0),
+                'unrealized_pnl': safe_float(item.get('unrealized_pnl_usd')),
+                'unrealized_pct': round(unrealized_pct * 100, 2) if unrealized_pct is not None else None,
+                'change_today_pct': round(change_today_pct * 100, 2) if change_today_pct is not None else 0.0,
+                'asset_type': item.get('asset_type', 'EQUITY'),
+            })
+        return positions
+
     legacy_items = {item.get('symbol'): item for item in legacy_snapshot.get('positions', []) if item.get('symbol')}
     positions = []
     for item in market.get('positions', []):
@@ -643,6 +665,7 @@ def build_operator(session: dict, market: dict, thesis_set: dict, pre_gate: dict
 def main():
     session = load(REBUILD_LATEST / 'session_context.json')
     market = load(REBUILD_LATEST / 'market_snapshot.json')
+    broker_snapshot = load(BROKER_SNAPSHOT_PATH)
     thesis_set = load(REBUILD_LATEST / 'thesis_set.json')
     pre_gate = load(REBUILD_LATEST / 'pre_gate_intent.json')
     trade_plan = load(REBUILD_LATEST / 'trade_plan.json')
@@ -660,8 +683,8 @@ def main():
     source_context = build_source_context()
     as_of_date = session.get('trading_date') or datetime.now(ET).date().isoformat()
 
-    held_symbols = {item.get('symbol') for item in market.get('positions', [])}
-    positions = build_positions(market, legacy_positions)
+    positions = build_positions(market, legacy_positions, broker_snapshot)
+    held_symbols = {item.get('symbol') for item in positions if item.get('symbol')}
     output = {
         'contract_version': '1',
         'generated_at': datetime.now(timezone.utc).isoformat(),
