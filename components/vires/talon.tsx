@@ -119,6 +119,25 @@ function ViresTalonPanel() {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [mounted, setMounted] = useState(false)
   const [restored, setRestored] = useState(false)
+  // Track the visible viewport so the mobile keyboard doesn't hide the
+  // composer. visualViewport shrinks when the soft keyboard opens;
+  // position:fixed + bottom:0 otherwise anchors to the document bottom
+  // (behind the keyboard). Setting an explicit height = visualViewport
+  // height keeps the composer visible above the keys.
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => setViewportHeight(vv.height)
+    update()
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
 
   // Mount + restore persisted conversation once.
   useEffect(() => {
@@ -201,11 +220,17 @@ function ViresTalonPanel() {
 
   if (!mounted) return null
 
+  // When the keyboard is open on mobile, swap from bottom:0 to an
+  // explicit height that matches the visible viewport. Keeps the
+  // composer above the keys instead of behind them.
+  const usingViewportHeight = viewportHeight != null && typeof window !== "undefined" && window.innerWidth < 640
   const panelStyle: CSSProperties = {
     position: "fixed",
     top: 0,
     right: 0,
-    bottom: 0,
+    ...(usingViewportHeight
+      ? { height: `${viewportHeight}px` }
+      : { bottom: 0 }),
     width: "420px",
     maxWidth: "94vw",
     background: "var(--vr-ink-raised)",
@@ -421,6 +446,54 @@ function ViresTalonPanel() {
                     }}
                   />
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Surface errors so silent API failures are visible. The most
+              likely cause of "Talon doesn't respond" today is a missing
+              ANTHROPIC_API_KEY in Vercel production env — the server returns
+              a JSON error but useChat silently swallows it. Show it here. */}
+          {chat.error && (
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <div
+                style={{
+                  padding: "10px 13px",
+                  borderRadius: 6,
+                  background: "rgba(201, 122, 122, 0.06)",
+                  border: "1px solid rgba(201, 122, 122, 0.35)",
+                  borderLeft: "2px solid var(--vr-down)",
+                  color: "var(--vr-cream)",
+                  fontSize: 12,
+                  lineHeight: 1.5,
+                  maxWidth: "92%",
+                }}
+              >
+                <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-down)", marginBottom: 4 }}>
+                  Talon request failed
+                </div>
+                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  {chat.error.message || String(chat.error)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => chat.regenerate()}
+                  style={{
+                    marginTop: 8,
+                    padding: "5px 10px",
+                    background: "transparent",
+                    border: "1px solid var(--vr-line-hi)",
+                    color: "var(--vr-cream-dim)",
+                    fontFamily: "var(--ff-sans)",
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    borderRadius: 2,
+                  }}
+                >
+                  Retry
+                </button>
               </div>
             </div>
           )}
