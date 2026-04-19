@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-18T04:36:14.966725+00:00",
+  "generated_at": "2026-04-19T21:36:26.802811+00:00",
   "as_of_date": "2026-04-17",
   "source_context": {
     "mode": "canonical",
@@ -18,24 +18,24 @@
     "total_pnl_pct": -14.5042,
     "today_pnl": null,
     "today_pnl_pct": null,
-    "positions_value": 54751.57,
-    "equity_deployed": 54508.47,
-    "crypto_deployed": 243.1,
+    "positions_value": 55085.11,
+    "equity_deployed": 54512.48,
+    "crypto_deployed": 572.63,
     "options_deployed": 0,
-    "unrealized_pnl": 54.64,
-    "unrealized_pnl_pct": 0.1
+    "unrealized_pnl": 45.92,
+    "unrealized_pnl_pct": 0.08
   },
   "positions": [
     {
       "symbol": "BTCUSD",
-      "qty": 0.003149925,
+      "qty": 0.007649133,
       "side": "long",
-      "entry_price": 77619.2,
-      "current_price": 77176.222,
-      "market_value": 243.099311,
-      "unrealized_pnl": -1.395348,
-      "unrealized_pct": -0.57,
-      "change_today_pct": 3.12,
+      "entry_price": 76709.710158034,
+      "current_price": 74862.5,
+      "market_value": 572.633219,
+      "unrealized_pnl": -14.129556,
+      "unrealized_pct": -2.41,
+      "change_today_pct": -1.09,
       "asset_type": "CRYPTO"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 201.27,
-      "market_value": 3220.32,
-      "unrealized_pnl": 38.29,
-      "unrealized_pct": 1.2,
-      "change_today_pct": 1.47,
+      "current_price": 201.68,
+      "market_value": 3226.88,
+      "unrealized_pnl": 44.85,
+      "unrealized_pct": 1.41,
+      "change_today_pct": 0.0,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 510.0,
       "side": "long",
       "entry_price": 100.530196,
-      "current_price": 100.565,
-      "market_value": 51288.15,
-      "unrealized_pnl": 17.75004,
+      "current_price": 100.56,
+      "market_value": 51285.6,
+      "unrealized_pnl": 15.20004,
       "unrealized_pct": 0.03,
-      "change_today_pct": 0.03,
+      "change_today_pct": 0.0,
       "asset_type": "EQUITY"
     }
   ],
@@ -74,7 +74,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-18T04:36:14.966910+00:00"
+    "audit_written_at": "2026-04-19T21:36:26.802869+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -761,7 +761,9 @@
         "prior_close": 263.325,
         "change_usd": 6.88,
         "change_pct": 2.6127,
+        "return_20d_pct": null,
         "in_position": false,
+        "strategy_member": true,
         "position_qty": 0.0
       },
       {
@@ -770,7 +772,9 @@
         "prior_close": 398.26,
         "change_usd": 8.24,
         "change_pct": 2.069,
+        "return_20d_pct": null,
         "in_position": false,
+        "strategy_member": true,
         "position_qty": 0.0
       },
       {
@@ -779,7 +783,9 @@
         "prior_close": 987.04,
         "change_usd": 12.735,
         "change_pct": 1.2902,
+        "return_20d_pct": null,
         "in_position": false,
+        "strategy_member": true,
         "position_qty": 0.0
       },
       {
@@ -788,7 +794,9 @@
         "prior_close": 903.83,
         "change_usd": 23.225,
         "change_pct": 2.5696,
+        "return_20d_pct": null,
         "in_position": false,
+        "strategy_member": true,
         "position_qty": 0.0
       },
       {
@@ -797,7 +805,9 @@
         "prior_close": 676.87,
         "change_usd": 11.59,
         "change_pct": 1.7123,
+        "return_20d_pct": null,
         "in_position": false,
+        "strategy_member": true,
         "position_qty": 0.0
       },
       {
@@ -806,7 +816,9 @@
         "prior_close": 198.26,
         "change_usd": 3.24,
         "change_pct": 1.6342,
+        "return_20d_pct": null,
         "in_position": true,
+        "strategy_member": true,
         "position_qty": 16.0
       },
       {
@@ -815,7 +827,9 @@
         "prior_close": 100.535,
         "change_usd": 0.035,
         "change_pct": 0.0348,
+        "return_20d_pct": null,
         "in_position": true,
+        "strategy_member": false,
         "position_qty": 510.0
       }
     ]
@@ -978,6 +992,8 @@
         "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
         "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
         "signal_source": "validation_strategy",
+        "selected_at": "2026-04-11T13:31:26.522551-04:00",
+        "registered_at": "2026-04-11T11:48:24.095819-04:00",
         "allowed_sides": [
           "LONG"
         ],
@@ -1042,6 +1058,8 @@
           "description": "Middle ground between the tighter stop and the looser stop while nudging the target earlier.",
           "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
           "signal_source": "validation_strategy",
+          "selected_at": null,
+          "registered_at": "2026-04-11T11:48:24.095819-04:00",
           "allowed_sides": [
             "LONG"
           ],
@@ -1105,6 +1123,8 @@
           "description": "Looser stop plus slightly earlier target to improve fold closure quality.",
           "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
           "signal_source": "validation_strategy",
+          "selected_at": null,
+          "registered_at": "2026-04-11T11:48:24.095819-04:00",
           "allowed_sides": [
             "LONG"
           ],
@@ -1168,6 +1188,8 @@
           "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
           "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
           "signal_source": "validation_strategy",
+          "selected_at": "2026-04-11T13:31:26.522551-04:00",
+          "registered_at": "2026-04-11T11:48:24.095819-04:00",
           "allowed_sides": [
             "LONG"
           ],
@@ -1222,7 +1244,268 @@
           }
         }
       ],
+      "promoted": [
+        {
+          "manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+          "title": "Regime-Aware Momentum Frozen Reference Paper v1",
+          "sleeve": "STOCKS",
+          "strategy_id": "regime_aware_momentum_frozen_stop_5_target_15",
+          "strategy_family": "REGIME_AWARE_MOMENTUM",
+          "deployment_config_id": "stop_5_target_15",
+          "runtime_contract": "POSITION_CANDIDATES",
+          "cadence": "DAILY",
+          "benchmark_symbol": "SPY",
+          "generated_at": "2026-04-17T20:30:00-04:00",
+          "broker": {
+            "broker_adapter": "alpaca_equities",
+            "broker_environment": "PAPER",
+            "venue": "usa_equities",
+            "paper_only": false
+          },
+          "target_spec": {
+            "mode": "CUSTOM",
+            "sleeve_allocation_pct": 100.0,
+            "max_account_exposure_pct": 100.0,
+            "min_rebalance_notional_usd": null,
+            "max_order_notional_usd": null,
+            "allowed_sides": [
+              "LONG"
+            ],
+            "allow_short": false,
+            "description": "This stock sleeve promotes candidate baskets and position deltas instead of a single target-exposure percentage."
+          },
+          "source_kind": "CHECKED_IN",
+          "source": {
+            "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+            "source_spec_path": "backtest/bench/specs/q076b_regime_aware_momentum_frozen_reference.bench_spec.json",
+            "source_result_bundle_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/bench_run_bundle.json",
+            "source_report_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json",
+            "selected_config_id": "stop_5_target_15",
+            "rationale": "This frozen stock winner is the canonical equities-side promotion reference and should eventually drive a manifest-native stock executor."
+          },
+          "strategy_parameters": {
+            "lookback_days": 20,
+            "min_symbol_return_pct": 8.0,
+            "max_symbol_volatility_pct": 45.0,
+            "benchmark_trend_days": 50,
+            "benchmark_min_return_pct": 0.0,
+            "benchmark_max_volatility_pct": 25.0,
+            "stop_loss_pct": 5.0,
+            "target_pct": 15.0,
+            "max_hold_days": 10,
+            "max_positions": 4,
+            "risk_pct_per_trade": 1.0
+          },
+          "performance_summary": {
+            "total_return_pct": 90.4969,
+            "benchmark_return_pct": 80.448,
+            "excess_return_pct": 10.0489,
+            "sharpe_ratio": 1.9302,
+            "calmar_ratio": 2.5465,
+            "max_drawdown_pct": 8.8878,
+            "profit_factor": 2.1217,
+            "win_rate_pct": 61.96,
+            "trade_count": 163,
+            "days": 797
+          }
+        },
+        {
+          "manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+          "title": "BTC Managed Exposure Daily Core Paper v1",
+          "sleeve": "CRYPTO",
+          "strategy_id": "btc_managed_exposure_v1",
+          "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+          "deployment_config_id": "BTC_GRADUATED_CORE_REGIME",
+          "runtime_contract": "TARGET_EXPOSURE",
+          "cadence": "DAILY",
+          "benchmark_symbol": "BTC/USD",
+          "generated_at": "2026-04-17T20:30:00-04:00",
+          "broker": {
+            "broker_adapter": "alpaca_crypto_paper",
+            "broker_environment": "PAPER",
+            "venue": "alpaca_us",
+            "paper_only": true
+          },
+          "target_spec": {
+            "mode": "PERCENT_OF_SLEEVE",
+            "sleeve_allocation_pct": 10.0,
+            "max_account_exposure_pct": 10.0,
+            "min_rebalance_notional_usd": 100.0,
+            "max_order_notional_usd": null,
+            "allowed_sides": [
+              "LONG"
+            ],
+            "allow_short": false,
+            "description": "Daily graduated BTC core exposure with account-level sleeve caps."
+          },
+          "source_kind": "CHECKED_IN",
+          "source": {
+            "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+            "source_spec_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
+            "source_result_bundle_path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/bench_run_bundle.json",
+            "source_report_path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/crypto_sleeve_comparison_report.json",
+            "selected_config_id": "BTC_GRADUATED_CORE_REGIME",
+            "rationale": "Promote the risk-adjusted managed BTC core first, while the tactical overlay remains research-only until a 4H scheduler is ready."
+          },
+          "strategy_parameters": {
+            "crypto_product_lane": "MANAGED_EXPOSURE",
+            "lookback_days": 400,
+            "core_regime_sma_bars": 200,
+            "core_regime_slope_bars": 20,
+            "risk_on_exposure_pct": 80.0,
+            "accumulate_exposure_pct": 70.0,
+            "risk_off_exposure_pct": 0.0
+          },
+          "performance_summary": {
+            "total_return_pct": 8409.8946,
+            "benchmark_return_pct": 17172.3116,
+            "excess_return_pct": -8762.417,
+            "sharpe_ratio": 1.1901,
+            "calmar_ratio": 0.9245,
+            "max_drawdown_pct": 58.4016,
+            "profit_factor": null,
+            "win_rate_pct": null,
+            "trade_count": 83,
+            "days": 3758
+          }
+        },
+        {
+          "manifest_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+          "title": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
+          "sleeve": "CRYPTO",
+          "strategy_id": "btc_managed_exposure_v1",
+          "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+          "deployment_config_id": "BTC_GRADUATED_CORE_REGIME",
+          "runtime_contract": "TARGET_EXPOSURE",
+          "cadence": "DAILY",
+          "benchmark_symbol": "BTC/USD",
+          "generated_at": "2026-04-19T16:44:48.988710-04:00",
+          "broker": {
+            "broker_adapter": "alpaca_crypto_paper",
+            "broker_environment": "PAPER",
+            "venue": "coinbase",
+            "paper_only": true
+          },
+          "target_spec": {
+            "mode": "PERCENT_OF_SLEEVE",
+            "sleeve_allocation_pct": 10.0,
+            "max_account_exposure_pct": 10.0,
+            "min_rebalance_notional_usd": 100.0,
+            "max_order_notional_usd": null,
+            "allowed_sides": [
+              "LONG"
+            ],
+            "allow_short": false,
+            "description": "Daily graduated BTC core exposure with a 10% risk-off floor and account-level sleeve caps."
+          },
+          "source_kind": "CHECKED_IN",
+          "source": {
+            "source_kind": "CHECKED_IN",
+            "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+            "source_spec_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json",
+            "source_result_bundle_path": "backtest/bench/results/q090d_btc_managed_exposure_persistent_floor/q090d-persistent-floor-20260419/bench_run_bundle.json",
+            "source_report_path": "backtest/bench/results/q090d_btc_managed_exposure_persistent_floor/q090d-persistent-floor-20260419/crypto_sleeve_comparison_report.json",
+            "selected_config_id": "BTC_GRADUATED_CORE_REGIME",
+            "rationale": "Promote the managed BTC core with a 10% risk-off floor so the crypto sleeve stays partially deployed while preserving the risk-adjusted managed-exposure story; tactical overlay remains research-only."
+          },
+          "strategy_parameters": {
+            "crypto_product_lane": "MANAGED_EXPOSURE",
+            "lookback_days": 400,
+            "core_regime_sma_bars": 200,
+            "core_regime_slope_bars": 20,
+            "risk_on_exposure_pct": 80.0,
+            "accumulate_exposure_pct": 70.0,
+            "risk_off_exposure_pct": 10.0
+          },
+          "performance_summary": {
+            "total_return_pct": 8693.515,
+            "benchmark_return_pct": 17172.3116,
+            "excess_return_pct": -8478.7966,
+            "sharpe_ratio": 1.1948,
+            "calmar_ratio": 0.8967,
+            "max_drawdown_pct": 60.7584,
+            "profit_factor": null,
+            "win_rate_pct": null,
+            "trade_count": 83,
+            "days": 3758
+          }
+        }
+      ],
       "narrative": "Active strategy is regime_aware_momentum:stop_5_target_15 in stage Frozen Confirmation Pending. 2 other banked variant(s) remain available for selection."
+    },
+    "crypto_signals": {
+      "tsmom": {
+        "status": "RESEARCH_ONLY",
+        "promoted": false,
+        "cadence": "4H",
+        "bar": "4H",
+        "direction": null,
+        "last_cross_at": null,
+        "signal_strength_pct": null,
+        "signal_strength_label": "Bench only",
+        "note": "The 4H tactical overlay remains bench-only until a dedicated 4H execution manifest is promoted."
+      },
+      "managed_exposure": {
+        "status": "PROMOTED",
+        "manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+        "title": "BTC Managed Exposure Daily Core Paper v1",
+        "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+        "cadence": "DAILY",
+        "current_state": "RISK_OFF",
+        "current_exposure_pct": 0.0,
+        "target_notional_usd": 0.0,
+        "action": "HOLD",
+        "last_report_status": "SKIPPED",
+        "performance_summary": {
+          "total_return_pct": 8409.8946,
+          "benchmark_return_pct": 17172.3116,
+          "excess_return_pct": -8762.417,
+          "sharpe_ratio": 1.1901,
+          "calmar_ratio": 0.9245,
+          "max_drawdown_pct": 58.4016,
+          "profit_factor": null,
+          "win_rate_pct": null,
+          "trade_count": 83,
+          "days": 3758
+        },
+        "ladder": [
+          {
+            "state": "RISK_ON",
+            "label": "Tier 1",
+            "exposure_pct": 80.0,
+            "note": "Constructive regime",
+            "active": false
+          },
+          {
+            "state": "ACCUMULATE",
+            "label": "Tier 2",
+            "exposure_pct": 70.0,
+            "note": "Neutral regime",
+            "active": false
+          },
+          {
+            "state": "RISK_OFF",
+            "label": "Tier 3",
+            "exposure_pct": 0.0,
+            "note": "Risk-off",
+            "active": true
+          }
+        ],
+        "overlay_status": "RESEARCH_ONLY",
+        "note": "Daily graduated core is the promoted crypto lane. Tactical remains an overlay candidate."
+      },
+      "tracked_assets": [
+        {
+          "symbol": "BTCUSD",
+          "lane": "CORE",
+          "state": "RISK_OFF",
+          "tier_label": "Tier 3",
+          "target_exposure_pct": 0.0,
+          "market_value": 572.633219,
+          "qty": 0.007649133,
+          "status": "SKIPPED"
+        }
+      ]
     },
     "mode_history": {
       "history_window": 20,
