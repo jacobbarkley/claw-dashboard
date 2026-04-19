@@ -1,0 +1,11 @@
+{
+  "name": "Vires Capital",
+  "short_name": "Vires",
+  "description": "Algorithmic trading operator hub.",
+  "start_url": "/vires",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0a0b14",
+  "background_color": "#0a0b14"
+}

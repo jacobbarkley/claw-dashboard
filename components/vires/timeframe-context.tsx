@@ -7,6 +7,7 @@
 // localStorage + CustomEvents — cleaner within a single-page tree.
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 
 export type Timeframe = "1D" | "1W" | "1M" | "3M" | "1Y" | "ALL"
 
@@ -51,30 +52,118 @@ export function useSharedTimeframe(): TimeframeContextValue {
 // Compact custom dropdown used by the main Equity Curve + every sleeve
 // sparkline so the selector looks and behaves identically everywhere.
 // Writes through the shared context so picking one updates all charts.
+//
+// The menu is rendered via createPortal to document.body so it escapes any
+// overflow-hidden ancestor (e.g. .vr-card-hero, where sleeve sparklines
+// live). It also flips upward when there isn't enough room below the
+// trigger to render the full 6-row list.
 export function TimeframeDropdown() {
   const { tf, setTf } = useSharedTimeframe()
   const [open, setOpen] = useState(false)
-  const wrapRef = useRef<HTMLDivElement>(null)
+  const [menuPos, setMenuPos] = useState<{ left: number; top: number; flipUp: boolean } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  // Approximate menu height: 6 items × ~28px + 8px padding.
+  const MENU_H = 6 * 28 + 8
+  const MENU_W = 96
+
+  const positionMenu = () => {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (!r) return
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const gap = 4
+    // Right-align with the button.
+    const left = Math.max(8, Math.min(vw - MENU_W - 8, r.right - MENU_W))
+    const flipUp = r.bottom + gap + MENU_H > vh - 8 && r.top - gap - MENU_H >= 8
+    const top = flipUp ? r.top - gap - MENU_H : r.bottom + gap
+    setMenuPos({ left, top, flipUp })
+  }
 
   useEffect(() => {
     if (!open) return
+    positionMenu()
     const onDocClick = (e: MouseEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (!btnRef.current?.contains(target) && !document.getElementById("vires-tf-menu")?.contains(target)) {
+        setOpen(false)
+      }
     }
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false) }
+    const onScroll = () => positionMenu()
     document.addEventListener("mousedown", onDocClick)
     document.addEventListener("keydown", onKey)
+    window.addEventListener("scroll", onScroll, true)
+    window.addEventListener("resize", onScroll)
     return () => {
       document.removeEventListener("mousedown", onDocClick)
       document.removeEventListener("keydown", onKey)
+      window.removeEventListener("scroll", onScroll, true)
+      window.removeEventListener("resize", onScroll)
     }
   }, [open])
 
   const active = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
 
+  const menu =
+    open && menuPos && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            id="vires-tf-menu"
+            role="listbox"
+            style={{
+              position: "fixed",
+              left: menuPos.left,
+              top: menuPos.top,
+              width: MENU_W,
+              background: "var(--vr-ink-raised)",
+              border: "1px solid var(--vr-line-hi)",
+              borderRadius: 3,
+              padding: 4,
+              zIndex: 1100,
+              boxShadow: "0 12px 28px rgba(0,0,0,0.55)",
+            }}
+          >
+            {TIMEFRAMES.map(t => {
+              const isActive = t.k === tf
+              return (
+                <button
+                  key={t.k}
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => { setTf(t.k); setOpen(false) }}
+                  className="t-eyebrow"
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "right",
+                    padding: "6px 10px",
+                    background: isActive ? "rgba(200,169,104,0.08)" : "transparent",
+                    border: "none",
+                    color: isActive ? "var(--vr-gold)" : "var(--vr-cream-dim)",
+                    fontFamily: "var(--ff-sans)",
+                    fontSize: 10,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    borderRadius: 2,
+                    touchAction: "manipulation",
+                  }}
+                >
+                  {t.label}
+                </button>
+              )
+            })}
+          </div>,
+          document.body,
+        )
+      : null
+
   return (
-    <div ref={wrapRef} style={{ position: "relative", display: "inline-block" }}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen(v => !v)}
         aria-haspopup="listbox"
@@ -100,54 +189,7 @@ export function TimeframeDropdown() {
         {active.label}
         <span style={{ fontSize: 8, opacity: 0.6 }}>▾</span>
       </button>
-      {open && (
-        <div
-          role="listbox"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            right: 0,
-            background: "var(--vr-ink-raised)",
-            border: "1px solid var(--vr-line-hi)",
-            borderRadius: 3,
-            padding: 4,
-            zIndex: 50,
-            boxShadow: "0 12px 28px rgba(0,0,0,0.45)",
-            minWidth: 84,
-          }}
-        >
-          {TIMEFRAMES.map(t => {
-            const isActive = t.k === tf
-            return (
-              <button
-                key={t.k}
-                type="button"
-                role="option"
-                aria-selected={isActive}
-                onClick={() => { setTf(t.k); setOpen(false) }}
-                className="t-eyebrow"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "right",
-                  padding: "6px 10px",
-                  background: isActive ? "rgba(200,169,104,0.08)" : "transparent",
-                  border: "none",
-                  color: isActive ? "var(--vr-gold)" : "var(--vr-cream-dim)",
-                  fontFamily: "var(--ff-sans)",
-                  fontSize: 10,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  borderRadius: 2,
-                }}
-              >
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
+      {menu}
+    </>
   )
 }

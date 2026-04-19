@@ -1,14 +1,12 @@
 import Link from "next/link"
 import { Zap, Activity, TrendingUp, List, FlaskConical, Sparkles } from "lucide-react"
 
-// Transitional nav. The end-state per the Vires Capital design handoff is
-// Ops · Vires · Queue (3 outer tabs), with Trading / Bench / Plateau living
-// inside Vires as a sub-nav. Until the inner nav + bench + plateau are
-// ported under /vires/*, the Trading and Bench top-level links stay so we
-// don't lose anything during the migration.
+// Vires is the primary surface (root redirects there). Ops + Trading + Bench +
+// Queue stay reachable but Vires leads in both desktop top nav and mobile
+// bottom nav so the daily hub is always one tap away.
 const LINKS = [
-  { href: "/dashboard", label: "Ops",      icon: Activity      },
   { href: "/vires",     label: "Vires",    icon: Sparkles      },
+  { href: "/dashboard", label: "Ops",      icon: Activity      },
   { href: "/trading",   label: "Trading",  icon: TrendingUp    },
   { href: "/bench",     label: "Bench",    icon: FlaskConical  },
   { href: "/queue",     label: "Queue",    icon: List          },

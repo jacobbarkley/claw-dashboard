@@ -16,8 +16,18 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClawBoy",
-  description: "Autonomous capital command",
+  title: "Vires Capital",
+  description: "Algorithmic trading operator hub.",
+  manifest: "/manifest.webmanifest",
+  // Tells iOS to honor the manifest's start_url when launched from the
+  // home screen. Re-add the home-screen icon while on /vires for the
+  // launch URL on existing icons to update.
+  appleWebApp: {
+    capable: true,
+    title: "Vires Capital",
+    statusBarStyle: "black-translucent",
+    startupImage: [],
+  },
 };
 
 export default function RootLayout({
