@@ -108,9 +108,13 @@ function buildSystemPrompt(feed: Record<string, unknown> | null): string {
 // surfaces errors that the streaming POST path silently swallows
 // (streamText's onError only logs to server console).
 export async function GET() {
-  const keyPresent = !!process.env.ANTHROPIC_API_KEY
-  const keyLength = process.env.ANTHROPIC_API_KEY?.length ?? 0
-  const keyPrefix = process.env.ANTHROPIC_API_KEY?.slice(0, 12) ?? null
+  const key = process.env.ANTHROPIC_API_KEY
+  const keyPresent = !!key
+  const keyLength = key?.length ?? 0
+  const keyPrefix = key?.slice(0, 12) ?? null
+  // Last 4 chars to disambiguate when the same Anthropic account has
+  // multiple keys — Anthropic console lists each key's last 4 too.
+  const keyTail = key ? key.slice(-4) : null
   const model = "claude-haiku-4-5-20251001"
 
   if (!keyPresent) {
@@ -131,6 +135,7 @@ export async function GET() {
         model,
         keyLength,
         keyPrefix,
+        keyTail,
         text: result.text,
         finishReason: result.finishReason,
         usage: result.usage,
@@ -149,6 +154,7 @@ export async function GET() {
         keyPresent,
         keyLength,
         keyPrefix,
+        keyTail,
         error: message,
         errorName: name,
         status: anyErr.status ?? anyErr.statusCode ?? null,
