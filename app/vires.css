@@ -81,15 +81,18 @@
 
 /* Italicize gold accents a touch harder in Obsidian so the wordmark
    and .t-accent reads as a distinct night identity, not just a palette
-   recolor. The italic is baked into .t-accent already; obsidian nudges
-   the display italic forward on the main wordmark + h1/h2 scale. */
-[data-vr-theme="obsidian"] .t-display,
-[data-vr-theme="obsidian"] .t-h1,
-[data-vr-theme="obsidian"] .t-h2 {
+   recolor. Numbers (.t-num) are explicitly excluded — italicized digits
+   read as cursive and look messy on a financial readout. */
+[data-vr-theme="obsidian"] .t-display:not(.t-num),
+[data-vr-theme="obsidian"] .t-h1:not(.t-num),
+[data-vr-theme="obsidian"] .t-h2:not(.t-num) {
   font-style: italic;
 }
 [data-vr-theme="obsidian"] .t-accent {
   font-style: italic;
+}
+[data-vr-theme="obsidian"] .t-num {
+  font-style: normal;
 }
 
 /* Scoped to .vires-root so this stylesheet does not override pages that

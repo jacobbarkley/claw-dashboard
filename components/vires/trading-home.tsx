@@ -508,11 +508,15 @@ function EquityChart({ curve, baseValue }: {
           <TimeframeDropdown />
         </div>
       </div>
+      {/* Negative-margin wrapper so the chart line stretches edge-to-edge
+          across the card instead of stopping inside the 18px padding. */}
+      <div style={{ margin: "0 -18px -18px", overflow: "hidden", borderBottomLeftRadius: 6, borderBottomRightRadius: 6 }}>
       <svg
         width="100%"
         height={H}
         viewBox={`0 0 ${W} ${H}`}
-        style={{ overflow: "visible" }}
+        preserveAspectRatio="none"
+        style={{ display: "block", overflow: "visible" }}
         onMouseLeave={() => setHoverIdx(null)}
         onMouseMove={(e) => {
           const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
@@ -548,6 +552,7 @@ function EquityChart({ curve, baseValue }: {
           )
         })()}
       </svg>
+      </div>
     </div>
   )
 }

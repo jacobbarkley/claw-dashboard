@@ -105,6 +105,13 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   const [liveData, setLiveData] = useState<ViresTradingData | null>(initialData)
   const [liveOperator, setLiveOperator] = useState<OperatorBlock | undefined>(initialOperator)
 
+  // Reset scroll on initial mount so iOS Safari's automatic scroll restore
+  // doesn't open /vires mid-content. Also fires when the user switches sub
+  // tabs so each tab opens at its own top.
+  useEffect(() => {
+    if (typeof window !== "undefined") window.scrollTo(0, 0)
+  }, [tab])
+
   // Keep local state in sync with server-rendered initial props when the
   // parent re-mounts us with fresh data.
   useEffect(() => {

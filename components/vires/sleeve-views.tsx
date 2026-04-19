@@ -239,11 +239,20 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
   const sleeveEndRatio = Math.pow(accountReturn, amp)
   const sleeveStart = currentValue / Math.max(sleeveEndRatio, 0.0001)
 
+  // Densify to ~180 points so the sparkline reads as live as the main
+  // equity chart's intraday upsampling — daily anchors alone produce a
+  // straight 7-segment line on 1W which feels flat compared to the hero
+  // chart. Anchor noise around the straight start→end line so the final
+  // point still locks to currentValue.
+  const targetPoints = Math.max(window.length, 180)
   const walk: number[] = []
-  for (let i = 0; i < window.length; i++) {
-    const t = i / (window.length - 1)
+  for (let i = 0; i < targetPoints; i++) {
+    const t = i / (targetPoints - 1)
     const target = sleeveStart * (1 + (sleeveEndRatio - 1) * t)
-    const noise = rand() * 0.012 * target
+    // Sine envelope mutes noise at both ends so the curve smoothly
+    // resolves at the anchor values; mid-window has the most jitter.
+    const env = Math.sin(Math.PI * t)
+    const noise = rand() * 0.014 * target * env
     walk.push(target + noise)
   }
   // Force last point to match currentValue (no drift).

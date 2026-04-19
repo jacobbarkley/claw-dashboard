@@ -201,9 +201,74 @@ function VerdictStrip({ passport }: { passport: Passport }) {
 
 function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: number | null | undefined }) {
   if (!eras.length) return null
-  const maxSharpe = Math.max(1, ...eras.map(e => e.sharpe ?? 0))
+  const populated = eras.filter(e => e.sharpe != null)
+  const allPending = populated.length === 0
+
+  // Honest empty state when Codex's per-era sharpe values aren't yet
+  // populated on the passport — labels exist but values are null. Render
+  // the same dotted-line baseline + label row so the section's visual
+  // weight is preserved without faking any per-era performance.
+  if (allPending) {
+    return (
+      <section className="vr-card" style={{ padding: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+          <div>
+            <div className="t-eyebrow">Era robustness</div>
+            <div className="t-label" style={{ fontSize: 12, marginTop: 4, color: "var(--vr-cream)" }}>
+              Sharpe by regime window
+            </div>
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-gold)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            Awaiting era data
+          </div>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${eras.length}, 1fr)`,
+            gap: 6,
+            alignItems: "end",
+            height: 88,
+            marginTop: 14,
+          }}
+        >
+          {eras.map((_, i) => (
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: 2,
+                  background: "var(--vr-cream-faint)",
+                  opacity: 0.5,
+                  alignSelf: "center",
+                  marginTop: "auto",
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${eras.length}, 1fr)`, gap: 6, marginTop: 10 }}>
+          {eras.map((e, i) => (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>—</div>
+              <div className="t-label" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginTop: 2 }}>
+                {e.label ?? `era ${i + 1}`}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="t-label" style={{ fontSize: 10, marginTop: 12, color: "var(--vr-cream-mute)", lineHeight: 1.5 }}>
+          The bench publishes the regime windows for this strategy, but the
+          per-era Sharpe values are not yet on the published passport. Lights
+          up the moment the campaign report carries era_results.
+        </div>
+      </section>
+    )
+  }
+
+  const maxSharpe = Math.max(1, ...populated.map(e => e.sharpe ?? 0))
   const floor = minEraSharpe ?? 0
-  const passing = eras.filter(e => e.sharpe != null && e.sharpe >= floor).length
+  const passing = populated.filter(e => (e.sharpe ?? -Infinity) >= floor).length
 
   return (
     <section className="vr-card" style={{ padding: 20 }}>
@@ -215,7 +280,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
           </div>
         </div>
         <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>
-          {passing}/{eras.length} above floor
+          {passing}/{populated.length} above floor
         </div>
       </div>
 
@@ -231,8 +296,14 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
         }}
       >
         {eras.map((e, i) => {
-          const sharpe = e.sharpe ?? 0
-          const h = Math.max(3, (sharpe / maxSharpe) * 84)
+          if (e.sharpe == null) {
+            return (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end" }}>
+                <div style={{ width: "100%", height: 2, background: "var(--vr-cream-faint)", opacity: 0.5 }} />
+              </div>
+            )
+          }
+          const h = Math.max(3, (e.sharpe / maxSharpe) * 84)
           const tone = e.pass ? "var(--vr-gold)" : "var(--vr-down)"
           return (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -253,7 +324,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${eras.length}, 1fr)`, gap: 6, marginTop: 10 }}>
         {eras.map((e, i) => (
           <div key={i} style={{ textAlign: "center" }}>
-            <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream)", fontWeight: 500 }}>
+            <div className="t-num" style={{ fontSize: 11, color: e.sharpe != null ? "var(--vr-cream)" : "var(--vr-cream-mute)", fontWeight: 500 }}>
               {fmtNum(e.sharpe, 2)}
             </div>
             <div className="t-label" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginTop: 2 }}>
