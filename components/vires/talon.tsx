@@ -120,16 +120,18 @@ function ViresTalonPanel() {
   const [mounted, setMounted] = useState(false)
   const [restored, setRestored] = useState(false)
   // Track the visible viewport so the mobile keyboard doesn't hide the
-  // composer. visualViewport shrinks when the soft keyboard opens;
-  // position:fixed + bottom:0 otherwise anchors to the document bottom
-  // (behind the keyboard). Setting an explicit height = visualViewport
-  // height keeps the composer visible above the keys.
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
+  // composer. iOS Safari (and the standalone PWA) handles the keyboard by
+  // shrinking visualViewport.height AND shifting visualViewport.offsetTop
+  // (it scrolls the layout viewport to reveal the focused input). A panel
+  // pinned to top:0 with only height applied ends above the keyboard but
+  // leaves a dead gap because the visual viewport has scrolled down. Apply
+  // both so the panel rectangle matches the visible viewport exactly.
+  const [viewport, setViewport] = useState<{ h: number; top: number } | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.visualViewport) return
     const vv = window.visualViewport
-    const update = () => setViewportHeight(vv.height)
+    const update = () => setViewport({ h: vv.height, top: vv.offsetTop })
     update()
     vv.addEventListener("resize", update)
     vv.addEventListener("scroll", update)
@@ -221,16 +223,17 @@ function ViresTalonPanel() {
   if (!mounted) return null
 
   // When the keyboard is open on mobile, swap from bottom:0 to an
-  // explicit height that matches the visible viewport. Keeps the
-  // composer above the keys instead of behind them.
-  const usingViewportHeight = viewportHeight != null && typeof window !== "undefined" && window.innerWidth < 640
+  // explicit height + offsetTop that matches the visible viewport.
+  // Keeps the composer above the keys instead of behind them, and keeps
+  // the panel anchored to the visible region instead of the layout
+  // viewport's top (which iOS scrolls away from when revealing the input).
+  const usingViewport = viewport != null && typeof window !== "undefined" && window.innerWidth < 640
   const panelStyle: CSSProperties = {
     position: "fixed",
-    top: 0,
     right: 0,
-    ...(usingViewportHeight
-      ? { height: `${viewportHeight}px` }
-      : { bottom: 0 }),
+    ...(usingViewport
+      ? { top: `${viewport.top}px`, height: `${viewport.h}px` }
+      : { top: 0, bottom: 0 }),
     width: "420px",
     maxWidth: "94vw",
     background: "var(--vr-ink-raised)",
@@ -537,7 +540,7 @@ function ViresTalonPanel() {
                 border: "none",
                 outline: "none",
                 fontFamily: "var(--ff-sans)",
-                fontSize: 13,
+                fontSize: 16,
                 color: "var(--vr-cream)",
                 lineHeight: 1.45,
                 maxHeight: 120,
