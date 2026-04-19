@@ -159,6 +159,30 @@ export async function GET() {
   }
 }
 
+// Translate a raw Anthropic / AI SDK error into a one-line user-readable
+// explanation. Keeps the technical detail available at the end but leads
+// with the thing the operator can act on.
+function explainError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err)
+
+  if (/credit balance is too low/i.test(raw)) {
+    return "Talon is offline — the Anthropic account is out of credits. Top up at console.anthropic.com → Plans & Billing, then try again."
+  }
+  if (/invalid[_ ]api[_ ]key|authentication|401/i.test(raw)) {
+    return "Talon is offline — Anthropic rejected the API key (invalid, revoked, or expired). Rotate ANTHROPIC_API_KEY in the Vercel env and redeploy."
+  }
+  if (/rate[_ -]?limit|429/i.test(raw)) {
+    return "Talon is rate-limited by Anthropic right now. Wait a minute and try again."
+  }
+  if (/overloaded|503/i.test(raw)) {
+    return "Anthropic is overloaded right now. Wait a moment and try again."
+  }
+  if (/model[^\w]+not[^\w]+found|unknown model|invalid model/i.test(raw)) {
+    return `Talon can't reach its model — the configured model id may be wrong or deprecated. Raw: ${raw}`
+  }
+  return `Talon hit an error: ${raw}`
+}
+
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json()
@@ -185,13 +209,56 @@ export async function POST(req: Request) {
       },
     })
 
-    return result.toTextStreamResponse()
+    // Wrap the AI SDK's textStream in a custom ReadableStream that catches
+    // errors and emits them as plain text. Without this, Anthropic-side
+    // failures (billing, rate limits, key rotation, model-not-found) arrive
+    // as an empty response with content-length: 0, so the Talon panel shows
+    // the user a ghost bubble with no explanation. The client uses a plain
+    // TextStreamChatTransport so any bytes we write land as the assistant's
+    // reply — errors become visible text in the chat.
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let emittedAnything = false
+        try {
+          for await (const chunk of result.textStream) {
+            if (chunk) {
+              emittedAnything = true
+              controller.enqueue(encoder.encode(chunk))
+            }
+          }
+          // If the stream completed with zero tokens but without throwing,
+          // fall through to fetch the underlying error. finishReason and
+          // providerMetadata are available on the result for diagnosis.
+          if (!emittedAnything) {
+            let reason: string | null = null
+            try { reason = String(await result.finishReason) } catch {}
+            controller.enqueue(encoder.encode(
+              `Talon returned no content${reason ? ` (finish reason: ${reason})` : ""}. Check the Anthropic account billing status.`,
+            ))
+          }
+        } catch (err) {
+          console.error("streamText catch:", err)
+          controller.enqueue(encoder.encode(explainError(err)))
+        } finally {
+          controller.close()
+        }
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-store",
+      },
+    })
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error("POST /api/chat error:", message, err)
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    )
+    const message = explainError(err)
+    console.error("POST /api/chat error:", err)
+    // Return 200 with the error as text so the client shows it in a bubble
+    // instead of firing chat.error silently.
+    return new Response(message, {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
   }
 }
