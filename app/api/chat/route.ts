@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic"
-import { streamText, convertToModelMessages } from "ai"
+import { streamText, generateText, convertToModelMessages } from "ai"
 import { promises as fs } from "fs"
 import path from "path"
 
@@ -101,6 +101,62 @@ function buildSystemPrompt(feed: Record<string, unknown> | null): string {
   }
 
   return sections.join("\n")
+}
+
+// Debug GET handler — browse to /api/chat and it runs a non-streaming
+// test call against Anthropic, returning JSON with the outcome. This
+// surfaces errors that the streaming POST path silently swallows
+// (streamText's onError only logs to server console).
+export async function GET() {
+  const keyPresent = !!process.env.ANTHROPIC_API_KEY
+  const keyLength = process.env.ANTHROPIC_API_KEY?.length ?? 0
+  const keyPrefix = process.env.ANTHROPIC_API_KEY?.slice(0, 12) ?? null
+  const model = "claude-haiku-4-5-20251001"
+
+  if (!keyPresent) {
+    return new Response(
+      JSON.stringify({ ok: false, reason: "ANTHROPIC_API_KEY missing from environment", model }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    )
+  }
+
+  try {
+    const result = await generateText({
+      model: anthropic(model),
+      prompt: "Reply with exactly the single word 'ok'.",
+    })
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        model,
+        keyLength,
+        keyPrefix,
+        text: result.text,
+        finishReason: result.finishReason,
+        usage: result.usage,
+      }, null, 2),
+      { headers: { "Content-Type": "application/json" } },
+    )
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    const name = err instanceof Error ? err.name : undefined
+    // Anthropic SDK errors often have a `status` field on the thrown object.
+    const anyErr = err as { status?: number; statusCode?: number; cause?: unknown }
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        model,
+        keyPresent,
+        keyLength,
+        keyPrefix,
+        error: message,
+        errorName: name,
+        status: anyErr.status ?? anyErr.statusCode ?? null,
+        cause: anyErr.cause ? String(anyErr.cause) : null,
+      }, null, 2),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    )
+  }
 }
 
 export async function POST(req: Request) {
