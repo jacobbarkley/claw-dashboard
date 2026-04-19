@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-19T21:38:02.659379+00:00",
+  "generated_at": "2026-04-19T21:55:57.304317+00:00",
   "as_of_date": "2026-04-17",
   "source_context": {
     "mode": "canonical",
@@ -18,11 +18,11 @@
     "total_pnl_pct": -14.5042,
     "today_pnl": null,
     "today_pnl_pct": null,
-    "positions_value": 55085.11,
+    "positions_value": 55085.13,
     "equity_deployed": 54512.48,
-    "crypto_deployed": 572.63,
+    "crypto_deployed": 572.65,
     "options_deployed": 0,
-    "unrealized_pnl": 45.92,
+    "unrealized_pnl": 45.94,
     "unrealized_pnl_pct": 0.08
   },
   "positions": [
@@ -31,10 +31,10 @@
       "qty": 0.007649133,
       "side": "long",
       "entry_price": 76709.710158034,
-      "current_price": 74862.5,
-      "market_value": 572.633219,
-      "unrealized_pnl": -14.129556,
-      "unrealized_pct": -2.41,
+      "current_price": 74864.62,
+      "market_value": 572.649435,
+      "unrealized_pnl": -14.11334,
+      "unrealized_pct": -2.4,
       "change_today_pct": -1.09,
       "asset_type": "CRYPTO"
     },
@@ -74,7 +74,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-19T21:38:02.659645+00:00"
+    "audit_written_at": "2026-04-19T21:55:57.304373+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -1453,9 +1453,9 @@
         "cadence": "DAILY",
         "current_state": "RISK_OFF",
         "current_exposure_pct": 0.0,
-        "target_notional_usd": 0.0,
-        "action": "HOLD",
-        "last_report_status": "SKIPPED",
+        "target_notional_usd": 854.8867,
+        "action": "BUY",
+        "last_report_status": "DRY_RUN",
         "performance_summary": {
           "total_return_pct": 8409.8946,
           "benchmark_return_pct": 17172.3116,
@@ -1501,9 +1501,9 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 0.0,
-          "market_value": 572.633219,
+          "market_value": 572.649435,
           "qty": 0.007649133,
-          "status": "SKIPPED"
+          "status": "DRY_RUN"
         }
       ]
     },
