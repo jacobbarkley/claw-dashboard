@@ -1,16 +1,17 @@
 #!/bin/bash
 # push-operator-feed.sh
 # Refreshes data/operator-feed.json from rebuild artifacts and pushes it to GitHub.
-set -e
+set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_DIR"
 
-python3 scripts/push-operator-feed.py
+# Refuse preview/demo feeds in the production publisher path.
+bash scripts/prepare-production-operator-feed.sh
 
 git add data/operator-feed.json
 if git diff --cached --quiet; then
-  echo "No changes to operator-feed.json — nothing to push"
+  echo "No changes to operator-feed.json - nothing to push"
   exit 0
 fi
 
