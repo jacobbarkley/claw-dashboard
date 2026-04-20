@@ -210,8 +210,8 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
       <SubNav tab={tab} onTab={setTab} />
       <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
         {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
-        {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} />}
-        {tab === "options" && <OptionsScreen data={currentData} />}
+        {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} operator={currentOperator} />}
+        {tab === "options" && <OptionsScreen data={currentData} operator={currentOperator} />}
         {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
       </div>
     </ViresTimeframeProvider>
