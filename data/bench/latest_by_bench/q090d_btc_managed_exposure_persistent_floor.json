@@ -1,0 +1,17 @@
+{
+  "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+  "run_id": "q090d-persistent-floor-20260419",
+  "title": "BTC Managed Exposure Persistent Floor Lead",
+  "sleeve": "CRYPTO",
+  "engine": "CUSTOM",
+  "promotion_target": "BENCH",
+  "status": "SUCCEEDED",
+  "selected_config_id": "BTC_GRADUATED_CORE_PLUS_TACTICAL",
+  "evaluated_candidate_count": 5,
+  "search_space_size": 5,
+  "candidate_cap": null,
+  "sweep_truncated": false,
+  "primary_metric": "calmar_ratio",
+  "primary_metric_value": 0.9352,
+  "generated_at": "2026-04-19T16:44:10.182669-04:00"
+}

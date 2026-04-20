@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-17T20:40:08.356442-04:00",
+  "generated_at": "2026-04-20T16:04:45.467720-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -205,6 +205,23 @@
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9134,
       "generated_at": "2026-04-17T02:10:32.487005-04:00"
+    },
+    {
+      "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+      "run_id": "q090d-persistent-floor-20260419",
+      "title": "BTC Managed Exposure Persistent Floor Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "promotion_target": "BENCH",
+      "status": "SUCCEEDED",
+      "selected_config_id": "BTC_GRADUATED_CORE_PLUS_TACTICAL",
+      "evaluated_candidate_count": 5,
+      "search_space_size": 5,
+      "candidate_cap": null,
+      "sweep_truncated": false,
+      "primary_metric": "calmar_ratio",
+      "primary_metric_value": 0.9352,
+      "generated_at": "2026-04-19T16:44:10.182669-04:00"
     }
   ],
   "specs": [
@@ -247,6 +264,14 @@
       "engine": "CUSTOM",
       "hypothesis": "A graduated BTC core regime with a 100/70/0 exposure ladder can stay much closer to HODL's upside while still improving risk-adjusted metrics and drawdown.",
       "has_runs": true
+    },
+    {
+      "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+      "title": "BTC Managed Exposure Persistent Floor Lead",
+      "sleeve": "CRYPTO",
+      "engine": "CUSTOM",
+      "hypothesis": "A graduated BTC core regime with an 80/70/10 exposure ladder can stay partially deployed during risk-off while still beating HODL on risk-adjusted metrics and materially reducing drawdown.",
+      "has_runs": true
     }
   ],
   "manifests": [
@@ -283,10 +308,28 @@
       "source_kind": "CHECKED_IN",
       "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
       "filename": "q090c_btc_managed_exposure_risk_adjusted.execution_manifest.json"
+    },
+    {
+      "manifest_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+      "title": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
+      "sleeve": "CRYPTO",
+      "sleeve_id": "btc_managed_exposure",
+      "strategy_id": "btc_managed_exposure_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "deployment_config_id": "BTC_GRADUATED_CORE_REGIME",
+      "runtime_contract": "TARGET_EXPOSURE",
+      "cadence": "DAILY",
+      "asset_type": "CRYPTO_SPOT",
+      "broker_adapter": "alpaca_crypto_paper",
+      "broker_environment": "PAPER",
+      "source_kind": "CHECKED_IN",
+      "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+      "filename": "q090d_btc_managed_exposure_persistent_floor.execution_manifest.json"
     }
   ],
   "runtime_artifacts": [
     "active_strategy.json",
+    "execution_manifest.json",
     "session_context.json"
   ]
 }

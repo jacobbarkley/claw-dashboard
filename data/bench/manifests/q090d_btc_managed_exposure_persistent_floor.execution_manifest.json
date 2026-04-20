@@ -1,8 +1,8 @@
 {
   "schema_version": "execution_manifest.v1",
-  "manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
-  "title": "BTC Managed Exposure Daily Core Paper v1",
-  "generated_at": "2026-04-17T20:30:00-04:00",
+  "manifest_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+  "title": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
+  "generated_at": "2026-04-19T16:44:48.988710-04:00",
   "sleeve": "CRYPTO",
   "sleeve_id": "btc_managed_exposure",
   "strategy_id": "btc_managed_exposure_v1",
@@ -20,7 +20,7 @@
   "broker": {
     "broker_adapter": "alpaca_crypto_paper",
     "broker_environment": "PAPER",
-    "venue": "alpaca_us",
+    "venue": "coinbase",
     "paper_only": true
   },
   "target_spec": {
@@ -33,15 +33,16 @@
       "LONG"
     ],
     "allow_short": false,
-    "description": "Daily graduated BTC core exposure with account-level sleeve caps."
+    "description": "Daily graduated BTC core exposure with a 10% risk-off floor and account-level sleeve caps."
   },
   "source": {
-    "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
-    "source_spec_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
-    "source_result_bundle_path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/bench_run_bundle.json",
-    "source_report_path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/crypto_sleeve_comparison_report.json",
+    "source_kind": "CHECKED_IN",
+    "bench_id": "q090d_btc_managed_exposure_persistent_floor",
+    "source_spec_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json",
+    "source_result_bundle_path": "backtest/bench/results/q090d_btc_managed_exposure_persistent_floor/q090d-persistent-floor-20260419/bench_run_bundle.json",
+    "source_report_path": "backtest/bench/results/q090d_btc_managed_exposure_persistent_floor/q090d-persistent-floor-20260419/crypto_sleeve_comparison_report.json",
     "selected_config_id": "BTC_GRADUATED_CORE_REGIME",
-    "rationale": "Promote the risk-adjusted managed BTC core first, while the tactical overlay remains research-only until a 4H scheduler is ready."
+    "rationale": "Promote the managed BTC core with a 10% risk-off floor so the crypto sleeve stays partially deployed while preserving the risk-adjusted managed-exposure story; tactical overlay remains research-only."
   },
   "strategy_parameters": {
     "crypto_product_lane": "MANAGED_EXPOSURE",
@@ -50,11 +51,11 @@
     "core_regime_slope_bars": 20,
     "risk_on_exposure_pct": 80.0,
     "accumulate_exposure_pct": 70.0,
-    "risk_off_exposure_pct": 0.0
+    "risk_off_exposure_pct": 10.0
   },
   "notes": [
-    "This manifest intentionally promotes the daily graduated core, not the tactical overlay.",
-    "The bench evidence comes from the q090c managed-exposure finalist package.",
+    "This manifest intentionally promotes the daily graduated core with a small persistent risk-off floor, not the tactical overlay.",
+    "The bench evidence comes from the q090d managed-exposure persistent-floor finalist package.",
     "Future 4H crypto execution should promote a second manifest instead of mutating this one in place."
   ]
 }

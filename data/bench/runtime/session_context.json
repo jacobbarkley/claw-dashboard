@@ -1,6 +1,6 @@
 {
-  "run_id": "2026-04-17-shadow-midday-01",
-  "trading_date": "2026-04-17",
+  "run_id": "2026-04-20-shadow-midday-01",
+  "trading_date": "2026-04-20",
   "phase": "INTRADAY",
   "entry_mode": "OPEN",
   "operator_mode": "AUTONOMOUS_PAPER",
@@ -8,7 +8,9 @@
   "active_strategy_id": "regime_aware_momentum",
   "active_strategy_variant_id": "stop_5_target_15",
   "active_strategy_signal_source": "validation_strategy",
+  "active_execution_manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+  "active_execution_manifest_source_kind": "CHECKED_IN",
   "entry_mode_advisory": null,
   "policy_version": "0.1.0",
-  "started_at": "2026-04-17T11:45:16.093320-04:00"
+  "started_at": "2026-04-20T11:45:14.341236-04:00"
 }

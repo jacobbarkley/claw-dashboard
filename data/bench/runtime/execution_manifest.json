@@ -1,0 +1,71 @@
+{
+  "schema_version": "execution_manifest.v1",
+  "manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+  "title": "Regime-Aware Momentum Frozen Reference Paper v1",
+  "generated_at": "2026-04-17T20:30:00-04:00",
+  "sleeve": "STOCKS",
+  "sleeve_id": "stock_regime_aware_momentum",
+  "strategy_id": "regime_aware_momentum_frozen_stop_5_target_15",
+  "strategy_family": "REGIME_AWARE_MOMENTUM",
+  "deployment_config_id": "stop_5_target_15",
+  "runtime_contract": "POSITION_CANDIDATES",
+  "cadence": "DAILY",
+  "order_style": "POSITION_DELTA",
+  "asset_type": "EQUITY",
+  "symbol": null,
+  "universe_symbols": [
+    "AAPL",
+    "AVGO",
+    "COST",
+    "LLY",
+    "META",
+    "NVDA"
+  ],
+  "contract_legs": [],
+  "benchmark_symbol": "SPY",
+  "schedule_timezone": "America/New_York",
+  "broker": {
+    "broker_adapter": "alpaca_equities",
+    "broker_environment": "PAPER",
+    "venue": "usa_equities",
+    "paper_only": false
+  },
+  "target_spec": {
+    "mode": "CUSTOM",
+    "sleeve_allocation_pct": 100.0,
+    "max_account_exposure_pct": 100.0,
+    "min_rebalance_notional_usd": null,
+    "max_order_notional_usd": null,
+    "allowed_sides": [
+      "LONG"
+    ],
+    "allow_short": false,
+    "description": "This stock sleeve promotes candidate baskets and position deltas instead of a single target-exposure percentage."
+  },
+  "source": {
+    "source_kind": "CHECKED_IN",
+    "bench_id": "q076b_regime_aware_momentum_frozen_reference",
+    "source_spec_path": "backtest/bench/specs/q076b_regime_aware_momentum_frozen_reference.bench_spec.json",
+    "source_result_bundle_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/bench_run_bundle.json",
+    "source_report_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json",
+    "selected_config_id": "stop_5_target_15",
+    "rationale": "This frozen stock winner is the canonical equities-side promotion reference and should eventually drive a manifest-native stock executor."
+  },
+  "strategy_parameters": {
+    "lookback_days": 20,
+    "min_symbol_return_pct": 8.0,
+    "max_symbol_volatility_pct": 45.0,
+    "benchmark_trend_days": 50,
+    "benchmark_min_return_pct": 0.0,
+    "benchmark_max_volatility_pct": 25.0,
+    "stop_loss_pct": 5.0,
+    "target_pct": 15.0,
+    "max_hold_days": 10,
+    "max_positions": 4,
+    "risk_pct_per_trade": 1.0
+  },
+  "notes": [
+    "This manifest exists for stock/dashboard parity while the equities executor is still strategy-bank driven.",
+    "It proves the same promotion contract can cover sleeves whose runtime contract is POSITION_CANDIDATES instead of TARGET_EXPOSURE."
+  ]
+}

@@ -23,15 +23,39 @@ from trading-bot per the bench-ui-primer-2026-04-16.md memory doc.
 
 from __future__ import annotations
 import json
+import os
 import shutil
 from datetime import datetime
 from pathlib import Path
 
-TRADING_BOT_BENCH_RESULTS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/results"
-TRADING_BOT_BENCH_SPECS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/specs"
-TRADING_BOT_BENCH_MANIFESTS = Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/manifests"
-TRADING_BOT_REBUILD_LATEST = Path.home() / ".openclaw/workspace/trading-bot/state/rebuild_latest"
-DASHBOARD_BENCH_DATA = Path.home() / "claude/claw-dashboard/data/bench"
+
+def _path_from_env(env_name: str, default: Path) -> Path:
+    """Allow local/dev callers to override source roots without editing the script."""
+
+    override = os.environ.get(env_name)
+    return Path(override).expanduser() if override else default
+
+
+TRADING_BOT_BENCH_RESULTS = _path_from_env(
+    "TRADING_BOT_BENCH_RESULTS",
+    Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/results",
+)
+TRADING_BOT_BENCH_SPECS = _path_from_env(
+    "TRADING_BOT_BENCH_SPECS",
+    Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/specs",
+)
+TRADING_BOT_BENCH_MANIFESTS = _path_from_env(
+    "TRADING_BOT_BENCH_MANIFESTS",
+    Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/manifests",
+)
+TRADING_BOT_REBUILD_LATEST = _path_from_env(
+    "TRADING_BOT_REBUILD_LATEST",
+    Path.home() / ".openclaw/workspace/trading-bot/state/rebuild_latest",
+)
+DASHBOARD_BENCH_DATA = _path_from_env(
+    "DASHBOARD_BENCH_DATA",
+    Path.home() / "claude/claw-dashboard/data/bench",
+)
 
 # Runtime artifacts copied verbatim — used to render promotion provenance and
 # tie an executed strategy back to its checked-in manifest. Optional: any file
