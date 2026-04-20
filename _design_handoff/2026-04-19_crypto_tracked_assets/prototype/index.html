@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tracked Assets · Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../vires-v2.css">
+<style>
+  /* ── State-switcher chrome (prototype-only, not shipped) ──────── */
+  body { padding: 40px 0; }
+  .proto-wrap { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+  .proto-eyebrow { color: var(--vr-gold); letter-spacing: 0.28em; }
+  .proto-divider { margin: 48px 0 24px; border: 0; border-top: 1px dashed var(--vr-line-hi); }
+  .proto-state-label {
+    font: 500 10px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-gold); margin-bottom: 12px;
+  }
+  .proto-note {
+    font: 400 12px/1.5 var(--ff-sans); color: var(--vr-cream-mute);
+    margin: 0 0 16px; max-width: 60ch;
+  }
+  .proto-note strong { color: var(--vr-cream-dim); font-weight: 500; }
+
+  /* ── Tracked Assets card primitives (THIS IS THE SHIP SURFACE) ── */
+  .ta-card {
+    background: rgba(15, 16, 32, 0.62);
+    backdrop-filter: blur(6px) saturate(1.05);
+    border: 1px solid var(--vr-line);
+    border-radius: var(--r-card);
+    overflow: hidden;
+  }
+
+  /* Card header */
+  .ta-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; padding: 16px 18px 14px;
+    border-bottom: 1px solid var(--vr-line);
+  }
+  .ta-header-l { min-width: 0; }
+  .ta-header-title {
+    font: 500 16px var(--ff-sans); color: var(--vr-cream); margin: 4px 0 0;
+  }
+  .ta-header-sub {
+    font: 400 11px var(--ff-sans); color: var(--vr-cream-mute); margin-top: 4px;
+  }
+  .ta-regime-chip {
+    display: inline-flex; flex-direction: column; gap: 2px;
+    padding: 6px 10px;
+    background: rgba(241, 236, 224, 0.025);
+    border: 1px solid var(--vr-line);
+    border-radius: var(--r-inset);
+    font-family: var(--ff-sans);
+    white-space: nowrap;
+  }
+  .ta-regime-chip-top { font: 500 10px var(--ff-mono); letter-spacing: 0.06em; color: var(--vr-cream); }
+  .ta-regime-chip-top .num { font-variant-numeric: tabular-nums; }
+  .ta-regime-chip-bot { font: 400 10px var(--ff-sans); color: var(--vr-cream-mute); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* Row */
+  .ta-row { padding: 18px 18px 20px; }
+  .ta-row + .ta-row { border-top: 1px solid var(--vr-line); }
+
+  .ta-row-top {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 16px;
+    align-items: center;
+  }
+  .ta-ident { display: flex; align-items: baseline; gap: 10px; }
+  .ta-symbol {
+    font: 500 18px var(--ff-mono); letter-spacing: 0.04em; color: var(--vr-cream);
+    font-variant-numeric: tabular-nums;
+  }
+  .ta-lane {
+    font: 500 9px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-sleeve-crypto);
+    padding: 2px 8px; border: 1px solid rgba(166, 146, 212, 0.28);
+    border-radius: 999px; background: rgba(166, 146, 212, 0.06);
+  }
+  .ta-price-block { text-align: right; }
+  .ta-price {
+    font: 500 18px var(--ff-mono); font-variant-numeric: tabular-nums;
+    color: var(--vr-cream); letter-spacing: -0.01em;
+  }
+  .ta-chg {
+    font: 400 11px var(--ff-mono); font-variant-numeric: tabular-nums;
+    margin-top: 3px; letter-spacing: 0;
+  }
+  .ta-chg.up { color: var(--vr-up); }
+  .ta-chg.down { color: var(--vr-down); }
+  .ta-chg.flat { color: var(--vr-cream-mute); }
+
+  /* Middle column — tier state cluster */
+  .ta-state-cluster { display: flex; flex-direction: column; gap: 4px; }
+  .ta-state-top { display: flex; align-items: center; gap: 10px; }
+  .ta-state-badge {
+    font: 500 10px var(--ff-sans); letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 3px;
+    border: 1px solid currentColor;
+  }
+  .ta-state-badge.risk-on   { color: var(--vr-up);    background: var(--vr-up-soft); }
+  .ta-state-badge.accum     { color: var(--vr-warn);  background: rgba(201, 169, 106, 0.10); }
+  .ta-state-badge.risk-off  { color: var(--vr-down);  background: var(--vr-down-soft); }
+  .ta-tier-label { font: 500 11px var(--ff-sans); color: var(--vr-cream-dim); letter-spacing: 0.04em; }
+  .ta-target-exp {
+    font: 400 11px var(--ff-sans); color: var(--vr-cream-mute);
+  }
+  .ta-target-exp .num { font-family: var(--ff-mono); font-variant-numeric: tabular-nums; color: var(--vr-cream-dim); }
+
+  /* Ladder — three-tier mini visual */
+  .ta-ladder {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .ta-rung {
+    position: relative;
+    padding: 10px 10px 11px;
+    border: 1px solid var(--vr-line);
+    border-radius: var(--r-inset);
+    background: rgba(241, 236, 224, 0.012);
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .ta-rung.active {
+    border-color: currentColor;
+    background: rgba(241, 236, 224, 0.025);
+  }
+  .ta-rung.active.risk-on   { color: var(--vr-up);   }
+  .ta-rung.active.accum     { color: var(--vr-warn); }
+  .ta-rung.active.risk-off  { color: var(--vr-down); }
+  .ta-rung-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .ta-rung-label {
+    font: 500 9px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-cream-mute);
+  }
+  .ta-rung.active .ta-rung-label { color: currentColor; }
+  .ta-rung-exp {
+    font: 500 13px var(--ff-mono); font-variant-numeric: tabular-nums;
+    color: var(--vr-cream);
+  }
+  .ta-rung.active .ta-rung-exp { color: currentColor; }
+  .ta-rung-note {
+    font: 400 10px var(--ff-sans); color: var(--vr-cream-mute); margin-top: 2px;
+    line-height: 1.35;
+  }
+  .ta-rung.active .ta-rung-note { color: var(--vr-cream-dim); }
+  .ta-rung.active::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: currentColor;
+    border-top-left-radius: var(--r-inset); border-top-right-radius: var(--r-inset);
+  }
+
+  /* Action line */
+  .ta-action-row {
+    margin-top: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    padding: 10px 12px;
+    background: var(--vr-ink-sunken);
+    border: 1px solid var(--vr-line);
+    border-radius: var(--r-inset);
+  }
+  .ta-action-l { display: flex; align-items: center; gap: 10px; }
+  .ta-action-eyebrow {
+    font: 500 9px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-cream-mute);
+  }
+  .ta-action-verb {
+    font: 500 13px var(--ff-sans); color: var(--vr-cream);
+    padding: 2px 8px; border-radius: 3px;
+    border: 1px solid var(--vr-line-hi);
+  }
+  .ta-action-verb.buy  { color: var(--vr-up);   border-color: rgba(124, 185, 143, 0.35); }
+  .ta-action-verb.sell { color: var(--vr-down); border-color: rgba(201, 122, 122, 0.35); }
+  .ta-action-verb.hold { color: var(--vr-cream-dim); }
+  .ta-action-notional {
+    font: 500 14px var(--ff-mono); font-variant-numeric: tabular-nums; color: var(--vr-cream);
+  }
+  .ta-action-r {
+    display: flex; align-items: center; gap: 10px;
+    font: 400 10px var(--ff-sans); letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--vr-cream-mute);
+  }
+
+  /* Tactical overlay sub-block */
+  .ta-overlay {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--vr-line-hi);
+    border-radius: var(--r-inset);
+    background: transparent;
+  }
+  .ta-overlay-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+  }
+  .ta-overlay-label {
+    font: 500 9px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-cream-mute);
+  }
+  .ta-overlay-status {
+    font: 500 9px var(--ff-sans); letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--vr-gold);
+    padding: 2px 7px;
+    border: 1px solid var(--vr-gold-line);
+    border-radius: 2px;
+    background: var(--vr-gold-soft);
+  }
+  .ta-overlay-copy {
+    font: 400 11px/1.5 var(--ff-sans); color: var(--vr-cream-mute);
+    margin: 0; max-width: 58ch;
+  }
+
+  /* Empty / loading / error variants on whole card */
+  .ta-empty-body, .ta-loading-body, .ta-error-body {
+    padding: 28px 18px 32px; text-align: left;
+  }
+  .ta-empty-title, .ta-loading-title, .ta-error-title {
+    font: 500 14px var(--ff-sans); color: var(--vr-cream); margin: 0 0 6px;
+  }
+  .ta-empty-copy, .ta-loading-copy, .ta-error-copy {
+    font: 400 12px/1.5 var(--ff-sans); color: var(--vr-cream-mute); margin: 0; max-width: 55ch;
+  }
+  .ta-error-copy { color: var(--vr-down); }
+
+  /* Skeleton shimmer for loading */
+  .ta-skel {
+    background: linear-gradient(90deg,
+      rgba(241, 236, 224, 0.02) 0%,
+      rgba(241, 236, 224, 0.06) 50%,
+      rgba(241, 236, 224, 0.02) 100%);
+    background-size: 200% 100%;
+    animation: ta-shimmer 1.6s ease-in-out infinite;
+    border-radius: 2px;
+  }
+  @keyframes ta-shimmer {
+    0%   { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+  }
+
+  /* Dotted pulse for dry-run */
+  .ta-dry-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--vr-warn);
+    animation: vr-pulse 2.4s ease-in-out infinite;
+    display: inline-block;
+  }
+
+  /* Future-shape preview (prototype-only framing) */
+  .ta-future-label {
+    display: inline-block; margin-bottom: 12px;
+    font: 500 9px var(--ff-sans); letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--vr-gold);
+    padding: 3px 9px; border: 1px dashed var(--vr-gold-line);
+    border-radius: 2px;
+  }
+  .ta-price.muted { color: var(--vr-cream-mute); }
+</style>
+</head>
+<body>
+  <div class="proto-wrap">
+    <div class="proto-eyebrow t-eyebrow">Design Handoff · 2026-04-19</div>
+    <h1 class="t-h2" style="margin: 6px 0 4px;">Tracked Assets · Crypto sleeve</h1>
+    <p class="proto-note" style="margin-top: 8px;">
+      Prototype for the <strong>Tracked Assets</strong> card on the Crypto sleeve. All states rendered below on one canvas.
+      Ground truth for Code: pixels, copy, spacing, interaction. Data contract: <code>DATA_PRIMER.md</code>. States: <code>DEGRADATION.md</code>. Parity: <code>UX_CHECKLIST.md</code>.
+    </p>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 1 · POPULATED · RISK_OFF (current feed snapshot)      -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <div class="proto-state-label">State 1 · Populated · Risk Off</div>
+    <p class="proto-note">Matches the current <code>_reference/operator-feed.json</code> snapshot verbatim. BTCUSD, Tier 3, action BUY $855 (the delta to reach the 0% target from current deployment — strategy returning to cash). tsmom overlay is research-only.</p>
+    <div class="ta-card" id="state-1">
+      <!-- Header -->
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-regime-chip" title="Broader-market regime context">
+          <div class="ta-regime-chip-top">VIX <span class="num">16.88</span> · Medium</div>
+          <div class="ta-regime-chip-bot">HMM Calm</div>
+        </div>
+      </div>
+
+      <!-- BTC row -->
+      <div class="ta-row">
+        <div class="ta-row-top">
+          <div class="ta-ident">
+            <div class="ta-symbol">BTCUSD</div>
+            <span class="ta-lane">Core</span>
+          </div>
+          <div class="ta-state-cluster">
+            <div class="ta-state-top">
+              <span class="ta-state-badge risk-off">Risk Off</span>
+              <span class="ta-tier-label">Tier 3</span>
+            </div>
+            <div class="ta-target-exp">Target exposure <span class="num">0%</span></div>
+          </div>
+          <div class="ta-price-block">
+            <div class="ta-price">$74,864.62</div>
+            <div class="ta-chg down">−1.09% today</div>
+          </div>
+        </div>
+
+        <!-- Three-tier ladder -->
+        <div class="ta-ladder">
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 1</span>
+              <span class="ta-rung-exp">80%</span>
+            </div>
+            <div class="ta-rung-note">Constructive regime</div>
+          </div>
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 2</span>
+              <span class="ta-rung-exp">70%</span>
+            </div>
+            <div class="ta-rung-note">Neutral regime</div>
+          </div>
+          <div class="ta-rung active risk-off">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 3 · Active</span>
+              <span class="ta-rung-exp">0%</span>
+            </div>
+            <div class="ta-rung-note">Risk-off</div>
+          </div>
+        </div>
+
+        <!-- Action -->
+        <div class="ta-action-row">
+          <div class="ta-action-l">
+            <span class="ta-action-eyebrow">Next action</span>
+            <span class="ta-action-verb buy">Buy</span>
+            <span class="ta-action-notional">$855</span>
+          </div>
+          <div class="ta-action-r">
+            <span class="ta-dry-dot"></span> Dry run
+          </div>
+        </div>
+
+        <!-- Tactical overlay · research-only empty state -->
+        <div class="ta-overlay">
+          <div class="ta-overlay-head">
+            <span class="ta-overlay-label">Tactical overlay · 4H TSMOM</span>
+            <span class="ta-overlay-status">Research only</span>
+          </div>
+          <p class="ta-overlay-copy">The 4H tactical overlay remains bench-only until a dedicated 4H execution manifest is promoted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 2 · POPULATED · RISK_ON variant                       -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 2 · Populated · Risk On (variant)</div>
+    <p class="proto-note">Same row, mocked into the RISK_ON tier so Code sees the green styling tokens and upper-ladder-active state. Mocked fields: state, tier_label, target_exposure_pct, action, target_notional_usd, active rung.</p>
+    <div class="ta-card">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-regime-chip">
+          <div class="ta-regime-chip-top">VIX <span class="num">14.20</span> · Low</div>
+          <div class="ta-regime-chip-bot">HMM Calm</div>
+        </div>
+      </div>
+      <div class="ta-row">
+        <div class="ta-row-top">
+          <div class="ta-ident">
+            <div class="ta-symbol">BTCUSD</div>
+            <span class="ta-lane">Core</span>
+          </div>
+          <div class="ta-state-cluster">
+            <div class="ta-state-top">
+              <span class="ta-state-badge risk-on">Risk On</span>
+              <span class="ta-tier-label">Tier 1</span>
+            </div>
+            <div class="ta-target-exp">Target exposure <span class="num">80%</span></div>
+          </div>
+          <div class="ta-price-block">
+            <div class="ta-price">$78,240.18</div>
+            <div class="ta-chg up">+2.47% today</div>
+          </div>
+        </div>
+        <div class="ta-ladder">
+          <div class="ta-rung active risk-on">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 1 · Active</span>
+              <span class="ta-rung-exp">80%</span>
+            </div>
+            <div class="ta-rung-note">Constructive regime</div>
+          </div>
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 2</span>
+              <span class="ta-rung-exp">70%</span>
+            </div>
+            <div class="ta-rung-note">Neutral regime</div>
+          </div>
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 3</span>
+              <span class="ta-rung-exp">0%</span>
+            </div>
+            <div class="ta-rung-note">Risk-off</div>
+          </div>
+        </div>
+        <div class="ta-action-row">
+          <div class="ta-action-l">
+            <span class="ta-action-eyebrow">Next action</span>
+            <span class="ta-action-verb hold">Hold</span>
+            <span class="ta-action-notional">$0</span>
+          </div>
+          <div class="ta-action-r">
+            <span class="ta-dry-dot"></span> Dry run
+          </div>
+        </div>
+        <div class="ta-overlay">
+          <div class="ta-overlay-head">
+            <span class="ta-overlay-label">Tactical overlay · 4H TSMOM</span>
+            <span class="ta-overlay-status">Research only</span>
+          </div>
+          <p class="ta-overlay-copy">The 4H tactical overlay remains bench-only until a dedicated 4H execution manifest is promoted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 3 · POPULATED · ACCUMULATE variant                    -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 3 · Populated · Accumulate (variant)</div>
+    <p class="proto-note">Middle tier, amber styling token, action SELL (reducing toward 70% from a higher prior tier). Mocked row — same shape as state 1.</p>
+    <div class="ta-card">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-regime-chip">
+          <div class="ta-regime-chip-top">VIX <span class="num">19.40</span> · Medium</div>
+          <div class="ta-regime-chip-bot">HMM Neutral</div>
+        </div>
+      </div>
+      <div class="ta-row">
+        <div class="ta-row-top">
+          <div class="ta-ident">
+            <div class="ta-symbol">BTCUSD</div>
+            <span class="ta-lane">Core</span>
+          </div>
+          <div class="ta-state-cluster">
+            <div class="ta-state-top">
+              <span class="ta-state-badge accum">Accumulate</span>
+              <span class="ta-tier-label">Tier 2</span>
+            </div>
+            <div class="ta-target-exp">Target exposure <span class="num">70%</span></div>
+          </div>
+          <div class="ta-price-block">
+            <div class="ta-price">$76,102.44</div>
+            <div class="ta-chg flat">+0.00% today</div>
+          </div>
+        </div>
+        <div class="ta-ladder">
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 1</span>
+              <span class="ta-rung-exp">80%</span>
+            </div>
+            <div class="ta-rung-note">Constructive regime</div>
+          </div>
+          <div class="ta-rung active accum">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 2 · Active</span>
+              <span class="ta-rung-exp">70%</span>
+            </div>
+            <div class="ta-rung-note">Neutral regime</div>
+          </div>
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 3</span>
+              <span class="ta-rung-exp">0%</span>
+            </div>
+            <div class="ta-rung-note">Risk-off</div>
+          </div>
+        </div>
+        <div class="ta-action-row">
+          <div class="ta-action-l">
+            <span class="ta-action-eyebrow">Next action</span>
+            <span class="ta-action-verb sell">Sell</span>
+            <span class="ta-action-notional">$612</span>
+          </div>
+          <div class="ta-action-r">
+            <span class="ta-dry-dot"></span> Dry run
+          </div>
+        </div>
+        <div class="ta-overlay">
+          <div class="ta-overlay-head">
+            <span class="ta-overlay-label">Tactical overlay · 4H TSMOM</span>
+            <span class="ta-overlay-status">Research only</span>
+          </div>
+          <p class="ta-overlay-copy">The 4H tactical overlay remains bench-only until a dedicated 4H execution manifest is promoted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 4 · EMPTY · tracked_assets[] is []                    -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 4 · Empty · No tracked assets</div>
+    <p class="proto-note">Fires when <code>operator.crypto_signals.tracked_assets</code> is an empty array. Card frame preserved (not collapsed) so the sleeve surface doesn't reflow when crypto is idle. Regime chip still renders — it's sleeve-scope context, not row-scope.</p>
+    <div class="ta-card">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-regime-chip">
+          <div class="ta-regime-chip-top">VIX <span class="num">16.88</span> · Medium</div>
+          <div class="ta-regime-chip-bot">HMM Calm</div>
+        </div>
+      </div>
+      <div class="ta-empty-body">
+        <div class="ta-empty-title">No tracked assets</div>
+        <p class="ta-empty-copy">The crypto sleeve has no active lanes. When a strategy is promoted, its tracked assets will appear here with tier state and next action.</p>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 5 · LOADING                                           -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 5 · Loading</div>
+    <p class="proto-note">Initial fetch in flight. Card frame + header copy render immediately; row contents are skeletonized. Shimmer is subtle — cream at 6% over ink, 1.6s cycle.</p>
+    <div class="ta-card">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-skel" style="width: 110px; height: 36px; border-radius: var(--r-inset);"></div>
+      </div>
+      <div class="ta-row">
+        <div class="ta-row-top">
+          <div class="ta-ident" style="display: flex; gap: 10px; align-items: center;">
+            <div class="ta-skel" style="width: 92px; height: 18px;"></div>
+            <div class="ta-skel" style="width: 42px; height: 16px; border-radius: 999px;"></div>
+          </div>
+          <div class="ta-state-cluster">
+            <div class="ta-skel" style="width: 140px; height: 22px;"></div>
+            <div class="ta-skel" style="width: 110px; height: 11px; margin-top: 6px;"></div>
+          </div>
+          <div class="ta-price-block">
+            <div class="ta-skel" style="width: 110px; height: 18px; margin-left: auto;"></div>
+            <div class="ta-skel" style="width: 80px; height: 11px; margin-left: auto; margin-top: 6px;"></div>
+          </div>
+        </div>
+        <div class="ta-ladder">
+          <div class="ta-skel" style="height: 52px;"></div>
+          <div class="ta-skel" style="height: 52px;"></div>
+          <div class="ta-skel" style="height: 52px;"></div>
+        </div>
+        <div class="ta-skel" style="height: 42px; margin-top: 14px; border-radius: var(--r-inset);"></div>
+        <div class="ta-skel" style="height: 56px; margin-top: 14px; border-radius: var(--r-inset);"></div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 6 · ERROR                                             -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 6 · Error</div>
+    <p class="proto-note">Fetch threw. Card frame preserved. Copy names the card and surface, not the stack trace — operators don't need the stack. Muted red uses the existing <code>--vr-down</code> token; no red chrome on the card itself (would compete with row-level tier styling).</p>
+    <div class="ta-card">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+      </div>
+      <div class="ta-error-body">
+        <div class="ta-error-title">Couldn't load tracked assets</div>
+        <p class="ta-error-copy">The operator feed didn't return. The rest of the sleeve continues to render from its last-known snapshot.</p>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <!-- STATE 7 · FUTURE SHAPE · tracked-but-unheld                 -->
+    <!-- ─────────────────────────────────────────────────────────── -->
+    <hr class="proto-divider">
+    <div class="proto-state-label">State 7 · Future shape preview · Tracked but unheld</div>
+    <p class="proto-note">
+      <span class="ta-future-label">Future · not current feed shape</span><br>
+      Rendered so the gap flagged in <code>NOTES.md</code> (contract dep #2) is visible, not theoretical. When the crypto universe expands beyond BTC, <code>positions[]</code> won't carry unheld symbols — <code>tracked_assets[]</code> needs a <code>current_price</code> field. The row below shows the graceful absence: price slot becomes <code>—</code>, change row suppressed.
+      <strong>Ship this row's visual treatment only when the contract addition lands;</strong> until then, v1 only renders held tracked assets.
+    </p>
+    <div class="ta-card" style="opacity: 0.85;">
+      <div class="ta-header">
+        <div class="ta-header-l">
+          <div class="t-eyebrow">Tracked Assets</div>
+          <h3 class="ta-header-title">Market intent · Crypto sleeve</h3>
+          <div class="ta-header-sub">What the strategy is about to do for the assets we track.</div>
+        </div>
+        <div class="ta-regime-chip">
+          <div class="ta-regime-chip-top">VIX <span class="num">16.88</span> · Medium</div>
+          <div class="ta-regime-chip-bot">HMM Calm</div>
+        </div>
+      </div>
+      <div class="ta-row">
+        <div class="ta-row-top">
+          <div class="ta-ident">
+            <div class="ta-symbol">ETHUSD</div>
+            <span class="ta-lane">Core</span>
+          </div>
+          <div class="ta-state-cluster">
+            <div class="ta-state-top">
+              <span class="ta-state-badge accum">Accumulate</span>
+              <span class="ta-tier-label">Tier 2</span>
+            </div>
+            <div class="ta-target-exp">Target exposure <span class="num">70%</span></div>
+          </div>
+          <div class="ta-price-block">
+            <div class="ta-price muted">—</div>
+          </div>
+        </div>
+        <div class="ta-ladder">
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 1</span>
+              <span class="ta-rung-exp">80%</span>
+            </div>
+            <div class="ta-rung-note">Constructive regime</div>
+          </div>
+          <div class="ta-rung active accum">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 2 · Active</span>
+              <span class="ta-rung-exp">70%</span>
+            </div>
+            <div class="ta-rung-note">Neutral regime</div>
+          </div>
+          <div class="ta-rung">
+            <div class="ta-rung-top">
+              <span class="ta-rung-label">Tier 3</span>
+              <span class="ta-rung-exp">0%</span>
+            </div>
+            <div class="ta-rung-note">Risk-off</div>
+          </div>
+        </div>
+        <div class="ta-action-row">
+          <div class="ta-action-l">
+            <span class="ta-action-eyebrow">Next action</span>
+            <span class="ta-action-verb buy">Buy</span>
+            <span class="ta-action-notional">$420</span>
+          </div>
+          <div class="ta-action-r">
+            <span class="ta-dry-dot"></span> Dry run
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 80px;"></div>
+  </div>
+</body>
+</html>
