@@ -765,12 +765,6 @@ const TIER_TONE: Record<string, { color: string; soft: string; label: string }> 
   RISK_OFF:   { color: "var(--vr-down)", soft: "var(--vr-down-soft)",        label: "Risk Off" },
 }
 
-const ACTION_TONE: Record<string, { color: string; border: string; label: string }> = {
-  BUY:  { color: "var(--vr-up)",         border: "rgba(124, 185, 143, 0.35)", label: "Buy" },
-  SELL: { color: "var(--vr-down)",       border: "rgba(201, 122, 122, 0.35)", label: "Sell" },
-  HOLD: { color: "var(--vr-cream-dim)",  border: "var(--vr-line-hi)",         label: "Hold" },
-}
-
 function TrackedAssetsHeader({ regime }: { regime?: ViresRegime | null }) {
   const showChip = regime != null && regime.populated !== false
   return (
@@ -857,346 +851,111 @@ function RegimeChip({ regime }: { regime: ViresRegime }) {
 function TrackedAssetRow({
   asset,
   managedExposure,
-  tsmom,
   position,
   isFirst,
 }: {
   asset: CryptoTrackedAssetSignal
   managedExposure?: CryptoManagedExposureSignal | null
-  tsmom?: CryptoSignalTSMOM | null
   position?: ViresPosition
   isFirst: boolean
 }) {
+  // Per Jacob's 2026-04-19 feedback: clean watchlist row only —
+  // symbol + lane + tier badge + price + change. Ladder, action verb,
+  // and tactical overlay live in CryptoExposure / CryptoTSMOM cards;
+  // duplicating them here was overkill. See DIVERGENCE_LOG.md.
   const symbol = asset.symbol ?? "—"
   const lane = asset.lane ?? null
   const state = asset.state ?? managedExposure?.current_state ?? null
   const tone = state && TIER_TONE[state] ? TIER_TONE[state] : null
   const stateLabel = tone?.label ?? (state ? titleizeEnum(state) : null)
-  const tierLabel = asset.tier_label ?? null
-  const targetExp = asset.target_exposure_pct
   const price = position?.current_price ?? null
   const changePct = position?.change_today_pct ?? null
-  const ladder = managedExposure?.ladder ?? []
-  const action = managedExposure?.action ?? null
-  const actionTone = action && ACTION_TONE[action] ? ACTION_TONE[action] : null
-  const notional = managedExposure?.target_notional_usd
-  const status = asset.status ?? null
-  const isResearchOverlay = tsmom?.status === "RESEARCH_ONLY"
 
   return (
     <div style={{
-      padding: "18px 18px 20px",
+      padding: "14px 18px",
+      display: "grid",
+      gridTemplateColumns: "auto 1fr auto",
+      gap: 16,
+      alignItems: "center",
       borderTop: isFirst ? "none" : "1px solid var(--vr-line)",
     }}>
-      {/* Top row: identity / state cluster / price */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "auto 1fr auto",
-        gap: 16,
-        alignItems: "center",
-      }}>
-        {/* Identity */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+      {/* Identity */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+        <span style={{
+          fontFamily: "var(--ff-mono)",
+          fontWeight: 500,
+          fontSize: 16,
+          letterSpacing: "0.04em",
+          color: "var(--vr-cream)",
+          fontVariantNumeric: "tabular-nums",
+        }}>
+          {symbol}
+        </span>
+        {lane && (
           <span style={{
-            fontFamily: "var(--ff-mono)",
+            fontFamily: "var(--ff-sans)",
             fontWeight: 500,
-            fontSize: 18,
-            letterSpacing: "0.04em",
-            color: "var(--vr-cream)",
-            fontVariantNumeric: "tabular-nums",
+            fontSize: 9,
+            letterSpacing: "0.22em",
+            textTransform: "uppercase",
+            color: "var(--vr-sleeve-crypto)",
+            padding: "2px 8px",
+            border: "1px solid rgba(166, 146, 212, 0.28)",
+            borderRadius: 999,
+            background: "rgba(166, 146, 212, 0.06)",
           }}>
-            {symbol}
+            {titleizeEnum(lane)}
           </span>
-          {lane && (
-            <span style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 500,
-              fontSize: 9,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--vr-sleeve-crypto)",
-              padding: "2px 8px",
-              border: "1px solid rgba(166, 146, 212, 0.28)",
-              borderRadius: 999,
-              background: "rgba(166, 146, 212, 0.06)",
-            }}>
-              {titleizeEnum(lane)}
-            </span>
-          )}
-        </div>
-
-        {/* State cluster */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {stateLabel ? (
-              <span style={{
-                fontFamily: "var(--ff-sans)",
-                fontWeight: 500,
-                fontSize: 10,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                padding: "3px 9px",
-                borderRadius: 3,
-                border: `1px solid ${tone?.color ?? "var(--vr-line-hi)"}`,
-                color: tone?.color ?? "var(--vr-cream)",
-                background: tone?.soft ?? "transparent",
-              }}>
-                {stateLabel}
-              </span>
-            ) : null}
-            {tierLabel && (
-              <span style={{
-                fontFamily: "var(--ff-sans)",
-                fontWeight: 500,
-                fontSize: 11,
-                color: "var(--vr-cream-dim)",
-                letterSpacing: "0.04em",
-              }}>
-                {tierLabel}
-              </span>
-            )}
-          </div>
-          <div style={{ fontFamily: "var(--ff-sans)", fontSize: 11, color: "var(--vr-cream-mute)" }}>
-            Target exposure{" "}
-            <span style={{
-              fontFamily: "var(--ff-mono)",
-              color: "var(--vr-cream-dim)",
-              fontVariantNumeric: "tabular-nums",
-            }}>
-              {targetExp != null ? `${targetExp.toFixed(0)}%` : "—"}
-            </span>
-          </div>
-        </div>
-
-        {/* Price */}
-        <div style={{ textAlign: "right" }}>
-          <div style={{
-            fontFamily: "var(--ff-mono)",
-            fontWeight: 500,
-            fontSize: 18,
-            color: "var(--vr-cream)",
-            letterSpacing: "-0.01em",
-            fontVariantNumeric: "tabular-nums",
-          }}>
-            {price != null ? fmtCurrency(price) : <span style={{ color: "var(--vr-cream-mute)" }}>—</span>}
-          </div>
-          {price != null && changePct != null && (
-            <div style={{
-              fontFamily: "var(--ff-mono)",
-              fontWeight: 400,
-              fontSize: 11,
-              marginTop: 3,
-              fontVariantNumeric: "tabular-nums",
-              color: changePct > 0 ? "var(--vr-up)" : changePct < 0 ? "var(--vr-down)" : "var(--vr-cream-mute)",
-            }}>
-              {changePct > 0 ? "+" : changePct < 0 ? "−" : "+"}
-              {Math.abs(changePct).toFixed(2)}% today
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Tier ladder */}
-      {ladder.length > 0 && (
-        <div style={{
-          marginTop: 14,
-          display: "grid",
-          gridTemplateColumns: `repeat(${ladder.length}, 1fr)`,
-          gap: 6,
-        }}>
-          {ladder.map((rung, i) => {
-            const rungActive = rung.active === true
-            const rungTone = rung.state && TIER_TONE[rung.state] ? TIER_TONE[rung.state] : null
-            const rungColor = rungActive ? (rungTone?.color ?? "var(--vr-cream)") : "var(--vr-cream-mute)"
-            return (
-              <div
-                key={`${rung.label ?? "tier"}-${i}`}
-                style={{
-                  position: "relative",
-                  padding: "10px 10px 11px",
-                  border: `1px solid ${rungActive ? rungColor : "var(--vr-line)"}`,
-                  borderRadius: "var(--r-inset)",
-                  background: rungActive ? "rgba(241, 236, 224, 0.025)" : "rgba(241, 236, 224, 0.012)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  color: rungColor,
-                }}
-              >
-                {rungActive && (
-                  <span style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: 2,
-                    background: rungColor,
-                    borderTopLeftRadius: "var(--r-inset)",
-                    borderTopRightRadius: "var(--r-inset)",
-                  }} />
-                )}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                  <span style={{
-                    fontFamily: "var(--ff-sans)",
-                    fontWeight: 500,
-                    fontSize: 9,
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color: rungActive ? rungColor : "var(--vr-cream-mute)",
-                  }}>
-                    {rung.label ?? "Tier"}{rungActive ? " · Active" : ""}
-                  </span>
-                  <span style={{
-                    fontFamily: "var(--ff-mono)",
-                    fontWeight: 500,
-                    fontSize: 13,
-                    color: rungActive ? rungColor : "var(--vr-cream)",
-                    fontVariantNumeric: "tabular-nums",
-                  }}>
-                    {rung.exposure_pct != null ? `${rung.exposure_pct.toFixed(0)}%` : "—"}
-                  </span>
-                </div>
-                {rung.note && (
-                  <div style={{
-                    fontFamily: "var(--ff-sans)",
-                    fontSize: 10,
-                    color: rungActive ? "var(--vr-cream-dim)" : "var(--vr-cream-mute)",
-                    marginTop: 2,
-                    lineHeight: 1.35,
-                  }}>
-                    {rung.note}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Action row */}
-      {action && (
-        <div style={{
-          marginTop: 14,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 16,
-          padding: "10px 12px",
-          background: "var(--vr-ink-sunken)",
-          border: "1px solid var(--vr-line)",
-          borderRadius: "var(--r-inset)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 500,
-              fontSize: 9,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--vr-cream-mute)",
-            }}>
-              Next action
-            </span>
-            <span style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 500,
-              fontSize: 13,
-              color: actionTone?.color ?? "var(--vr-cream)",
-              padding: "2px 8px",
-              borderRadius: 3,
-              border: `1px solid ${actionTone?.border ?? "var(--vr-line-hi)"}`,
-            }}>
-              {actionTone?.label ?? titleizeEnum(action)}
-            </span>
-            <span style={{
-              fontFamily: "var(--ff-mono)",
-              fontWeight: 500,
-              fontSize: 14,
-              color: "var(--vr-cream)",
-              fontVariantNumeric: "tabular-nums",
-            }}>
-              {notional != null ? fmtCurrency(notional, { digits: 0 }) : "—"}
-            </span>
-          </div>
-          {status === "DRY_RUN" && (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 400,
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--vr-cream-mute)",
-            }}>
-              <span className="vr-pulse-dot" style={{ background: "var(--vr-warn)" }} />
-              Dry run
-            </div>
-          )}
-          {status && status !== "DRY_RUN" && status !== "LIVE" && (
-            <div style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 400,
-              fontSize: 10,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color: "var(--vr-cream-mute)",
-            }}>
-              {titleizeEnum(status)}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tactical overlay (research-only empty-state per package spec) */}
-      {tsmom && isResearchOverlay && (
-        <div style={{
-          marginTop: 14,
-          padding: "12px 14px",
-          border: "1px dashed var(--vr-line-hi)",
-          borderRadius: "var(--r-inset)",
-          background: "transparent",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-            <span style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 500,
-              fontSize: 9,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--vr-cream-mute)",
-            }}>
-              Tactical overlay · {tsmom.cadence ?? tsmom.bar ?? "4H"} TSMOM
-            </span>
-            <span style={{
-              fontFamily: "var(--ff-sans)",
-              fontWeight: 500,
-              fontSize: 9,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--vr-gold)",
-              padding: "2px 7px",
-              border: "1px solid var(--vr-gold-line)",
-              borderRadius: 2,
-              background: "var(--vr-gold-soft)",
-            }}>
-              Research only
-            </span>
-          </div>
-          <p style={{
+      {/* State badge (lightweight tag, not a duplicate of the ladder) */}
+      <div>
+        {stateLabel && (
+          <span style={{
             fontFamily: "var(--ff-sans)",
+            fontWeight: 500,
+            fontSize: 9,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            padding: "2px 8px",
+            borderRadius: 3,
+            border: `1px solid ${tone?.color ?? "var(--vr-line-hi)"}`,
+            color: tone?.color ?? "var(--vr-cream)",
+            background: tone?.soft ?? "transparent",
+          }}>
+            {stateLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Price */}
+      <div style={{ textAlign: "right" }}>
+        <div style={{
+          fontFamily: "var(--ff-mono)",
+          fontWeight: 500,
+          fontSize: 16,
+          color: "var(--vr-cream)",
+          letterSpacing: "-0.01em",
+          fontVariantNumeric: "tabular-nums",
+        }}>
+          {price != null ? fmtCurrency(price) : <span style={{ color: "var(--vr-cream-mute)" }}>—</span>}
+        </div>
+        {price != null && changePct != null && (
+          <div style={{
+            fontFamily: "var(--ff-mono)",
             fontWeight: 400,
             fontSize: 11,
-            lineHeight: 1.5,
-            color: "var(--vr-cream-mute)",
-            margin: 0,
-            maxWidth: "58ch",
+            marginTop: 3,
+            fontVariantNumeric: "tabular-nums",
+            color: changePct > 0 ? "var(--vr-up)" : changePct < 0 ? "var(--vr-down)" : "var(--vr-cream-mute)",
           }}>
-            {tsmom.note ?? "Tactical overlay not currently live."}
-          </p>
-        </div>
-      )}
+            {changePct > 0 ? "+" : changePct < 0 ? "−" : "+"}
+            {Math.abs(changePct).toFixed(2)}% today
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1254,7 +1013,6 @@ function CryptoTrackedAssets({
             key={asset.symbol ?? `row-${i}`}
             asset={asset}
             managedExposure={signals?.managed_exposure ?? null}
-            tsmom={signals?.tsmom ?? null}
             position={positions.find(p => p.symbol === asset.symbol)}
             isFirst={i === 0}
           />

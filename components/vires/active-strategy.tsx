@@ -108,20 +108,35 @@ const STATUS_TONE: Record<NormalizedStrategy["status"], { color: string; label: 
   IDLE:     { color: "var(--vr-cream-mute)", label: "Idle" },
 }
 
-function formatVariant(record: StrategyBankRecord): string {
-  const v = record.variant_id ?? null
-  const fam = record.strategy_family ?? null
-  if (v && fam) return `${fam.toLowerCase().replace(/_/g, " ")} · ${v}`
-  if (v) return v
-  if (fam) return fam.toLowerCase().replace(/_/g, " ")
-  return ""
+// Humanize an enum / snake_case / colon-delimited identifier into a clean
+// title-cased label. "regime_aware_momentum:stop_5_target_15" →
+// "Regime Aware Momentum · Stop 5 Target 15"
+function humanizeId(s: string | null | undefined): string {
+  if (!s) return ""
+  return s
+    .split(/[:]+/)
+    .map(seg => seg
+      .split(/[_\s]+/)
+      .filter(Boolean)
+      .map(w => (w[0] ?? "").toUpperCase() + w.slice(1).toLowerCase())
+      .join(" "))
+    .filter(Boolean)
+    .join(" · ")
+}
+
+function pickStrategyName(r: StrategyBankRecord): string {
+  // Prefer the family name (cleaner) over display_name (which is
+  // typically family:variant concatenated and underscore-noisy).
+  if (r.strategy_family) return humanizeId(r.strategy_family)
+  if (r.display_name) return humanizeId(r.display_name)
+  return "Active strategy"
 }
 
 function normalizeStockRecord(r: StrategyBankRecord): NormalizedStrategy {
   return {
     id: r.record_id ?? r.display_name ?? "stock-strategy",
-    name: r.display_name ?? r.strategy_family ?? "Active strategy",
-    variant: formatVariant(r),
+    name: pickStrategyName(r),
+    variant: r.variant_id ? humanizeId(r.variant_id) : "",
     summary: r.description ?? "—",
     status: statusFromStage(r.promotion_stage),
     metrics: {
@@ -139,9 +154,7 @@ function normalizeManagedExposure(m: ManagedExposureLite): NormalizedStrategy {
   return {
     id: m.manifest_id ?? "crypto-managed-exposure",
     name: m.title ?? "BTC Managed Exposure",
-    variant: m.strategy_family
-      ? m.strategy_family.toLowerCase().replace(/_/g, " ")
-      : "graduated core",
+    variant: m.strategy_family ? humanizeId(m.strategy_family) : "Graduated core",
     summary: m.note ?? "Daily graduated core exposure. Tactical overlay sits as a research-only candidate.",
     status: m.status === "PROMOTED" ? "PROMOTED" : "IDLE",
     metrics: {
@@ -151,7 +164,7 @@ function normalizeManagedExposure(m: ManagedExposureLite): NormalizedStrategy {
       maxDD:       m.performance_summary?.max_drawdown_pct ?? null,
       calmar:      m.performance_summary?.calmar_ratio ?? null,
     },
-    benchmark: m.performance_summary?.benchmark_return_pct != null ? "BTC HODL" : null,
+    benchmark: m.performance_summary?.benchmark_return_pct != null ? "BTC" : null,
   }
 }
 

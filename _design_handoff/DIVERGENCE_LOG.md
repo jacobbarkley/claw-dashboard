@@ -26,6 +26,45 @@ entry teaches the next handoff how to avoid the same drift.
 
 ## Entries
 
+### 2026-04-19 — Crypto sleeve · Tracked Assets — operator pushback on the rich market-intent framing
+
+**Type:** drift (operator-driven simplification, post-ship)
+
+**Prototype intent:** The 2026-04-19 Tracked Assets package specced a
+rich per-row card with embedded tier ladder, action-verb pill (Buy /
+Sell / Hold) + notional, and tactical-overlay block. Framing was
+"what is the strategy about to do for the assets we care about."
+
+**Shipped state (post-feedback):** Per Jacob's review the same day,
+simplified to a clean watchlist row — symbol + lane pill + tier-state
+badge + price + intraday change. The rich strategy-action context
+(ladder, action verb, tactical overlay) was redundant with
+`CryptoExposure` and `CryptoTSMOM` cards which already render those
+elements at sleeve scope. Per-row duplication added density without
+adding information.
+
+**Which is correct + why:** The simplified version, based on the
+operator's actual usage. The package's framing was internally
+consistent but cross-card redundant — the lane-level strategy state
+already lives in dedicated cards, so embedding it per row inflated
+the card without adding signal. The tier-state badge is retained as
+a lightweight at-a-glance tag; the full ladder lives in
+`CryptoExposure` only.
+
+**Resolution:** Implemented in commit `<TBD>` alongside the
+display-name humanization fix and the `BTC HODL` → `BTC` benchmark
+label fix.
+
+**Lesson:** When the design package adds visual density inside a
+card, cross-check against adjacent cards on the same surface — if an
+embedded element duplicates a sleeve-level surface, it usually
+should not be embedded. Cross-surface parity (the
+`UX_CHECKLIST.md` "adjacent cards" table) needs to extend beyond
+"don't duplicate the same data" to "don't duplicate the same
+*concept* at different scopes."
+
+---
+
 ### 2026-04-19 — Crypto sleeve · Tracked Assets — BTC row showed user holding instead of market price
 
 **Prototype intent:** The Tracked Assets card on the Crypto sleeve is a
