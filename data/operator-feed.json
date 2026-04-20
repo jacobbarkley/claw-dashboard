@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-20T17:20:03.104884+00:00",
+  "generated_at": "2026-04-20T17:25:02.203789+00:00",
   "as_of_date": "2026-04-20",
   "source_context": {
     "mode": "canonical",
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-20T17:20:03.104923+00:00"
+    "audit_written_at": "2026-04-20T17:25:02.203835+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -770,15 +770,15 @@
     }
   ],
   "strategy_universe": {
-    "as_of": "2026-04-20T17:20:01.374344969Z",
+    "as_of": "2026-04-20T17:24:58.774121902Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 272.56,
+        "current_price": 272.41,
         "prior_close": 270.205,
-        "change_usd": 2.355,
-        "change_pct": 0.8716,
+        "change_usd": 2.205,
+        "change_pct": 0.816,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -786,10 +786,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 397.405,
+        "current_price": 397.365,
         "prior_close": 406.5,
-        "change_usd": -9.095,
-        "change_pct": -2.2374,
+        "change_usd": -9.135,
+        "change_pct": -2.2472,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -797,10 +797,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1002.03,
+        "current_price": 1002.095,
         "prior_close": 999.775,
-        "change_usd": 2.255,
-        "change_pct": 0.2256,
+        "change_usd": 2.32,
+        "change_pct": 0.2321,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -808,10 +808,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 926.94,
+        "current_price": 927.42,
         "prior_close": 927.055,
-        "change_usd": -0.115,
-        "change_pct": -0.0124,
+        "change_usd": 0.365,
+        "change_pct": 0.0394,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -819,10 +819,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 673.385,
+        "current_price": 672.98,
         "prior_close": 688.46,
-        "change_usd": -15.075,
-        "change_pct": -2.1897,
+        "change_usd": -15.48,
+        "change_pct": -2.2485,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -830,10 +830,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 199.695,
+        "current_price": 199.68,
         "prior_close": 201.67,
-        "change_usd": -1.975,
-        "change_pct": -0.9793,
+        "change_usd": -1.99,
+        "change_pct": -0.9868,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
