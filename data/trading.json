@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-20T13:00:11.501002+00:00",
+  "generated_at": "2026-04-20T13:15:11.227377+00:00",
   "as_of_date": "2026-04-20",
   "account": {
-    "equity": 85474.4,
+    "equity": 85472.99,
     "cash": 30403.54,
-    "buying_power": 115302.31,
+    "buying_power": 115300.66,
     "base_value": 100000.0,
-    "total_pnl": -14525.6,
-    "total_pnl_pct": -14.5256,
-    "today_pnl": -28.2,
-    "today_pnl_pct": -0.033,
-    "positions_value": 55070.86,
-    "equity_deployed": 55070.86,
+    "total_pnl": -14527.01,
+    "total_pnl_pct": -14.527,
+    "today_pnl": -29.61,
+    "today_pnl_pct": -0.0346,
+    "positions_value": 55069.45,
+    "equity_deployed": 55069.45,
     "options_deployed": 0,
-    "unrealized_pnl": 31.67,
-    "unrealized_pnl_pct": 0.06
+    "unrealized_pnl": 30.25,
+    "unrealized_pnl_pct": 0.05
   },
   "positions": [
     {
@@ -22,31 +22,31 @@
       "qty": 0.007649133,
       "side": "long",
       "entry_price": 76709.710158034,
-      "current_price": 75254.361,
-      "market_value": 575.630616,
-      "unrealized_pnl": -11.132159,
-      "unrealized_pct": -1.9,
-      "change_today_pct": 0.78
+      "current_price": 75285.34,
+      "market_value": 575.867579,
+      "unrealized_pnl": -10.895196,
+      "unrealized_pct": -1.86,
+      "change_today_pct": 0.82
     },
     {
       "symbol": "NVDA",
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 200.28,
-      "market_value": 3204.48,
-      "unrealized_pnl": 22.45,
-      "unrealized_pct": 0.71,
-      "change_today_pct": -0.69
+      "current_price": 200.18,
+      "market_value": 3202.88,
+      "unrealized_pnl": 20.85,
+      "unrealized_pct": 0.66,
+      "change_today_pct": -0.74
     },
     {
       "symbol": "SGOV",
       "qty": 510.0,
       "side": "long",
       "entry_price": 100.530196,
-      "current_price": 100.5701,
-      "market_value": 51290.751,
-      "unrealized_pnl": 20.35104,
+      "current_price": 100.57,
+      "market_value": 51290.7,
+      "unrealized_pnl": 20.30004,
       "unrealized_pct": 0.04,
       "change_today_pct": 0.01
     }
