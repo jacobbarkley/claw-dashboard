@@ -1,54 +1,54 @@
 {
-  "generated_at": "2026-04-17T20:45:09.587688+00:00",
-  "as_of_date": "2026-04-17",
+  "generated_at": "2026-04-20T13:00:11.501002+00:00",
+  "as_of_date": "2026-04-20",
   "account": {
-    "equity": 85502.19,
-    "cash": 30746.67,
-    "buying_power": 116004.37,
+    "equity": 85474.4,
+    "cash": 30403.54,
+    "buying_power": 115302.31,
     "base_value": 100000.0,
-    "total_pnl": -14497.81,
-    "total_pnl_pct": -14.4978,
-    "today_pnl": 66.47,
-    "today_pnl_pct": 0.0778,
-    "positions_value": 54755.52,
-    "equity_deployed": 54755.52,
+    "total_pnl": -14525.6,
+    "total_pnl_pct": -14.5256,
+    "today_pnl": -28.2,
+    "today_pnl_pct": -0.033,
+    "positions_value": 55070.86,
+    "equity_deployed": 55070.86,
     "options_deployed": 0,
-    "unrealized_pnl": 58.6,
-    "unrealized_pnl_pct": 0.11
+    "unrealized_pnl": 31.67,
+    "unrealized_pnl_pct": 0.06
   },
   "positions": [
     {
       "symbol": "BTCUSD",
-      "qty": 0.003149925,
+      "qty": 0.007649133,
       "side": "long",
-      "entry_price": 77619.2,
-      "current_price": 77617.976,
-      "market_value": 244.490803,
-      "unrealized_pnl": -0.003856,
-      "unrealized_pct": -0.0,
-      "change_today_pct": 3.71
+      "entry_price": 76709.710158034,
+      "current_price": 75254.361,
+      "market_value": 575.630616,
+      "unrealized_pnl": -11.132159,
+      "unrealized_pct": -1.9,
+      "change_today_pct": 0.78
     },
     {
       "symbol": "NVDA",
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 201.43,
-      "market_value": 3222.88,
-      "unrealized_pnl": 40.85,
-      "unrealized_pct": 1.28,
-      "change_today_pct": 1.55
+      "current_price": 200.28,
+      "market_value": 3204.48,
+      "unrealized_pnl": 22.45,
+      "unrealized_pct": 0.71,
+      "change_today_pct": -0.69
     },
     {
       "symbol": "SGOV",
       "qty": 510.0,
       "side": "long",
       "entry_price": 100.530196,
-      "current_price": 100.565,
-      "market_value": 51288.15,
-      "unrealized_pnl": 17.75004,
-      "unrealized_pct": 0.03,
-      "change_today_pct": 0.03
+      "current_price": 100.5701,
+      "market_value": 51290.751,
+      "unrealized_pnl": 20.35104,
+      "unrealized_pct": 0.04,
+      "change_today_pct": 0.01
     }
   ],
   "pipeline_status": {
@@ -695,6 +695,11 @@
       "date": "2026-04-17",
       "equity": 85435.72,
       "profit_loss": -8.49
+    },
+    {
+      "date": "2026-04-18",
+      "equity": 85502.6,
+      "profit_loss": 66.88
     }
   ],
   "watchlist": {
@@ -1532,30 +1537,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "SCHW",
-        "price": 94.8,
-        "sector": "Financial Services",
-        "expiry": "2026-05-08",
-        "dte": 21,
-        "short_strike": 95.0,
-        "long_strike": 90.0,
-        "spread_width": 5.0,
-        "net_credit": 1.72,
-        "credit_width_ratio": 0.344,
-        "annualized_yield_pct": 597.9,
-        "max_loss_per_contract": 328.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
