@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-20T15:20:02.702593+00:00",
+  "generated_at": "2026-04-20T15:21:42.856506+00:00",
   "as_of_date": "2026-04-20",
   "source_context": {
     "mode": "canonical",
@@ -74,7 +74,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-20T15:20:02.702785+00:00"
+    "audit_written_at": "2026-04-20T15:21:42.856609+00:00"
   },
   "kpis": {
     "total_trades": 59,
@@ -758,15 +758,15 @@
     }
   ],
   "strategy_universe": {
-    "as_of": "2026-04-20T15:20:03.863919444Z",
+    "as_of": "2026-04-20T15:21:41.307590521Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 272.095,
+        "current_price": 272.03,
         "prior_close": 270.205,
-        "change_usd": 1.89,
-        "change_pct": 0.6995,
+        "change_usd": 1.825,
+        "change_pct": 0.6754,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -774,10 +774,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 397.53,
+        "current_price": 397.83,
         "prior_close": 406.5,
-        "change_usd": -8.97,
-        "change_pct": -2.2066,
+        "change_usd": -8.67,
+        "change_pct": -2.1328,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -785,10 +785,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1004.82,
+        "current_price": 1005.145,
         "prior_close": 999.775,
-        "change_usd": 5.045,
-        "change_pct": 0.5046,
+        "change_usd": 5.37,
+        "change_pct": 0.5371,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -796,10 +796,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 927.98,
+        "current_price": 927.7,
         "prior_close": 927.055,
-        "change_usd": 0.925,
-        "change_pct": 0.0998,
+        "change_usd": 0.645,
+        "change_pct": 0.0696,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -807,10 +807,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 671.65,
+        "current_price": 672.21,
         "prior_close": 688.46,
-        "change_usd": -16.81,
-        "change_pct": -2.4417,
+        "change_usd": -16.25,
+        "change_pct": -2.3603,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -818,10 +818,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 198.57,
+        "current_price": 198.71,
         "prior_close": 201.67,
-        "change_usd": -3.1,
-        "change_pct": -1.5372,
+        "change_usd": -2.96,
+        "change_pct": -1.4677,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1602,15 +1602,6 @@
           "price": 100.53,
           "usd": null,
           "note": "Cash management reserve park"
-        },
-        {
-          "date": "2026-04-15",
-          "side": "SELL",
-          "sym": "NVDA",
-          "qty": 2.0,
-          "price": 199.52,
-          "usd": null,
-          "note": "legacy unwind batch 02 nvda"
         },
         {
           "date": "2026-04-15",

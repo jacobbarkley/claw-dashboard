@@ -46,6 +46,8 @@ OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
 ALPACA_REQUIRED_KEYS = ('ALPACA_API_KEY_ID', 'ALPACA_API_SECRET_KEY')
 ALPACA_DATA_BASE_URL = 'https://data.alpaca.markets'
+ORDER_BLOTTER_RETENTION_DAYS = 60
+ORDER_BLOTTER_MAX_ROWS = 60
 BENCH_COMPARISON_KEYS = (
     'benchmark',
     'benchmark_baseline',
@@ -143,6 +145,48 @@ def fetch_stock_snapshots(symbols: list[str], creds: Optional[dict]) -> dict[str
     if isinstance(snapshots, dict):
         return snapshots
     return payload
+
+
+def alpaca_trading_request(creds: dict, path: str, *, params: Optional[dict] = None):
+    base_url = creds.get('ALPACA_BASE_URL') or 'https://paper-api.alpaca.markets'
+    url = f'{base_url}{path}'
+    if params:
+        query = urllib.parse.urlencode({key: value for key, value in params.items() if value is not None})
+        if query:
+            url = f'{url}?{query}'
+
+    request = urllib.request.Request(url)
+    request.add_header('APCA-API-KEY-ID', creds['ALPACA_API_KEY_ID'])
+    request.add_header('APCA-API-SECRET-KEY', creds['ALPACA_API_SECRET_KEY'])
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            return json.loads(response.read())
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        return None
+
+
+def fetch_recent_orders_map(creds: Optional[dict], *, after_days: int = ORDER_BLOTTER_RETENTION_DAYS) -> dict[str, dict]:
+    if creds is None:
+        return {}
+    after = (datetime.now(timezone.utc) - timedelta(days=after_days)).isoformat().replace('+00:00', 'Z')
+    payload = alpaca_trading_request(
+        creds,
+        '/v2/orders',
+        params={
+            'status': 'all',
+            'limit': 500,
+            'direction': 'desc',
+            'nested': 'false',
+            'after': after,
+        },
+    )
+    if not isinstance(payload, list):
+        return {}
+    return {
+        str(item.get('id')): item
+        for item in payload
+        if isinstance(item, dict) and item.get('id')
+    }
 
 
 def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dict[str, float]:
@@ -602,6 +646,20 @@ def validate_output_contract(output: dict) -> None:
     if not isinstance(crypto_signals, dict):
         raise RuntimeError('operator feed contract violation: operator.crypto_signals missing')
 
+    allocation_history = operator.get('allocation_history')
+    if not isinstance(allocation_history, dict):
+        raise RuntimeError('operator feed contract violation: operator.allocation_history missing')
+
+    order_blotter = operator.get('order_blotter')
+    if not isinstance(order_blotter, dict):
+        raise RuntimeError('operator feed contract violation: operator.order_blotter missing')
+
+    for sleeve in ('stocks', 'options', 'crypto'):
+        if sleeve not in allocation_history:
+            raise RuntimeError(f'operator feed contract violation: operator.allocation_history.{sleeve} missing')
+        if sleeve not in order_blotter:
+            raise RuntimeError(f'operator feed contract violation: operator.order_blotter.{sleeve} missing')
+
 
 def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
     if not path.exists():
@@ -625,6 +683,381 @@ def load_jsonl_tail(path: Path, limit: int = 20) -> list[dict]:
         if isinstance(value, dict):
             items.append(value)
     return items
+
+
+def normalize_symbol(symbol: Optional[str]) -> str:
+    return str(symbol or '').replace('/', '').upper()
+
+
+def normalize_order_side(value: Optional[str]) -> str:
+    token = str(value or '').strip().upper()
+    if token in {'BUY', 'SELL'}:
+        return token
+    if token == 'SHORT':
+        return 'SELL'
+    return 'BUY'
+
+
+def prettify_order_note(note: Optional[str]) -> Optional[str]:
+    if not note:
+        return None
+    text = str(note).strip()
+    if not text:
+        return None
+    replacements = {
+        'cash_management_park_required': 'Cash management reserve park',
+        'cash_management_unpark_required': 'Cash management reserve release',
+        'first_crypto_probe': 'Manual BTC paper probe',
+    }
+    if text in replacements:
+        return replacements[text]
+    if '_' in text and text.lower() == text:
+        return text.replace('_', ' ')
+    return text
+
+
+def build_crypto_blotter_note(report: dict) -> Optional[str]:
+    state = title_case_token(report.get('active_regime_state'))
+    target_notional = safe_float(report.get('target_notional_usd'))
+    action = title_case_token(report.get('action'))
+    if target_notional is not None and state != 'Unknown':
+        return f'Managed exposure · {state} · ${target_notional:,.0f} target · {action.lower()}.'
+    if state != 'Unknown':
+        return f'Managed exposure · {state}.'
+    return prettify_order_note(((report.get('order_intent') or {}).get('reason')))
+
+
+def iter_rebuild_report_paths(filename: str, *, after_date: str) -> list[Path]:
+    root = WORKSPACE / 'state/rebuild'
+    paths: list[Path] = []
+    for path in root.glob(f'*/*/{filename}'):
+        try:
+            trading_date = path.parts[-3]
+        except IndexError:
+            continue
+        if trading_date >= after_date:
+            paths.append(path)
+    paths.sort()
+    return paths
+
+
+def load_equity_open_dates() -> dict[str, str]:
+    position_book = load(REBUILD_LATEST / 'position_book.json')
+    entries = position_book.get('entries', []) if isinstance(position_book, dict) else []
+    out: dict[str, str] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get('status') != 'OPEN' or entry.get('asset_type') != 'EQUITY':
+            continue
+        symbol = normalize_symbol(entry.get('symbol'))
+        opened_date = str(entry.get('opened_trading_date') or '')[:10]
+        if symbol and opened_date:
+            out[symbol] = opened_date
+    return out
+
+
+def collect_order_blotter_events(
+    positions: list[dict],
+    crypto_execution_plan: dict,
+    crypto_execution_report: dict,
+) -> list[dict]:
+    stock_symbols = {
+        normalize_symbol(item.get('symbol'))
+        for item in positions
+        if item.get('asset_type') == 'EQUITY' and item.get('symbol')
+    }
+    stock_open_dates = load_equity_open_dates()
+    crypto_symbols = {
+        normalize_symbol(item.get('symbol'))
+        for item in positions
+        if item.get('asset_type') == 'CRYPTO' and item.get('symbol')
+    }
+    after_date = (datetime.now(ET).date() - timedelta(days=ORDER_BLOTTER_RETENTION_DAYS)).isoformat()
+    events: list[dict] = []
+
+    for path in iter_rebuild_report_paths('execution_report.json', after_date=after_date):
+        report = load(path)
+        if report.get('status') not in {'OK', 'PARTIAL', 'SUBMITTED'}:
+            continue
+        for item in report.get('items', []):
+            symbol = normalize_symbol(item.get('symbol'))
+            if symbol not in stock_symbols:
+                continue
+            if symbol in stock_open_dates and str(report.get('trading_date') or '')[:10] < stock_open_dates[symbol]:
+                continue
+            order_id = item.get('broker_order_id')
+            if not order_id:
+                continue
+            events.append(
+                {
+                    'sleeve': 'stocks',
+                    'symbol': symbol,
+                    'order_id': str(order_id),
+                    'fallback_qty': safe_float(item.get('quantity')),
+                    'fallback_price': safe_float(item.get('avg_fill_price')),
+                    'fallback_date': report.get('trading_date'),
+                    'note': prettify_order_note(item.get('note')),
+                    'kind': 'strategy',
+                }
+            )
+
+    for path in iter_rebuild_report_paths('cash_management_execution_report.json', after_date=after_date):
+        report = load(path)
+        if report.get('status') not in {'OK', 'PARTIAL', 'SUBMITTED'}:
+            continue
+        for item in report.get('items', []):
+            symbol = normalize_symbol(item.get('symbol'))
+            if symbol not in stock_symbols:
+                continue
+            if symbol in stock_open_dates and str(report.get('trading_date') or '')[:10] < stock_open_dates[symbol]:
+                continue
+            order_id = item.get('broker_order_id')
+            if not order_id:
+                continue
+            events.append(
+                {
+                    'sleeve': 'stocks',
+                    'symbol': symbol,
+                    'order_id': str(order_id),
+                    'fallback_qty': safe_float(item.get('quantity')),
+                    'fallback_price': safe_float(item.get('avg_fill_price')),
+                    'fallback_date': report.get('trading_date'),
+                    'note': prettify_order_note(item.get('note')),
+                    'kind': 'cash_management',
+                }
+            )
+
+    for path in iter_rebuild_report_paths('manual_trade_execution_report.json', after_date=after_date):
+        report = load(path)
+        if report.get('status') not in {'OK', 'PARTIAL', 'SUBMITTED'}:
+            continue
+        request = load(path.with_name('manual_trade_request.json'))
+        request_items = request.get('items', []) if isinstance(request, dict) else []
+        request_map = {
+            (normalize_symbol(item.get('symbol')), str(item.get('action') or '').upper()): item
+            for item in request_items
+            if isinstance(item, dict)
+        }
+        for item in report.get('items', []):
+            symbol = normalize_symbol(item.get('symbol'))
+            action = normalize_order_side(item.get('action'))
+            request_item = request_map.get((symbol, action)) or request_map.get((symbol, 'BUY')) or request_map.get((symbol, 'SELL')) or {}
+            asset_type = str(request_item.get('asset_type') or '').upper()
+            if (asset_type == 'CRYPTO' or symbol in crypto_symbols) and symbol in crypto_symbols:
+                sleeve = 'crypto'
+            elif (asset_type == 'EQUITY' or symbol in stock_symbols) and symbol in stock_symbols:
+                sleeve = 'stocks'
+            else:
+                continue
+            if sleeve == 'stocks' and symbol in stock_open_dates and str(report.get('trading_date') or '')[:10] < stock_open_dates[symbol]:
+                continue
+            order_id = item.get('broker_order_id')
+            if not order_id:
+                continue
+            events.append(
+                {
+                    'sleeve': sleeve,
+                    'symbol': symbol,
+                    'order_id': str(order_id),
+                    'fallback_qty': safe_float(item.get('quantity')),
+                    'fallback_price': safe_float(item.get('avg_fill_price')),
+                    'fallback_date': report.get('trading_date'),
+                    'note': prettify_order_note(request_item.get('reason') or item.get('note')),
+                    'kind': 'manual',
+                }
+            )
+
+    crypto_report = crypto_execution_report if isinstance(crypto_execution_report, dict) else {}
+    crypto_symbol = normalize_symbol(
+        crypto_report.get('symbol')
+        or (crypto_execution_plan.get('symbol') if isinstance(crypto_execution_plan, dict) else None)
+    )
+    crypto_order_id = crypto_report.get('broker_order_id')
+    if crypto_symbol in crypto_symbols and crypto_order_id and crypto_report.get('status') in {'OK', 'PARTIAL', 'SUBMITTED'}:
+        events.append(
+            {
+                'sleeve': 'crypto',
+                'symbol': crypto_symbol,
+                'order_id': str(crypto_order_id),
+                'fallback_qty': safe_float(((crypto_report.get('broker_response') or {}).get('filled_qty')))
+                or safe_float(((crypto_report.get('order_intent') or {}).get('quantity')),
+                ),
+                'fallback_price': safe_float(((crypto_report.get('broker_response') or {}).get('filled_avg_price')))
+                or safe_float(((crypto_report.get('order_intent') or {}).get('reference_price_usd')),
+                ),
+                'fallback_date': crypto_report.get('trading_date'),
+                'note': build_crypto_blotter_note(crypto_report),
+                'kind': 'crypto_strategy',
+            }
+        )
+
+    return events
+
+
+def build_order_blotter(
+    positions: list[dict],
+    crypto_execution_plan: dict,
+    crypto_execution_report: dict,
+) -> dict[str, list[dict]]:
+    creds = load_alpaca_creds()
+    recent_orders = fetch_recent_orders_map(creds)
+    events = collect_order_blotter_events(positions, crypto_execution_plan, crypto_execution_report)
+    blotter: dict[str, list[tuple[str, dict]]] = {'stocks': [], 'crypto': [], 'options': []}
+    seen_order_ids: set[str] = set()
+
+    for event in events:
+        order_id = event.get('order_id')
+        if not order_id or order_id in seen_order_ids:
+            continue
+        seen_order_ids.add(order_id)
+
+        order = recent_orders.get(order_id, {})
+        filled_at = order.get('filled_at') or order.get('submitted_at') or order.get('created_at')
+        sort_key = str(filled_at or event.get('fallback_date') or '')
+        qty = (
+            safe_float(order.get('filled_qty'))
+            or safe_float(order.get('qty'))
+            or event.get('fallback_qty')
+        )
+        price = safe_float(order.get('filled_avg_price')) or event.get('fallback_price')
+        if qty in (None, 0) or price in (None, 0):
+            continue
+
+        side = normalize_order_side(order.get('side'))
+        symbol = normalize_symbol(order.get('symbol') or event.get('symbol'))
+        if not symbol:
+            continue
+
+        usd = safe_float(order.get('notional'))
+        if symbol == 'BTCUSD' and usd is None and qty is not None and price is not None:
+            usd = round(qty * price, 2)
+
+        entry = {
+            'date': str(filled_at or event.get('fallback_date') or datetime.now(ET).date().isoformat())[:10],
+            'side': side,
+            'sym': symbol,
+            'qty': round(float(qty), 8) if symbol == 'BTCUSD' else round(float(qty), 4),
+            'price': round(float(price), 4),
+            'usd': round(float(usd), 2) if usd is not None else None,
+            'note': event.get('note'),
+        }
+        blotter[event['sleeve']].append((sort_key, entry))
+
+    return {
+        sleeve: [item for _, item in sorted(rows, key=lambda row: row[0])][-ORDER_BLOTTER_MAX_ROWS:]
+        for sleeve, rows in blotter.items()
+    }
+
+
+def build_allocation_history(
+    positions: list[dict],
+    promoted_manifests: list[dict],
+    crypto_execution_plan: dict,
+    as_of_date: str,
+) -> dict[str, dict]:
+    def build_snapshot(
+        *,
+        sleeve_label: str,
+        source: str,
+        sleeve_positions: list[dict],
+        active: bool,
+        reason: str,
+        regimes: Optional[list[dict]] = None,
+        regime_tones: Optional[dict] = None,
+    ) -> dict:
+        if not active:
+            return {
+                'status': 'unavailable',
+                'source': source,
+                'sleeveLabel': sleeve_label,
+                'reason': reason,
+            }
+
+        total = sum(max(safe_float(item.get('market_value'), 0.0), 0.0) for item in sleeve_positions)
+        ordered_positions = sorted(
+            [item for item in sleeve_positions if item.get('symbol')],
+            key=lambda item: safe_float(item.get('market_value'), 0.0),
+            reverse=True,
+        )
+        symbols = [
+            {
+                'sym': normalize_symbol(item.get('symbol')),
+                'label': 'BTC' if normalize_symbol(item.get('symbol')) == 'BTCUSD' else normalize_symbol(item.get('symbol')),
+                'color': None,
+            }
+            for item in ordered_positions
+        ]
+        weights = {}
+        if total > 0:
+            for item in ordered_positions:
+                symbol = normalize_symbol(item.get('symbol'))
+                market_value = max(safe_float(item.get('market_value'), 0.0), 0.0)
+                if symbol:
+                    weights[symbol] = round((market_value / total) * 100, 2)
+
+        series = [
+            {
+                'date': as_of_date,
+                'weights': weights,
+                'cash': round(max(0.0, 100.0 - sum(weights.values())), 2),
+                'total': round(total, 2),
+            }
+        ]
+        return {
+            'status': 'available',
+            'source': source,
+            'sleeveLabel': sleeve_label,
+            'reason': None,
+            'symbols': symbols,
+            'regimes': regimes or [],
+            'regimeTones': regime_tones or {},
+            'series': series,
+        }
+
+    stock_positions = [item for item in positions if item.get('asset_type') == 'EQUITY']
+    crypto_positions = [item for item in positions if item.get('asset_type') == 'CRYPTO']
+    crypto_manifest = next((item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO'), None)
+    crypto_state = str(crypto_execution_plan.get('active_regime_state') or '').upper()
+    effective_date = str(
+        crypto_execution_plan.get('effective_timestamp')
+        or crypto_execution_plan.get('signal_timestamp')
+        or as_of_date
+    )[:10]
+    crypto_regimes = (
+        [{'from': effective_date, 'to': as_of_date, 'label': crypto_state}] if crypto_state else []
+    )
+    crypto_regime_tones = {
+        'RISK_ON': {'label': 'Tier 1 · Risk on', 'tone': 'pos'},
+        'ACCUMULATE': {'label': 'Tier 2 · Accumulate', 'tone': 'neutral'},
+        'RISK_OFF': {'label': 'Tier 3 · Risk off', 'tone': 'warn'},
+    }
+
+    return {
+        'stocks': build_snapshot(
+            sleeve_label='Stocks sleeve',
+            source='trade_log',
+            sleeve_positions=stock_positions,
+            active=True,
+            reason='Allocation history begins when the stock sleeve records daily snapshots.',
+        ),
+        'crypto': build_snapshot(
+            sleeve_label='Crypto sleeve',
+            source='ladder_log',
+            sleeve_positions=crypto_positions,
+            active=bool(crypto_manifest or crypto_positions),
+            reason='No promoted crypto sleeve is active yet.',
+            regimes=crypto_regimes,
+            regime_tones=crypto_regime_tones,
+        ),
+        'options': build_snapshot(
+            sleeve_label='Options sleeve',
+            source='feed',
+            sleeve_positions=[],
+            active=False,
+            reason='No strategies deployed yet. Allocation history begins when the first variant is promoted from the Bench.',
+        ),
+    }
 
 
 def build_positions(market: dict, legacy_snapshot: dict, broker_snapshot: dict) -> list[dict]:
@@ -1006,6 +1439,8 @@ def build_operator(
     promoted_manifests: list[dict],
     crypto_execution_plan: dict,
     crypto_execution_report: dict,
+    allocation_history: dict[str, dict],
+    order_blotter: dict[str, list[dict]],
 ) -> dict:
     theses = thesis_set.get('items', [])
     regime = market.get('regime', {})
@@ -1128,6 +1563,8 @@ def build_operator(
             crypto_execution_plan,
             crypto_execution_report,
         ),
+        'allocation_history': allocation_history,
+        'order_blotter': order_blotter,
         'mode_history': mode_history,
         'incident_flags': daily_eval.get('incident_flags', []),
         'notes': daily_eval.get('notes', []),
@@ -1160,6 +1597,8 @@ def main():
     as_of_date = session.get('trading_date') or datetime.now(ET).date().isoformat()
 
     positions = build_positions(market, legacy_positions, broker_snapshot)
+    allocation_history = build_allocation_history(positions, promoted_manifests, crypto_execution_plan, as_of_date)
+    order_blotter = build_order_blotter(positions, crypto_execution_plan, crypto_execution_report)
     held_symbols = {item.get('symbol') for item in positions if item.get('symbol')}
     output = {
         'contract_version': '1',
@@ -1197,6 +1636,8 @@ def main():
             promoted_manifests,
             crypto_execution_plan,
             crypto_execution_report,
+            allocation_history,
+            order_blotter,
         ),
     }
     output['kpis']['positions_count'] = len(positions)
