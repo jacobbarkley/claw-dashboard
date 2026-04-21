@@ -17,6 +17,10 @@ interface PassportEra {
   sharpe?: number | null
   ret?: number | null
   pass?: boolean | null
+  verdict?: string | null            // "PASS" | "FAIL" | "INCONCLUSIVE" | null
+  verdict_reason?: string | null     // e.g. "INSUFFICIENT_TRADE_COUNT"
+  total_trades?: number | null       // for the inconclusive tooltip
+  evaluated_trading_days?: number | null
 }
 
 interface PassportGate {
@@ -305,15 +309,34 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
           }
           const h = Math.max(3, (e.sharpe / maxSharpe) * 84)
           const tone = e.pass ? "var(--vr-gold)" : "var(--vr-down)"
+          // INCONCLUSIVE eras (small sample size, etc.) keep their bar +
+          // value but render with reduced opacity + diagonal stripe so the
+          // operator can see the value without reading it as full
+          // confidence. Per Jacob's 2026-04-21 product call: data stays
+          // visible, confidence stays honest.
+          const inconclusive = e.verdict === "INCONCLUSIVE"
+          const reasonHuman = humanizeVerdictReason(e.verdict_reason)
+          const tooltip = inconclusive
+            ? [
+                `Inconclusive era (${reasonHuman ?? "low confidence"})`,
+                e.total_trades != null ? `${e.total_trades} trade${e.total_trades === 1 ? "" : "s"}` : null,
+                e.evaluated_trading_days != null ? `${e.evaluated_trading_days} day${e.evaluated_trading_days === 1 ? "" : "s"}` : null,
+              ].filter(Boolean).join(" · ")
+            : undefined
           return (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }} title={tooltip}>
               <div
                 style={{
                   width: "100%",
                   height: h,
                   background: tone,
-                  opacity: e.pass ? 0.85 : 0.55,
+                  opacity: inconclusive ? 0.35 : (e.pass ? 0.85 : 0.55),
                   borderRadius: 1,
+                  // Diagonal-stripe overlay for inconclusive eras — reads
+                  // as "data is here but treat with caution."
+                  backgroundImage: inconclusive
+                    ? `repeating-linear-gradient(45deg, transparent 0 4px, rgba(0,0,0,0.18) 4px 5px)`
+                    : undefined,
                 }}
               />
             </div>
@@ -322,19 +345,54 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: `repeat(${eras.length}, 1fr)`, gap: 6, marginTop: 10 }}>
-        {eras.map((e, i) => (
-          <div key={i} style={{ textAlign: "center" }}>
-            <div className="t-num" style={{ fontSize: 11, color: e.sharpe != null ? "var(--vr-cream)" : "var(--vr-cream-mute)", fontWeight: 500 }}>
-              {fmtNum(e.sharpe, 2)}
+        {eras.map((e, i) => {
+          const inconclusive = e.verdict === "INCONCLUSIVE"
+          return (
+            <div key={i} style={{ textAlign: "center" }}>
+              <div className="t-num" style={{
+                fontSize: 11,
+                color: e.sharpe != null
+                  ? (inconclusive ? "var(--vr-cream-dim)" : "var(--vr-cream)")
+                  : "var(--vr-cream-mute)",
+                fontWeight: 500,
+              }}>
+                {fmtNum(e.sharpe, 2)}
+              </div>
+              {inconclusive && (
+                <div style={{
+                  fontFamily: "var(--ff-sans)",
+                  fontSize: 8,
+                  color: "var(--vr-cream-faint)",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  marginTop: 2,
+                }}>
+                  Inconclusive
+                </div>
+              )}
+              <div className="t-label" style={{
+                fontSize: 9,
+                color: "var(--vr-cream-mute)",
+                marginTop: inconclusive ? 1 : 2,
+              }}>
+                {e.label ?? `era ${i + 1}`}
+              </div>
             </div>
-            <div className="t-label" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginTop: 2 }}>
-              {e.label ?? `era ${i + 1}`}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
+}
+
+function humanizeVerdictReason(reason: string | null | undefined): string | null {
+  if (!reason) return null
+  // "INSUFFICIENT_TRADE_COUNT" → "Insufficient trade count"
+  return reason
+    .toLowerCase()
+    .split("_")
+    .map(w => w.length > 0 ? w[0].toUpperCase() + w.slice(1) : "")
+    .join(" ")
 }
 
 // ─── Gates list ────────────────────────────────────────────────────────────

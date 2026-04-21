@@ -224,6 +224,15 @@ function buildCryptoProbeCandidates(report: JsonObject): JsonObject[] {
       sharpe: num(era.summary?.sharpe_ratio),
       ret: num(era.summary?.net_total_compounded_return_pct),
       pass: (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+      // Crypto era reports don't currently carry an explicit verdict
+      // (only the stock report's era.row does). Propagate trade_count so
+      // the EraStripe drill-in can surface sample size, but leave verdict
+      // null — synthesizing a verdict here would invent signal upstream
+      // hasn't shipped.
+      verdict: null,
+      verdict_reason: null,
+      total_trades: num(era.summary?.trade_count),
+      evaluated_trading_days: null,
     }))
 
     return {
@@ -460,12 +469,19 @@ function buildStockPassport(
   const maxDD = num(selected.max_drawdown_pct)
   const trades = num(selected.total_trades)
   const days = num(selected.evaluated_trading_days)
-  const reportEraRows = arr<JsonObject>(report?.era_results).map(era => ({
-    label: str(era.label) ?? str(era.era_id) ?? "Era",
-    sharpe: num(era.row?.sharpe_ratio),
-    ret: num(era.row?.total_return_pct),
-    pass: str(era.row?.verdict) === "PASS" ? true : str(era.row?.verdict) ? false : null,
-  }))
+  const reportEraRows = arr<JsonObject>(report?.era_results).map(era => {
+    const verdict = str(era.row?.verdict)
+    return {
+      label: str(era.label) ?? str(era.era_id) ?? "Era",
+      sharpe: num(era.row?.sharpe_ratio),
+      ret: num(era.row?.total_return_pct),
+      pass: verdict === "PASS" ? true : verdict ? false : null,
+      verdict,
+      verdict_reason: str(era.row?.verdict_reason),
+      total_trades: num(era.row?.total_trades),
+      evaluated_trading_days: num(era.row?.evaluated_trading_days),
+    }
+  })
   const eras = reportEraRows.length
     ? reportEraRows
     : arr<JsonObject>(spec?.dataset?.eras).map(era => ({
@@ -473,6 +489,10 @@ function buildStockPassport(
         sharpe: null,
         ret: null,
         pass: null,
+        verdict: null,
+        verdict_reason: null,
+        total_trades: null,
+        evaluated_trading_days: null,
       }))
   const finiteEraSharpes = eras
     .map(era => num(era.sharpe))
