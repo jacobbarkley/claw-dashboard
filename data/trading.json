@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T19:45:11.655460+00:00",
+  "generated_at": "2026-04-21T20:00:10.742050+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85465.25,
@@ -1574,6 +1574,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "COO",
+        "price": 71.21,
+        "sector": "Healthcare",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
+        "spread_width": 5.0,
+        "net_credit": 2.9,
+        "credit_width_ratio": 0.58,
+        "annualized_yield_pct": 1008.1,
+        "max_loss_per_contract": 210.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "MKC",
         "price": 53.71,
         "sector": "Consumer Defensive",
@@ -1592,6 +1610,42 @@
         "selected": false
       },
       {
+        "symbol": "CF",
+        "price": 121.32,
+        "sector": "Basic Materials",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 125.0,
+        "long_strike": 120.0,
+        "spread_width": 5.0,
+        "net_credit": 1.7,
+        "credit_width_ratio": 0.34,
+        "annualized_yield_pct": 591.0,
+        "max_loss_per_contract": 330.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "HAS",
+        "price": 91.73,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 92.5,
+        "long_strike": 87.5,
+        "spread_width": 5.0,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
+        "iv_rank_proxy": 0.25,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "PRU",
         "price": 96.9,
         "sector": "Financial Services",
@@ -1600,10 +1654,10 @@
         "short_strike": 97.5,
         "long_strike": 92.5,
         "spread_width": 5.0,
-        "net_credit": 1.75,
-        "credit_width_ratio": 0.35,
-        "annualized_yield_pct": 608.3,
-        "max_loss_per_contract": 325.0,
+        "net_credit": 1.4,
+        "credit_width_ratio": 0.28,
+        "annualized_yield_pct": 486.7,
+        "max_loss_per_contract": 360.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1613,7 +1667,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 5,
     "universe_watch": [
       {
         "symbol": "BKNG",
