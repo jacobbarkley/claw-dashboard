@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T19:15:10.525521+00:00",
+  "generated_at": "2026-04-21T19:30:11.311579+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85465.25,
@@ -1574,6 +1574,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "COO",
+        "price": 71.21,
+        "sector": "Healthcare",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
+        "spread_width": 5.0,
+        "net_credit": 2.9,
+        "credit_width_ratio": 0.58,
+        "annualized_yield_pct": 1008.1,
+        "max_loss_per_contract": 210.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "MKC",
         "price": 53.71,
         "sector": "Consumer Defensive",
@@ -1592,24 +1610,6 @@
         "selected": false
       },
       {
-        "symbol": "COO",
-        "price": 71.21,
-        "sector": "Healthcare",
-        "expiry": "2026-05-15",
-        "dte": 24,
-        "short_strike": 85.0,
-        "long_strike": 80.0,
-        "spread_width": 5.0,
-        "net_credit": 2.2,
-        "credit_width_ratio": 0.44,
-        "annualized_yield_pct": 764.8,
-        "max_loss_per_contract": 280.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "PRU",
         "price": 96.9,
         "sector": "Financial Services",
@@ -1618,11 +1618,29 @@
         "short_strike": 100.0,
         "long_strike": 95.0,
         "spread_width": 5.0,
-        "net_credit": 2.1,
-        "credit_width_ratio": 0.42,
-        "annualized_yield_pct": 730.0,
-        "max_loss_per_contract": 290.0,
+        "net_credit": 2.2,
+        "credit_width_ratio": 0.44,
+        "annualized_yield_pct": 764.8,
+        "max_loss_per_contract": 280.0,
         "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "HAS",
+        "price": 91.73,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 92.5,
+        "long_strike": 87.5,
+        "spread_width": 5.0,
+        "net_credit": 1.4,
+        "credit_width_ratio": 0.28,
+        "annualized_yield_pct": 486.7,
+        "max_loss_per_contract": 360.0,
+        "iv_rank_proxy": 0.25,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1631,7 +1649,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
