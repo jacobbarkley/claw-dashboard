@@ -220,27 +220,39 @@ const SLEEVE_DENSIFY_SEED: Record<Sleeve, number> = {
 // 520×58 sparkline without chewing unnecessary CPU on the path.
 const SPARKLINE_DENSITY_TARGET = 200
 
+// Mulberry32 — same deterministic PRNG used by the home EquityChart's
+// `upsampleIntraday`. Identical seed → identical sequence, so the sparkline
+// path is stable across renders.
+function makeSparklineRand(seed: number): () => number {
+  let t = seed >>> 0
+  return () => {
+    t = (t + 0x6D2B79F5) >>> 0
+    let r = t
+    r = Math.imul(r ^ (r >>> 15), r | 1)
+    r ^= r + Math.imul(r ^ (r >>> 7), r | 61)
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Mirrors the noise profile of the home EquityChart's `upsampleIntraday`:
+// envelope-damped dual-random wiggle (`n1 * 0.8 + n2 * 0.4`) + a mild
+// intraday U-shape. Amplitude is scaled to the visible value range of the
+// sparkline so the jaggedness reads similarly on a narrow 58-px sparkline
+// as it does on the big equity chart. Real anchors stay exactly on their
+// real values — noise peaks mid-pair and fades to zero at each anchor.
 function densifySeries(anchors: number[], sleeve: Sleeve): number[] {
   if (anchors.length < 2) return anchors
   const pairCount = anchors.length - 1
   const subPerPair = Math.max(0, Math.floor((SPARKLINE_DENSITY_TARGET - anchors.length) / pairCount))
   if (subPerPair === 0) return anchors
 
-  // Deterministic LCG seeded per-sleeve — same data → same rendered path.
-  let rngState = SLEEVE_DENSIFY_SEED[sleeve] >>> 0
-  const rand = () => {
-    rngState = (rngState * 1664525 + 1013904223) >>> 0
-    return rngState / 4294967296 - 0.5
-  }
+  const range = Math.max(...anchors) - Math.min(...anchors)
+  const rand = makeSparklineRand(SLEEVE_DENSIFY_SEED[sleeve])
 
-  const min = Math.min(...anchors)
-  const max = Math.max(...anchors)
-  const range = max - min
-  // Noise amplitude: 2% of the value range, or 0.5% of abs(anchor) when
-  // the range is zero (single-day views with duplicated anchors — still
-  // want some visual movement so the line isn't pancake-flat).
-  const fallbackAmp = Math.abs(anchors[0]) * 0.005
-  const noiseAmp = range > 0 ? range * 0.02 : fallbackAmp
+  // Honest render when the sleeve genuinely hasn't moved — densify
+  // visually with straight interpolation, no synthesized wiggle.
+  const flat = range === 0
+  const sigma = flat ? 0 : range * 0.06
 
   const out: number[] = [anchors[0]]
   for (let i = 0; i < pairCount; i++) {
@@ -248,11 +260,17 @@ function densifySeries(anchors: number[], sleeve: Sleeve): number[] {
     const b = anchors[i + 1]
     for (let j = 1; j <= subPerPair; j++) {
       const t = j / (subPerPair + 1)
-      const interp = a + (b - a) * t
-      // Damped noise: peaks mid-pair, fades to zero at either anchor. Keeps
-      // real anchors exactly on their real value.
-      const damp = Math.sin(t * Math.PI)
-      out.push(interp + rand() * noiseAmp * damp)
+      const base = a + (b - a) * t
+      if (flat) {
+        out.push(base)
+        continue
+      }
+      const env = Math.sin(Math.PI * t)
+      const n1 = (rand() - 0.5) * 2
+      const n2 = (rand() - 0.5) * 2
+      const noise = (n1 * 0.8 + n2 * 0.4) * sigma * env
+      const uShape = Math.sin(Math.PI * 2 * t - 0.3) * sigma * 0.35 * env
+      out.push(base + noise + uShape)
     }
     out.push(b)
   }
