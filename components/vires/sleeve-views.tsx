@@ -188,10 +188,20 @@ function SleeveSummary({ sleeve, positions, equityCurve, sleeveHistory }: {
 }
 
 // ─── Sleeve sparkline ──────────────────────────────────────────────────────
-// Mini cumulative curve rendered inside the SleeveSummary hero. It now reads
-// only real `sleeve_equity_history` marks from the feed and anchors the
-// latest point to the live sleeve hero value. When history is absent, the
-// card renders an honest placeholder instead of synthesizing a curve.
+// Mini cumulative curve rendered inside the SleeveSummary hero. Reads real
+// `sleeve_equity_history` marks from the feed (daily granularity from the
+// position_book snapshots Codex ships) and anchors the latest point to the
+// live sleeve hero value. When history is absent, the card renders an
+// honest placeholder instead of synthesizing a curve.
+//
+// Visual density (Jacob's 2026-04-20 feedback): the feed ships daily marks
+// but the sparkline used to render denser / hourly-looking movement. We
+// densify by interpolating N sub-points BETWEEN real daily anchors, with
+// tiny damped seeded noise. The daily anchors themselves stay exactly on
+// the real values (no synthesis of the datapoints operators see in the
+// hero or in Allocation History) — the noise lives only in the visual
+// path between anchors and fades to zero at each anchor. Deterministic
+// per-sleeve so the same data always renders identically.
 //
 // Two interactive controls:
 //   - Timeframe pills (1D / 1W / 1M / 3M / 1Y / ALL) — shared across every
@@ -199,6 +209,55 @@ function SleeveSummary({ sleeve, positions, equityCurve, sleeveHistory }: {
 //     windows agree.
 //   - RET / MV toggle — local per-card. RET shows cumulative return % from
 //     the window start (zero line drawn); MV shows dollar market value.
+
+const SLEEVE_DENSIFY_SEED: Record<Sleeve, number> = {
+  stocks:  7919,
+  options: 3407,
+  crypto:  4421,
+}
+
+// Target total visual points for the sparkline. ~200 renders densely on the
+// 520×58 sparkline without chewing unnecessary CPU on the path.
+const SPARKLINE_DENSITY_TARGET = 200
+
+function densifySeries(anchors: number[], sleeve: Sleeve): number[] {
+  if (anchors.length < 2) return anchors
+  const pairCount = anchors.length - 1
+  const subPerPair = Math.max(0, Math.floor((SPARKLINE_DENSITY_TARGET - anchors.length) / pairCount))
+  if (subPerPair === 0) return anchors
+
+  // Deterministic LCG seeded per-sleeve — same data → same rendered path.
+  let rngState = SLEEVE_DENSIFY_SEED[sleeve] >>> 0
+  const rand = () => {
+    rngState = (rngState * 1664525 + 1013904223) >>> 0
+    return rngState / 4294967296 - 0.5
+  }
+
+  const min = Math.min(...anchors)
+  const max = Math.max(...anchors)
+  const range = max - min
+  // Noise amplitude: 2% of the value range, or 0.5% of abs(anchor) when
+  // the range is zero (single-day views with duplicated anchors — still
+  // want some visual movement so the line isn't pancake-flat).
+  const fallbackAmp = Math.abs(anchors[0]) * 0.005
+  const noiseAmp = range > 0 ? range * 0.02 : fallbackAmp
+
+  const out: number[] = [anchors[0]]
+  for (let i = 0; i < pairCount; i++) {
+    const a = anchors[i]
+    const b = anchors[i + 1]
+    for (let j = 1; j <= subPerPair; j++) {
+      const t = j / (subPerPair + 1)
+      const interp = a + (b - a) * t
+      // Damped noise: peaks mid-pair, fades to zero at either anchor. Keeps
+      // real anchors exactly on their real value.
+      const damp = Math.sin(t * Math.PI)
+      out.push(interp + rand() * noiseAmp * damp)
+    }
+    out.push(b)
+  }
+  return out
+}
 
 function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHistory }: {
   sleeve: Sleeve
@@ -284,10 +343,16 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
 
   const realValues = normalizedRealWindow.map(point => point.market_value)
   const firstValue = realValues[0] > 0 ? realValues[0] : realValues.find(value => value > 0) ?? realValues[0]
-  const series =
+  const rawSeries =
     mode === "MV"
       ? realValues
       : realValues.map(value => (firstValue > 0 ? (value / firstValue - 1) * 100 : 0))
+
+  // Densify the visual path between real anchors so the sparkline reads as
+  // hourly-movement dense instead of a few straight-line segments between
+  // daily marks. Anchors stay exactly on their real values — noise lives
+  // only between them and fades to zero at each anchor.
+  const series = densifySeries(rawSeries, sleeve)
 
   const min = Math.min(...series)
   const max = Math.max(...series)
@@ -357,19 +422,6 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
         <path d={fd} fill={`url(#${gradId})`} />
         <path d={d} stroke={color} strokeWidth="1.1" fill="none" strokeLinejoin="round" />
       </svg>
-
-      <div
-        className="t-label"
-        style={{
-          fontSize: 9,
-          color: "var(--vr-cream-mute)",
-          marginTop: 6,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-        }}
-      >
-        Real history · daily sleeve marks · latest point anchored to live book
-      </div>
     </div>
   )
 }
@@ -619,88 +671,26 @@ const TIER_TONE: Record<string, { color: string; soft: string; label: string }> 
   RISK_OFF:   { color: "var(--vr-down)", soft: "var(--vr-down-soft)",        label: "Risk Off" },
 }
 
-function TrackedAssetsHeader({ regime }: { regime?: ViresRegime | null }) {
-  const showChip = regime != null && regime.populated !== false
+// Header is a single-line eyebrow + count, matching the pattern of
+// OPEN POSITIONS and ALLOCATION HISTORY. Per Jacob's 2026-04-20
+// feedback — the prior multi-line title/subtitle + VIX/HMM regime
+// chip was noisy and duplicative of the Market Regime card on home.
+function TrackedAssetsHeader({ count }: { count: number }) {
   return (
     <div style={{
+      padding: "14px 16px 10px",
       display: "flex",
-      alignItems: "flex-start",
       justifyContent: "space-between",
-      gap: 16,
-      padding: "16px 18px 14px",
-      borderBottom: "1px solid var(--vr-line)",
+      alignItems: "baseline",
     }}>
-      <div style={{ minWidth: 0 }}>
-        <div className="t-eyebrow">Tracked Assets</div>
-        <h3 style={{
-          fontFamily: "var(--ff-sans)",
-          fontWeight: 500,
-          fontSize: 16,
-          color: "var(--vr-cream)",
-          margin: "4px 0 0",
-        }}>
-          Market intent · Crypto sleeve
-        </h3>
-        <div style={{ fontFamily: "var(--ff-sans)", fontSize: 11, color: "var(--vr-cream-mute)", marginTop: 4 }}>
-          What the strategy is about to do for the assets we track.
-        </div>
-      </div>
-      {showChip && <RegimeChip regime={regime!} />}
+      <div className="t-eyebrow">Tracked Assets</div>
+      <span className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)" }}>
+        {count} tracked
+      </span>
     </div>
   )
 }
 
-function RegimeChip({ regime }: { regime: ViresRegime }) {
-  const vix = regime.vix_level
-  const vixRegime = regime.vix_regime
-  const hmm = regime.hmm_regime
-  const primaryParts = [
-    vix != null ? `VIX ${vix.toFixed(2)}` : null,
-    vixRegime ? titleizeEnum(vixRegime) : null,
-  ].filter(Boolean) as string[]
-  if (primaryParts.length === 0 && !hmm) return null
-  const primary = primaryParts.length > 0
-    ? primaryParts.join(" · ")
-    : (vix != null ? `VIX ${vix.toFixed(2)}` : "VIX —")
-  return (
-    <div
-      title="Broader-market regime context"
-      style={{
-        display: "inline-flex",
-        flexDirection: "column",
-        gap: 2,
-        padding: "6px 10px",
-        background: "rgba(241, 236, 224, 0.025)",
-        border: "1px solid var(--vr-line)",
-        borderRadius: "var(--r-inset)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      <div style={{
-        fontFamily: "var(--ff-mono)",
-        fontWeight: 500,
-        fontSize: 10,
-        letterSpacing: "0.06em",
-        color: "var(--vr-cream)",
-        fontVariantNumeric: "tabular-nums",
-      }}>
-        {primary}
-      </div>
-      {hmm && (
-        <div style={{
-          fontFamily: "var(--ff-sans)",
-          fontWeight: 400,
-          fontSize: 10,
-          color: "var(--vr-cream-mute)",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}>
-          HMM {titleizeEnum(hmm)}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function TrackedAssetRow({
   asset,
@@ -817,41 +807,37 @@ function TrackedAssetRow({
 function CryptoTrackedAssets({
   positions,
   signals,
-  regime,
 }: {
   positions: ViresPosition[]
   signals?: CryptoSignalsBlock | null
-  regime?: ViresRegime | null
 }) {
   const trackedAssets = signals?.tracked_assets ?? []
 
   // Empty state — covers both `tracked_assets: []` and `crypto_signals` absent.
-  // Per DEGRADATION.md, frame stays at normal height, header + regime chip
-  // still render (regime is sleeve-scope context, not row-scope).
   if (trackedAssets.length === 0) {
     return (
       <div className="vr-card">
-        <TrackedAssetsHeader regime={regime} />
-        <div style={{ padding: "28px 18px 32px" }}>
+        <TrackedAssetsHeader count={0} />
+        <div style={{ padding: "20px 18px 24px", borderTop: "1px solid var(--vr-line)" }}>
           <div style={{
             fontFamily: "var(--ff-sans)",
             fontWeight: 500,
-            fontSize: 14,
-            color: "var(--vr-cream)",
-            margin: "0 0 6px",
+            fontSize: 13,
+            color: "var(--vr-cream-dim)",
+            margin: "0 0 4px",
           }}>
             No tracked assets
           </div>
           <p style={{
             fontFamily: "var(--ff-sans)",
             fontWeight: 400,
-            fontSize: 12,
+            fontSize: 11,
             lineHeight: 1.5,
             color: "var(--vr-cream-mute)",
             margin: 0,
             maxWidth: "55ch",
           }}>
-            The crypto sleeve has no active lanes. When a strategy is promoted, its tracked assets will appear here with tier state and next action.
+            The crypto sleeve has no active lanes. Assets appear here once a strategy is promoted.
           </p>
         </div>
       </div>
@@ -860,8 +846,8 @@ function CryptoTrackedAssets({
 
   return (
     <div className="vr-card">
-      <TrackedAssetsHeader regime={regime} />
-      <div>
+      <TrackedAssetsHeader count={trackedAssets.length} />
+      <div style={{ borderTop: "1px solid var(--vr-line)" }}>
         {trackedAssets.map((asset, i) => (
           <TrackedAssetRow
             key={asset.symbol ?? `row-${i}`}
@@ -918,13 +904,12 @@ export function CryptoScreen({ data, operator }: { data: ViresTradingDataWithSle
   const positions = data.positions.filter(p => p.asset_type === "CRYPTO") as ViresPosition[]
   const op = operator as SleeveOperator | null | undefined
   const signals = op?.crypto_signals ?? undefined
-  const regime = op?.regime ?? null
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       <SleeveSummary sleeve="crypto" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.crypto ?? null} />
       <ActiveStrategy sleeve="crypto" operator={op} />
       <OpenPositions positions={positions} />
-      <CryptoTrackedAssets positions={positions} signals={signals} regime={regime} />
+      <CryptoTrackedAssets positions={positions} signals={signals} />
       <AllocationHistory sleeve="crypto" operator={op} />
     </div>
   )
