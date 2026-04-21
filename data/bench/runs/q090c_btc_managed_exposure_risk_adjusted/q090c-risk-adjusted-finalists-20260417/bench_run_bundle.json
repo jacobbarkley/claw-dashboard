@@ -1,7 +1,7 @@
 {
   "run_id": "q090c-risk-adjusted-finalists-20260417",
   "bench_id": "q090c_btc_managed_exposure_risk_adjusted",
-  "generated_at": "2026-04-20T23:57:46.807037-04:00",
+  "generated_at": "2026-04-21T00:58:34.804866-04:00",
   "status": "SUCCEEDED",
   "spec_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
   "spec_hash": null,

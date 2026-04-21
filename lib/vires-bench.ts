@@ -223,16 +223,15 @@ function buildCryptoProbeCandidates(report: JsonObject): JsonObject[] {
       label: str(era.label) ?? str(era.era_id) ?? "Era",
       sharpe: num(era.summary?.sharpe_ratio),
       ret: num(era.summary?.net_total_compounded_return_pct),
-      pass: (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
-      // Crypto era reports don't currently carry an explicit verdict
-      // (only the stock report's era.row does). Propagate trade_count so
-      // the EraStripe drill-in can surface sample size, but leave verdict
-      // null — synthesizing a verdict here would invent signal upstream
-      // hasn't shipped.
-      verdict: null,
-      verdict_reason: null,
+      pass: str(era.verdict) === "PASS"
+        ? true
+        : str(era.verdict)
+          ? false
+          : (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+      verdict: str(era.verdict),
+      verdict_reason: str(era.verdict_reason),
       total_trades: num(era.summary?.trade_count),
-      evaluated_trading_days: null,
+      evaluated_trading_days: num(era.evaluated_trading_days),
     }))
 
     return {
@@ -608,7 +607,15 @@ function buildCryptoManagedPassport(
     label: str(era.label) ?? str(era.era_id) ?? "Era",
     sharpe: num(era.summary?.sharpe_ratio),
     ret: num(era.summary?.net_total_compounded_return_pct),
-    pass: (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+    pass: str(era.verdict) === "PASS"
+      ? true
+      : str(era.verdict)
+        ? false
+        : (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+    verdict: str(era.verdict),
+    verdict_reason: str(era.verdict_reason),
+    total_trades: num(era.summary?.trade_count),
+    evaluated_trading_days: num(era.evaluated_trading_days),
   }))
   const minEraSharpe = eraRows.length
     ? Math.min(...eraRows.map(era => era.sharpe ?? Infinity).filter(value => Number.isFinite(value)))
@@ -725,7 +732,15 @@ function buildCryptoBenchOnlyPassport(spec: JsonObject | null, report: JsonObjec
     label: str(era.label) ?? str(era.era_id) ?? "Era",
     sharpe: num(era.summary?.sharpe_ratio),
     ret: num(era.summary?.net_total_compounded_return_pct),
-    pass: (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+    pass: str(era.verdict) === "PASS"
+      ? true
+      : str(era.verdict)
+        ? false
+        : (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+    verdict: str(era.verdict),
+    verdict_reason: str(era.verdict_reason),
+    total_trades: num(era.summary?.trade_count),
+    evaluated_trading_days: num(era.evaluated_trading_days),
   }))
   const minEraSharpe = eraRows.length
     ? Math.min(...eraRows.map(era => era.sharpe ?? Infinity).filter(value => Number.isFinite(value)))

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-20T23:58:00.332974-04:00",
+  "generated_at": "2026-04-21T00:59:08.236265-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -187,7 +187,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9568,
-      "generated_at": "2026-04-20T23:57:46.807037-04:00"
+      "generated_at": "2026-04-21T00:58:34.804866-04:00"
     },
     {
       "bench_id": "q090c_btc_managed_exposure_upside_capture",
@@ -204,7 +204,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9134,
-      "generated_at": "2026-04-20T23:57:46.866042-04:00"
+      "generated_at": "2026-04-21T00:58:44.632806-04:00"
     },
     {
       "bench_id": "q090d_btc_managed_exposure_persistent_floor",
@@ -221,7 +221,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9352,
-      "generated_at": "2026-04-20T23:53:49.717166-04:00"
+      "generated_at": "2026-04-21T00:58:59.570254-04:00"
     }
   ],
   "specs": [
