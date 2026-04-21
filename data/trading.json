@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T16:00:11.828215+00:00",
+  "generated_at": "2026-04-21T16:15:11.345089+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85472.06,
@@ -1600,11 +1600,29 @@
         "short_strike": 37.5,
         "long_strike": 32.5,
         "spread_width": 5.0,
-        "net_credit": 1.75,
-        "credit_width_ratio": 0.35,
-        "annualized_yield_pct": 608.3,
-        "max_loss_per_contract": 325.0,
+        "net_credit": 1.8,
+        "credit_width_ratio": 0.36,
+        "annualized_yield_pct": 625.7,
+        "max_loss_per_contract": 320.0,
         "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "COO",
+        "price": 71.21,
+        "sector": "Healthcare",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 85.0,
+        "long_strike": 80.0,
+        "spread_width": 5.0,
+        "net_credit": 1.5,
+        "credit_width_ratio": 0.3,
+        "annualized_yield_pct": 521.4,
+        "max_loss_per_contract": 350.0,
+        "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1631,7 +1649,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
