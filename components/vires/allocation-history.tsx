@@ -73,6 +73,47 @@ const SLEEVE_LABELS: Record<Sleeve, string> = {
   crypto: "Crypto sleeve",
 }
 
+// Per-symbol color fallback palette. The feed sometimes ships `color: null`
+// for every symbol, which would collapse the Currently bar to a single hue.
+// These defaults guarantee distinct, semantic colors even when the feed is
+// color-silent. The specific hex values mirror the design's data.js so known
+// symbols keep their established identity across the app.
+const CASH_COLOR = "#5f6a7a" // slate — also used for SGOV (T-bill cash-equiv)
+const KNOWN_SYMBOL_COLORS: Record<string, string> = {
+  // Stocks (from design's data.js)
+  NVDA: "#c8a968", // gold
+  META: "#8fb4cf", // cool blue
+  AVGO: "#a89cc8", // muted violet
+  AAPL: "#9ec4a0", // sage
+  COST: "#d9b48c", // peach
+  LLY:  "#c89090", // rose
+  SGOV: CASH_COLOR,
+  // Crypto
+  BTCUSD: "#c8a968", // gold (crypto sleeve accent)
+  ETHUSD: "#8fa6d4", // slate-blue
+  SOLUSD: "#b69ad4", // violet
+}
+// Fallback deterministic palette for symbols not in the known list. Each hue
+// is visually distinct from the known list and from its neighbors here.
+const FALLBACK_PALETTE = [
+  "#8fc9c0", // teal
+  "#d9a38c", // coral
+  "#b4a4d9", // heather
+  "#c2d48c", // lime
+  "#d98cb4", // pink
+  "#8cb4d9", // azure
+  "#d4c28c", // sand
+  "#9ccfb4", // mint
+]
+function symbolHash(sym: string): number {
+  let h = 0
+  for (let i = 0; i < sym.length; i++) h = (h * 31 + sym.charCodeAt(i)) >>> 0
+  return h
+}
+function fallbackColorFor(sym: string): string {
+  return FALLBACK_PALETTE[symbolHash(sym) % FALLBACK_PALETTE.length]
+}
+
 // ─── Header ─────────────────────────────────────────────────────────────────
 
 function AllocationHeader({
@@ -128,10 +169,18 @@ function CurrentlyPanel({ data }: { data: AllocationHistorySleeve }) {
   const last = series[series.length - 1]
   if (!last) return null
 
+  // Color resolution order:
+  //   1. explicit color from the feed (when Codex ships one)
+  //   2. known-symbol palette (NVDA gold, META blue, etc.)
+  //   3. deterministic hash → fallback palette
+  // CASH and SGOV always use the slate cash color so they read as
+  // "parked capital" rather than as another position.
   const symbolColors = new Map((data.symbols ?? []).map(s => [s.sym, s.color ?? null]))
   const colorFor = (sym: string): string => {
-    if (sym === "CASH") return "#5f6a7a"
-    return symbolColors.get(sym) ?? "#666"
+    if (sym === "CASH" || sym === "SGOV") return CASH_COLOR
+    const fromFeed = symbolColors.get(sym)
+    if (fromFeed) return fromFeed
+    return KNOWN_SYMBOL_COLORS[sym] ?? fallbackColorFor(sym)
   }
 
   const entries: Array<[string, number]> = Object.entries(last.weights ?? {})
