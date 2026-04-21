@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T20:30:11.193516+00:00",
+  "generated_at": "2026-04-21T20:41:12.290685+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85465.25,
@@ -87,9 +87,9 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 61,
+    "total_trades": 62,
     "closed_trades": 19,
-    "open_trades": 42,
+    "open_trades": 43,
     "win_rate_pct": 15.79,
     "profit_factor": 0.031,
     "expectancy": -25.91,
@@ -1582,24 +1582,6 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "COO",
-        "price": 71.21,
-        "sector": "Healthcare",
-        "expiry": "2026-05-15",
-        "dte": 24,
-        "short_strike": 75.0,
-        "long_strike": 70.0,
-        "spread_width": 5.0,
-        "net_credit": 2.9,
-        "credit_width_ratio": 0.58,
-        "annualized_yield_pct": 1008.1,
-        "max_loss_per_contract": 210.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "MKC",
         "price": 53.71,
         "sector": "Consumer Defensive",
@@ -1608,10 +1590,10 @@
         "short_strike": 55.0,
         "long_strike": 50.0,
         "spread_width": 5.0,
-        "net_credit": 2.4,
-        "credit_width_ratio": 0.48,
-        "annualized_yield_pct": 834.3,
-        "max_loss_per_contract": 260.0,
+        "net_credit": 2.45,
+        "credit_width_ratio": 0.49,
+        "annualized_yield_pct": 851.7,
+        "max_loss_per_contract": 255.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1639,7 +1621,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
