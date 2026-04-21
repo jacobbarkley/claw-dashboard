@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T17:15:11.859821+00:00",
+  "generated_at": "2026-04-21T17:30:11.971014+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85465.25,
@@ -1592,6 +1592,24 @@
         "selected": false
       },
       {
+        "symbol": "CF",
+        "price": 121.32,
+        "sector": "Basic Materials",
+        "expiry": "2026-05-15",
+        "dte": 24,
+        "short_strike": 125.0,
+        "long_strike": 120.0,
+        "spread_width": 5.0,
+        "net_credit": 2.0,
+        "credit_width_ratio": 0.4,
+        "annualized_yield_pct": 695.2,
+        "max_loss_per_contract": 300.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "COO",
         "price": 71.21,
         "sector": "Healthcare",
@@ -1631,7 +1649,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
