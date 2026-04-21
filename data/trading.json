@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-21T13:45:10.814147+00:00",
+  "generated_at": "2026-04-21T14:00:12.514303+00:00",
   "as_of_date": "2026-04-21",
   "account": {
     "equity": 85503.73,
@@ -1561,30 +1561,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "SMCI",
-        "price": 25.26,
-        "sector": "Technology",
-        "expiry": "2026-05-15",
-        "dte": 24,
-        "short_strike": 70.0,
-        "long_strike": 65.0,
-        "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
