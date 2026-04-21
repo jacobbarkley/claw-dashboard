@@ -634,6 +634,10 @@ def validate_output_contract(output: dict) -> None:
             if key not in item:
                 raise RuntimeError(f'operator feed contract violation: strategy_universe.symbols[].{key} missing')
 
+    sleeve_equity_history = output.get('sleeve_equity_history')
+    if not isinstance(sleeve_equity_history, dict):
+        raise RuntimeError('operator feed contract violation: sleeve_equity_history missing')
+
     operator = output.get('operator', {})
     if not isinstance(operator, dict):
         raise RuntimeError('operator feed contract violation: operator missing')
@@ -655,6 +659,8 @@ def validate_output_contract(output: dict) -> None:
         raise RuntimeError('operator feed contract violation: operator.order_blotter missing')
 
     for sleeve in ('stocks', 'options', 'crypto'):
+        if sleeve not in sleeve_equity_history:
+            raise RuntimeError(f'operator feed contract violation: sleeve_equity_history.{sleeve} missing')
         if sleeve not in allocation_history:
             raise RuntimeError(f'operator feed contract violation: operator.allocation_history.{sleeve} missing')
         if sleeve not in order_blotter:
@@ -755,6 +761,149 @@ def load_equity_open_dates() -> dict[str, str]:
         if symbol and opened_date:
             out[symbol] = opened_date
     return out
+
+
+def iter_position_book_paths() -> list[Path]:
+    root = WORKSPACE / 'state/rebuild'
+    paths = list(root.glob('*/*/position_book.json'))
+    latest_path = REBUILD_LATEST / 'position_book.json'
+    if latest_path.exists():
+        paths.append(latest_path)
+    paths.sort()
+    return paths
+
+
+def collect_latest_position_book_snapshots() -> dict[str, dict]:
+    latest_by_date: dict[str, tuple[float, dict]] = {}
+    for path in iter_position_book_paths():
+        payload = load(path)
+        trading_date = str(payload.get('trading_date') or '')[:10]
+        if not trading_date:
+            continue
+        try:
+            stamp = path.stat().st_mtime
+        except OSError:
+            stamp = 0.0
+        current = latest_by_date.get(trading_date)
+        if current is None or stamp >= current[0]:
+            latest_by_date[trading_date] = (stamp, payload)
+    return {
+        trading_date: payload
+        for trading_date, (_, payload) in sorted(latest_by_date.items())
+    }
+
+
+def classify_sleeve_from_asset_type(asset_type: Optional[str]) -> Optional[str]:
+    token = str(asset_type or '').upper()
+    if token == 'EQUITY':
+        return 'stocks'
+    if token == 'CRYPTO':
+        return 'crypto'
+    if token in {'OPTION', 'OPTIONS'}:
+        return 'options'
+    return None
+
+
+def build_sleeve_equity_history(
+    positions: list[dict],
+    as_of_date: str,
+) -> dict[str, dict]:
+    current_totals = {'stocks': 0.0, 'crypto': 0.0, 'options': 0.0}
+    for item in positions:
+        sleeve = classify_sleeve_from_asset_type(item.get('asset_type'))
+        if sleeve is None:
+            continue
+        current_totals[sleeve] += max(safe_float(item.get('market_value'), 0.0) or 0.0, 0.0)
+
+    snapshots = collect_latest_position_book_snapshots()
+    raw_series: dict[str, list[dict]] = {'stocks': [], 'crypto': [], 'options': []}
+
+    for trading_date, payload in snapshots.items():
+        totals = {'stocks': 0.0, 'crypto': 0.0, 'options': 0.0}
+        for entry in payload.get('entries', []):
+            if not isinstance(entry, dict) or entry.get('status') != 'OPEN':
+                continue
+            sleeve = classify_sleeve_from_asset_type(entry.get('asset_type'))
+            if sleeve is None:
+                continue
+            totals[sleeve] += max(safe_float(entry.get('market_value_usd'), 0.0) or 0.0, 0.0)
+        for sleeve, total in totals.items():
+            raw_series[sleeve].append({
+                'date': trading_date,
+                'market_value': round(total, 2),
+            })
+
+    def finalize_sleeve(
+        *,
+        sleeve: str,
+        sleeve_label: str,
+        benchmark_symbol: str,
+        unavailable_reason: str,
+    ) -> dict:
+        series = raw_series[sleeve]
+        has_history = bool(series)
+        current_total = round(current_totals[sleeve], 2)
+
+        if not has_history:
+            return {
+                'status': 'unavailable',
+                'source': 'position_book_daily_latest',
+                'sleeveLabel': sleeve_label,
+                'benchmark_symbol': benchmark_symbol,
+                'reason': (
+                    unavailable_reason
+                    if current_total <= 0
+                    else 'Live sleeve value exists, but no daily ledger snapshot has been captured yet.'
+                ),
+                'series': [],
+            }
+
+        normalized = [dict(point) for point in series]
+        if normalized and normalized[-1]['date'] == as_of_date:
+            normalized[-1]['market_value'] = current_total
+        elif normalized:
+            normalized.append({
+                'date': as_of_date,
+                'market_value': current_total,
+            })
+        else:
+            normalized = [{
+                'date': as_of_date,
+                'market_value': current_total,
+            }]
+
+        if len(normalized) == 1:
+            normalized = [dict(normalized[0]), dict(normalized[0])]
+
+        return {
+            'status': 'available',
+            'source': 'position_book_daily_latest',
+            'sleeveLabel': sleeve_label,
+            'benchmark_symbol': benchmark_symbol,
+            'reason': None,
+            'series': normalized,
+        }
+
+    return {
+        'stocks': finalize_sleeve(
+            sleeve='stocks',
+            sleeve_label='Stocks sleeve',
+            benchmark_symbol='SPY',
+            unavailable_reason='No equity sleeve history has been captured yet.',
+        ),
+        'crypto': finalize_sleeve(
+            sleeve='crypto',
+            sleeve_label='Crypto sleeve',
+            benchmark_symbol='BTC/USD',
+            unavailable_reason='No crypto sleeve history has been captured yet.',
+        ),
+        'options': finalize_sleeve(
+            sleeve='options',
+            sleeve_label='Options sleeve',
+            benchmark_symbol='SPY',
+            unavailable_reason='No option sleeve history exists yet. This lights up after the first live options position.',
+        ),
+    }
 
 
 def collect_order_blotter_events(
@@ -1599,6 +1748,7 @@ def main():
     positions = build_positions(market, legacy_positions, broker_snapshot)
     allocation_history = build_allocation_history(positions, promoted_manifests, crypto_execution_plan, as_of_date)
     order_blotter = build_order_blotter(positions, crypto_execution_plan, crypto_execution_report)
+    sleeve_equity_history = build_sleeve_equity_history(positions, as_of_date)
     held_symbols = {item.get('symbol') for item in positions if item.get('symbol')}
     output = {
         'contract_version': '1',
@@ -1611,6 +1761,7 @@ def main():
         'kpis': build_kpis(legacy_kpis, len(positions)),
         'daily_performance': build_daily_performance(),
         'equity_curve': build_equity_curve(legacy_positions),
+        'sleeve_equity_history': sleeve_equity_history,
         'strategy_universe': build_strategy_universe(market, active_strategy, positions, research_dataset),
         'watchlist': build_watchlist(pre_gate, trade_plan, thesis_set, held_symbols),
         'exit_candidates': [],

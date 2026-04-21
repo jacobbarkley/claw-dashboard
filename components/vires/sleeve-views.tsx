@@ -107,12 +107,31 @@ interface CryptoSignalsOperator {
   regime?: ViresRegime | null
 }
 
+interface SleeveEquityHistoryPoint {
+  date: string
+  market_value: number
+}
+
+interface SleeveEquityHistoryPayload {
+  status?: "available" | "unavailable" | string | null
+  source?: string | null
+  sleeveLabel?: string | null
+  benchmark_symbol?: string | null
+  reason?: string | null
+  series?: SleeveEquityHistoryPoint[] | null
+}
+
+type ViresTradingDataWithSleeveHistory = ViresTradingData & {
+  sleeve_equity_history?: Record<string, SleeveEquityHistoryPayload | null | undefined>
+}
+
 // ─── Sleeve hero ────────────────────────────────────────────────────────────
 
-function SleeveSummary({ sleeve, positions, equityCurve }: {
+function SleeveSummary({ sleeve, positions, equityCurve, sleeveHistory }: {
   sleeve: Sleeve
   positions: ViresPosition[]
   equityCurve?: Array<{ date: string; equity: number }>
+  sleeveHistory?: SleeveEquityHistoryPayload | null
 }) {
   const cfg = {
     stocks:  { c: "var(--vr-sleeve-stocks)",  title: "Stocks",  copy: "Equity sleeve · regime-aware momentum" },
@@ -160,19 +179,17 @@ function SleeveSummary({ sleeve, positions, equityCurve }: {
         currentValue={total}
         color={cfg.c}
         equityCurve={equityCurve ?? []}
+        sleeveHistory={sleeveHistory ?? null}
       />
     </div>
   )
 }
 
 // ─── Sleeve sparkline ──────────────────────────────────────────────────────
-// Mini cumulative curve rendered inside the SleeveSummary hero. Until Codex
-// ships `sleeve_equity_history` (primer ask #8), this is a MODELED curve
-// derived deterministically from the account's daily equity_curve with
-// per-sleeve seeded noise + amplification. Scales the final point exactly
-// to the sleeve's current market value so the chart never contradicts the
-// big number above it. Options (or any sleeve with $0 deployed) renders a
-// flat dashed "awaiting promotion" line instead of pretending.
+// Mini cumulative curve rendered inside the SleeveSummary hero. It now reads
+// only real `sleeve_equity_history` marks from the feed and anchors the
+// latest point to the live sleeve hero value. When history is absent, the
+// card renders an honest placeholder instead of synthesizing a curve.
 //
 // Two interactive controls:
 //   - Timeframe pills (1D / 1W / 1M / 3M / 1Y / ALL) — shared across every
@@ -181,25 +198,30 @@ function SleeveSummary({ sleeve, positions, equityCurve }: {
 //   - RET / MV toggle — local per-card. RET shows cumulative return % from
 //     the window start (zero line drawn); MV shows dollar market value.
 
-const SLEEVE_SEED: Record<Sleeve, { seed: number; amp: number }> = {
-  stocks:  { seed: 7919, amp: 1.05 },
-  options: { seed: 3407, amp: 1.10 },
-  crypto:  { seed: 4421, amp: 2.10 },
-}
-
-function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
+function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHistory }: {
   sleeve: Sleeve
   currentValue: number
   color: string
   equityCurve: Array<{ date: string; equity: number }>
+  sleeveHistory?: SleeveEquityHistoryPayload | null
 }) {
   const W = 520
   const H = 58
   const { tf } = useSharedTimeframe()
   const [mode, setMode] = useState<"RET" | "MV">("MV")
+  const tfMeta = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
+  const rawHistory =
+    sleeveHistory?.status === "available" && Array.isArray(sleeveHistory.series)
+      ? sleeveHistory.series
+          .filter((point): point is SleeveEquityHistoryPoint =>
+            !!point && typeof point.date === "string" && typeof point.market_value === "number"
+          )
+          .map(point => ({ ...point }))
+      : []
+  const hasRealHistory = rawHistory.length > 0
 
-  if (currentValue <= 0) {
-    // Awaiting-promotion flat line — honest about having no data.
+  if (!hasRealHistory) {
+    const copy = currentValue > 0 ? "LIVE VALUE ONLY · HISTORY PENDING" : "NO DATA · AWAITING PROMOTION"
     const midY = H / 2
     return (
       <div style={{ marginTop: 18, position: "relative" }}>
@@ -221,66 +243,49 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
             letterSpacing: "0.16em",
           }}
         >
-          NO DATA · AWAITING PROMOTION
+          {copy}
         </div>
       </div>
     )
   }
 
-  if (equityCurve.length < 2) return null
+  if (hasRealHistory) {
+    if (rawHistory[rawHistory.length - 1].market_value !== currentValue) {
+      rawHistory[rawHistory.length - 1] = {
+        ...rawHistory[rawHistory.length - 1],
+        market_value: currentValue,
+      }
+    }
+    if (rawHistory.length === 1) {
+      rawHistory.push({ ...rawHistory[0] })
+    }
+  }
 
-  // Slice the account curve by the shared timeframe. For ALL use the whole
-  // series; otherwise take the last N days. We keep at least 2 points so
-  // the walk has a span to draw against.
-  const tfMeta = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
-  const window =
+  if (!hasRealHistory && equityCurve.length < 2) return null
+
+  const realWindowBase =
     tfMeta.days === Infinity
-      ? equityCurve
-      : equityCurve.slice(-Math.max(2, Math.min(equityCurve.length, tfMeta.days + 1)))
+      ? rawHistory
+      : rawHistory.slice(-Math.max(2, Math.min(rawHistory.length, tfMeta.days + 1)))
+  const realWindow =
+    mode === "RET"
+      ? (() => {
+          const firstPositive = realWindowBase.findIndex(point => point.market_value > 0)
+          if (firstPositive > 0) return realWindowBase.slice(firstPositive)
+          return realWindowBase
+        })()
+      : realWindowBase
+  const normalizedRealWindow =
+    realWindow.length === 1
+      ? [realWindow[0], realWindow[0]]
+      : realWindow
 
-  // Generate a deterministic noise series from the windowed account curve.
-  // Seed incorporates the TF key so changing timeframes reshuffles noise
-  // (otherwise every window draws the same wobble at different scales).
-  const { seed, amp } = SLEEVE_SEED[sleeve]
-  let s = (seed ^ tf.charCodeAt(0) * 131) >>> 0
-  const rand = () => {
-    s = (s * 9301 + 49297) % 233280
-    return s / 233280 - 0.5
-  }
-
-  const accountStart = window[0].equity
-  const accountEnd = window[window.length - 1].equity
-  const accountReturn = accountEnd / Math.max(accountStart, 1)
-  // Sleeve's synthetic return magnifies the account return by amp, then
-  // walks with seeded noise around the straight line between start and end.
-  const sleeveEndRatio = Math.pow(accountReturn, amp)
-  const sleeveStart = currentValue / Math.max(sleeveEndRatio, 0.0001)
-
-  // Densify to ~180 points so the sparkline reads as live as the main
-  // equity chart's intraday upsampling — daily anchors alone produce a
-  // straight 7-segment line on 1W which feels flat compared to the hero
-  // chart. Anchor noise around the straight start→end line so the final
-  // point still locks to currentValue.
-  const targetPoints = Math.max(window.length, 180)
-  const walk: number[] = []
-  for (let i = 0; i < targetPoints; i++) {
-    const t = i / (targetPoints - 1)
-    const target = sleeveStart * (1 + (sleeveEndRatio - 1) * t)
-    // Sine envelope mutes noise at both ends so the curve smoothly
-    // resolves at the anchor values; mid-window has the most jitter.
-    const env = Math.sin(Math.PI * t)
-    const noise = rand() * 0.014 * target * env
-    walk.push(target + noise)
-  }
-  // Force last point to match currentValue (no drift).
-  walk[walk.length - 1] = currentValue
-
-  // Convert to display series. MV = dollars. RET = cumulative return %
-  // from the window start.
+  const realValues = normalizedRealWindow.map(point => point.market_value)
+  const firstValue = realValues[0] > 0 ? realValues[0] : realValues.find(value => value > 0) ?? realValues[0]
   const series =
     mode === "MV"
-      ? walk
-      : walk.map(v => (v / walk[0] - 1) * 100)
+      ? realValues
+      : realValues.map(value => (firstValue > 0 ? (value / firstValue - 1) * 100 : 0))
 
   const min = Math.min(...series)
   const max = Math.max(...series)
@@ -303,8 +308,10 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
   const zeroY = zeroInRange ? H - ((0 - minP) / range) * H : null
 
   const lastValue = series[series.length - 1]
-  const firstValue = series[0]
-  const periodPct = mode === "MV" ? ((lastValue - firstValue) / firstValue) * 100 : lastValue
+  const firstPositiveValue = mode === "MV" ? series.find(value => value > 0) ?? series[0] : series[0]
+  const periodPct = mode === "MV" && firstPositiveValue > 0
+    ? ((lastValue - firstPositiveValue) / firstPositiveValue) * 100
+    : lastValue
 
   return (
     <div style={{ marginTop: 18 }}>
@@ -359,7 +366,7 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve }: {
           textTransform: "uppercase",
         }}
       >
-        Modeled · final point matches current value · real history lands with primer 5
+        Real history · daily sleeve marks · latest point anchored to live book
       </div>
     </div>
   )
@@ -1027,7 +1034,7 @@ function CryptoTrackedAssets({
 type SleeveOperator = ActiveStrategyOperator & AllocationHistoryOperator & CryptoSignalsOperator
 
 export function StocksScreen({ data, rules, operator }: {
-  data: ViresTradingData & { strategy_universe?: ViresStrategyUniverse | null }
+  data: ViresTradingDataWithSleeveHistory & { strategy_universe?: ViresStrategyUniverse | null }
   rules?: StrategyRules
   operator?: unknown
 }) {
@@ -1036,7 +1043,7 @@ export function StocksScreen({ data, rules, operator }: {
   const op = operator as SleeveOperator | null | undefined
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="stocks" positions={positions} equityCurve={data.equity_curve} />
+      <SleeveSummary sleeve="stocks" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.stocks ?? null} />
       <ActiveStrategy sleeve="stocks" operator={op} />
       <OpenPositions positions={positions} />
       <StrategyUniverse universe={data.strategy_universe ?? null} positions={positions} rules={effectiveRules} />
@@ -1045,12 +1052,12 @@ export function StocksScreen({ data, rules, operator }: {
   )
 }
 
-export function OptionsScreen({ data, operator }: { data: ViresTradingData; operator?: unknown }) {
+export function OptionsScreen({ data, operator }: { data: ViresTradingDataWithSleeveHistory; operator?: unknown }) {
   const positions = data.positions.filter(p => p.asset_type === "OPTION")
   const op = operator as SleeveOperator | null | undefined
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="options" positions={positions as ViresPosition[]} equityCurve={data.equity_curve} />
+      <SleeveSummary sleeve="options" positions={positions as ViresPosition[]} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.options ?? null} />
       <ActiveStrategy sleeve="options" operator={op} />
       <OpenPositions positions={positions as ViresPosition[]} />
       <div className="vr-card" style={{ padding: 18 }}>
@@ -1065,14 +1072,14 @@ export function OptionsScreen({ data, operator }: { data: ViresTradingData; oper
   )
 }
 
-export function CryptoScreen({ data, operator }: { data: ViresTradingData; operator?: unknown }) {
+export function CryptoScreen({ data, operator }: { data: ViresTradingDataWithSleeveHistory; operator?: unknown }) {
   const positions = data.positions.filter(p => p.asset_type === "CRYPTO") as ViresPosition[]
   const op = operator as SleeveOperator | null | undefined
   const signals = op?.crypto_signals ?? undefined
   const regime = op?.regime ?? null
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="crypto" positions={positions} equityCurve={data.equity_curve} />
+      <SleeveSummary sleeve="crypto" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.crypto ?? null} />
       <ActiveStrategy sleeve="crypto" operator={op} />
       <OpenPositions positions={positions} />
       <CryptoTSMOM signals={signals?.tsmom} />
