@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-21T00:23:09.259844+00:00",
+  "generated_at": "2026-04-21T02:32:58.566688+00:00",
   "as_of_date": "2026-04-20",
   "source_context": {
     "mode": "canonical",
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-21T00:23:09.259893+00:00"
+    "audit_written_at": "2026-04-21T02:32:58.566744+00:00"
   },
   "kpis": {
     "total_trades": 61,
@@ -1609,22 +1609,22 @@
       },
       "managed_exposure": {
         "status": "PROMOTED",
-        "manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
-        "title": "BTC Managed Exposure Daily Core Paper v1",
+        "manifest_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+        "title": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
         "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
         "cadence": "DAILY",
         "current_state": "RISK_OFF",
-        "current_exposure_pct": 0.0,
+        "current_exposure_pct": 10.0,
         "target_notional_usd": 854.6944,
         "action": "BUY",
         "last_report_status": "SUBMITTED",
         "performance_summary": {
-          "total_return_pct": 8409.8946,
+          "total_return_pct": 8693.515,
           "benchmark_return_pct": 17172.3116,
-          "excess_return_pct": -8762.417,
-          "sharpe_ratio": 1.1901,
-          "calmar_ratio": 0.9245,
-          "max_drawdown_pct": 58.4016,
+          "excess_return_pct": -8478.7966,
+          "sharpe_ratio": 1.1948,
+          "calmar_ratio": 0.8967,
+          "max_drawdown_pct": 60.7584,
           "profit_factor": null,
           "win_rate_pct": null,
           "trade_count": 83,
@@ -1648,7 +1648,7 @@
           {
             "state": "RISK_OFF",
             "label": "Tier 3",
-            "exposure_pct": 0.0,
+            "exposure_pct": 10.0,
             "note": "Risk-off",
             "active": true
           }
@@ -1662,7 +1662,7 @@
           "lane": "CORE",
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
-          "target_exposure_pct": 0.0,
+          "target_exposure_pct": 10.0,
           "market_value": 860.073244,
           "qty": 0.011281099,
           "status": "SUBMITTED"

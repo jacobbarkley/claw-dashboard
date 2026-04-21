@@ -529,7 +529,19 @@ def build_crypto_signals(
     crypto_execution_plan: dict,
     crypto_execution_report: dict,
 ) -> dict:
-    crypto_manifest = next((item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO'), None)
+    # Pick the most recently generated crypto manifest as the active one.
+    # Prior logic used `next()` on the sorted-ascending promoted list, which
+    # meant the older manifest always won — stale on any new promotion.
+    # Until Codex ships a formal `selected_crypto_manifest` signal on the
+    # runtime (parallel to `strategy_bank.active_record_id` for stocks),
+    # newest-wins is the right heuristic because only promoted manifests
+    # reach the manifests/ directory.
+    _crypto_candidates = [item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO']
+    crypto_manifest = max(
+        _crypto_candidates,
+        key=lambda m: str(m.get('generated_at') or ''),
+        default=None,
+    )
     crypto_positions = [item for item in positions if item.get('asset_type') == 'CRYPTO']
     params = crypto_manifest.get('strategy_parameters', {}) if isinstance(crypto_manifest, dict) else {}
     state_to_exposure = {
@@ -1166,7 +1178,19 @@ def build_allocation_history(
 
     stock_positions = [item for item in positions if item.get('asset_type') == 'EQUITY']
     crypto_positions = [item for item in positions if item.get('asset_type') == 'CRYPTO']
-    crypto_manifest = next((item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO'), None)
+    # Pick the most recently generated crypto manifest as the active one.
+    # Prior logic used `next()` on the sorted-ascending promoted list, which
+    # meant the older manifest always won — stale on any new promotion.
+    # Until Codex ships a formal `selected_crypto_manifest` signal on the
+    # runtime (parallel to `strategy_bank.active_record_id` for stocks),
+    # newest-wins is the right heuristic because only promoted manifests
+    # reach the manifests/ directory.
+    _crypto_candidates = [item for item in promoted_manifests if item.get('sleeve') == 'CRYPTO']
+    crypto_manifest = max(
+        _crypto_candidates,
+        key=lambda m: str(m.get('generated_at') or ''),
+        default=None,
+    )
     crypto_state = str(crypto_execution_plan.get('active_regime_state') or '').upper()
     effective_date = str(
         crypto_execution_plan.get('effective_timestamp')
