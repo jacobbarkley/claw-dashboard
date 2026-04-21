@@ -47,8 +47,28 @@ interface ManagedExposureLite {
   strategy_family?: string | null
   status?: string | null
   current_state?: string | null
+  current_exposure_pct?: number | null
+  overlay_status?: string | null
   note?: string | null
   performance_summary?: PerformanceSummary | null
+  ladder?: Array<{
+    label?: string | null
+    state?: string | null
+    exposure_pct?: number | null
+    note?: string | null
+    active?: boolean | null
+  }> | null
+}
+
+interface TacticalOverlayLite {
+  status?: string | null
+  bar?: string | null
+  cadence?: string | null
+  direction?: string | null
+  last_cross_at?: string | null
+  signal_strength_pct?: number | null
+  signal_strength_label?: string | null
+  note?: string | null
 }
 
 interface AllocationRegimeBand {
@@ -70,6 +90,7 @@ export interface ActiveStrategyOperator {
   } | null
   crypto_signals?: {
     managed_exposure?: ManagedExposureLite | null
+    tsmom?: TacticalOverlayLite | null
   } | null
   allocation_history?: Record<string, AllocationHistorySleeve | null | undefined> | null
 }
@@ -396,6 +417,163 @@ function ActiveStrategyHeader({
   )
 }
 
+// ─── Crypto strategy details (folded in from former CryptoExposure +
+// CryptoTSMOM sibling cards). Shown inside ActiveStrategyBody when
+// sleeve === "crypto" and the active variant is selected. Renders the
+// managed-exposure tier ladder and the tactical 4H overlay status.
+// Both are strategy-specific signals — they belong attached to the
+// strategy card, not floating as separate sleeve cards.
+
+function CryptoStrategyDetails({ operator }: { operator?: ActiveStrategyOperator | null }) {
+  const exposure = operator?.crypto_signals?.managed_exposure ?? null
+  const tsmom = operator?.crypto_signals?.tsmom ?? null
+  const ladder = exposure?.ladder ?? []
+  const currentExposure = exposure?.current_exposure_pct
+  const currentState = exposure?.current_state
+  const overlayStatus = tsmom?.status
+  const overlayLabel =
+    overlayStatus === "PROMOTED" ? "Promoted"
+    : overlayStatus === "RESEARCH_ONLY" ? "Research only"
+    : overlayStatus ? overlayStatus.toLowerCase().replace(/_/g, " ") : "Awaiting"
+  const overlayTone =
+    overlayStatus === "PROMOTED" ? "var(--vr-up)"
+    : overlayStatus === "RESEARCH_ONLY" ? "var(--vr-gold)"
+    : "var(--vr-cream-mute)"
+
+  const hasLadder = ladder.length > 0
+  const hasOverlay = tsmom != null
+  if (!hasLadder && !hasOverlay) return null
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {hasLadder && (
+        <div style={{ marginBottom: hasOverlay ? 14 : 0 }}>
+          <div style={{
+            display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8,
+          }}>
+            <div className="t-eyebrow">Managed Exposure</div>
+            {currentExposure != null && (
+              <div style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+                <span className="t-num" style={{
+                  fontSize: 14, color: "var(--vr-cream)", fontWeight: 500,
+                }}>
+                  {currentExposure.toFixed(0)}%
+                </span>
+                {currentState && (
+                  <span style={{
+                    fontFamily: "var(--ff-sans)", fontSize: 9.5,
+                    color: "var(--vr-cream-mute)", letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}>
+                    {currentState.replace(/_/g, " ")}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            {ladder.map(t => (
+              <div
+                key={t.label ?? "tier"}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "7px 10px",
+                  background: "transparent",
+                  border: `1px solid ${t.active ? "var(--vr-gold-line)" : "var(--vr-line)"}`,
+                  borderRadius: 2,
+                }}
+              >
+                <span style={{
+                  width: 5, height: 5, borderRadius: "50%",
+                  background: t.active ? "var(--vr-gold)" : "var(--vr-cream-faint)",
+                }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span className="t-eyebrow" style={{ fontSize: 9.5 }}>{t.label}</span>
+                    {t.note && (
+                      <span className="t-label" style={{ fontSize: 10 }}>{t.note}</span>
+                    )}
+                  </div>
+                </div>
+                <span className="t-num" style={{
+                  fontSize: 12,
+                  color: t.active ? "var(--vr-cream)" : "var(--vr-cream-mute)",
+                }}>
+                  {t.exposure_pct != null ? `${t.exposure_pct}%` : "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {hasOverlay && (
+        <div>
+          <div style={{
+            display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 8,
+          }}>
+            <div className="t-eyebrow">Tactical Overlay · {tsmom?.cadence ?? tsmom?.bar ?? "4H"} TSMOM</div>
+            <span style={{
+              fontFamily: "var(--ff-sans)", fontSize: 9.5,
+              color: overlayTone, letterSpacing: "0.08em", textTransform: "uppercase",
+            }}>
+              {overlayLabel}
+            </span>
+          </div>
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
+            border: "1px solid var(--vr-line)", borderRadius: 2,
+          }}>
+            <div style={{ padding: "10px 12px" }}>
+              <div className="t-eyebrow" style={{ fontSize: 8.5, marginBottom: 4 }}>Direction</div>
+              <div className="t-num" style={{
+                fontSize: 12,
+                color: tsmom?.direction ? "var(--vr-cream)" : "var(--vr-cream-mute)",
+              }}>
+                {tsmom?.direction ?? "—"}
+              </div>
+            </div>
+            <div style={{
+              padding: "10px 12px", borderLeft: "1px solid var(--vr-line)",
+            }}>
+              <div className="t-eyebrow" style={{ fontSize: 8.5, marginBottom: 4 }}>Signal</div>
+              <div className="t-num" style={{
+                fontSize: 12,
+                color: tsmom?.signal_strength_pct != null ? "var(--vr-cream)" : "var(--vr-cream-mute)",
+              }}>
+                {tsmom?.signal_strength_pct != null
+                  ? `${tsmom.signal_strength_pct.toFixed(0)}%`
+                  : (tsmom?.signal_strength_label ?? "—")}
+              </div>
+            </div>
+            <div style={{
+              padding: "10px 12px", borderLeft: "1px solid var(--vr-line)",
+            }}>
+              <div className="t-eyebrow" style={{ fontSize: 8.5, marginBottom: 4 }}>Last Cross</div>
+              <div className="t-num" style={{
+                fontSize: 11,
+                color: tsmom?.last_cross_at ? "var(--vr-cream)" : "var(--vr-cream-mute)",
+              }}>
+                {tsmom?.last_cross_at ? tsmom.last_cross_at.replace("T", " ").slice(0, 16) : "—"}
+              </div>
+            </div>
+          </div>
+          {tsmom?.note && (
+            <div className="t-label" style={{
+              fontSize: 10, marginTop: 8, lineHeight: 1.45,
+              color: "var(--vr-cream-mute)",
+            }}>
+              {tsmom.note}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Body (expanded inline) ─────────────────────────────────────────────────
 
 function ActiveStrategyBody({
@@ -518,6 +696,14 @@ function ActiveStrategyBody({
           </Link>
         )}
       </div>
+
+      {/* Crypto-specific strategy state — tier ladder + tactical overlay.
+          Lives here (instead of as sibling cards) because both are tied
+          to whichever strategy is actively running this sleeve. Per
+          Jacob's 2026-04-20 walkthrough. */}
+      {isActiveSelected && sleeve === "crypto" && (
+        <CryptoStrategyDetails operator={operator} />
+      )}
 
       {/* Regime timeline — only for the active (not preview) */}
       {isActiveSelected && (

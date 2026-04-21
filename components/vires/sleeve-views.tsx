@@ -1,11 +1,13 @@
 "use client"
 
 // Per-sleeve views (Stocks / Options / Crypto) for the Vires Trading section.
-// Each sleeve gets a SleeveSummary header + Open Positions list. Stocks adds
-// a Qualified Universe panel; Options shows an "awaiting promotion" state;
-// Crypto adds the two-layer architecture explainer kept compact and the
-// position list. Future BTC TSMOM / exposure ladder cards will plug in once
-// Codex ships the crypto signal data in the operator feed.
+// Each sleeve renders the same skeleton:
+//   SleeveSummary  →  ActiveStrategy  →  OpenPositions  →  <sleeve detail>  →  AllocationHistory
+// where <sleeve detail> is Strategy Universe (stocks/options) or
+// CryptoTrackedAssets (crypto). Per Jacob's 2026-04-20 walkthrough:
+// crypto's earlier sibling cards (TSMOM, ExposureLadder, Architecture)
+// folded into ActiveStrategy's expanded body so strategy-specific state
+// stays attached to the strategy.
 
 import { useState } from "react"
 import { Delta, StatusPill, fmtCurrency, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
@@ -483,7 +485,17 @@ function StrategyUniverse({ universe, positions, rules }: {
   positions: ViresPosition[]
   rules: StrategyRules
 }) {
-  if (!universe || universe.symbols.length === 0) return null
+  if (!universe || universe.symbols.length === 0) {
+    return (
+      <div className="vr-card" style={{ padding: 18 }}>
+        <div className="t-eyebrow" style={{ marginBottom: 6 }}>Strategy Universe</div>
+        <div className="t-h4" style={{ color: "var(--vr-cream-dim)" }}>No symbols yet</div>
+        <div className="t-label" style={{ fontSize: 11, marginTop: 4, lineHeight: 1.5 }}>
+          The active strategy&apos;s tracked universe appears here once a strategy is promoted to this sleeve.
+        </div>
+      </div>
+    )
+  }
   const sorted = [...universe.symbols].sort((a, b) => {
     if (a.in_position !== b.in_position) return a.in_position ? -1 : 1
     return (b.change_pct ?? 0) - (a.change_pct ?? 0)
@@ -494,7 +506,7 @@ function StrategyUniverse({ universe, positions, rules }: {
   return (
     <div className="vr-card">
       <div style={{ padding: "14px 16px 10px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <div className="t-eyebrow">Qualified Universe</div>
+        <div className="t-eyebrow">Strategy Universe</div>
         <span className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)" }}>
           {heldCount} held · {sorted.length} tracked
         </span>
@@ -579,171 +591,6 @@ function StrategyUniverse({ universe, positions, rules }: {
             </div>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-// ─── Crypto explainer (compact two-layer) ───────────────────────────────────
-
-function CryptoArchitecture({ signals }: { signals?: CryptoManagedExposureSignal | null }) {
-  const perf = signals?.performance_summary ?? null
-  const totalReturn = perf?.total_return_pct
-  const maxDrawdown = perf?.max_drawdown_pct
-  const calmar = perf?.calmar_ratio
-  const summaryLine =
-    totalReturn != null || maxDrawdown != null || calmar != null
-      ? [
-          totalReturn != null ? `${totalReturn >= 0 ? "+" : ""}${totalReturn.toFixed(0)}% net` : null,
-          maxDrawdown != null ? `max DD ${maxDrawdown.toFixed(0)}%` : null,
-          calmar != null ? `Calmar ${calmar.toFixed(2)}` : null,
-        ].filter(Boolean).join(" · ")
-      : null
-  return (
-    <div className="vr-card" style={{ padding: 18 }}>
-      <div className="t-eyebrow" style={{ marginBottom: 10 }}>Two-layer architecture</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--vr-cream-dim)" }}>
-        <div style={{ flex: 1 }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-gold)" }}>Core regime</div>
-          <div style={{ marginTop: 4 }}>Daily · own BTC?</div>
-        </div>
-        <span style={{ color: "var(--vr-cream-faint)" }}>→</span>
-        <div style={{ flex: 1 }}>
-          <div className="t-eyebrow" style={{ fontSize: 9 }}>Tactical overlay</div>
-          <div style={{ marginTop: 4 }}>4H · trim or add inside the regime</div>
-        </div>
-      </div>
-      <div className="t-label" style={{ fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--vr-line)" }}>
-        {summaryLine ?? signals?.note ?? "Managed BTC exposure promotes the core sleeve first and leaves tactical as an overlay candidate."}
-      </div>
-    </div>
-  )
-}
-
-// ─── BTC 4H TSMOM signal card (scaffolded) ──────────────────────────────────
-// Fully laid out per the design handoff. Values default to em-dashes until
-// Codex's crypto_signals.tsmom block populates the operator feed (primer
-// ask #7).
-function CryptoTSMOM({ signals }: { signals?: CryptoSignalTSMOM | null }) {
-  const status = signals?.status ?? "AWAITING_FEED"
-  const statusLabel =
-    status === "RESEARCH_ONLY" ? "BENCH ONLY"
-    : status === "PROMOTED" ? "PROMOTED"
-    : "AWAITING FEED"
-  const signalStrength = signals?.signal_strength_pct
-  const signalTone = signalStrength != null && signalStrength >= 60 ? "gold" : "neutral"
-  return (
-    <div className="vr-card" style={{ padding: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: 4 }}>BTC 4H TSMOM</div>
-          <div className="t-h3" style={{ fontSize: 16 }}>Time-Series Momentum</div>
-        </div>
-        <StatusPill tone={signalTone}>{statusLabel}</StatusPill>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0, borderTop: "1px solid var(--vr-line)" }}>
-        <div style={{ padding: "12px 0 4px", paddingRight: 12 }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4 }}>Bar</div>
-          <div className="t-num" style={{ fontSize: 14, color: signals?.bar ? "var(--vr-cream)" : "var(--vr-cream-mute)" }}>{signals?.bar ?? "—"}</div>
-        </div>
-        <div style={{ padding: "12px 12px 4px", borderLeft: "1px solid var(--vr-line)" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4 }}>Direction</div>
-          <div className="t-num" style={{ fontSize: 14, color: signals?.direction ? "var(--vr-cream)" : "var(--vr-cream-mute)" }}>{signals?.direction ?? "—"}</div>
-        </div>
-        <div style={{ padding: "12px 0 4px 12px", borderLeft: "1px solid var(--vr-line)" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4 }}>Last Cross</div>
-          <div className="t-num" style={{ fontSize: 11, color: signals?.last_cross_at ? "var(--vr-cream)" : "var(--vr-cream-mute)" }}>
-            {signals?.last_cross_at ? signals.last_cross_at.replace("T", " ").slice(0, 16) : "—"}
-          </div>
-        </div>
-      </div>
-      <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--vr-line)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <span className="t-label" style={{ fontSize: 10 }}>Signal Strength</span>
-          <span className="t-num" style={{ fontSize: 11, color: signalStrength != null ? "var(--vr-cream)" : "var(--vr-cream-mute)" }}>
-            {signalStrength != null ? `${signalStrength.toFixed(0)}%` : (signals?.signal_strength_label ?? "—")}
-          </span>
-        </div>
-        <div style={{ height: 4, background: "rgba(241,236,224,0.05)", borderRadius: 2, overflow: "hidden" }}>
-          <div
-            style={{
-              width: `${Math.max(0, Math.min(signalStrength ?? 0, 100))}%`,
-              height: "100%",
-              background: "var(--vr-gold)",
-            }}
-          />
-        </div>
-        {signals?.note && (
-          <div className="t-label" style={{ fontSize: 10, marginTop: 8, lineHeight: 1.45 }}>
-            {signals.note}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Managed Exposure ladder (scaffolded) ───────────────────────────────────
-function CryptoExposure({ signals }: { signals?: CryptoManagedExposureSignal | null }) {
-  const tiers = signals?.ladder?.length ? signals.ladder : [
-    { label: "Tier 1", exposure_pct: 80, note: "Constructive regime", active: false },
-    { label: "Tier 2", exposure_pct: 70, note: "Neutral regime", active: false },
-    { label: "Tier 3", exposure_pct: 0, note: "Risk-off", active: false },
-  ]
-  const ladderTitle = tiers
-    .map(t => typeof t.exposure_pct === "number" ? Math.round(t.exposure_pct).toString() : null)
-    .filter((value): value is string => value != null)
-    .join(" / ")
-  return (
-    <div className="vr-card" style={{ padding: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: 4 }}>Managed Exposure</div>
-          <div className="t-h3" style={{ fontSize: 16 }}>
-            {signals?.title ?? (ladderTitle ? `Graduated ${ladderTitle} ladder` : "Managed exposure ladder")}
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Current</div>
-          <div className="t-num" style={{ fontSize: 18, color: signals?.current_exposure_pct != null ? "var(--vr-cream)" : "var(--vr-cream-mute)", fontWeight: 500 }}>
-            {signals?.current_exposure_pct != null ? `${signals.current_exposure_pct.toFixed(0)}%` : "—"}
-          </div>
-          <div className="t-label" style={{ fontSize: 10, marginTop: 3 }}>
-            {signals?.current_state?.replace(/_/g, " ") ?? "no live state"}
-          </div>
-        </div>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {tiers.map(t => (
-          <div
-            key={t.label ?? "tier"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "8px 10px",
-              background: "transparent",
-              border: `1px solid ${t.active ? "var(--vr-gold-line)" : "var(--vr-line)"}`,
-              borderRadius: 2,
-            }}
-          >
-            <span style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: t.active ? "var(--vr-gold)" : "var(--vr-cream-faint)",
-            }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span className="t-eyebrow" style={{ fontSize: 10 }}>{t.label}</span>
-                <span className="t-label" style={{ fontSize: 10 }}>{t.note}</span>
-              </div>
-            </div>
-            <span className="t-num" style={{ fontSize: 13, color: t.active ? "var(--vr-cream)" : "var(--vr-cream-mute)" }}>{t.exposure_pct ?? "—"}%</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--vr-line)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span className="t-label" style={{ fontSize: 11 }}>Tactical Top-Up</span>
-        <StatusPill tone="neutral">{signals?.overlay_status?.replace(/_/g, " ") ?? "AWAITING FEED"}</StatusPill>
       </div>
     </div>
   )
@@ -1053,20 +900,15 @@ export function StocksScreen({ data, rules, operator }: {
 }
 
 export function OptionsScreen({ data, operator }: { data: ViresTradingDataWithSleeveHistory; operator?: unknown }) {
-  const positions = data.positions.filter(p => p.asset_type === "OPTION")
+  const positions = data.positions.filter(p => p.asset_type === "OPTION") as ViresPosition[]
   const op = operator as SleeveOperator | null | undefined
+  const noRules: StrategyRules = { stop_loss_pct: null, target_pct: null }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="options" positions={positions as ViresPosition[]} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.options ?? null} />
+      <SleeveSummary sleeve="options" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.options ?? null} />
       <ActiveStrategy sleeve="options" operator={op} />
-      <OpenPositions positions={positions as ViresPosition[]} />
-      <div className="vr-card" style={{ padding: 18 }}>
-        <div className="t-eyebrow" style={{ marginBottom: 6 }}>Bull Put Spreads · Hedges</div>
-        <div className="t-h4" style={{ color: "var(--vr-cream-dim)" }}>No strategies deployed</div>
-        <div className="t-label" style={{ fontSize: 11, marginTop: 4, lineHeight: 1.5 }}>
-          Awaiting BPS variant promotion from the Bench. Target: weekly income with defined risk.
-        </div>
-      </div>
+      <OpenPositions positions={positions} />
+      <StrategyUniverse universe={null} positions={positions} rules={noRules} />
       <AllocationHistory sleeve="options" operator={op} />
     </div>
   )
@@ -1082,10 +924,7 @@ export function CryptoScreen({ data, operator }: { data: ViresTradingDataWithSle
       <SleeveSummary sleeve="crypto" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.crypto ?? null} />
       <ActiveStrategy sleeve="crypto" operator={op} />
       <OpenPositions positions={positions} />
-      <CryptoTSMOM signals={signals?.tsmom} />
-      <CryptoExposure signals={signals?.managed_exposure} />
       <CryptoTrackedAssets positions={positions} signals={signals} regime={regime} />
-      <CryptoArchitecture signals={signals?.managed_exposure} />
       <AllocationHistory sleeve="crypto" operator={op} />
     </div>
   )

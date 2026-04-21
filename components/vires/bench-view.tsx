@@ -243,6 +243,26 @@ function FeaturedStrategy({ strategy, passportHref }: { strategy: ActiveStrategy
   )
 }
 
+function PromotedEmptyRow({ sleeve, copy }: { sleeve: Sleeve; copy: string }) {
+  return (
+    <div
+      className="vr-card"
+      style={{
+        padding: 16,
+        borderColor: "var(--vr-line)",
+        background: "var(--vr-ink)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <SleeveChip sleeve={sleeve} />
+      </div>
+      <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream-dim)" }}>
+        {copy}
+      </div>
+    </div>
+  )
+}
+
 // ─── Run card ───────────────────────────────────────────────────────────────
 
 const SLEEVE_FROM_RUN: Record<string, Sleeve> = {
@@ -424,26 +444,58 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
   })
   const filtered = filter === "ALL" ? sortedRuns : sortedRuns.filter(r => (r.sleeve ?? "").toUpperCase() === filter)
 
-  const featured = mapFeaturedStrategy(liveOperator)
-  const promotedCount = liveOperator?.strategy_bank?.promoted?.length ?? currentBenchData.manifests?.length ?? 0
+  const promotedBySleeve = mapAllPromotedBySleeve(liveOperator)
+  const promotedCount = promotedBySleeve.stocks.length + promotedBySleeve.options.length + promotedBySleeve.crypto.length
 
-  // Find the passport that matches the featured strategy's sleeve so the
-  // "Passport" link routes to a real drill-in page. Defaults to the first
-  // STOCKS passport — today there's only one promoted stock strategy.
-  const featuredSleeve = (featured?.sleeve ?? "stocks").toLowerCase()
-  const featuredPassport = (currentBenchData.passports ?? []).find(p =>
-    (p.sleeve ?? "").toLowerCase() === featuredSleeve,
-  )
-  const passportHref = featuredPassport
-    ? `/vires/bench/passport/${encodeURIComponent(featuredPassport.id)}`
-    : null
+  // Resolve a passport link per sleeve. Today the bench data ships passports
+  // tagged by sleeve, so we link the first card per sleeve to that sleeve's
+  // first matching passport. Future: match by manifest_id once passports
+  // expose it.
+  const passportBySleeve: Record<Sleeve, string | null> = { stocks: null, options: null, crypto: null }
+  for (const p of currentBenchData.passports ?? []) {
+    const sleeveToken = (p.sleeve ?? "").toLowerCase()
+    if (sleeveToken === "stocks" && !passportBySleeve.stocks) passportBySleeve.stocks = `/vires/bench/passport/${encodeURIComponent(p.id)}`
+    else if (sleeveToken === "crypto" && !passportBySleeve.crypto) passportBySleeve.crypto = `/vires/bench/passport/${encodeURIComponent(p.id)}`
+    else if (sleeveToken === "options" && !passportBySleeve.options) passportBySleeve.options = `/vires/bench/passport/${encodeURIComponent(p.id)}`
+  }
+
+  const SLEEVE_GROUP: Array<{ sleeve: Sleeve; label: string; emptyCopy: string }> = [
+    { sleeve: "stocks",  label: "Stocks",  emptyCopy: "No stocks strategy in production yet." },
+    { sleeve: "options", label: "Options", emptyCopy: "No options strategy in production yet." },
+    { sleeve: "crypto",  label: "Crypto",  emptyCopy: "No crypto strategy in production yet." },
+  ]
 
   return (
     <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
       <BenchHero runs={sortedRuns} promotedCount={promotedCount} />
 
-      <SectionHeader eyebrow="Promoted" title="In production" />
-      <FeaturedStrategy strategy={featured} passportHref={passportHref} />
+      <SectionHeader
+        eyebrow="Promoted"
+        title="In production"
+        right={<span className="t-label" style={{ fontSize: 10 }}>{promotedCount} promoted</span>}
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {SLEEVE_GROUP.map(({ sleeve, label, emptyCopy }) => {
+          const entries = promotedBySleeve[sleeve]
+          const passportHref = passportBySleeve[sleeve]
+          return (
+            <div key={sleeve} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="t-eyebrow" style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.18em" }}>
+                {label}
+              </div>
+              {entries.length > 0
+                ? entries.map((s, i) => (
+                    <FeaturedStrategy
+                      key={s.display_name ?? `${sleeve}-${i}`}
+                      strategy={s}
+                      passportHref={i === 0 ? passportHref : null}
+                    />
+                  ))
+                : <PromotedEmptyRow sleeve={sleeve} copy={emptyCopy} />}
+            </div>
+          )
+        })}
+      </div>
 
       <SectionHeader
         eyebrow="Research"
@@ -535,4 +587,26 @@ function mapFeaturedStrategy(operator: OperatorBundle | null): ActiveStrategy | 
   const active = mapActiveStrategy(operator?.strategy_bank?.active ?? null)
   if (active) return active
   return mapPromotedManifest(operator?.strategy_bank?.promoted?.[0] ?? null)
+}
+
+// Group every promoted strategy by sleeve. Stocks prefers the selected
+// `active` (richer per-variant metrics); falls back to STOCKS-tagged
+// entries in `promoted[]` only if active is absent. Crypto + Options
+// pull straight from `promoted[]`.
+function mapAllPromotedBySleeve(operator: OperatorBundle | null): Record<Sleeve, ActiveStrategy[]> {
+  const grouped: Record<Sleeve, ActiveStrategy[]> = { stocks: [], options: [], crypto: [] }
+
+  const active = mapActiveStrategy(operator?.strategy_bank?.active ?? null)
+  if (active) grouped.stocks.push(active)
+
+  for (const m of operator?.strategy_bank?.promoted ?? []) {
+    const sleeveToken = typeof m.sleeve === "string" ? m.sleeve.toUpperCase() : null
+    const mapped = mapPromotedManifest(m)
+    if (!mapped) continue
+    if (sleeveToken === "CRYPTO") grouped.crypto.push(mapped)
+    else if (sleeveToken === "OPTIONS") grouped.options.push(mapped)
+    else if (grouped.stocks.length === 0) grouped.stocks.push(mapped)
+  }
+
+  return grouped
 }

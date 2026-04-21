@@ -87,34 +87,73 @@ interface PromotedManifest {
 }
 
 // ─── Elevated Strategies ────────────────────────────────────────────────────
-// Shows the single selected promoted strategy with real metrics, plus honest
-// placeholder rows for BTC 4H TSMOM and BTC Managed Exposure. The two crypto
-// rows flip to real cards once strategy_bank.promoted carries them (Codex
-// primer, ask #6).
+// Grouped by sleeve (Stocks / Options / Crypto), each sleeve header followed
+// by stacked variant cards. Stocks pulls from `strategy_bank.active` (the
+// selected variant has the richest per-variant metrics). Crypto and Options
+// pull from `strategy_bank.promoted[]` filtered by sleeve. Per Jacob's
+// 2026-04-20 feedback — visible architecture mirrors Bench's Promoted in
+// Production card.
 
-function StrategyRow({ chip, eyebrow, title, subtitle, metrics, promotedOn, tone = "gold" }: {
+interface NormalizedElevated {
+  key: string
+  title: string
+  subtitle?: string
+  metrics: Array<{ label: string; value: string; color?: string; term?: string }>
+  promotedOn: string | null
+}
+
+function normalizeFromActive(a: BankedStrategy): NormalizedElevated {
+  const perf = a.performance_summary ?? {}
+  return {
+    key: a.record_id ?? a.display_name ?? "active",
+    title: displayNameFromFamily(a.strategy_family) ?? a.display_name ?? "Active Strategy",
+    subtitle: [a.symbols?.slice(0, 6).join(", "), a.variant_id].filter(Boolean).join(" · "),
+    metrics: [
+      { label: "Calmar", term: "Calmar", value: perf.calmar_ratio != null ? perf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
+      { label: "Sharpe", term: "Sharpe", value: perf.sharpe_ratio != null ? perf.sharpe_ratio.toFixed(2) : "—" },
+    ],
+    promotedOn: a.selected_at?.slice(0, 10) ?? a.registered_at?.slice(0, 10) ?? null,
+  }
+}
+
+function normalizeFromPromoted(p: PromotedManifest): NormalizedElevated {
+  const perf = p.performance_summary ?? {}
+  return {
+    key: p.manifest_id ?? p.title ?? `${p.sleeve}-${p.strategy_family}`,
+    title: p.title ?? p.strategy_family ?? "Promoted sleeve",
+    subtitle: [p.deployment_config_id, p.cadence].filter(Boolean).join(" · "),
+    metrics: [
+      { label: "Calmar",   term: "Calmar",  value: perf.calmar_ratio != null ? perf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
+      { label: "vs Bench", term: "VsBench", value: perf.excess_return_pct != null ? `${perf.excess_return_pct >= 0 ? "+" : ""}${perf.excess_return_pct.toFixed(1)}%` : "—" },
+    ],
+    promotedOn: p.generated_at?.slice(0, 10) ?? "checked-in",
+  }
+}
+
+const SLEEVE_DISPLAY: Array<{ sleeve: "stocks" | "options" | "crypto"; label: string; emptyCopy: string }> = [
+  { sleeve: "stocks",  label: "Stocks",  emptyCopy: "No stocks strategy promoted yet." },
+  { sleeve: "options", label: "Options", emptyCopy: "No options strategy promoted yet." },
+  { sleeve: "crypto",  label: "Crypto",  emptyCopy: "No crypto strategy promoted yet." },
+]
+
+function StrategyRow({ chip, title, subtitle, metrics, promotedOn }: {
   chip: React.ReactNode
-  eyebrow: string
   title: string
   subtitle?: string
   metrics: Array<{ label: string; value: string; color?: string; term?: string }>
   promotedOn?: string | null
-  tone?: "gold" | "neutral"
 }) {
   return (
     <div
       className="vr-card"
       style={{
         padding: 16,
-        borderColor: tone === "gold" ? "var(--vr-gold-line)" : "var(--vr-line)",
+        borderColor: "var(--vr-gold-line)",
         background: "var(--vr-ink)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         {chip}
-        <span className="t-eyebrow" style={{ color: tone === "gold" ? "var(--vr-gold)" : "var(--vr-cream-mute)" }}>
-          · {eyebrow}
-        </span>
       </div>
       <div className="t-h4" style={{ fontSize: 16, marginTop: 4 }}>{title}</div>
       {subtitle && (
@@ -153,89 +192,84 @@ function StrategyRow({ chip, eyebrow, title, subtitle, metrics, promotedOn, tone
   )
 }
 
+function SleeveEmptyRow({ chip, copy }: { chip: React.ReactNode; copy: string }) {
+  return (
+    <div
+      className="vr-card"
+      style={{
+        padding: 16,
+        borderColor: "var(--vr-line)",
+        background: "var(--vr-ink)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        {chip}
+      </div>
+      <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream-dim)" }}>
+        {copy}
+      </div>
+    </div>
+  )
+}
+
 export function ElevatedStrategies({ operator }: { operator: OperatorBundle | null }) {
   const active = operator?.strategy_bank?.active ?? null
   const promoted = operator?.strategy_bank?.promoted ?? []
-  const perf = active?.performance_summary ?? {}
-  const promotedDate = active?.selected_at?.slice(0, 10) ?? active?.registered_at?.slice(0, 10) ?? null
-  const secondaryPromoted = promoted.filter(item => item.sleeve !== "STOCKS")
+
+  const grouped: Record<"stocks" | "options" | "crypto", NormalizedElevated[]> = {
+    stocks: [],
+    options: [],
+    crypto: [],
+  }
+
+  // Stocks: prefer the selected `active` (richer per-variant metrics).
+  // Fall back to any STOCKS entries in promoted[] only if active is absent.
+  if (active) {
+    grouped.stocks.push(normalizeFromActive(active))
+  } else {
+    promoted
+      .filter(p => p.sleeve === "STOCKS")
+      .forEach(p => grouped.stocks.push(normalizeFromPromoted(p)))
+  }
+
+  // Crypto + Options: every promoted entry tagged for that sleeve.
+  promoted.forEach(p => {
+    if (p.sleeve === "CRYPTO") grouped.crypto.push(normalizeFromPromoted(p))
+    else if (p.sleeve === "OPTIONS") grouped.options.push(normalizeFromPromoted(p))
+  })
+
+  const totalCount = grouped.stocks.length + grouped.options.length + grouped.crypto.length
 
   return (
     <section>
       <SectionHeader
         eyebrow="From the Bench"
         title="Elevated Strategies"
-        right={<span className="t-label" style={{ fontSize: 10 }}>3 tracked</span>}
+        right={<span className="t-label" style={{ fontSize: 10 }}>{totalCount} promoted</span>}
       />
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {active ? (
-          <StrategyRow
-            chip={<SleeveChip sleeve="stocks" />}
-            eyebrow="ELEVATED"
-            title={displayNameFromFamily(active.strategy_family) ?? active.display_name ?? "Active Strategy"}
-            subtitle={`${active.symbols?.slice(0, 6).join(", ") ?? ""} · ${active.variant_id ?? ""}`}
-            metrics={[
-              { label: "Calmar", term: "Calmar", value: perf.calmar_ratio != null ? perf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
-              { label: "Sharpe", term: "Sharpe", value: perf.sharpe_ratio != null ? perf.sharpe_ratio.toFixed(2) : "—" },
-            ]}
-            promotedOn={promotedDate}
-            tone="gold"
-          />
-        ) : (
-          <StrategyRow
-            chip={<SleeveChip sleeve="stocks" />}
-            eyebrow="awaiting promotion"
-            title="Stock strategy not yet promoted"
-            metrics={[{ label: "Status", value: "—" }]}
-            tone="neutral"
-          />
-        )}
-
-        {secondaryPromoted.length > 0 ? secondaryPromoted.map(item => {
-          const itemPerf = item.performance_summary ?? {}
-          const sleeve = item.sleeve === "CRYPTO" ? "crypto" : "options"
+      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+        {SLEEVE_DISPLAY.map(({ sleeve, label, emptyCopy }) => {
+          const entries = grouped[sleeve]
           return (
-            <StrategyRow
-              key={item.manifest_id ?? item.title ?? sleeve}
-              chip={<SleeveChip sleeve={sleeve} />}
-              eyebrow={`promoted · ${(item.source_kind ?? "checked in").toLowerCase().replace(/_/g, " ")}`}
-              title={item.title ?? item.strategy_family ?? "Promoted sleeve"}
-              subtitle={[item.deployment_config_id, item.cadence].filter(Boolean).join(" · ")}
-              metrics={[
-                { label: "Calmar",   term: "Calmar",  value: itemPerf.calmar_ratio != null ? itemPerf.calmar_ratio.toFixed(2) : "—", color: "var(--vr-gold)" },
-                { label: "vs Bench", term: "VsBench", value: itemPerf.excess_return_pct != null ? `${itemPerf.excess_return_pct >= 0 ? "+" : ""}${itemPerf.excess_return_pct.toFixed(1)}%` : "—" },
-              ]}
-              promotedOn={item.generated_at?.slice(0, 10) ?? "checked-in"}
-              tone="gold"
-            />
+            <div key={sleeve} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="t-eyebrow" style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.18em" }}>
+                {label}
+              </div>
+              {entries.length > 0
+                ? entries.map(e => (
+                    <StrategyRow
+                      key={e.key}
+                      chip={<SleeveChip sleeve={sleeve} />}
+                      title={e.title}
+                      subtitle={e.subtitle}
+                      metrics={e.metrics}
+                      promotedOn={e.promotedOn}
+                    />
+                  ))
+                : <SleeveEmptyRow chip={<SleeveChip sleeve={sleeve} />} copy={emptyCopy} />}
+            </div>
           )
-        }) : (
-          <>
-            <StrategyRow
-              chip={<SleeveChip sleeve="crypto" />}
-              eyebrow="bench research · awaiting promotion"
-              title="BTC 4H TSMOM"
-              subtitle="4-hour time-series momentum · trend filter"
-              metrics={[
-                { label: "Med Era Sharpe", term: "MedEraSharpe", value: "—" },
-                { label: "Plateau",        term: "Plateau",      value: "pending" },
-              ]}
-              tone="neutral"
-            />
-
-            <StrategyRow
-              chip={<SleeveChip sleeve="crypto" />}
-              eyebrow="bench research · awaiting promotion"
-              title="BTC Managed Exposure"
-              subtitle="Graduated 80 / 70 / 0 ladder + tactical top-up"
-              metrics={[
-                { label: "Calmar",  term: "Calmar", value: "—" },
-                { label: "vs HODL", term: "VsHODL", value: "—" },
-              ]}
-              tone="neutral"
-            />
-          </>
-        )}
+        })}
       </div>
     </section>
   )
@@ -325,10 +359,14 @@ export function DeskStatus({ operator }: { operator: OperatorBundle | null }) {
     return null
   }
 
-  const cp = operator.checkpoint05 ?? {}
   const plan = operator.plan ?? {}
   const research = operator.research ?? {}
   const topThesis = research.top_theses?.[0]
+
+  // Promotion / checkpoint05 row was removed 2026-04-20 — placeholder data
+  // (ACCUMULATING tier state) was tied to a discarded approach. The row
+  // returns when the campaign UI lands and there's a real promotion-pipeline
+  // signal to surface.
 
   const rows: Array<{
     label: string
@@ -336,21 +374,6 @@ export function DeskStatus({ operator }: { operator: OperatorBundle | null }) {
     detail: string
     pill: { tone: "up" | "down" | "gold" | "warn" | "neutral"; text: string }
   }> = []
-
-  // Promotion — checkpoint05 accumulation
-  if (cp.checkpoint_status) {
-    const subs = cp.substantive_shadow_days ?? 0
-    const total = cp.total_shadow_days ?? 0
-    rows.push({
-      label: "Promotion",
-      value: `${subs} of 10 days`,
-      detail: `${total} shadow days observed`,
-      pill: {
-        tone: cp.checkpoint_status === "ACCUMULATING" ? "warn" : cp.checkpoint_status === "SATISFIED" ? "up" : "neutral",
-        text: cp.checkpoint_status,
-      },
-    })
-  }
 
   // Plan — trade plan readiness
   if (plan.trade_plan_status) {
