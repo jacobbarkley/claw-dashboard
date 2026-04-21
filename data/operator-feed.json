@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-21T15:50:11.349007+00:00",
+  "generated_at": "2026-04-21T15:55:01.509283+00:00",
   "as_of_date": "2026-04-21",
   "source_context": {
     "mode": "canonical",
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-21T15:50:11.349057+00:00"
+    "audit_written_at": "2026-04-21T15:55:01.509325+00:00"
   },
   "kpis": {
     "total_trades": 61,
@@ -897,15 +897,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-04-21T15:50:10.209881162Z",
+    "as_of": "2026-04-21T15:55:01.364997617Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 267.23,
+        "current_price": 266.86,
         "prior_close": 273.06,
-        "change_usd": -5.83,
-        "change_pct": -2.1351,
+        "change_usd": -6.2,
+        "change_pct": -2.2706,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -913,10 +913,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 401.12,
+        "current_price": 401.375,
         "prior_close": 399.77,
-        "change_usd": 1.35,
-        "change_pct": 0.3377,
+        "change_usd": 1.605,
+        "change_pct": 0.4015,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -924,10 +924,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 998.85,
+        "current_price": 999.91,
         "prior_close": 997.79,
-        "change_usd": 1.06,
-        "change_pct": 0.1062,
+        "change_usd": 2.12,
+        "change_pct": 0.2125,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -935,10 +935,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 896.235,
+        "current_price": 897.04,
         "prior_close": 920.41,
-        "change_usd": -24.175,
-        "change_pct": -2.6265,
+        "change_usd": -23.37,
+        "change_pct": -2.5391,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -946,10 +946,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 671.17,
+        "current_price": 670.33,
         "prior_close": 670.92,
-        "change_usd": 0.25,
-        "change_pct": 0.0373,
+        "change_usd": -0.59,
+        "change_pct": -0.0879,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -957,10 +957,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 201.0,
+        "current_price": 200.84,
         "prior_close": 202.12,
-        "change_usd": -1.12,
-        "change_pct": -0.5541,
+        "change_usd": -1.28,
+        "change_pct": -0.6333,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1798,8 +1798,145 @@
       }
     },
     "order_blotter": {
-      "stocks": [],
-      "crypto": [],
+      "stocks": [
+        {
+          "date": "2026-04-15",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 509.0,
+          "price": 100.53,
+          "usd": null,
+          "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 1.0,
+          "price": 100.53,
+          "usd": null,
+          "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 1.0,
+          "price": 100.53,
+          "usd": null,
+          "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "SELL",
+          "sym": "SGOV",
+          "qty": 2.0,
+          "price": 100.52,
+          "usd": null,
+          "note": "Cash management reserve release"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "SELL",
+          "sym": "SGOV",
+          "qty": 2.0,
+          "price": 100.52,
+          "usd": null,
+          "note": "Cash management reserve release"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "SELL",
+          "sym": "SGOV",
+          "qty": 2.0,
+          "price": 100.52,
+          "usd": null,
+          "note": "Cash management reserve release"
+        },
+        {
+          "date": "2026-04-15",
+          "side": "SELL",
+          "sym": "SGOV",
+          "qty": 2.0,
+          "price": 100.52,
+          "usd": null,
+          "note": "Cash management reserve release"
+        },
+        {
+          "date": "2026-04-16",
+          "side": "BUY",
+          "sym": "NVDA",
+          "qty": 8.0,
+          "price": 198.71,
+          "usd": null,
+          "note": "Market order submitted. size_modifier=FULL, shares=8, notional=$1602.13."
+        },
+        {
+          "date": "2026-04-16",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 6.0,
+          "price": 100.54,
+          "usd": null,
+          "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-04-16",
+          "side": "BUY",
+          "sym": "NVDA",
+          "qty": 8.0,
+          "price": 199.0437,
+          "usd": null,
+          "note": "Market order submitted. size_modifier=FULL, shares=8, notional=$1602.13."
+        },
+        {
+          "date": "2026-04-17",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 1.0,
+          "price": 100.57,
+          "usd": null,
+          "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-04-20",
+          "side": "BUY",
+          "sym": "AAPL",
+          "qty": 5.0,
+          "price": 272.294,
+          "usd": null,
+          "note": "Market order submitted. size_modifier=FULL, shares=5, notional=$1602.33."
+        }
+      ],
+      "crypto": [
+        {
+          "date": "2026-04-17",
+          "side": "BUY",
+          "sym": "BTCUSD",
+          "qty": 0.00315782,
+          "price": 77619.2,
+          "usd": 250.0,
+          "note": "Manual BTC paper probe"
+        },
+        {
+          "date": "2026-04-19",
+          "side": "BUY",
+          "sym": "BTCUSD",
+          "qty": 0.00322167,
+          "price": 76086.3,
+          "usd": 250.0,
+          "note": "why not"
+        },
+        {
+          "date": "2026-04-19",
+          "side": "BUY",
+          "sym": "BTCUSD",
+          "qty": 0.00128881,
+          "price": 76039.65,
+          "usd": 100.0,
+          "note": "smoke test"
+        }
+      ],
       "options": []
     },
     "mode_history": {
