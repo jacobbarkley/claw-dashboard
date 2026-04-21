@@ -1029,13 +1029,34 @@ def collect_order_blotter_events(
                 }
             )
 
-    crypto_report = crypto_execution_report if isinstance(crypto_execution_report, dict) else {}
-    crypto_symbol = normalize_symbol(
-        crypto_report.get('symbol')
-        or (crypto_execution_plan.get('symbol') if isinstance(crypto_execution_plan, dict) else None)
-    )
-    crypto_order_id = crypto_report.get('broker_order_id')
-    if crypto_symbol in crypto_symbols and crypto_order_id and crypto_report.get('status') in {'OK', 'PARTIAL', 'SUBMITTED'}:
+    # Crypto strategy fills — iterate historical crypto_execution_report.json
+    # files the same way stocks iterate execution_report.json. Previously this
+    # block only processed the single `crypto_execution_report` passed in at
+    # call time, which meant yesterday's BTC buys fell off the blotter when
+    # today's feed was generated. Dedup by broker_order_id is handled later
+    # in build_order_blotter via seen_order_ids.
+    historical_crypto_paths = iter_rebuild_report_paths('crypto_execution_report.json', after_date=after_date)
+    # Include the passed-in report if it's not already covered by the glob
+    # (e.g. the caller loaded it from outside the rebuild tree).
+    singleton_crypto_report = crypto_execution_report if isinstance(crypto_execution_report, dict) else None
+    crypto_reports: list[dict] = [load(path) for path in historical_crypto_paths]
+    if singleton_crypto_report:
+        crypto_reports.append(singleton_crypto_report)
+
+    for crypto_report in crypto_reports:
+        if not isinstance(crypto_report, dict):
+            continue
+        if crypto_report.get('status') not in {'OK', 'PARTIAL', 'SUBMITTED'}:
+            continue
+        crypto_symbol = normalize_symbol(
+            crypto_report.get('symbol')
+            or (crypto_execution_plan.get('symbol') if isinstance(crypto_execution_plan, dict) else None)
+        )
+        if crypto_symbol not in crypto_symbols:
+            continue
+        crypto_order_id = crypto_report.get('broker_order_id')
+        if not crypto_order_id:
+            continue
         events.append(
             {
                 'sleeve': 'crypto',
