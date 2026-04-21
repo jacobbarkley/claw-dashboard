@@ -1,7 +1,7 @@
 {
   "run_id": "q076b-frozen-reference-20260417",
   "bench_id": "q076b_regime_aware_momentum_frozen_reference",
-  "generated_at": "2026-04-17T06:40:56.170805Z",
+  "generated_at": "2026-04-21T03:53:54.261241Z",
   "status": "SUCCEEDED",
   "spec_path": "backtest/bench/specs/q076b_regime_aware_momentum_frozen_reference.bench_spec.json",
   "spec_hash": null,

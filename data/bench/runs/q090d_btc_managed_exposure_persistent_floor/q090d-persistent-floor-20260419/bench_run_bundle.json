@@ -1,7 +1,7 @@
 {
   "run_id": "q090d-persistent-floor-20260419",
   "bench_id": "q090d_btc_managed_exposure_persistent_floor",
-  "generated_at": "2026-04-19T16:44:10.182669-04:00",
+  "generated_at": "2026-04-20T23:53:49.717166-04:00",
   "status": "SUCCEEDED",
   "spec_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json",
   "spec_hash": null,
@@ -22,7 +22,14 @@
   "baseline_ids": [
     "BUY_AND_HOLD_BTC"
   ],
-  "era_ids": [],
+  "era_ids": [
+    "2016_rebuild",
+    "2017_mania",
+    "2018_2020_reset",
+    "2020_2021_bull",
+    "2021_2022_reset",
+    "2023_2026_current"
+  ],
   "primary_metric": "calmar_ratio",
   "primary_metric_value": 0.9352,
   "artifact_refs": [

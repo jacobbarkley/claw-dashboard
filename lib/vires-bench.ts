@@ -460,12 +460,24 @@ function buildStockPassport(
   const maxDD = num(selected.max_drawdown_pct)
   const trades = num(selected.total_trades)
   const days = num(selected.evaluated_trading_days)
-  const eras = arr<JsonObject>(spec?.dataset?.eras).map(era => ({
+  const reportEraRows = arr<JsonObject>(report?.era_results).map(era => ({
     label: str(era.label) ?? str(era.era_id) ?? "Era",
-    sharpe: null,
-    ret: null,
-    pass: null,
+    sharpe: num(era.row?.sharpe_ratio),
+    ret: num(era.row?.total_return_pct),
+    pass: str(era.row?.verdict) === "PASS" ? true : str(era.row?.verdict) ? false : null,
   }))
+  const eras = reportEraRows.length
+    ? reportEraRows
+    : arr<JsonObject>(spec?.dataset?.eras).map(era => ({
+        label: str(era.label) ?? str(era.era_id) ?? "Era",
+        sharpe: null,
+        ret: null,
+        pass: null,
+      }))
+  const finiteEraSharpes = eras
+    .map(era => num(era.sharpe))
+    .filter((value): value is number => value != null)
+  const minEraSharpe = finiteEraSharpes.length ? Math.min(...finiteEraSharpes) : null
   const rejectRules = buildStockRejectRules(spec, arr<JsonObject>(report?.leaderboard ?? report?.candidate_rows ?? []))
   const gates: JsonObject[] = [
     {
@@ -479,6 +491,13 @@ function buildStockPassport(
       detail: benchmarkRet != null && totalRet != null
         ? `${totalRet.toFixed(2)}% vs ${benchmarkRet.toFixed(2)}% benchmark return.`
         : "Benchmark-relative comparison is partially populated.",
+    },
+    {
+      label: "Era robustness",
+      status: minEraSharpe == null ? "WARN" : minEraSharpe >= 1 ? "PASS" : minEraSharpe >= 0 ? "WARN" : "FAIL",
+      detail: minEraSharpe != null
+        ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
+        : "Promoted era metrics are not populated yet.",
     },
     ...rejectRules.map(rule => ({
       label: str(rule.label) ?? "Gate",
@@ -531,7 +550,7 @@ function buildStockPassport(
       winRate: num(selected.win_rate_pct),
     },
     eras,
-    minEraSharpe: null,
+    minEraSharpe,
     assumptions: {
       commissionBps: num(spec?.cost_model?.fee_bps_round_trip),
       slippageBps: num(spec?.cost_model?.slippage_bps_one_way),
@@ -565,6 +584,15 @@ function buildCryptoManagedPassport(
   const benchmarkSummary = benchmark?.summary ?? {}
   const laneSummary = lane?.summary ?? {}
   const comparison = lane?.benchmark_comparison ?? {}
+  const eraRows = arr<JsonObject>(lane?.era_results).map(era => ({
+    label: str(era.label) ?? str(era.era_id) ?? "Era",
+    sharpe: num(era.summary?.sharpe_ratio),
+    ret: num(era.summary?.net_total_compounded_return_pct),
+    pass: (num(era.summary?.sharpe_ratio) ?? -Infinity) >= 0.5,
+  }))
+  const minEraSharpe = eraRows.length
+    ? Math.min(...eraRows.map(era => era.sharpe ?? Infinity).filter(value => Number.isFinite(value)))
+    : null
 
   const gates: JsonObject[] = [
     {
@@ -592,6 +620,13 @@ function buildCryptoManagedPassport(
       detail: num(comparison.drawdown_improvement_pct) != null
         ? `${Number(comparison.drawdown_improvement_pct).toFixed(2)}% shallower max drawdown than HODL.`
         : "Drawdown comparison is not populated.",
+    },
+    {
+      label: "Era robustness",
+      status: minEraSharpe == null ? "WARN" : minEraSharpe >= 0.5 ? "PASS" : "WARN",
+      detail: minEraSharpe != null
+        ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
+        : "Promoted era metrics are not populated yet.",
     },
   ]
 
@@ -638,13 +673,15 @@ function buildCryptoManagedPassport(
       profitFactor: null,
       winRate: num(laneSummary.net_win_rate_pct),
     },
-    eras: arr<JsonObject>(spec?.dataset?.eras).map(era => ({
-      label: str(era.label) ?? str(era.era_id) ?? "Era",
-      sharpe: null,
-      ret: null,
-      pass: null,
-    })),
-    minEraSharpe: null,
+    eras: eraRows.length
+      ? eraRows
+      : arr<JsonObject>(spec?.dataset?.eras).map(era => ({
+          label: str(era.label) ?? str(era.era_id) ?? "Era",
+          sharpe: null,
+          ret: null,
+          pass: null,
+        })),
+    minEraSharpe,
     assumptions: {
       commissionBps: num(spec?.cost_model?.fee_bps_round_trip),
       slippageBps: num(spec?.cost_model?.slippage_bps_one_way),

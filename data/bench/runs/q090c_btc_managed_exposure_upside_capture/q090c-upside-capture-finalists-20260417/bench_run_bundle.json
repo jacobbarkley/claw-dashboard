@@ -1,7 +1,7 @@
 {
   "run_id": "q090c-upside-capture-finalists-20260417",
   "bench_id": "q090c_btc_managed_exposure_upside_capture",
-  "generated_at": "2026-04-17T02:10:32.487005-04:00",
+  "generated_at": "2026-04-20T23:57:46.866042-04:00",
   "status": "SUCCEEDED",
   "spec_path": "backtest/bench/specs/q090c_btc_managed_exposure_upside_capture.bench_spec.json",
   "spec_hash": null,
@@ -22,7 +22,14 @@
   "baseline_ids": [
     "BUY_AND_HOLD_BTC"
   ],
-  "era_ids": [],
+  "era_ids": [
+    "2016_rebuild",
+    "2017_mania",
+    "2018_2020_reset",
+    "2020_2021_bull",
+    "2021_2022_reset",
+    "2023_2026_current"
+  ],
   "primary_metric": "calmar_ratio",
   "primary_metric_value": 0.9134,
   "artifact_refs": [

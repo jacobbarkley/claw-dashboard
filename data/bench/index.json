@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-20T16:04:45.467720-04:00",
+  "generated_at": "2026-04-20T23:58:00.332974-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -17,7 +17,7 @@
       "sweep_truncated": false,
       "primary_metric": "CALMAR",
       "primary_metric_value": 2.5465,
-      "generated_at": "2026-04-17T06:40:56.170805Z"
+      "generated_at": "2026-04-21T03:53:54.261241Z"
     },
     {
       "bench_id": "q090b_btc_4h_tsmom_neighborhood_probe",
@@ -187,7 +187,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9568,
-      "generated_at": "2026-04-17T02:10:32.446321-04:00"
+      "generated_at": "2026-04-20T23:57:46.807037-04:00"
     },
     {
       "bench_id": "q090c_btc_managed_exposure_upside_capture",
@@ -204,7 +204,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9134,
-      "generated_at": "2026-04-17T02:10:32.487005-04:00"
+      "generated_at": "2026-04-20T23:57:46.866042-04:00"
     },
     {
       "bench_id": "q090d_btc_managed_exposure_persistent_floor",
@@ -221,7 +221,7 @@
       "sweep_truncated": false,
       "primary_metric": "calmar_ratio",
       "primary_metric_value": 0.9352,
-      "generated_at": "2026-04-19T16:44:10.182669-04:00"
+      "generated_at": "2026-04-20T23:53:49.717166-04:00"
     }
   ],
   "specs": [
