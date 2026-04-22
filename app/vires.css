@@ -397,3 +397,27 @@ button:focus-visible, a:focus-visible { outline: 1px solid var(--vr-gold); outli
     grid-template-columns: 1fr;
   }
 }
+
+/* Sub-tab swipe transitions — the incoming content slides in from the
+   direction of travel. Short + low-amplitude so the gesture feels
+   responsive without ever looking "cinematic." */
+@keyframes vr-slide-from-right {
+  from { transform: translateX(12%); opacity: 0.35; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+@keyframes vr-slide-from-left {
+  from { transform: translateX(-12%); opacity: 0.35; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.vr-tab-slide-forward {
+  animation: vr-slide-from-right 200ms ease-out;
+}
+.vr-tab-slide-back {
+  animation: vr-slide-from-left 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vr-tab-slide-forward,
+  .vr-tab-slide-back {
+    animation: none;
+  }
+}
