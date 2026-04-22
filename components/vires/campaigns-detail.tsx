@@ -500,20 +500,31 @@ function LeaderVsBaselineBlock({
         </div>
       ) : (
         <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(5, 1fr)",
-            }}
-          >
-            {deltas.map((d, i) => (
+          {/* Mobile-first layout: 2x2 of returns + risk deltas, then the
+              robustness delta (eras passed) on a full-width row below. Five
+              cells across fit on desktop but crush on phone; 2+2+1 reads
+              cleanly at both widths. */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+            {deltas.slice(0, 4).map((d, i) => (
               <div
                 key={d.label}
-                style={{ borderRight: i < deltas.length - 1 ? "1px solid var(--vr-line)" : "none" }}
+                style={{
+                  borderRight: i % 2 === 0 ? "1px solid var(--vr-line)" : "none",
+                  borderBottom: "1px solid var(--vr-line)",
+                }}
               >
                 <PerformanceCell label={d.label} value={d.value} valueColor={d.color} />
               </div>
             ))}
+            {deltas[4] && (
+              <div style={{ gridColumn: "1 / -1" }}>
+                <PerformanceCell
+                  label={deltas[4].label}
+                  value={deltas[4].value}
+                  valueColor={deltas[4].color}
+                />
+              </div>
+            )}
           </div>
           {comp.summary && (
             <div style={{ padding: "10px 16px", borderTop: "1px solid var(--vr-line)" }}>
