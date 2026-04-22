@@ -33,12 +33,14 @@ import {
   changeMeta,
   relTime,
 } from "./campaigns-shared"
-import { SleeveChip, type Sleeve } from "./shared"
+import { InfoPop, SleeveChip, type Sleeve } from "./shared"
 
 // ─── Lever shell — action-shaped button (disabled in v1) ────────────────────
 // CRITICAL: element IS <button>, NOT div/span. disabled + aria-disabled true.
 // When v2 action wiring lands, swap `disabled` off and add onClick. No
 // structural rewrite.
+// InfoPop sits as a sibling (absolute-positioned overlay), not a child, so
+// we stay HTML-valid — you can't nest interactive elements inside a <button>.
 
 function LeverShell({
   eyebrow,
@@ -46,69 +48,90 @@ function LeverShell({
   sub,
   actionHint,
   glyph = "↻",
+  infoTerm,
 }: {
   eyebrow: string
   value: string
   sub?: string | null
   actionHint: string
   glyph?: string
+  infoTerm?: string
 }) {
   return (
-    <button
-      type="button"
-      disabled
-      aria-disabled="true"
-      title={`${actionHint} — action wires in v2`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        width: "100%",
-        padding: "10px 12px",
-        background: "transparent",
-        border: "none",
-        color: "inherit",
-        textAlign: "left",
-        cursor: "default",
-        fontFamily: "inherit",
-      }}
-    >
-      <div
+    <div style={{ position: "relative" }}>
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        title={`${actionHint} — action wires in v2`}
         style={{
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          flexDirection: "column",
+          alignItems: "flex-start",
           width: "100%",
-          gap: 6,
+          // Reserve room on the right for the InfoPop overlay even when
+          // infoTerm is absent, so cell widths stay uniform.
+          padding: "10px 28px 10px 12px",
+          background: "transparent",
+          border: "none",
+          color: "inherit",
+          textAlign: "left",
+          cursor: "default",
+          fontFamily: "inherit",
         }}
       >
         <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
           {eyebrow}
         </span>
-        <span
-          aria-hidden
+        <div
           style={{
-            display: "inline-block",
-            width: 14,
-            height: 14,
-            textAlign: "center",
-            color: "var(--vr-cream-faint)",
-            fontSize: 11,
-            lineHeight: "14px",
+            display: "flex",
+            alignItems: "baseline",
+            gap: 6,
+            marginTop: 3,
           }}
         >
-          {glyph}
-        </span>
-      </div>
-      <div className="t-num" style={{ fontSize: 14, color: "var(--vr-cream)", fontWeight: 500, marginTop: 3 }}>
-        {value}
-      </div>
-      {sub && (
-        <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-faint)", marginTop: 2 }}>
-          {sub}
+          <span
+            className="t-num"
+            style={{ fontSize: 14, color: "var(--vr-cream)", fontWeight: 500 }}
+          >
+            {value}
+          </span>
+          <span
+            aria-hidden
+            style={{
+              display: "inline-block",
+              width: 12,
+              textAlign: "center",
+              color: "var(--vr-cream-faint)",
+              fontSize: 11,
+              lineHeight: 1,
+            }}
+          >
+            {glyph}
+          </span>
         </div>
+        {sub && (
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-faint)", marginTop: 2 }}>
+            {sub}
+          </div>
+        )}
+      </button>
+      {infoTerm && (
+        <span
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            zIndex: 1,
+            // Letting the InfoPop render its own spacing; this wrapper
+            // keeps it visually anchored to the cell corner.
+          }}
+        >
+          <InfoPop term={infoTerm} size={13} />
+        </span>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -658,11 +681,13 @@ function CampaignCandidateRow({
   isLeader,
   isLast,
   benchmarkSymbol,
+  passportHref,
 }: {
   candidate: Candidate
   isLeader: boolean
   isLast: boolean
   benchmarkSymbol: string
+  passportHref?: string
 }) {
   const stats =
     candidate.latest_run?.run_stats_status === "INDEXED" ? candidate.latest_run.run_stats ?? null : null
@@ -672,10 +697,17 @@ function CampaignCandidateRow({
       : isLeader
         ? "rgba(200,169,104,0.02)"
         : "transparent"
+  const clickable = !!passportHref
+  const Outer: React.ElementType = clickable ? Link : "div"
+  const outerProps: Record<string, unknown> = clickable
+    ? { href: passportHref, style: { textDecoration: "none", color: "inherit", display: "block" } }
+    : {}
 
   return (
-    <div
+    <Outer
+      {...outerProps}
       style={{
+        ...((outerProps.style as object) ?? {}),
         padding: "12px 14px",
         background: tint,
         borderBottom: isLast ? "none" : "1px solid var(--vr-line)",
@@ -710,7 +742,25 @@ function CampaignCandidateRow({
             {candidate.candidate_id}
           </div>
         </div>
-        <RoleTag role={candidate.role} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <RoleTag role={candidate.role} />
+          {clickable && (
+            <span
+              aria-hidden
+              className="t-eyebrow"
+              style={{
+                fontSize: 9,
+                color: "var(--vr-gold)",
+                display: "inline-flex",
+                alignItems: "center",
+              }}
+            >
+              <svg width="9" height="9" viewBox="0 0 8 8" fill="none">
+                <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+              </svg>
+            </span>
+          )}
+        </div>
       </div>
 
       {candidate === candidate && (candidate.latest_run?.run_id || candidate.latest_run?.summary) && (
@@ -868,7 +918,23 @@ function CampaignCandidateRow({
           ))}
         </ul>
       )}
-    </div>
+
+      {/* Honest footnote for candidates that don't have a passport yet. */}
+      {!clickable && (
+        <div
+          className="t-label"
+          style={{
+            fontSize: 10,
+            marginTop: 8,
+            color: "var(--vr-cream-faint)",
+            fontStyle: "italic",
+            fontFamily: "var(--ff-serif)",
+          }}
+        >
+          Bench passport lands with promotion-v2.
+        </div>
+      )}
+    </Outer>
   )
 }
 
@@ -879,11 +945,13 @@ function FamilyGroupView({
   candidates,
   leaderId,
   benchmarkSymbol,
+  passportByCandidateId,
 }: {
   family: FamilyGroupT
   candidates: Candidate[]
   leaderId: string | null
   benchmarkSymbol: string
+  passportByCandidateId: Record<string, string>
 }) {
   if (!candidates.length) return null
   const ROLE_ORDER: Record<string, number> = { PROMOTED_REFERENCE: 0, LEADER: 1, CHALLENGER: 2 }
@@ -931,22 +999,32 @@ function FamilyGroupView({
           {sorted.length} {sorted.length === 1 ? "candidate" : "candidates"}
         </div>
       </div>
-      {sorted.map((c, i) => (
-        <CampaignCandidateRow
-          key={c.candidate_id}
-          candidate={c}
-          isLeader={c.candidate_id === leaderId}
-          isLast={i === sorted.length - 1}
-          benchmarkSymbol={benchmarkSymbol}
-        />
-      ))}
+      {sorted.map((c, i) => {
+        const passportId = passportByCandidateId[c.candidate_id]
+        return (
+          <CampaignCandidateRow
+            key={c.candidate_id}
+            candidate={c}
+            isLeader={c.candidate_id === leaderId}
+            isLast={i === sorted.length - 1}
+            benchmarkSymbol={benchmarkSymbol}
+            passportHref={passportId ? `/vires/bench/passport/${encodeURIComponent(passportId)}` : undefined}
+          />
+        )
+      })}
     </div>
   )
 }
 
 // ─── Main detail page ──────────────────────────────────────────────────────
 
-export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest }) {
+export function ViresCampaignsDetail({
+  campaign,
+  passportByCandidateId = {},
+}: {
+  campaign: CampaignManifest
+  passportByCandidateId?: Record<string, string>
+}) {
   const candidatesById = useMemo(() => {
     const m: Record<string, Candidate> = {}
     for (const c of campaign.candidates) m[c.candidate_id] = c
@@ -1060,7 +1138,35 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
         </div>
       </div>
 
-      {/* Leader card — role-tagged, with lever strip, runner-up context, baseline performance */}
+      {/* Promotion target — editorial callout, moved above the Leader card so
+          "what winning looks like" reads right after the title/objective. */}
+      {campaign.promotion_target && (
+        <div
+          style={{
+            padding: "14px 16px",
+            border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
+            borderRadius: 4,
+            background: "var(--vr-gold-soft, rgba(200,169,104,0.06))",
+          }}
+        >
+          <div className="t-eyebrow" style={{ color: "var(--vr-gold)", marginBottom: 6 }}>
+            Promotion target
+          </div>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream)",
+              lineHeight: 1.55,
+            }}
+          >
+            {campaign.promotion_target}
+          </div>
+        </div>
+      )}
+
+      {/* Leader card — role-tagged, with lever strip, baseline performance */}
       {featuredCandidate && (
         <div
           className="vr-card"
@@ -1124,29 +1230,6 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                 {featuredCandidate.latest_run.summary}
               </div>
             )}
-            {baseline?.why && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: "8px 10px",
-                  borderLeft: "2px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
-                  background: "rgba(200,169,104,0.03)",
-                }}
-              >
-                <div
-                  className="t-read"
-                  style={{
-                    fontSize: 12,
-                    fontFamily: "var(--ff-serif)",
-                    fontStyle: "italic",
-                    color: "var(--vr-cream-dim)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {baseline.why}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Lever strip: 4 shells */}
@@ -1161,6 +1244,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                 }
                 sub={rs.last_leader_change_at ? `changed ${relTime(rs.last_leader_change_at)}` : null}
                 actionHint="Force leader re-evaluation"
+                infoTerm="LeaderStability"
               />
             </div>
             <div style={{ borderBottom: "1px solid var(--vr-line)" }}>
@@ -1169,6 +1253,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                 value={rs.last_param_sweep_at ? relTime(rs.last_param_sweep_at) : "—"}
                 sub={rs.days_since_param_sweep != null ? `${rs.days_since_param_sweep}d since last sweep` : null}
                 actionHint="Run new parameter sweep"
+                infoTerm="ParamSweep"
               />
             </div>
             <div style={{ borderRight: "1px solid var(--vr-line)" }}>
@@ -1178,6 +1263,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                 sub={runnerUp ? `vs ${runnerUp.title}` : null}
                 actionHint="Open runner-up passport"
                 glyph="→"
+                infoTerm="RunnerUpGap"
               />
             </div>
             <div>
@@ -1190,30 +1276,10 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                     : null
                 }
                 actionHint="Queue fresh run"
+                infoTerm="LastRun"
               />
             </div>
           </div>
-
-          {/* Runner-up context prose */}
-          {rs.runner_up_gap?.summary && (
-            <div style={{ padding: "12px 16px", borderTop: "1px solid var(--vr-line)" }}>
-              <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4, color: "var(--vr-cream-mute)" }}>
-                Runner-up context
-              </div>
-              <div
-                className="t-read"
-                style={{
-                  fontSize: 12,
-                  fontFamily: "var(--ff-serif)",
-                  fontStyle: "italic",
-                  color: "var(--vr-cream-dim)",
-                  lineHeight: 1.5,
-                }}
-              >
-                {rs.runner_up_gap.summary}
-              </div>
-            </div>
-          )}
 
           {/* Baseline Performance block (reads v2 if present, falls back to v1 leader run_stats) */}
           <BaselinePerformanceBlock
@@ -1227,33 +1293,6 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
 
       {/* Leader vs baseline — v2 only */}
       {leaderComp && <LeaderVsBaselineBlock comp={leaderComp} />}
-
-      {/* Promotion target */}
-      {campaign.promotion_target && (
-        <div
-          style={{
-            padding: "14px 16px",
-            border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
-            borderRadius: 4,
-            background: "var(--vr-gold-soft, rgba(200,169,104,0.06))",
-          }}
-        >
-          <div className="t-eyebrow" style={{ color: "var(--vr-gold)", marginBottom: 6 }}>
-            Promotion target
-          </div>
-          <div
-            className="t-read"
-            style={{
-              fontSize: 13,
-              fontFamily: "var(--ff-serif)",
-              color: "var(--vr-cream)",
-              lineHeight: 1.55,
-            }}
-          >
-            {campaign.promotion_target}
-          </div>
-        </div>
-      )}
 
       {/* Leaderboard by family */}
       <div
@@ -1286,6 +1325,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
             candidates={g.candidates}
             leaderId={leaderId}
             benchmarkSymbol={campaign.benchmark_symbol}
+            passportByCandidateId={passportByCandidateId}
           />
         ))}
         {orphans.length > 0 && (
@@ -1298,6 +1338,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
             candidates={orphans}
             leaderId={leaderId}
             benchmarkSymbol={campaign.benchmark_symbol}
+            passportByCandidateId={passportByCandidateId}
           />
         )}
       </div>

@@ -1,9 +1,33 @@
 import Link from "next/link"
 import { loadCampaignById } from "@/lib/vires-campaigns.server"
+import { loadBenchIndexWithViresContracts } from "@/lib/vires-bench"
 import { ViresCampaignsDetail } from "@/components/vires/campaigns-detail"
 
 export const metadata = {
   title: "Vires Capital — Campaign",
+}
+
+// Build a candidate_id → passport.id map by matching against the bench index.
+// We match on either passport.id or passport.bench_id because Codex's producer
+// emits the canonical strategy/bench id as both possible keys. Candidates
+// without a passport aren't in the map; the UI renders them without a link.
+async function buildCandidatePassportMap(
+  candidateIds: string[],
+): Promise<Record<string, string>> {
+  if (!candidateIds.length) return {}
+  const index = await loadBenchIndexWithViresContracts()
+  const passports = Array.isArray(index?.passports)
+    ? (index.passports as Array<{ id?: string | null; bench_id?: string | null }>)
+    : []
+  const map: Record<string, string> = {}
+  for (const p of passports) {
+    const pid = p.id
+    if (!pid) continue
+    for (const cid of candidateIds) {
+      if (cid === pid || cid === p.bench_id) map[cid] = pid
+    }
+  }
+  return map
 }
 
 export default async function ViresCampaignDetailPage({
@@ -54,5 +78,10 @@ export default async function ViresCampaignDetailPage({
       </div>
     )
   }
-  return <ViresCampaignsDetail campaign={campaign} />
+  const passportByCandidateId = await buildCandidatePassportMap(
+    campaign.candidates.map(c => c.candidate_id),
+  )
+  return (
+    <ViresCampaignsDetail campaign={campaign} passportByCandidateId={passportByCandidateId} />
+  )
 }

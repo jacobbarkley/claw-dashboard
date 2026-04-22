@@ -412,6 +412,11 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
     full: "Strategy Variants Under This Thesis",
     body: "Number of strategy variants checked into this campaign. Variants compete under the same thesis \u2014 different implementations of the same research question, grouped into families.",
   },
+  RunnerUpGap: {
+    title: "Runner-up Gap",
+    full: "Distance Between the Leader and the Next-Best Candidate",
+    body: "How far the second-best candidate trails the leader on the load-bearing metrics (return, Sharpe, drawdown). \u201CNot quantified\u201D is a legitimate state \u2014 it means the candidates haven\u2019t had enough fresh runs on matching windows for an honest delta to be computed yet.",
+  },
 }
 
 export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {
