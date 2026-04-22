@@ -8,6 +8,8 @@
 //
 // Per spec §11: display-only first. The promote-confirm flow wires in v2.
 
+import { useState } from "react"
+
 import type {
   CampaignManifest,
   GateStatus,
@@ -231,6 +233,9 @@ function GateRow({ gate, isLast }: { gate: ReadinessGate; isLast: boolean }) {
 export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifest }) {
   const readiness = campaign.promotion_readiness?.readiness ?? null
   const promotionTarget = campaign.promotion_target ?? null
+  const [requestState, setRequestState] = useState<"idle" | "success" | "error">("idle")
+  const [requestMessage, setRequestMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Degraded case — no readiness data yet but promotion_target present.
   // Render a pared-down version that still carries the editorial narrative.
@@ -277,6 +282,41 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
 
   const readyToNominate = readiness.overall_status === "READY_TO_NOMINATE"
   const blockers = readiness.blockers ?? []
+  const canNominate = readyToNominate && requestState !== "success" && !isSubmitting
+
+  const submitNomination = async () => {
+    setRequestMessage(null)
+    setRequestState("idle")
+    setIsSubmitting(true)
+    try {
+      const response = await fetch("/api/passport/workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "CONFIRM_PROMOTION",
+          actor: "operator",
+          campaign_id: campaign.campaign_id,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to record the promotion request.")
+      }
+      setRequestState("success")
+      setRequestMessage(
+        payload?.mode === "direct"
+          ? "Promotion confirmed in the local strategy bank."
+          : payload?.mode === "github"
+            ? "Nomination request recorded for the live workflow."
+            : "Nomination request recorded locally for the next backend sync.",
+      )
+    } catch (error) {
+      setRequestState("error")
+      setRequestMessage(error instanceof Error ? error.message : "Unable to record the promotion request.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
     <div
@@ -392,17 +432,20 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
           </div>
         )}
 
-        {/* Nominate button — action shell (disabled until the promote-confirm
-            flow wires in v2). When READY_TO_NOMINATE, visually primed but
-            still non-interactive. */}
+        {/* Nominate button — now wired to the governed passport-workflow
+            request path. The route records a promotion request only when the
+            scorecard is genuinely promotion-ready. */}
         <button
           type="button"
-          disabled
-          aria-disabled="true"
+          disabled={!canNominate}
+          aria-disabled={!canNominate}
+          onClick={() => void submitNomination()}
           title={
-            readyToNominate
-              ? "Nominate for promotion — operator-confirm flow wires in v2"
-              : "Gates not yet cleared"
+            canNominate
+              ? "Nominate this candidate into the governed passport workflow"
+              : readyToNominate
+                ? "Nomination already requested"
+                : "Gates not yet cleared"
           }
           style={{
             display: "inline-flex",
@@ -410,24 +453,46 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
             justifyContent: "center",
             gap: 6,
             padding: "9px 14px",
-            border: `1px solid ${readyToNominate ? "var(--vr-up)" : "var(--vr-line-hi, rgba(241,236,224,0.16))"}`,
-            background: readyToNominate ? "rgba(127,194,155,0.08)" : "transparent",
-            color: readyToNominate ? "var(--vr-up)" : "var(--vr-cream-mute)",
+            border: `1px solid ${
+              canNominate || requestState === "success"
+                ? "var(--vr-up)"
+                : "var(--vr-line-hi, rgba(241,236,224,0.16))"
+            }`,
+            background: canNominate || requestState === "success" ? "rgba(127,194,155,0.08)" : "transparent",
+            color: canNominate || requestState === "success" ? "var(--vr-up)" : "var(--vr-cream-mute)",
             borderRadius: 3,
             fontFamily: "var(--ff-sans)",
             fontWeight: 600,
             fontSize: 10,
             letterSpacing: "0.16em",
             textTransform: "uppercase",
-            cursor: "default",
+            cursor: canNominate ? "pointer" : "default",
             alignSelf: "flex-start",
           }}
         >
-          {readyToNominate ? "Nominate for promotion" : "Awaiting gates"}
+          {isSubmitting
+            ? "Submitting request"
+            : requestState === "success"
+              ? "Nomination requested"
+              : readyToNominate
+                ? "Nominate for promotion"
+                : "Awaiting gates"}
           <svg width="10" height="10" viewBox="0 0 8 8" fill="none" aria-hidden>
             <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
           </svg>
         </button>
+        {requestMessage && (
+          <div
+            className="t-read"
+            style={{
+              fontSize: 11,
+              color: requestState === "error" ? "var(--vr-down)" : "var(--vr-cream-dim)",
+              lineHeight: 1.45,
+            }}
+          >
+            {requestMessage}
+          </div>
+        )}
       </div>
     </div>
   )
