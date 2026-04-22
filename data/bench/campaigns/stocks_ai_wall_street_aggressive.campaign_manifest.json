@@ -1,19 +1,92 @@
 {
-  "schema_version": "bench_campaign_manifest.v1",
+  "schema_version": "bench_campaign_manifest.v2",
   "campaign_id": "stocks_ai_wall_street_aggressive",
   "title": "Aggressive AI Wall Street",
   "sleeve": "STOCKS",
   "objective": "Find a concentrated AI and technology leadership sleeve that compounds faster than broad large-cap market exposure without faking robustness.",
   "benchmark_symbol": "QQQ",
   "status": "EXPLORING",
-  "summary": "Aggressive concentrated-tech research lane. Current leader exists, but nothing in this campaign is close enough to quality-gated promotion yet.",
-  "updated_at": "2026-04-20T21:55:00-04:00",
+  "summary": "Aggressive concentrated-tech research lane. A real bench leader exists, but it still has not beaten the promoted stock reference honestly or cleared quality gates.",
+  "updated_at": "2026-04-21T21:06:56.6718844-04:00",
   "updated_by": "codex",
   "current_leader_candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
   "last_run_at": "2026-04-14T16:00:00-04:00",
   "last_meaningful_change_at": "2026-04-14T16:00:00-04:00",
   "last_meaningful_change": "Dynamic Top 6 became the current aggressive leader after the first focused AI/tech screen batch.",
   "promotion_target": "Clear bench quality gates and earn paper eligibility without relying on one hot AI tape.",
+  "baseline": {
+    "kind": "PROMOTED_REFERENCE",
+    "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+    "strategy_name": "Regime-Aware Momentum",
+    "strategy_id": "REGIME_AWARE_MOMENTUM",
+    "variant": "5% stop / 15% target",
+    "why": "Aggressive AI benchmarks against QQQ, but the promoted broad-stock reference is still the honest stock baseline every concentrated challenger must beat before it earns promotion pressure of its own."
+  },
+  "baseline_performance": {
+    "evaluation_window": {
+      "start": "2022-01-01",
+      "end": "2024-11-30",
+      "trading_days": 797
+    },
+    "eras": [
+      {
+        "label": "2023 H1",
+        "pass": true
+      },
+      {
+        "label": "2023 H2",
+        "pass": true
+      },
+      {
+        "label": "2024 H1",
+        "pass": true
+      },
+      {
+        "label": "2024 H2",
+        "pass": true
+      }
+    ],
+    "eras_passed": 4,
+    "eras_total": 4,
+    "total_return_pct": 90.5,
+    "benchmark_return_pct": 80.45,
+    "excess_return_pct": 10.05,
+    "max_drawdown_pct": -8.89,
+    "benchmark_max_drawdown_pct": -13.4,
+    "sharpe": 1.93,
+    "benchmark_sharpe": 1.12,
+    "sortino": 3.17,
+    "calmar": 2.55,
+    "profit_factor": 2.12,
+    "win_rate_pct": 61.96,
+    "trades": 163,
+    "source": {
+      "kind": "PASSPORT",
+      "passport_id": "ram_stop5_tgt15",
+      "bundle_path": null,
+      "generated_at": "2026-04-17T20:30:00-04:00"
+    }
+  },
+  "leader_comparison_to_baseline": {
+    "leader_candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
+    "evaluation_window": {
+      "start": "2010-01-01",
+      "end": "2026-03-31",
+      "trading_days": 2993
+    },
+    "return_delta_pct": null,
+    "excess_delta_pct": null,
+    "sharpe_delta": null,
+    "drawdown_delta_pct": null,
+    "eras_pass_delta": null,
+    "status": "INSUFFICIENT_EVIDENCE",
+    "summary": "Dynamic Top 6's current result bundle spans a different benchmark and validation-window shape than the promoted stock reference, so the gap has not been quantified honestly yet."
+  },
+  "campaign_pressure": {
+    "status": "LEADER_NOT_YET_QUALITY_GATED",
+    "summary": "Dynamic Top 6 leads internally but still fails the era sweep. Leader in bench, not in promotion.",
+    "as_of": "2026-04-21T21:06:56.6718844-04:00"
+  },
   "recency_signals": {
     "last_leader_change_at": "2026-04-14T16:00:00-04:00",
     "leader_stability_sessions": 1,
@@ -35,10 +108,31 @@
     {
       "family_id": "REGIME_AWARE_MOMENTUM",
       "title": "Regime-Gated Momentum",
-      "summary": "The underlying implementation family currently executing these aggressive screens."
+      "summary": "The promoted broad-stock reference family this campaign must beat, and the momentum lineage the current aggressive screen variants still trace back to."
     }
   ],
   "candidates": [
+    {
+      "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+      "title": "Frozen Reference",
+      "family_id": "REGIME_AWARE_MOMENTUM",
+      "role": "PROMOTED_REFERENCE",
+      "artifact_kind": "EXECUTION_MANIFEST",
+      "artifact_refs": {
+        "execution_manifest_path": "backtest/bench/manifests/q076b_regime_aware_momentum_frozen_reference.execution_manifest.json",
+        "bench_result_bundle_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/bench_run_bundle.json",
+        "bench_report_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json"
+      },
+      "latest_run": {
+        "run_id": "q076b-frozen-reference-20260417",
+        "completed_at": "2026-04-17T20:30:00-04:00",
+        "summary": "Promoted broad-stock reference used as the baseline every aggressive AI challenger must clear before it earns real promotion pressure.",
+        "result_summary_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json"
+      },
+      "notes": [
+        "This is the stock baseline for aggressive challengers, not the leader of the AI thesis itself."
+      ]
+    },
     {
       "candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
       "title": "Dynamic Top 6",
@@ -53,9 +147,7 @@
         "run_id": "2026-04-14-dynamic-top6",
         "completed_at": "2026-04-14T16:00:00-04:00",
         "summary": "Current aggressive leader. Still failed quality gates across the era sweep, so this is a bench leader, not a promotion candidate yet.",
-        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top6/results/2026-04-14-dynamic-top6/campaign_summary.json",
-        "run_stats": null,
-        "run_stats_status": "NOT_INDEXED"
+        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top6/results/2026-04-14-dynamic-top6/campaign_summary.json"
       },
       "notes": [
         "This is the sharpest expression of the aggressive AI thesis currently checked in.",
@@ -70,15 +162,13 @@
       "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
       "artifact_refs": {
         "campaign_config_path": "backtest/campaigns/q085_dynamic_tech_top8/campaign_config.json",
-        "campaign_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
+        "campaign_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-dynamic-top8/campaign_summary.json"
       },
       "latest_run": {
-        "run_id": "2026-04-14-q085-dynamic-tech-01",
+        "run_id": "2026-04-14-dynamic-top8",
         "completed_at": "2026-04-14T16:00:00-04:00",
         "summary": "Broader aggressive challenger using the same frozen stop/target structure on a wider top-8 AI/tech screen.",
-        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json",
-        "run_stats": null,
-        "run_stats_status": "NOT_INDEXED"
+        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-dynamic-top8/campaign_summary.json"
       },
       "notes": [
         "Useful as the immediate breadth check against the top-6 concentration bet."
@@ -98,9 +188,7 @@
         "run_id": "2026-04-14-q085-dynamic-tech-01",
         "completed_at": "2026-04-14T16:00:00-04:00",
         "summary": "Dynamic aggressive screen using the same regime-aware momentum engine with a broader rotating tech leadership universe.",
-        "result_summary_path": "backtest/campaigns/q085_momentum_dynamic_tech_screen/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json",
-        "run_stats": null,
-        "run_stats_status": "NOT_INDEXED"
+        "result_summary_path": "backtest/campaigns/q085_momentum_dynamic_tech_screen/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
       },
       "notes": [
         "Keeps the campaign from over-anchoring on one specific top-N concentration choice."
@@ -108,6 +196,16 @@
     }
   ],
   "change_log": [
+    {
+      "at": "2026-04-21T21:06:56.6718844-04:00",
+      "kind": "PROMOTION_REFERENCE_ADDED",
+      "title": "Promoted stock baseline attached",
+      "detail": "The aggressive AI campaign now explicitly measures its internal leader against the promoted stock reference instead of only comparing AI challengers to each other.",
+      "actor": "codex",
+      "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+      "from_candidate_id": null,
+      "to_candidate_id": "q076b_regime_aware_momentum_frozen_reference"
+    },
     {
       "at": "2026-04-14T16:00:00-04:00",
       "kind": "LEADER_CHANGED",

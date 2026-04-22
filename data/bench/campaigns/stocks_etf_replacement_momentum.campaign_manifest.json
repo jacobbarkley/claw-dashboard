@@ -1,5 +1,5 @@
 {
-  "schema_version": "bench_campaign_manifest.v1",
+  "schema_version": "bench_campaign_manifest.v2",
   "campaign_id": "stocks_etf_replacement_momentum",
   "title": "ETF Replacement Momentum",
   "sleeve": "STOCKS",
@@ -7,13 +7,72 @@
   "benchmark_symbol": "SPY",
   "status": "CONVERGING",
   "summary": "This is the broad stock thesis closest to product shape. It already has a promoted reference, but the bench still needs to keep testing broader and stronger challengers.",
-  "updated_at": "2026-04-20T21:55:00-04:00",
+  "updated_at": "2026-04-21T21:06:56.6718844-04:00",
   "updated_by": "codex",
-  "current_leader_candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+  "current_leader_candidate_id": null,
   "last_run_at": "2026-04-17T20:30:00-04:00",
   "last_meaningful_change_at": "2026-04-17T20:30:00-04:00",
   "last_meaningful_change": "The frozen q076b momentum reference was promoted into the manifest-native path while broader ETF-replacement challengers remained in bench research.",
   "promotion_target": "Keep broad equity replacement as the user-facing stock story while the bench searches for challengers that beat the frozen reference honestly.",
+  "baseline": {
+    "kind": "PROMOTED_REFERENCE",
+    "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+    "strategy_name": "Regime-Aware Momentum",
+    "strategy_id": "REGIME_AWARE_MOMENTUM",
+    "variant": "5% stop / 15% target",
+    "why": "Current promoted stock reference and the baseline every broader ETF-replacement challenger must beat honestly."
+  },
+  "baseline_performance": {
+    "evaluation_window": {
+      "start": "2022-01-01",
+      "end": "2024-11-30",
+      "trading_days": 797
+    },
+    "eras": [
+      {
+        "label": "2023 H1",
+        "pass": true
+      },
+      {
+        "label": "2023 H2",
+        "pass": true
+      },
+      {
+        "label": "2024 H1",
+        "pass": true
+      },
+      {
+        "label": "2024 H2",
+        "pass": true
+      }
+    ],
+    "eras_passed": 4,
+    "eras_total": 4,
+    "total_return_pct": 90.5,
+    "benchmark_return_pct": 80.45,
+    "excess_return_pct": 10.05,
+    "max_drawdown_pct": -8.89,
+    "benchmark_max_drawdown_pct": -13.4,
+    "sharpe": 1.93,
+    "benchmark_sharpe": 1.12,
+    "sortino": 3.17,
+    "calmar": 2.55,
+    "profit_factor": 2.12,
+    "win_rate_pct": 61.96,
+    "trades": 163,
+    "source": {
+      "kind": "PASSPORT",
+      "passport_id": "ram_stop5_tgt15",
+      "bundle_path": null,
+      "generated_at": "2026-04-17T20:30:00-04:00"
+    }
+  },
+  "leader_comparison_to_baseline": null,
+  "campaign_pressure": {
+    "status": "BASELINE_CLEARLY_AHEAD",
+    "summary": "The promoted frozen reference is still the clear baseline; broader challengers are present but need fresh runs before the gap can be quantified honestly.",
+    "as_of": "2026-04-21T21:06:56.6718844-04:00"
+  },
   "recency_signals": {
     "last_leader_change_at": "2026-04-17T20:30:00-04:00",
     "leader_stability_sessions": 3,
@@ -54,31 +113,7 @@
         "run_id": "q076b-frozen-reference-20260417",
         "completed_at": "2026-04-17T20:30:00-04:00",
         "summary": "Current promoted stock reference and the baseline every broader ETF-replacement challenger must beat honestly.",
-        "result_summary_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json",
-        "run_stats": {
-          "period": { "start": "2022-01-01", "end": "2024-11-30", "trading_days": 797 },
-          "eras": [
-            { "label": "2023 H1", "pass": true },
-            { "label": "2023 H2", "pass": true },
-            { "label": "2024 H1", "pass": true },
-            { "label": "2024 H2", "pass": true }
-          ],
-          "eras_passed": 4,
-          "eras_total": 4,
-          "total_return_pct": 90.50,
-          "benchmark_return_pct": 80.45,
-          "excess_return_pct": 10.05,
-          "max_drawdown_pct": -8.89,
-          "benchmark_max_drawdown_pct": -13.40,
-          "sharpe": 1.93,
-          "benchmark_sharpe": 1.12,
-          "sortino": 3.17,
-          "calmar": 2.55,
-          "profit_factor": 2.12,
-          "win_rate_pct": 61.96,
-          "trades": 163
-        },
-        "run_stats_status": "INDEXED"
+        "result_summary_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json"
       },
       "notes": [
         "This is the current stock promotion reference, not the end of research."
@@ -97,9 +132,7 @@
         "run_id": null,
         "completed_at": null,
         "summary": "Broader top-12 ETF-replacement challenger using the first composite monthly screen.",
-        "result_summary_path": null,
-        "run_stats": null,
-        "run_stats_status": "NO_RUN"
+        "result_summary_path": null
       },
       "notes": [
         "This stays in the campaign because it pushes the ETF-replacement thesis broader than the frozen six-name reference."
@@ -118,9 +151,7 @@
         "run_id": null,
         "completed_at": null,
         "summary": "Second-generation ETF-replacement challenger using the winning C-lite ablation weights.",
-        "result_summary_path": null,
-        "run_stats": null,
-        "run_stats_status": "NO_RUN"
+        "result_summary_path": null
       },
       "notes": [
         "Good example of why campaign != family: same thesis, different implementation weighting."

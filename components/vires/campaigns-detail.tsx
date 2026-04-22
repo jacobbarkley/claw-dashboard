@@ -962,6 +962,9 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
   const rs = campaign.recency_signals
 
   const baseline = getBaseline(campaign)
+  const baselineCandidate =
+    baseline?.candidate_id != null ? candidatesById[baseline.candidate_id] : undefined
+  const featuredCandidate = leader ?? baselineCandidate
   const pressure = getCampaignPressure(campaign)
   const leaderComp = getLeaderComparison(campaign)
   const perfState = baselinePerformanceState(campaign)
@@ -1058,18 +1061,18 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
       </div>
 
       {/* Leader card — role-tagged, with lever strip, runner-up context, baseline performance */}
-      {leader && (
+      {featuredCandidate && (
         <div
           className="vr-card"
           style={{
             padding: 0,
             background:
-              leader.role === "PROMOTED_REFERENCE" ? "rgba(200,169,104,0.04)" : "var(--vr-ink)",
+              featuredCandidate.role === "PROMOTED_REFERENCE" ? "rgba(200,169,104,0.04)" : "var(--vr-ink)",
           }}
         >
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--vr-line)" }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 5, color: "var(--vr-cream-mute)" }}>
-              {leader.role === "PROMOTED_REFERENCE" ? "Baseline to beat" : "Current leader"}
+              {featuredCandidate.role === "PROMOTED_REFERENCE" ? "Baseline to beat" : "Current leader"}
             </div>
             <div
               style={{
@@ -1089,7 +1092,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                     fontWeight: 500,
                   }}
                 >
-                  {leader.title}
+                  {featuredCandidate.title}
                 </div>
                 <div
                   className="t-ticker"
@@ -1103,12 +1106,12 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {leader.candidate_id}
+                  {featuredCandidate.candidate_id}
                 </div>
               </div>
-              <RoleTag role={leader.role} />
+              <RoleTag role={featuredCandidate.role} />
             </div>
-            {leader.latest_run?.summary && (
+            {featuredCandidate.latest_run?.summary && (
               <div
                 className="t-read"
                 style={{
@@ -1118,7 +1121,7 @@ export function ViresCampaignsDetail({ campaign }: { campaign: CampaignManifest 
                   marginTop: 10,
                 }}
               >
-                {leader.latest_run.summary}
+                {featuredCandidate.latest_run.summary}
               </div>
             )}
             {baseline?.why && (

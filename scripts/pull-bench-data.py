@@ -9,6 +9,8 @@ at request time. Produces:
   data/bench/runs/<bench_id>/<run_id>/bench_spec.snapshot.json
   data/bench/runs/<bench_id>/<run_id>/bench_run_bundle.json
   data/bench/runs/<bench_id>/<run_id>/crypto_bench_leaderboard.json
+  data/bench/campaigns/campaign_registry.json
+  data/bench/campaigns/*.campaign_manifest.json
   data/bench/latest_by_bench/<bench_id>.json   (pointer to newest run by generated_at)
   data/bench/index.json                         (flat list of all benches with summary)
 
@@ -47,6 +49,10 @@ TRADING_BOT_BENCH_SPECS = _path_from_env(
 TRADING_BOT_BENCH_MANIFESTS = _path_from_env(
     "TRADING_BOT_BENCH_MANIFESTS",
     Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/manifests",
+)
+TRADING_BOT_BENCH_CAMPAIGNS = _path_from_env(
+    "TRADING_BOT_BENCH_CAMPAIGNS",
+    Path.home() / ".openclaw/workspace/trading-bot/backtest/bench/campaigns",
 )
 TRADING_BOT_REBUILD_LATEST = _path_from_env(
     "TRADING_BOT_REBUILD_LATEST",
@@ -208,6 +214,17 @@ def pull() -> None:
                 "filename": manifest_file.name,
             })
             print(f"  manifest {manifest_file.name}  sleeve={manifest.get('sleeve'):8s}  source=CHECKED_IN")
+
+    campaigns_dest = DASHBOARD_BENCH_DATA / "campaigns"
+    campaigns_dest.mkdir(parents=True, exist_ok=True)
+    if TRADING_BOT_BENCH_CAMPAIGNS.exists():
+        registry_src = TRADING_BOT_BENCH_CAMPAIGNS / "campaign_registry.json"
+        if registry_src.exists():
+            shutil.copy2(registry_src, campaigns_dest / registry_src.name)
+            print(f"  campaign {registry_src.name}")
+        for manifest_file in sorted(TRADING_BOT_BENCH_CAMPAIGNS.glob("*.campaign_manifest.json")):
+            shutil.copy2(manifest_file, campaigns_dest / manifest_file.name)
+            print(f"  campaign {manifest_file.name}")
 
     # Copy runtime artifacts that anchor manifest provenance to the live runtime
     runtime_dest = DASHBOARD_BENCH_DATA / "runtime"

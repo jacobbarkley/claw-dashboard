@@ -15,7 +15,7 @@ import type {
   CampaignsIndexData,
   RunnerUpGap,
 } from "@/lib/vires-campaigns"
-import { countsBySleeve, statusCounts } from "@/lib/vires-campaigns"
+import { countsBySleeve, getBaseline, statusCounts } from "@/lib/vires-campaigns"
 import {
   ChangeLogPreviewRow,
   RoleTag,
@@ -278,6 +278,12 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
   const leader = campaign.candidates.find(
     c => c.candidate_id === campaign.current_leader_candidate_id,
   )
+  const baseline = getBaseline(campaign)
+  const baselineCandidate =
+    baseline?.candidate_id != null
+      ? campaign.candidates.find(c => c.candidate_id === baseline.candidate_id)
+      : null
+  const featuredCandidate = leader ?? baselineCandidate ?? null
   const runnerUp = campaign.candidates.find(
     c => c.candidate_id === campaign.recency_signals.runner_up_candidate_id,
   )
@@ -352,12 +358,12 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
       </div>
 
       {/* Leader row */}
-      {leader && (
+      {featuredCandidate && (
         <div
           style={{
             padding: "10px 14px",
             background:
-              leader.role === "PROMOTED_REFERENCE"
+              featuredCandidate.role === "PROMOTED_REFERENCE"
                 ? "rgba(200,169,104,0.04)"
                 : "rgba(241,236,224,0.02)",
             borderTop: "1px solid var(--vr-line)",
@@ -369,7 +375,7 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4, color: "var(--vr-cream-mute)" }}>
-              {leader.role === "PROMOTED_REFERENCE" ? "Baseline to beat" : "Current leader"}
+              {featuredCandidate.role === "PROMOTED_REFERENCE" ? "Baseline to beat" : "Current leader"}
             </div>
             <div
               className="t-h4"
@@ -381,7 +387,7 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
                 fontWeight: 500,
               }}
             >
-              {leader.title}
+              {featuredCandidate.title}
             </div>
             <div
               className="t-ticker"
@@ -395,10 +401,10 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
                 whiteSpace: "nowrap",
               }}
             >
-              {leader.candidate_id}
+              {featuredCandidate.candidate_id}
             </div>
           </div>
-          <RoleTag role={leader.role} />
+          <RoleTag role={featuredCandidate.role} />
         </div>
       )}
 
