@@ -637,7 +637,29 @@ function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"]
 }
 
 function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monitoring"] }) {
-  if (!monitoring) return null
+  if (!monitoring) {
+    return (
+      <section>
+        <SectionHeader eyebrow="Paper monitoring" title="Tracking under monitoring window" />
+        <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            Paper monitoring activates once this passport enters the CONFIRMING
+            stage. Until the strategy bank accepts a promotion for this slot,
+            there is no monitored window to track against.
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const status = (monitoring.status ?? "").toUpperCase()
   const tone =
@@ -714,7 +736,31 @@ function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monit
 function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_history"] }) {
   const rows = tradeHistory?.rows ?? []
   const [rawOpen, setRawOpen] = useState(false)
-  if (!rows.length || !tradeHistory) return null
+
+  if (!rows.length || !tradeHistory) {
+    return (
+      <section>
+        <SectionHeader eyebrow="Trade history" title="What this strategy did" />
+        <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            No trade ledger is published for this passport yet. The allocation
+            stream and symbol-contribution views light up once the bench
+            producer normalizes this strategy's per-event rows into the
+            passport_trade_history schema.
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const symbolCount = new Set(rows.map(row => row.symbol).filter(Boolean)).size
 
