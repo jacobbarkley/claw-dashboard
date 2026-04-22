@@ -141,6 +141,44 @@ Same pattern as Bug 1:
 
 ---
 
+## Bug 3 — Alpaca /v2/orders fetch can hiccup, silently drops Recent Orders
+
+### Status
+
+Mitigated, not fully solved. `scripts/push-operator-feed.py` now raises
+`AlpacaFetchError` and exits 2 when Alpaca's `/v2/orders` returns None /
+wrong shape, so the shell wrapper aborts before committing a feed with
+an empty `order_blotter`. Landed on main at `6ca3d1a`.
+
+### What this mitigates
+
+Observed ~10% of 5-minute cron cycles shipping `order_blotter = {stocks: [], crypto: [], options: []}` despite healthy positions. Vercel occasionally
+deployed one of those commits, causing the Recent Orders section of the
+AllocationHistory card to disappear entirely on Stocks and Crypto until the
+next successful cycle + Vercel redeploy. With the guard, those commits no
+longer land on main — next successful cycle catches up within ≤5 min.
+
+### What a proper fix looks like (Codex's lane)
+
+Replace the hard-abort with something richer, ideally:
+
+1. Short retry / backoff on `fetch_recent_orders_map` before giving up.
+2. Per-subsystem freshness markers on the operator-feed so the frontend
+   can render "stale" vs "fresh" instead of an ambiguous empty state.
+3. Apply the same pattern to the other `alpaca_*_request` callers that
+   currently swallow `None` (see `fetch_stock_return_20d_map`,
+   `fetch_stock_snapshots`) — same class of silent-empty bug.
+
+Until then, the hard-abort is the right conservative default.
+
+### Verification after fix
+
+Watch 30 minutes of cron commits (~6 cycles). All should have
+`sum(len(v) for v in order_blotter.values()) > 0` unless the account
+legitimately has zero fills in the retention window.
+
+---
+
 ## Notes for Codex
 
 - Registration path (`register-from-manifest`) is working end-to-end from the Linux side. If your WSL bridge stays flaky, Claude can keep running hydration jobs on your behalf — just flag which records to add.
