@@ -29,8 +29,8 @@ This decision means the campaign manifest and the passport carry *pointers into*
 
 ## 3. Jacob's six locked decisions (refined by Codex)
 
-1. **Trigger — criteria-based auto-nomination, operator-confirmed promotion.**
-   Backend evaluates the existing stock validation gates per run. When all gates pass, state goes to `READY_TO_NOMINATE`. Operator confirms via UI → transitions to `CONFIRMED` → strategy bank records the promotion. *Refinement from Codex:* criteria-passing does NOT auto-fire promotion. The backend emits a nomination + a concrete target action; the operator pulls the lever. Fits the existing governed-selection model.
+1. **Trigger — criteria-based auto-nomination, operator-confirmed promotion into a CONFIRMING stage.**
+   Backend evaluates the existing stock validation gates per run. When all gates pass, state goes to `READY_TO_NOMINATE`. Operator confirms via UI → strategy bank creates or updates the passport record → the new record enters a `CONFIRMING` stage (in production-ledger monitoring, not yet paper-approved forever). A clean monitoring window later earns `PAPER_APPROVED`. The promote button reads as *"graduate into the production ledger"* — not *"fully approved for paper."* Fits the existing governed-selection model. *Refinement from Codex:* criteria-passing does NOT auto-fire promotion. The backend emits a nomination + a concrete target action; the operator pulls the lever.
 
 2. **Identity — slot-based replacement, not destructive overwrite.**
    Every passport lives in a stable production slot identified by `passport_role_id`. A promotion that replaces an existing passport means "same role, new record" — the prior record is archived via `supersedes_record_id`, not overwritten. A promotion that occupies an empty role creates a new slot.
@@ -38,14 +38,14 @@ This decision means the campaign manifest and the passport carry *pointers into*
 3. **Campaign aftermath — MONITORED, re-openable in place.**
    On promotion, the originating campaign transitions to `MONITORED`. If the promoted candidate subsequently fails on paper and the operator confirms demotion, the campaign re-opens in place — same `campaign_id`, history appended, not a fresh record.
 
-4. **Baseline reshuffle — promoted becomes the new baseline.**
-   After promotion confirmation, the campaign's `baseline.candidate_id` points at the newly promoted candidate. Operator override supported.
+4. **Baseline reshuffle — promoted becomes the new baseline; reverts on demotion.**
+   After promotion confirmation, the campaign's `baseline.candidate_id` points at the newly promoted candidate. Operator override supported. On demotion, the baseline reverts to the last stable promoted reference (or `NONE` if none exists) — a demoted candidate is **not** silently left as the ratcheted baseline forever. The campaign is durable research memory, not a one-way escalator.
 
 5. **UI surface — promotion readiness scorecard, then passport.**
    Campaign detail page shows a live readiness scorecard (per-gate pass/fail, overall status). When `overall_status === "READY_TO_NOMINATE"`, a promote button lights up. Confirming transitions the scorecard visually into the passport.
 
-6. **Reversibility — operator-confirmed demotion.**
-   *Refinement from Codex:* backend raises `DEMOTION_RECOMMENDED` when paper performance trips pre-set thresholds; operator confirms via UI → transitions to `DEMOTION_CONFIRMED` → passport slot is vacated, originating campaign re-opens. Not auto-triggered from a noisy paper stretch.
+6. **Reversibility — operator-confirmed demotion, both sides update.**
+   Backend raises `DEMOTION_RECOMMENDED` when paper monitoring trips pre-set thresholds; operator confirms via UI → transitions to `DEMOTION_CONFIRMED` → (a) passport record transitions to the explicit `DEMOTED` stage (do NOT reuse `RETIRED` — research is still alive), (b) originating campaign transitions from `MONITORED` → `CONVERGING` (if a real bench leader still exists) or `EXPLORING` (if not), (c) baseline reverts per decision #4, (d) change log records the reversal on both the passport and the campaign. Not auto-triggered from a noisy paper stretch.
 
 ---
 
@@ -64,20 +64,22 @@ Lives on the **campaign manifest**. Describes how close each campaign is to prod
   "readiness": {
     "gates": [
       {
-        "gate_id":   "BENCHMARK_BEAT",
-        "label":     "Beats benchmark",
-        "status":    "PASS" | "FAIL" | "PENDING",
-        "value":     10.05,        // optional — metric actually measured
-        "threshold": 0.0,          // optional — what it had to beat
-        "summary":   "10.05% excess vs SPY on the 797-day window."
+        "gate_id":     "BENCHMARK",
+        "label":       "Beats benchmark",
+        "status":      "PASS" | "FAIL" | "PENDING" | "INCONCLUSIVE",
+        "source_kind": "VALIDATION_GATE" | "BENCH_AGGREGATE",
+        "value":       10.05,        // optional — metric actually measured
+        "threshold":   0.0,          // optional — what it had to beat
+        "summary":     "10.05% excess vs SPY on the 797-day window."
       },
       {
-        "gate_id":   "ERA_ROBUSTNESS",
-        "label":     "Era sweep",
-        "status":    "FAIL",
-        "value":     2,
-        "threshold": 4,
-        "summary":   "Passes 2 of 4 eras. Needs all four to clear promotion."
+        "gate_id":     "ERA_ROBUSTNESS",
+        "label":       "Era sweep",
+        "status":      "FAIL",
+        "source_kind": "BENCH_AGGREGATE",
+        "value":       2,
+        "threshold":   4,
+        "summary":     "Passes 2 of 4 eras. Needs all four to clear promotion."
       }
       // ... one entry per gate
     ],
@@ -88,22 +90,81 @@ Lives on the **campaign manifest**. Describes how close each campaign is to prod
 }
 ```
 
-**Notes:**
+**Emission cadence:** Backend emits `promotion_readiness` on every campaign refresh / run completion — not only at promotion time. Keeps the frontend scorecard live.
 
-- `gates[]` reuses the stock validation gate semantics from `evaluator.py` / `models.py`. Gate enums are the backend's — design tracks additions via this spec.
-- `passport_role_id` names a stable production slot (e.g. `STOCKS_AGGRESSIVE_AI`, `STOCKS_BROAD_MOMENTUM`, `CRYPTO_MANAGED_EXPOSURE`). One slot → one active passport record at a time.
-- `target_action: "REPLACE_EXISTING"` requires `supersedes_record_id` pointing at the record being retired.
-- Frontend renders: per-gate pass/fail scorecard with InfoPops on gate labels; promote button wires to an operator-confirm flow when `overall_status === "READY_TO_NOMINATE"`.
+**Field notes:**
 
-**Stocks ship first. Crypto needs one more normalization pass** — managed crypto has strong verdict/report data but no structured `gate_statuses` block yet. Codex adds a crypto gate adapter before crypto campaigns can use this block cleanly. Frontend tolerates `readiness: null` (renders an "awaiting gate data" empty state) for crypto until the adapter lands.
+- **`source_kind`** distinguishes a gate computed by the single-window validation engine (`VALIDATION_GATE` — sourced from `evaluator.py` / `models.py`) from one derived by campaign-level aggregation across bench/passport era results (`BENCH_AGGREGATE`). Keeps the frontend honest about where a number came from; different sources have different refresh cadences.
+- **`status: "INCONCLUSIVE"`** is a legitimate fourth state. `PASS | FAIL | PENDING` alone is too thin for the real data (e.g., not enough samples to commit to a pass/fail). Frontend renders it distinctly from PENDING — "we have data, but it's ambiguous," not "no data yet."
+- **`passport_role_id`** names a stable production slot (e.g. `STOCKS_AGGRESSIVE_AI`, `STOCKS_BROAD_MOMENTUM`, `CRYPTO_MANAGED_EXPOSURE`). One slot → one active passport record at a time.
+- **`target_action: "REPLACE_EXISTING"`** requires `supersedes_record_id` pointing at the record being retired.
+- Frontend renders: per-gate PASS/FAIL/PENDING/INCONCLUSIVE scorecard with InfoPops on gate labels; promote button wires to an operator-confirm flow when `overall_status === "READY_TO_NOMINATE"`.
+
+### 4.1 Stock validation gates (ships first)
+
+Sourced from `evaluator.py` + `models.py` in the trading-bot repo. These are the canonical set; the backend emits one readiness gate per row below, plus the campaign-level aggregate.
+
+| Gate ID | Source kind | What it measures |
+|---|---|---|
+| `TRADE_COUNT` | VALIDATION_GATE | Minimum trade count in the eval window. |
+| `PROFIT_FACTOR` | VALIDATION_GATE | Gross profit ÷ gross loss. |
+| `EXPECTANCY` | VALIDATION_GATE | Average P&L per trade. |
+| `PROFITABLE_FOLDS` | VALIDATION_GATE | Share of era-folds with positive net P&L. |
+| `DRAWDOWN` | VALIDATION_GATE | Max drawdown ≤ bound. |
+| `BENCHMARK` | VALIDATION_GATE | Excess return vs benchmark (SPY / QQQ / sleeve default). |
+| `EXPECTANCY_DECAY` | VALIDATION_GATE | Forward-period expectancy vs training expectancy. |
+| `HOLDBACK` | VALIDATION_GATE | Out-of-sample holdback window result. |
+| `ERA_ROBUSTNESS` | BENCH_AGGREGATE | Per-era pass count across the bench era matrix. Campaign-level rollup. |
+
+### 4.2 Crypto gate adapter (ships later)
+
+Managed crypto emits verdicts + reasons today via `crypto_compare.py` / `crypto_bench.py` — not the structured `gate_statuses` block stocks produce. Codex adds a crypto gate adapter that normalizes those verdicts into the same row shape (same `gate_id` / `status` / `source_kind` / `summary` contract) before crypto campaigns can render a readiness scorecard. Frontend tolerates `readiness: null` (renders *"Crypto gate normalization pending"* empty state) until the adapter lands.
+
+### 4.3 Bidirectional production linkage
+
+Readiness alone doesn't close the loop between a campaign and its promoted passport. Both sides carry explicit pointers:
+
+**On the passport / strategy-bank record:**
+```jsonc
+"origin": {
+  "campaign_id":   "stocks_ai_wall_street_aggressive",
+  "candidate_id":  "q085_dynamic_tech_top6.stop_5_target_15",
+  "run_id":        "2026-04-14-dynamic-top6",
+  "passport_role_id":     "STOCKS_AGGRESSIVE_AI",
+  "supersedes_record_id": "q076b_regime_aware_momentum_frozen_reference" | null
+}
+```
+
+**On the campaign manifest:**
+```jsonc
+"production_links": {
+  "active_record_id":   "q085_dynamic_tech_top6.20260422" | null,  // the passport record currently in production for this campaign
+  "passport_role_id":   "STOCKS_AGGRESSIVE_AI",                    // the slot this campaign feeds
+  "history": [
+    {
+      "record_id":       "q076b_regime_aware_momentum_frozen_reference",
+      "stage":           "SUPERSEDED",
+      "at":              "2026-04-22T16:00:00-04:00",
+      "event":           "PASSPORT_SUPERSEDED"
+    }
+  ]
+}
+```
+
+Slot-based replacement means *"same `passport_role_id`, new record, prior record marked `SUPERSEDED`."* Never destructive overwrite. `history[]` lets the campaign display its full promotion lineage.
 
 ---
 
 ## 5. The `paper_monitoring` block (passport extension)
 
-Lives on the **passport**. Tracks in-paper-window performance, demotion-watch, and the trigger for `DEMOTION_RECOMMENDED`.
+Lives on the **passport**. Tracks in-monitoring-window performance, demotion-watch, and the trigger for `DEMOTION_RECOMMENDED`. Applies to passport records in the `CONFIRMING` stage and continues past `PAPER_APPROVED` (paper-approved records keep being watched).
 
 **Important:** this block replaces the existing `paperDays` / `paperTarget` display stubs on passport manifests. Those fields were display-only without backend truth; the spec formalizes them into a real monitoring contract.
+
+**Relationship to passport stage:**
+- **CONFIRMING stage** — `paper_monitoring.status` typically starts `ACTIVE`. A clean window (elapsed_days ≥ target_days, no threshold trips) closes with `status: "COMPLETED"` → backend transitions the passport stage to `PAPER_APPROVED`.
+- **PAPER_APPROVED stage** — `paper_monitoring.status` stays live (still `ACTIVE` or `AT_RISK`). Can trip `DEMOTION_RECOMMENDED` at any point; operator confirms to demote.
+- **DEMOTED stage** — `paper_monitoring` freezes with its last state. Record is archived for audit.
 
 ```jsonc
 "paper_monitoring": {
@@ -135,6 +196,8 @@ Renders on the passport as a compact strip: window progress bar + tracking devia
 ## 6. The `promotion_events` ledger
 
 Lives on **both** the campaign manifest and the passport (same event, dual-referenced for audit clarity). Append-only.
+
+**Extends the existing strategy-bank event plane.** Today's bank emits `STRATEGY_REGISTERED | STRATEGY_UPDATED | STRATEGY_SELECTED | STRATEGY_DESELECTED`. The seven new event types below are additive — they integrate into the same event log, not a parallel ledger.
 
 ```jsonc
 "promotion_events": [
@@ -223,18 +286,35 @@ CONVERGING ─┤─── (PROMOTION_CONFIRMED) ──▶ MONITORED
             │                                  │
             │                                  │  (DEMOTION_CONFIRMED)
             │                                  ▼
-            └──◀─────── CAMPAIGN_REOPENED ─── (same campaign_id, history appended)
+            │     ┌───── if real leader still ─▶ CONVERGING
+            │     │      exists on bench
+            │     │
+            │     ├───── if no leader ─────────▶ EXPLORING
+            └──◀──┘   (same campaign_id, history appended — CAMPAIGN_REOPENED)
 ```
 
-### Passport states (via strategy bank)
+**Key invariants:**
+- `campaign_id` never changes across demotion + re-open. The campaign is durable research memory.
+- Baseline reverts per §3 decision #4 on demotion. Not ratcheted forever.
+
+### Passport record states (via strategy bank)
 
 ```
-(none)   ──(PROMOTION_CONFIRMED, CREATE_NEW)──▶  ACTIVE
-ACTIVE   ──(PROMOTION_CONFIRMED, REPLACE_EXISTING)──▶  SUPERSEDED (archived, new ACTIVE takes the slot)
-ACTIVE   ──(DEMOTION_CONFIRMED)──▶  DEMOTED (slot vacated)
+(none)          ──(PROMOTION_CONFIRMED, CREATE_NEW)──────────────▶  CONFIRMING
+PAPER_APPROVED  ──(PROMOTION_CONFIRMED, REPLACE_EXISTING)────────▶  SUPERSEDED
+                                                                    (new CONFIRMING takes slot)
+CONFIRMING      ──(paper_monitoring.status = COMPLETED cleanly)──▶  PAPER_APPROVED
+CONFIRMING      ──(DEMOTION_CONFIRMED)───────────────────────────▶  DEMOTED
+PAPER_APPROVED  ──(DEMOTION_CONFIRMED)───────────────────────────▶  DEMOTED
 ```
 
-Superseded and demoted records are not deleted. They remain queryable for audit and historical analysis.
+**Stage meanings:**
+- **`CONFIRMING`** — promotion just confirmed, record in production ledger but still in monitoring window. Not yet fully paper-approved.
+- **`PAPER_APPROVED`** — monitoring window cleared cleanly. Record is the active production reference for its slot. Still monitored; can still be demoted.
+- **`SUPERSEDED`** — a newer `CONFIRMING` record replaced this one in the same slot. Archived for audit.
+- **`DEMOTED`** — operator confirmed removal from production. Archived for audit. Distinct from `RETIRED` — a demoted record is still *alive as research input*; the campaign feeds off that signal to iterate.
+
+Superseded and demoted records are never deleted. They remain queryable for audit and lineage.
 
 ---
 
