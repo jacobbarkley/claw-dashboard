@@ -11,11 +11,21 @@ import json
 from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
+import sys
 from typing import Optional
 import urllib.error
 import urllib.parse
 import urllib.request
 from zoneinfo import ZoneInfo
+
+
+class AlpacaFetchError(RuntimeError):
+    """Raised when an Alpaca API call fails after creds were present.
+
+    Distinct from the legitimate no-creds / no-orders paths so that the
+    main entrypoint can abort the push cleanly instead of silently
+    committing a feed with an empty order blotter.
+    """
 
 WORKSPACE = Path(os.environ.get('OPENCLAW_WORKSPACE', str(Path.home() / '.openclaw/workspace/trading-bot')))
 REBUILD_LATEST = Path(os.environ.get('OPENCLAW_REBUILD_LATEST', str(WORKSPACE / 'state/rebuild_latest')))
@@ -180,8 +190,17 @@ def fetch_recent_orders_map(creds: Optional[dict], *, after_days: int = ORDER_BL
             'after': after,
         },
     )
+    # alpaca_trading_request returns None on URLError / HTTPError / timeout
+    # / JSONDecodeError. An Alpaca outage here used to silently fall
+    # through as `{}` and produce a feed with an empty order blotter,
+    # which was indistinguishable from "genuinely zero orders" for the
+    # dashboard. Raise instead so main() can abort the push and the next
+    # cron run can try again. A valid empty list (e.g., a fresh paper
+    # account with no orders) still returns `{}` without raising.
+    if payload is None:
+        raise AlpacaFetchError("Alpaca /v2/orders fetch failed; skipping this cron cycle")
     if not isinstance(payload, list):
-        return {}
+        raise AlpacaFetchError(f"Alpaca /v2/orders returned unexpected shape: {type(payload).__name__}")
     return {
         str(item.get('id')): item
         for item in payload
@@ -1844,4 +1863,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except AlpacaFetchError as exc:
+        print(f'operator feed push skipped: {exc}', file=sys.stderr)
+        sys.exit(2)
