@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-22T19:00:10.825203+00:00",
+  "generated_at": "2026-04-22T19:15:10.375489+00:00",
   "as_of_date": "2026-04-22",
   "account": {
     "equity": 85601.48,
@@ -1613,11 +1613,29 @@
         "short_strike": 125.0,
         "long_strike": 120.0,
         "spread_width": 5.0,
-        "net_credit": 2.5,
-        "credit_width_ratio": 0.5,
-        "annualized_yield_pct": 869.0,
-        "max_loss_per_contract": 250.0,
+        "net_credit": 2.2,
+        "credit_width_ratio": 0.44,
+        "annualized_yield_pct": 764.8,
+        "max_loss_per_contract": 280.0,
         "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "PRU",
+        "price": 96.9,
+        "sector": "Financial Services",
+        "expiry": "2026-05-15",
+        "dte": 23,
+        "short_strike": 97.5,
+        "long_strike": 92.5,
+        "spread_width": 5.0,
+        "net_credit": 1.9,
+        "credit_width_ratio": 0.38,
+        "annualized_yield_pct": 660.5,
+        "max_loss_per_contract": 310.0,
+        "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1644,7 +1662,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
