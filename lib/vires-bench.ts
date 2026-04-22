@@ -381,11 +381,21 @@ function findStrategyRecordForManifest(
   runtimeStrategyBank: JsonObject | null,
 ): JsonObject | null {
   const deploymentConfigId = str(manifest?.deployment_config_id)
+  const manifestId = str(manifest?.manifest_id)
   const activeRecord = isObject(runtimeActiveStrategy?.record) ? runtimeActiveStrategy.record : null
-  if (deploymentConfigId && str(activeRecord?.variant_id) === deploymentConfigId) return activeRecord
+  const activeEvidence = isObject(activeRecord?.evidence) ? activeRecord.evidence : null
+  if (
+    (manifestId && str(activeEvidence?.source_manifest_id) === manifestId) ||
+    (deploymentConfigId && str(activeRecord?.variant_id) === deploymentConfigId)
+  ) return activeRecord
 
   const records = arr<JsonObject>(runtimeStrategyBank?.strategies)
   if (!records.length) return deploymentConfigId ? null : activeRecord
+
+  const byManifest = manifestId
+    ? records.find(record => str(record?.evidence?.source_manifest_id) === manifestId)
+    : null
+  if (byManifest) return byManifest
 
   const byVariant = deploymentConfigId
     ? records.find(record => str(record.variant_id) === deploymentConfigId)
