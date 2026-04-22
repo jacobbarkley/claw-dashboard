@@ -9,7 +9,7 @@
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export type Sleeve = "STOCKS" | "OPTIONS" | "CRYPTO"
-export type CampaignStatus = "EXPLORING" | "CONVERGING" | "PROMOTED" | string
+export type CampaignStatus = "EXPLORING" | "CONVERGING" | "MONITORED" | "PROMOTED" | string
 export type CandidateRole = "LEADER" | "CHALLENGER" | "PROMOTED_REFERENCE" | string
 export type ChangeKind =
   | "LEADER_CHANGED"
@@ -186,6 +186,32 @@ export interface PromotionReadiness {
   readiness: Readiness | null
 }
 
+export interface ProductionLinkHistoryEntry {
+  record_id: string
+  stage: string
+  at: string
+  event: string
+}
+
+export interface ProductionLinks {
+  active_record_id: string | null
+  passport_role_id: string | null
+  history: ProductionLinkHistoryEntry[]
+}
+
+export interface PromotionEvent {
+  event_id: string
+  event_type: string
+  at: string
+  actor: Actor
+  campaign_id?: string | null
+  candidate_id?: string | null
+  passport_role_id?: string | null
+  target_action?: PromotionTargetAction | null
+  supersedes_record_id?: string | null
+  notes?: string | null
+}
+
 export interface CampaignManifest {
   schema_version: "bench_campaign_manifest.v1" | "bench_campaign_manifest.v2" | string
   campaign_id: string
@@ -215,6 +241,8 @@ export interface CampaignManifest {
 
   // Passport v2 §4 — promotion readiness scorecard (optional until Codex ships)
   promotion_readiness?: PromotionReadiness | null
+  production_links?: ProductionLinks | null
+  promotion_events?: PromotionEvent[] | null
 }
 
 export interface CampaignRegistryEntry {

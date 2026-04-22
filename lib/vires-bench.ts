@@ -71,6 +71,19 @@ async function readJson<T = any>(filename: string): Promise<T | null> {
   }
 }
 
+async function readJsonLines<T = any>(filename: string): Promise<T[]> {
+  try {
+    const raw = await fs.readFile(path.join(process.cwd(), filename), "utf-8")
+    return raw
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => JSON.parse(line) as T)
+  } catch {
+    return []
+  }
+}
+
 async function readFirstJson<T = any>(...filenames: string[]): Promise<T | null> {
   for (const filename of filenames) {
     const value = await readJson<T>(filename)
@@ -362,6 +375,44 @@ function eligibilityForManifest(manifest: JsonObject | null): string {
   return isObject(manifest.broker) && manifest.broker.paper_only ? "PAPER" : "LIVE_ELIGIBLE"
 }
 
+function findStrategyRecordForManifest(
+  manifest: JsonObject | null,
+  runtimeActiveStrategy: JsonObject | null,
+  runtimeStrategyBank: JsonObject | null,
+): JsonObject | null {
+  const deploymentConfigId = str(manifest?.deployment_config_id)
+  const activeRecord = isObject(runtimeActiveStrategy?.record) ? runtimeActiveStrategy.record : null
+  if (deploymentConfigId && str(activeRecord?.variant_id) === deploymentConfigId) return activeRecord
+
+  const records = arr<JsonObject>(runtimeStrategyBank?.strategies)
+  if (!records.length) return activeRecord
+
+  const byVariant = deploymentConfigId
+    ? records.find(record => str(record.variant_id) === deploymentConfigId)
+    : null
+  if (byVariant) return byVariant
+
+  return activeRecord
+}
+
+function promotionEventsForRecord(recordId: string | null, events: JsonObject[]): JsonObject[] {
+  if (!recordId) return []
+  return events
+    .filter(event => str(event.record_id) === recordId)
+    .map(event => ({
+      event_id: `${str(event.timestamp) ?? "event"}-${str(event.event_type) ?? "EVENT"}`,
+      event_type: str(event.event_type),
+      at: str(event.timestamp),
+      actor: str(event.actor),
+      campaign_id: str(event.details?.campaign_id),
+      candidate_id: str(event.details?.origin_candidate_id) ?? str(event.details?.candidate_id),
+      passport_role_id: str(event.details?.passport_role_id),
+      target_action: str(event.details?.target_action),
+      supersedes_record_id: str(event.details?.supersedes_record_id),
+      notes: str(event.note),
+    }))
+}
+
 function buildLifecycle(
   currentStage: string,
   benchRunAt: string | null,
@@ -456,9 +507,12 @@ function buildStockPassport(
   spec: JsonObject | null,
   report: JsonObject | null,
   runtimeActiveStrategy: JsonObject | null,
+  runtimeStrategyBank: JsonObject | null,
+  strategyPromotionEvents: JsonObject[],
   runId: string | null,
 ): JsonObject | null {
-  const selected = isObject(report?.selected_result) ? report?.selected_result : runtimeActiveStrategy?.record?.performance_summary
+  const strategyRecord = findStrategyRecordForManifest(manifest, runtimeActiveStrategy, runtimeStrategyBank)
+  const selected = isObject(report?.selected_result) ? report?.selected_result : strategyRecord?.performance_summary
   if (!selected) return null
 
   const benchmarkRet = num(selected.benchmark_return_pct)
@@ -535,7 +589,7 @@ function buildStockPassport(
     sleeve: "STOCKS",
     benchmark: str(manifest.benchmark_symbol) ?? str(spec?.dataset?.benchmark_symbol) ?? "SPY",
     summary:
-      str(runtimeActiveStrategy?.record?.description) ??
+      str(strategyRecord?.description) ??
       str(arr<string>(report?.notes)[0]) ??
       str(spec?.hypothesis) ??
       "Promoted stock sleeve.",
@@ -544,8 +598,8 @@ function buildStockPassport(
       ref: str(manifest.manifest_id) ?? str(manifest.title),
       stage: stageLabelForManifest(manifest),
       eligibility: eligibilityForManifest(manifest),
-      paperDays: null,
-      paperTarget: null,
+      paperDays: num(strategyRecord?.paper_monitoring?.window?.elapsed_days),
+      paperTarget: num(strategyRecord?.paper_monitoring?.window?.target_days),
       runtimeContract: str(manifest.runtime_contract),
       cadence: str(manifest.cadence),
       broker: manifest.broker ?? null,
@@ -581,6 +635,12 @@ function buildStockPassport(
     },
     gates,
     lifecycle: buildLifecycle("PAPER", str(manifest.generated_at) ?? null, manifest),
+    origin: strategyRecord?.origin ?? null,
+    passport_role_id: str(strategyRecord?.passport_role_id),
+    supersedes_record_id: str(strategyRecord?.supersedes_record_id),
+    paper_monitoring: strategyRecord?.paper_monitoring ?? null,
+    promotion_events: promotionEventsForRecord(str(strategyRecord?.record_id), strategyPromotionEvents),
+    trade_history: null,
   }
 }
 
@@ -720,6 +780,12 @@ function buildCryptoManagedPassport(
     },
     gates,
     lifecycle: buildLifecycle("PAPER", str(manifest.generated_at) ?? null, manifest),
+    origin: null,
+    passport_role_id: null,
+    supersedes_record_id: null,
+    paper_monitoring: null,
+    promotion_events: [],
+    trade_history: null,
   }
 }
 
@@ -841,6 +907,12 @@ function buildCryptoBenchOnlyPassport(spec: JsonObject | null, report: JsonObjec
       null,
       "Still blocked on stronger benchmark-relative proof before promotion."
     ),
+    origin: null,
+    passport_role_id: null,
+    supersedes_record_id: null,
+    paper_monitoring: null,
+    promotion_events: [],
+    trade_history: null,
   }
 }
 
@@ -1045,8 +1117,10 @@ export async function loadBenchIndexWithViresContracts(): Promise<JsonObject | n
   const index = await readJson<JsonObject>("data/bench/index.json")
   if (!index) return null
 
-  const [runtimeActiveStrategy, runtimeExecutionManifest, runtimeSessionContext] = await Promise.all([
+  const [runtimeActiveStrategy, runtimeStrategyBank, strategyPromotionEvents, runtimeExecutionManifest, runtimeSessionContext] = await Promise.all([
     readJson<JsonObject>("data/bench/runtime/active_strategy.json"),
+    readJson<JsonObject>("data/bench/runtime/strategy_bank.json"),
+    readJsonLines<JsonObject>("data/bench/runtime/strategy_promotion_events.jsonl"),
     readJson<JsonObject>("data/bench/runtime/execution_manifest.json"),
     readJson<JsonObject>("data/bench/runtime/session_context.json"),
   ])
@@ -1098,6 +1172,8 @@ export async function loadBenchIndexWithViresContracts(): Promise<JsonObject | n
       stockRaw.spec,
       stockRaw.report,
       runtimeActiveStrategy,
+      runtimeStrategyBank,
+      strategyPromotionEvents,
       str(stockRaw.bundle?.run_id),
     )
     if (stockPassport) passports.push(stockPassport)
@@ -1143,6 +1219,8 @@ export async function loadBenchIndexWithViresContracts(): Promise<JsonObject | n
     plateau_primer: plateauPrimer,
     runtime: {
       active_strategy: runtimeActiveStrategy,
+      strategy_bank: runtimeStrategyBank,
+      strategy_promotion_events: strategyPromotionEvents,
       execution_manifest: runtimeExecutionManifest,
       session_context: runtimeSessionContext,
     },

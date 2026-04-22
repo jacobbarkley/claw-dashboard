@@ -51,6 +51,59 @@ interface PassportManifest {
   broker?: { broker_adapter?: string; broker_environment?: string } | null
 }
 
+interface PassportPromotionEvent {
+  event_id?: string | null
+  event_type?: string | null
+  at?: string | null
+  actor?: string | null
+  campaign_id?: string | null
+  candidate_id?: string | null
+  passport_role_id?: string | null
+  target_action?: string | null
+  supersedes_record_id?: string | null
+  notes?: string | null
+}
+
+interface PassportPaperMonitoring {
+  schema_version?: string | null
+  status?: string | null
+  window?: {
+    start?: string | null
+    target_days?: number | null
+    elapsed_days?: number | null
+    remaining_days?: number | null
+  } | null
+  tracking?: {
+    tracking_deviation_pct?: number | null
+    threshold_pct?: number | null
+    window_days?: number | null
+  } | null
+  recommendation?: {
+    status?: string | null
+    raised_at?: string | null
+    reason?: string | null
+  } | null
+}
+
+interface PassportTradeHistoryRow {
+  date?: string | null
+  event_id?: string | null
+  event_type?: string | null
+  symbol?: string | null
+  side?: string | null
+  weight_after?: number | null
+  price?: number | null
+  notional?: number | null
+  pnl_realized?: number | null
+}
+
+interface PassportTradeHistory {
+  schema_version?: string | null
+  weight_basis?: string | null
+  cash_model?: string | null
+  rows?: PassportTradeHistoryRow[]
+}
+
 export interface Passport {
   id: string
   bench_id?: string | null
@@ -93,6 +146,18 @@ export interface Passport {
   } | null
   gates?: PassportGate[]
   lifecycle?: { events?: PassportLifecycleEvent[] } | null
+  origin?: {
+    campaign_id?: string | null
+    candidate_id?: string | null
+    run_id?: string | null
+    passport_role_id?: string | null
+    supersedes_record_id?: string | null
+  } | null
+  passport_role_id?: string | null
+  supersedes_record_id?: string | null
+  paper_monitoring?: PassportPaperMonitoring | null
+  promotion_events?: PassportPromotionEvent[] | null
+  trade_history?: PassportTradeHistory | null
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────

@@ -38,6 +38,7 @@ export function relTime(iso: string | null | undefined): string {
 const STATUS_META: Record<string, { label: string; color: string; bg: string }> = {
   EXPLORING:   { label: "Exploring",   color: "var(--vr-cream-dim)", bg: "rgba(241,236,224,0.04)" },
   CONVERGING:  { label: "Converging",  color: "var(--vr-gold)",      bg: "rgba(200,169,104,0.08)" },
+  MONITORED:   { label: "Monitored",   color: "var(--vr-up)",        bg: "rgba(127,194,155,0.08)" },
   PROMOTED:    { label: "Promoted",    color: "var(--vr-up)",        bg: "rgba(127,194,155,0.08)" },
   RETIRED:     { label: "Retired",     color: "var(--vr-cream-mute)", bg: "rgba(241,236,224,0.02)" },
 }

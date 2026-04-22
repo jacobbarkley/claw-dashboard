@@ -73,6 +73,40 @@
     "summary": "The promoted frozen reference is still the clear baseline; broader challengers are present but need fresh runs before the gap can be quantified honestly.",
     "as_of": "2026-04-21T21:06:56.6718844-04:00"
   },
+  "promotion_readiness": {
+    "schema_version": "campaign_promotion_readiness.v1",
+    "origin_candidate_id": null,
+    "passport_role_id": "STOCKS_BROAD_MOMENTUM",
+    "target_action": "REPLACE_EXISTING",
+    "supersedes_record_id": "regime_aware_momentum::stop_5_target_15",
+    "readiness": null
+  },
+  "production_links": {
+    "active_record_id": "regime_aware_momentum::stop_5_target_15",
+    "passport_role_id": "STOCKS_BROAD_MOMENTUM",
+    "history": [
+      {
+        "record_id": "regime_aware_momentum::stop_5_target_15",
+        "stage": "ACTIVE",
+        "at": "2026-04-11T13:31:26.522551-04:00",
+        "event": "PROMOTION_CONFIRMED"
+      }
+    ]
+  },
+  "promotion_events": [
+    {
+      "event_id": "2026-04-11-stocks-broad-momentum-promote-01",
+      "event_type": "PROMOTION_CONFIRMED",
+      "at": "2026-04-11T13:31:26.522551-04:00",
+      "actor": "codex",
+      "campaign_id": "stocks_etf_replacement_momentum",
+      "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+      "passport_role_id": "STOCKS_BROAD_MOMENTUM",
+      "target_action": "CREATE_NEW",
+      "supersedes_record_id": null,
+      "notes": "Seeded from the existing frozen-reference promotion so the campaign has a starting production lineage."
+    }
+  ],
   "recency_signals": {
     "last_leader_change_at": "2026-04-17T20:30:00-04:00",
     "leader_stability_sessions": 3,

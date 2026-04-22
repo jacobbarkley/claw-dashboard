@@ -68,6 +68,8 @@ DASHBOARD_BENCH_DATA = _path_from_env(
 # that is missing on this revision of the rebuild is silently skipped.
 RUNTIME_ARTIFACT_FILES = (
     "active_strategy.json",
+    "strategy_bank.json",
+    "strategy_promotion_events.jsonl",
     "execution_manifest.json",
     "session_context.json",
 )

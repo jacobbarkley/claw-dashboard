@@ -1,0 +1,226 @@
+{
+  "schema_version": "1",
+  "active_record_id": "regime_aware_momentum::stop_5_target_15",
+  "updated_at": "2026-04-11T13:31:26.522551-04:00",
+  "strategies": [
+    {
+      "record_id": "regime_aware_momentum::stop_475_target_14",
+      "strategy_id": "regime_aware_momentum",
+      "variant_id": "stop_475_target_14",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
+      "display_name": "regime_aware_momentum:stop_475_target_14",
+      "description": "Middle ground between the tighter stop and the looser stop while nudging the target earlier.",
+      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "signal_source": "validation_strategy",
+      "notes": [
+        "Current research leader.",
+        "The frozen winner is stop_5_target_15 and should not be retuned on the same 2022-01-01 through 2026-03-31 tape.",
+        "The frozen confirmation preset intentionally uses the six-name optimized sleeve: AAPL, AVGO, COST, LLY, META, NVDA.",
+        "Benchmark SPY return over the test span: 80.45%",
+        "Benchmark rationale: SPY remains the correct market baseline for a broad long-only momentum sleeve that rotates among liquid large-cap equities.",
+        "Benchmark comparison mode: both",
+        "Exposure profile: 81.20% of evaluated trading days active, 36.03% average capital deployed, 85.94% peak capital deployed.",
+        "Deployment-matched benchmark SPY return: 45.89% (excess 44.88%).",
+        "Risk-adjusted summary: annualized return 22.69%, annualized volatility 11.23%, Sharpe 1.88, Sortino 3.06, Calmar 2.49.",
+        "The strategy cleared the minimum thresholds for profit factor, expectancy, fold consistency, drawdown, benchmark comparison, and sample-quality gates."
+      ],
+      "planning_profile": {
+        "symbols": [
+          "AAPL",
+          "AVGO",
+          "COST",
+          "LLY",
+          "META",
+          "NVDA"
+        ],
+        "allowed_sides": [
+          "LONG"
+        ],
+        "benchmark_symbol": "SPY",
+        "benchmark_comparison_mode": "both",
+        "max_positions": 4,
+        "risk_pct_per_trade": 1.0,
+        "stop_loss_pct": 4.75,
+        "target_pct": 14.0,
+        "max_hold_days": 10
+      },
+      "performance_summary": {
+        "verdict_reason": "PROMOTABLE_EDGE",
+        "total_trades": 164,
+        "evaluated_trading_days": 797,
+        "total_return_pct": 90.7669,
+        "benchmark_return_pct": 80.448,
+        "excess_return_pct": 10.3189,
+        "deployment_matched_benchmark_return_pct": 45.8913,
+        "deployment_matched_excess_return_pct": 44.8756,
+        "sharpe_ratio": 1.8771,
+        "sortino_ratio": 3.0641,
+        "calmar_ratio": 2.4865,
+        "max_drawdown_pct": 9.1246,
+        "profit_factor": 2.0541,
+        "expectancy_per_trade_usd": 276.7288,
+        "win_rate_pct": 61.59,
+        "profitable_fold_pct": 50.0
+      },
+      "evidence": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_475_target_14",
+        "validation_run_id": "2026-04-11-q076b-regime-opt-02",
+        "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
+        "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
+        "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
+      },
+      "registered_at": "2026-04-11T11:48:24.095819-04:00",
+      "updated_at": "2026-04-11T13:31:26.522551-04:00",
+      "selected_at": null
+    },
+    {
+      "record_id": "regime_aware_momentum::stop_5_target_14",
+      "strategy_id": "regime_aware_momentum",
+      "variant_id": "stop_5_target_14",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
+      "display_name": "regime_aware_momentum:stop_5_target_14",
+      "description": "Looser stop plus slightly earlier target to improve fold closure quality.",
+      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "signal_source": "validation_strategy",
+      "notes": [
+        "Current research leader.",
+        "The frozen winner is stop_5_target_15 and should not be retuned on the same 2022-01-01 through 2026-03-31 tape.",
+        "The frozen confirmation preset intentionally uses the six-name optimized sleeve: AAPL, AVGO, COST, LLY, META, NVDA.",
+        "Benchmark SPY return over the test span: 80.45%",
+        "Benchmark rationale: SPY remains the correct market baseline for a broad long-only momentum sleeve that rotates among liquid large-cap equities.",
+        "Benchmark comparison mode: both",
+        "Exposure profile: 81.69% of evaluated trading days active, 34.52% average capital deployed, 82.17% peak capital deployed.",
+        "Deployment-matched benchmark SPY return: 48.17% (excess 40.44%).",
+        "Risk-adjusted summary: annualized return 22.25%, annualized volatility 10.84%, Sharpe 1.91, Sortino 3.13, Calmar 2.51.",
+        "The strategy cleared the minimum thresholds for profit factor, expectancy, fold consistency, drawdown, benchmark comparison, and sample-quality gates."
+      ],
+      "planning_profile": {
+        "symbols": [
+          "AAPL",
+          "AVGO",
+          "COST",
+          "LLY",
+          "META",
+          "NVDA"
+        ],
+        "allowed_sides": [
+          "LONG"
+        ],
+        "benchmark_symbol": "SPY",
+        "benchmark_comparison_mode": "both",
+        "max_positions": 4,
+        "risk_pct_per_trade": 1.0,
+        "stop_loss_pct": 5.0,
+        "target_pct": 14.0,
+        "max_hold_days": 10
+      },
+      "performance_summary": {
+        "verdict_reason": "PROMOTABLE_EDGE",
+        "total_trades": 163,
+        "evaluated_trading_days": 797,
+        "total_return_pct": 88.6065,
+        "benchmark_return_pct": 80.448,
+        "excess_return_pct": 8.1585,
+        "deployment_matched_benchmark_return_pct": 48.1679,
+        "deployment_matched_excess_return_pct": 40.4386,
+        "sharpe_ratio": 1.9082,
+        "sortino_ratio": 3.1276,
+        "calmar_ratio": 2.5096,
+        "max_drawdown_pct": 8.8647,
+        "profit_factor": 2.1053,
+        "expectancy_per_trade_usd": 271.7993,
+        "win_rate_pct": 61.96,
+        "profitable_fold_pct": 52.38
+      },
+      "evidence": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_5_target_14",
+        "validation_run_id": "2026-04-11-q076b-regime-opt-02",
+        "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
+        "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
+        "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
+      },
+      "registered_at": "2026-04-11T11:48:24.095819-04:00",
+      "updated_at": "2026-04-11T13:31:26.522551-04:00",
+      "selected_at": null
+    },
+    {
+      "record_id": "regime_aware_momentum::stop_5_target_15",
+      "strategy_id": "regime_aware_momentum",
+      "variant_id": "stop_5_target_15",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
+      "display_name": "regime_aware_momentum:stop_5_target_15",
+      "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
+      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "signal_source": "validation_strategy",
+      "notes": [
+        "Current research leader.",
+        "The frozen winner is stop_5_target_15 and should not be retuned on the same 2022-01-01 through 2026-03-31 tape.",
+        "The frozen confirmation preset intentionally uses the six-name optimized sleeve: AAPL, AVGO, COST, LLY, META, NVDA.",
+        "Benchmark SPY return over the test span: 80.45%",
+        "Benchmark rationale: SPY remains the correct market baseline for a broad long-only momentum sleeve that rotates among liquid large-cap equities.",
+        "Benchmark comparison mode: both",
+        "Exposure profile: 81.69% of evaluated trading days active, 34.52% average capital deployed, 82.17% peak capital deployed.",
+        "Deployment-matched benchmark SPY return: 48.17% (excess 42.33%).",
+        "Risk-adjusted summary: annualized return 22.63%, annualized volatility 10.88%, Sharpe 1.93, Sortino 3.17, Calmar 2.55.",
+        "The strategy cleared the minimum thresholds for profit factor, expectancy, fold consistency, drawdown, benchmark comparison, and sample-quality gates."
+      ],
+      "planning_profile": {
+        "symbols": [
+          "AAPL",
+          "AVGO",
+          "COST",
+          "LLY",
+          "META",
+          "NVDA"
+        ],
+        "allowed_sides": [
+          "LONG"
+        ],
+        "benchmark_symbol": "SPY",
+        "benchmark_comparison_mode": "both",
+        "max_positions": 4,
+        "risk_pct_per_trade": 1.0,
+        "stop_loss_pct": 5.0,
+        "target_pct": 15.0,
+        "max_hold_days": 10
+      },
+      "performance_summary": {
+        "verdict_reason": "PROMOTABLE_EDGE",
+        "total_trades": 163,
+        "evaluated_trading_days": 797,
+        "total_return_pct": 90.4969,
+        "benchmark_return_pct": 80.448,
+        "excess_return_pct": 10.0489,
+        "deployment_matched_benchmark_return_pct": 48.1679,
+        "deployment_matched_excess_return_pct": 42.329,
+        "sharpe_ratio": 1.9302,
+        "sortino_ratio": 3.1713,
+        "calmar_ratio": 2.5465,
+        "max_drawdown_pct": 8.8878,
+        "profit_factor": 2.1217,
+        "expectancy_per_trade_usd": 277.5978,
+        "win_rate_pct": 61.96,
+        "profitable_fold_pct": 52.38
+      },
+      "evidence": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_5_target_15",
+        "validation_run_id": "2026-04-11-q076b-regime-opt-02",
+        "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
+        "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
+        "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
+      },
+      "registered_at": "2026-04-11T11:48:24.095819-04:00",
+      "updated_at": "2026-04-11T13:31:26.522551-04:00",
+      "selected_at": "2026-04-11T13:31:26.522551-04:00"
+    }
+  ]
+}
