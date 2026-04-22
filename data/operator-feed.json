@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-22T16:45:06.393254+00:00",
+  "generated_at": "2026-04-22T16:48:11.436104+00:00",
   "as_of_date": "2026-04-22",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-22T16:45:06.393298+00:00"
+    "audit_written_at": "2026-04-22T16:48:11.436155+00:00"
   },
   "kpis": {
     "total_trades": 62,
@@ -935,15 +935,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-04-22T16:45:05.053788584Z",
+    "as_of": "2026-04-22T16:48:10.935870337Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 272.75,
+        "current_price": 272.49,
         "prior_close": 266.16,
-        "change_usd": 6.59,
-        "change_pct": 2.476,
+        "change_usd": 6.33,
+        "change_pct": 2.3783,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -951,10 +951,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 418.23,
+        "current_price": 417.82,
         "prior_close": 402.26,
-        "change_usd": 15.97,
-        "change_pct": 3.9701,
+        "change_usd": 15.56,
+        "change_pct": 3.8681,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -962,10 +962,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1004.95,
+        "current_price": 1005.29,
         "prior_close": 1005.76,
-        "change_usd": -0.81,
-        "change_pct": -0.0805,
+        "change_usd": -0.47,
+        "change_pct": -0.0467,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -973,10 +973,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 919.47,
+        "current_price": 919.23,
         "prior_close": 902.92,
-        "change_usd": 16.55,
-        "change_pct": 1.8329,
+        "change_usd": 16.31,
+        "change_pct": 1.8064,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -984,10 +984,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 674.485,
+        "current_price": 674.56,
         "prior_close": 668.69,
-        "change_usd": 5.795,
-        "change_pct": 0.8666,
+        "change_usd": 5.87,
+        "change_pct": 0.8778,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -995,10 +995,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 201.07,
+        "current_price": 201.1,
         "prior_close": 199.82,
-        "change_usd": 1.25,
-        "change_pct": 0.6256,
+        "change_usd": 1.28,
+        "change_pct": 0.6406,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1185,7 +1185,7 @@
     "approval": null,
     "strategy_bank": {
       "active_record_id": "regime_aware_momentum::stop_5_target_15",
-      "strategy_count": 3,
+      "strategy_count": 4,
       "active": {
         "record_id": "regime_aware_momentum::stop_5_target_15",
         "selected": true,
@@ -1252,6 +1252,61 @@
         }
       },
       "banked_strategies": [
+        {
+          "record_id": "btc_managed_exposure_v1::q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+          "selected": false,
+          "strategy_id": "btc_managed_exposure_v1",
+          "variant_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+          "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+          "display_name": "BTC Managed Exposure Daily Core Paper v1",
+          "description": "Promote the risk-adjusted managed BTC core first, while the tactical overlay remains research-only until a 4H scheduler is ready.",
+          "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+          "signal_source": "validation_strategy",
+          "selected_at": null,
+          "registered_at": "2026-04-22T12:48:10.939387-04:00",
+          "allowed_sides": [
+            "LONG"
+          ],
+          "symbols": [
+            "BTC/USD"
+          ],
+          "max_positions": 1,
+          "risk_pct_per_trade": 10.0,
+          "stop_loss_pct": null,
+          "target_pct": null,
+          "max_hold_days": null,
+          "performance_summary": {
+            "verdict_reason": "BENCHMARK_GATE_FAILED",
+            "total_trades": 83,
+            "evaluated_trading_days": 3758,
+            "total_return_pct": 8409.8946,
+            "benchmark_return_pct": 17172.3116,
+            "excess_return_pct": -8762.417,
+            "deployment_matched_benchmark_return_pct": null,
+            "deployment_matched_excess_return_pct": null,
+            "sharpe_ratio": 1.1901,
+            "sortino_ratio": 1.0656,
+            "calmar_ratio": 0.9245,
+            "max_drawdown_pct": 58.4016,
+            "profit_factor": null,
+            "expectancy_per_trade_usd": null,
+            "win_rate_pct": null,
+            "profitable_fold_pct": null
+          },
+          "notes": [
+            "Passive manifest registration for passport convergence; this record is not eligible for the singleton active runtime slot until the strategy bank becomes sleeve-aware.",
+            "This manifest intentionally promotes the daily graduated core, not the tactical overlay.",
+            "The bench evidence comes from the q090c managed-exposure finalist package.",
+            "Future 4H crypto execution should promote a second manifest instead of mutating this one in place.",
+            "Hydrate q090c into the bank from Linux side to unblock crypto passport workflow fields"
+          ],
+          "evidence": {
+            "campaign_id": null,
+            "campaign_run_id": null,
+            "experiment_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+            "validation_run_id": "q090c-risk-adjusted-finalists-20260417"
+          }
+        },
         {
           "record_id": "regime_aware_momentum::stop_475_target_14",
           "selected": false,
@@ -1635,7 +1690,7 @@
           }
         }
       ],
-      "narrative": "Active strategy is regime_aware_momentum:stop_5_target_15 in stage Frozen Confirmation Pending. 2 other banked variant(s) remain available for selection."
+      "narrative": "Active strategy is regime_aware_momentum:stop_5_target_15 in stage Frozen Confirmation Pending. 3 other banked variant(s) remain available for selection."
     },
     "crypto_signals": {
       "tsmom": {
