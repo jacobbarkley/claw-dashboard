@@ -385,14 +385,14 @@ function findStrategyRecordForManifest(
   if (deploymentConfigId && str(activeRecord?.variant_id) === deploymentConfigId) return activeRecord
 
   const records = arr<JsonObject>(runtimeStrategyBank?.strategies)
-  if (!records.length) return activeRecord
+  if (!records.length) return deploymentConfigId ? null : activeRecord
 
   const byVariant = deploymentConfigId
     ? records.find(record => str(record.variant_id) === deploymentConfigId)
     : null
   if (byVariant) return byVariant
 
-  return activeRecord
+  return deploymentConfigId ? null : activeRecord
 }
 
 function promotionEventsForRecord(recordId: string | null, events: JsonObject[]): JsonObject[] {
@@ -651,9 +651,13 @@ function buildCryptoManagedPassport(
   manifest: JsonObject,
   spec: JsonObject | null,
   report: JsonObject,
+  runtimeActiveStrategy: JsonObject | null,
+  runtimeStrategyBank: JsonObject | null,
+  strategyPromotionEvents: JsonObject[],
   runId: string | null,
 ): JsonObject {
   const selectedId = str(manifest.deployment_config_id) ?? str(report?.result_bundle?.selected_config_id)
+  const strategyRecord = findStrategyRecordForManifest(manifest, runtimeActiveStrategy, runtimeStrategyBank)
   const lane = COMPARISON_REPORT_KEYS
     .map(key => report[key])
     .find(item => isObject(item) && (str(item.sleeve_id) === selectedId || str(item.label) === selectedId))
@@ -730,6 +734,7 @@ function buildCryptoManagedPassport(
     sleeve: "CRYPTO",
     benchmark: str(manifest.benchmark_symbol) ?? "BTC/USD",
     summary:
+      str(strategyRecord?.description) ??
       str(manifest.source?.rationale) ??
       str(arr<string>(lane?.notes)[0]) ??
       str(spec?.hypothesis) ??
@@ -739,8 +744,8 @@ function buildCryptoManagedPassport(
       ref: str(manifest.manifest_id) ?? str(manifest.title),
       stage: stageLabelForManifest(manifest),
       eligibility: eligibilityForManifest(manifest),
-      paperDays: null,
-      paperTarget: null,
+      paperDays: num(strategyRecord?.paper_monitoring?.window?.elapsed_days),
+      paperTarget: num(strategyRecord?.paper_monitoring?.window?.target_days),
       runtimeContract: str(manifest.runtime_contract),
       cadence: str(manifest.cadence),
       broker: manifest.broker ?? null,
@@ -783,12 +788,12 @@ function buildCryptoManagedPassport(
     },
     gates,
     lifecycle: buildLifecycle("PAPER", str(manifest.generated_at) ?? null, manifest),
-    origin: null,
-    passport_role_id: null,
-    supersedes_record_id: null,
-    paper_monitoring: null,
-    promotion_events: [],
-    trade_history: null,
+    origin: strategyRecord?.origin ?? null,
+    passport_role_id: str(strategyRecord?.passport_role_id),
+    supersedes_record_id: str(strategyRecord?.supersedes_record_id),
+    paper_monitoring: strategyRecord?.paper_monitoring ?? null,
+    promotion_events: promotionEventsForRecord(str(strategyRecord?.record_id), strategyPromotionEvents),
+    trade_history: strategyRecord?.trade_history ?? null,
     // Managed-crypto passports are built from the comparison report, which
     // doesn't carry a variant grid. Parameter-neighborhood analysis needs
     // sweep artifacts; render the honest empty state on the passport.
@@ -1199,6 +1204,9 @@ export async function loadBenchIndexWithViresContracts(): Promise<JsonObject | n
       manifest,
       matchingRun.spec,
       matchingRun.report,
+      runtimeActiveStrategy,
+      runtimeStrategyBank,
+      strategyPromotionEvents,
       str(matchingRun.bundle?.run_id),
     )
     passports.push(passport)
