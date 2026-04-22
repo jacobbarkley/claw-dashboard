@@ -67,6 +67,35 @@ export async function GET() {
       return "EQUITY"
     }
 
+    // Compute today's % change with a fallback chain. Alpaca returns
+    // `change_today` for equity positions, but returns null for crypto
+    // positions (crypto markets don't honor the same daily boundary). For
+    // crypto, fall back to `lastday_price` — Alpaca populates this on
+    // crypto positions using their 00:00 UTC boundary, so it's a reliable
+    // prior-close. Returns 0 only when both sources are unavailable.
+    const computeChangeTodayPct = (p: Record<string, string>): number => {
+      const currentPrice = Number(p.current_price)
+      const changeToday = Number(p.change_today)
+      const lastdayPrice = Number(p.lastday_price)
+      if (
+        Number.isFinite(changeToday) &&
+        changeToday !== 0 &&
+        Number.isFinite(currentPrice) &&
+        currentPrice !== 0
+      ) {
+        const priorClose = currentPrice - changeToday
+        if (priorClose !== 0) return (changeToday / priorClose) * 100
+      }
+      if (
+        Number.isFinite(lastdayPrice) &&
+        lastdayPrice !== 0 &&
+        Number.isFinite(currentPrice)
+      ) {
+        return ((currentPrice - lastdayPrice) / lastdayPrice) * 100
+      }
+      return 0
+    }
+
     const mapEquityLikePosition = (p: Record<string, string>, assetType: "EQUITY" | "CRYPTO") => ({
       symbol: p.symbol,
       qty: Number(p.qty),
@@ -77,9 +106,7 @@ export async function GET() {
       unrealized_pnl: Number(p.unrealized_pl),
       unrealized_pct: Number(p.unrealized_plpc) * 100,
       change_today: Number(p.change_today),
-      change_today_pct: Number(p.change_today) !== 0 && Number(p.current_price) !== 0
-        ? (Number(p.change_today) / (Number(p.current_price) - Number(p.change_today))) * 100
-        : 0,
+      change_today_pct: computeChangeTodayPct(p),
       asset_type: assetType,
     })
 
