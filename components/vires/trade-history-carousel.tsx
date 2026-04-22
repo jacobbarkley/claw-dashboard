@@ -472,6 +472,7 @@ export function TradeHistoryCarousel({ history }: { history: PassportTradeHistor
       {/* Scroll-snap slides. */}
       <div
         ref={scrollRef}
+        data-allow-horizontal-scroll
         style={{
           display: "flex",
           overflowX: "auto",

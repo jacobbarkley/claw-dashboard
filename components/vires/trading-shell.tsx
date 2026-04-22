@@ -4,10 +4,12 @@
 // view. Receives the operator feed from a server component loader for fast
 // first paint, then takes over with /api/trading polling (60s + on focus).
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { ViresTradingHome, type ViresTradingData } from "./trading-home"
 import { StocksScreen, OptionsScreen, CryptoScreen } from "./sleeve-views"
 import { ViresTimeframeProvider } from "./timeframe-context"
+import { useSwipeNavigation } from "./use-swipe-navigation"
 
 // Opaque operator shape — passed through to home-extras which owns its own
 // narrow types. Keeping it untyped here avoids re-declaring the same shape
@@ -104,6 +106,33 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   const [tab, setTab] = useState<SubTab>("home")
   const [liveData, setLiveData] = useState<ViresTradingData | null>(initialData)
   const [liveOperator, setLiveOperator] = useState<OperatorBlock | undefined>(initialOperator)
+  const router = useRouter()
+  const swipeContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Swipe navigation — horizontal swipes on the content body cycle through
+  // Home → Stocks → Options → Crypto. Right-edge swipe LEFT pushes to the
+  // Bench surface. No left-edge handler on Trading — iOS Safari owns the
+  // left-edge-right-swipe as native browser-back.
+  const handleNext = useCallback(() => {
+    const idx = TABS.findIndex(t => t.key === tab)
+    const next = TABS[Math.min(TABS.length - 1, idx + 1)]
+    if (next && next.key !== tab) setTab(next.key)
+  }, [tab])
+  const handlePrev = useCallback(() => {
+    const idx = TABS.findIndex(t => t.key === tab)
+    const prev = TABS[Math.max(0, idx - 1)]
+    if (prev && prev.key !== tab) setTab(prev.key)
+  }, [tab])
+  const handleEdgeRight = useCallback(() => {
+    router.push("/vires/bench")
+  }, [router])
+
+  useSwipeNavigation({
+    containerRef: swipeContainerRef,
+    onNext: handleNext,
+    onPrev: handlePrev,
+    onEdgeSwipeFromRight: handleEdgeRight,
+  })
 
   // Reset scroll on initial mount so iOS Safari's automatic scroll restore
   // doesn't open /vires mid-content. Also fires when the user switches sub
@@ -208,7 +237,11 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   return (
     <ViresTimeframeProvider>
       <SubNav tab={tab} onTab={setTab} />
-      <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <div
+        ref={swipeContainerRef}
+        className="vr-screen vires-screen-pad"
+        style={{ maxWidth: 1100, margin: "0 auto", touchAction: "pan-y" }}
+      >
         {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
         {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} operator={currentOperator} />}
         {tab === "options" && <OptionsScreen data={currentData} operator={currentOperator} />}

@@ -521,6 +521,7 @@ function EquityChart({ curve, baseValue }: {
         height={H}
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
+        data-allow-horizontal-scroll
         style={{ display: "block", overflow: "visible", ...touchActionStyle }}
         {...pointerHandlers}
       >

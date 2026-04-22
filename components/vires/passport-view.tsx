@@ -1,6 +1,6 @@
 "use client"
 
-// Strategy Passport — drill-in view opened from the Bench Promoted row.
+// Strategy Passport Ã¢â‚¬â€ drill-in view opened from the Bench Promoted row.
 // Renders the passport payload Codex's lib/vires-bench.ts emits
 // (buildStockPassport / buildCryptoManagedPassport / etc.) into a full
 // editorial detail page: identity + verdict + era robustness + promotion
@@ -12,7 +12,7 @@ import { InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, toneColor, tone
 import { ParameterHeatmap, type PlateauPayload } from "./plateau-view"
 import { TradeHistoryCarousel } from "./trade-history-carousel"
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Types ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 // Matches the shape lib/vires-bench.ts returns for a passport entry.
 
 interface PassportEra {
@@ -168,7 +168,7 @@ export interface Passport {
   plateau_primer?: PlateauPayload | null
 }
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Helpers ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 const SLEEVE_LC: Record<string, Sleeve> = {
   STOCKS: "stocks",
@@ -185,21 +185,21 @@ function gateTone(status: string | null | undefined): "up" | "down" | "gold" | "
 }
 
 function fmtNum(v: number | null | undefined, digits = 2): string {
-  return v != null && Number.isFinite(v) ? v.toFixed(digits) : "—"
+  return v != null && Number.isFinite(v) ? v.toFixed(digits) : "Ã¢â‚¬â€"
 }
 
 function fmtPctSigned(v: number | null | undefined, digits = 2): string {
-  if (v == null || !Number.isFinite(v)) return "—"
+  if (v == null || !Number.isFinite(v)) return "Ã¢â‚¬â€"
   return `${v >= 0 ? "+" : ""}${v.toFixed(digits)}%`
 }
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return "—"
+  if (!iso) return "Ã¢â‚¬â€"
   return iso.slice(0, 10)
 }
 
 function fmtUsd(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return "—"
+  if (v == null || !Number.isFinite(v)) return "Ã¢â‚¬â€"
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -207,7 +207,7 @@ function fmtUsd(v: number | null | undefined): string {
   }).format(v)
 }
 
-// â”€â”€â”€ Verdict strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Verdict strip ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 function VerdictStrip({ passport }: { passport: Passport }) {
   const m = passport.manifest
@@ -219,12 +219,12 @@ function VerdictStrip({ passport }: { passport: Passport }) {
     if (stage === "PROMOTED") {
       return {
         eyebrow: "Verdict",
-        line: eligibility === "LIVE" ? "Promoted · Earning live capital" : "Promoted · Paper window",
+        line: eligibility === "LIVE" ? "Promoted Ã‚Â· Earning live capital" : "Promoted Ã‚Â· Paper window",
         accent: "var(--vr-gold)",
       }
     }
     if (stage === "BENCHED" || stage === "BENCH_ONLY") {
-      return { eyebrow: "Verdict", line: "Benched · Awaiting promotion", accent: "var(--vr-cream-dim)" }
+      return { eyebrow: "Verdict", line: "Benched Ã‚Â· Awaiting promotion", accent: "var(--vr-cream-dim)" }
     }
     if (stage === "FALLBACK") {
       return { eyebrow: "Verdict", line: "Running on fallback manifest", accent: "var(--vr-gold)" }
@@ -244,15 +244,15 @@ function VerdictStrip({ passport }: { passport: Passport }) {
         <div style={{ padding: "12px 18px", borderRight: "1px solid var(--vr-line)" }}>
           <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 5 }}>Eligibility</div>
           <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)", letterSpacing: "0.04em" }}>
-            {eligibility === "LIVE" && <span style={{ color: "var(--vr-up)" }}>â— LIVE</span>}
+            {eligibility === "LIVE" && <span style={{ color: "var(--vr-up)" }}>ÃƒÂ¢Ã¢â‚¬â€Ã‚Â LIVE</span>}
             {eligibility === "PAPER" && (
               <span style={{ color: "var(--vr-gold)" }}>
-                â— PAPER
-                {m?.paperDays != null && m?.paperTarget != null && ` · day ${m.paperDays}/${m.paperTarget}`}
+                ÃƒÂ¢Ã¢â‚¬â€Ã‚Â PAPER
+                {m?.paperDays != null && m?.paperTarget != null && ` Ã‚Â· day ${m.paperDays}/${m.paperTarget}`}
               </span>
             )}
             {(eligibility === "BENCH_ONLY" || !eligibility) && (
-              <span style={{ color: "var(--vr-cream-mute)" }}>â—‹ BENCH ONLY</span>
+              <span style={{ color: "var(--vr-cream-mute)" }}>ÃƒÂ¢Ã¢â‚¬â€Ã¢â‚¬Â¹ BENCH ONLY</span>
             )}
           </div>
         </div>
@@ -267,7 +267,7 @@ function VerdictStrip({ passport }: { passport: Passport }) {
               textTransform: "none",
             }}
           >
-            {provenanceWarn && "âš  "}
+            {provenanceWarn && "ÃƒÂ¢Ã…Â¡Ã‚Â  "}
             {(m?.provenance ?? "no manifest").toLowerCase().replace(/_/g, " ")}
           </div>
         </div>
@@ -283,15 +283,34 @@ function VerdictStrip({ passport }: { passport: Passport }) {
   )
 }
 
-// â”€â”€â”€ Era robustness graph â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Era robustness graph ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: number | null | undefined }) {
-  if (!eras.length) return null
+  if (!eras.length) {
+    return (
+      <section className="vr-card" style={{ padding: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+          <div>
+            <div className="t-eyebrow">Era robustness</div>
+            <div className="t-label" style={{ fontSize: 12, marginTop: 4, color: "var(--vr-cream)" }}>
+              Sharpe by regime window
+            </div>
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+            No era windows yet
+          </div>
+        </div>
+        <div className="t-label" style={{ fontSize: 10, marginTop: 12, color: "var(--vr-cream-mute)", lineHeight: 1.5 }}>
+          This passport does not publish any era windows yet. The regime strip appears once the bench spec or promoted report carries explicit era labels.
+        </div>
+      </section>
+    )
+  }
   const populated = eras.filter(e => e.sharpe != null)
   const allPending = populated.length === 0
 
   // Honest empty state when Codex's per-era sharpe values aren't yet
-  // populated on the passport — labels exist but values are null. Render
+  // populated on the passport Ã¢â‚¬â€ labels exist but values are null. Render
   // the same dotted-line baseline + label row so the section's visual
   // weight is preserved without faking any per-era performance.
   if (allPending) {
@@ -336,7 +355,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${eras.length}, 1fr)`, gap: 6, marginTop: 10 }}>
           {eras.map((e, i) => (
             <div key={i} style={{ textAlign: "center" }}>
-              <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>—</div>
+              <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>Ã¢â‚¬â€</div>
               <div className="t-label" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginTop: 2 }}>
                 {e.label ?? `era ${i + 1}`}
               </div>
@@ -403,7 +422,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
                 `Inconclusive era (${reasonHuman ?? "low confidence"})`,
                 e.total_trades != null ? `${e.total_trades} trade${e.total_trades === 1 ? "" : "s"}` : null,
                 e.evaluated_trading_days != null ? `${e.evaluated_trading_days} day${e.evaluated_trading_days === 1 ? "" : "s"}` : null,
-              ].filter(Boolean).join(" · ")
+              ].filter(Boolean).join(" Ã‚Â· ")
             : undefined
           return (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }} title={tooltip}>
@@ -414,7 +433,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
                   background: tone,
                   opacity: inconclusive ? 0.35 : (e.pass ? 0.85 : 0.55),
                   borderRadius: 1,
-                  // Diagonal-stripe overlay for inconclusive eras — reads
+                  // Diagonal-stripe overlay for inconclusive eras Ã¢â‚¬â€ reads
                   // as "data is here but treat with caution."
                   backgroundImage: inconclusive
                     ? `repeating-linear-gradient(45deg, transparent 0 4px, rgba(0,0,0,0.18) 4px 5px)`
@@ -469,7 +488,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
 
 function humanizeVerdictReason(reason: string | null | undefined): string | null {
   if (!reason) return null
-  // "INSUFFICIENT_TRADE_COUNT" â†’ "Insufficient trade count"
+  // "INSUFFICIENT_TRADE_COUNT" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ "Insufficient trade count"
   return reason
     .toLowerCase()
     .split("_")
@@ -477,10 +496,30 @@ function humanizeVerdictReason(reason: string | null | undefined): string | null
     .join(" ")
 }
 
-// â”€â”€â”€ Gates list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Gates list ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 function GatesList({ gates }: { gates: PassportGate[] }) {
-  if (!gates.length) return null
+  if (!gates.length) {
+    return (
+      <section>
+        <SectionHeader eyebrow="Governance" title="Promotion gates" />
+        <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            No promotion gates are published for this passport yet. Readiness and governance checks appear here once the producer emits them for this sleeve.
+          </div>
+        </div>
+      </section>
+    )
+  }
   return (
     <section>
       <SectionHeader eyebrow="Governance" title="Promotion gates" />
@@ -516,7 +555,7 @@ function GatesList({ gates }: { gates: PassportGate[] }) {
                   </div>
                 )}
               </div>
-              <StatusPill tone={gateTone(g.status)}>{g.status ?? "—"}</StatusPill>
+              <StatusPill tone={gateTone(g.status)}>{g.status ?? "Ã¢â‚¬â€"}</StatusPill>
             </div>
           ))}
         </div>
@@ -525,12 +564,12 @@ function GatesList({ gates }: { gates: PassportGate[] }) {
   )
 }
 
-// â”€â”€â”€ Parameter stability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Parameter stability ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 // Per-passport plateau: does THIS config live on a broad plateau, or is it
 // a lucky peak with brittle neighbors? Rendered when the passport was born
 // of a parameter sweep (i.e. plateau_primer is non-null). For frozen
 // references and comparison-lane sleeves we show an honest empty state
-// instead — plateaus only mean something if a neighborhood was searched.
+// instead Ã¢â‚¬â€ plateaus only mean something if a neighborhood was searched.
 
 function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | undefined }) {
   const winnerSharpe = plateau?.stats?.winnerSharpe ?? null
@@ -550,7 +589,7 @@ function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | 
       />
       {plateau ? (
         <>
-          {/* Summary strip — "is this a plateau or peak?" at a glance. */}
+          {/* Summary strip Ã¢â‚¬â€ "is this a plateau or peak?" at a glance. */}
           <div
             className="vr-card"
             style={{
@@ -564,7 +603,7 @@ function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | 
               style={{ fontSize: 16, fontStyle: "italic", lineHeight: 1.35 }}
             >
               {hasLucky
-                ? "A brighter neighbor is isolated — watch for overfit."
+                ? "A brighter neighbor is isolated Ã¢â‚¬â€ watch for overfit."
                 : "The winner sits inside a stable neighborhood."}
             </div>
             <div
@@ -593,7 +632,7 @@ function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | 
               lineHeight: 1.55,
             }}
           >
-            No parameter sweep backs this passport — it is a frozen reference or a
+            No parameter sweep backs this passport Ã¢â‚¬â€ it is a frozen reference or a
             comparison-lane sleeve, not a neighborhood winner. Plateau checks
             light up once a candidate is selected from a real parameter grid.
           </div>
@@ -603,18 +642,18 @@ function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | 
   )
 }
 
-// â”€â”€â”€ Assumptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Assumptions ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"] }) {
   const a = assumptions ?? {}
   const rows: Array<{ label: string; value: string }> = [
-    { label: "Commission", value: a.commissionBps != null ? `${a.commissionBps.toFixed(1)} bps round trip` : "—" },
-    { label: "Slippage", value: a.slippageBps != null ? `${a.slippageBps.toFixed(1)} bps one way` : "—" },
-    { label: "Fill model", value: a.fillModel ?? "—" },
-    { label: "Capital base", value: a.capitalBase != null ? `$${a.capitalBase.toLocaleString("en-US")}` : "—" },
-    { label: "Data provider", value: a.provider ?? "—" },
-    { label: "Venue", value: a.venue ?? "—" },
-    { label: "Timeframe", value: a.timeframe ?? "—" },
+    { label: "Commission", value: a.commissionBps != null ? `${a.commissionBps.toFixed(1)} bps round trip` : "Ã¢â‚¬â€" },
+    { label: "Slippage", value: a.slippageBps != null ? `${a.slippageBps.toFixed(1)} bps one way` : "Ã¢â‚¬â€" },
+    { label: "Fill model", value: a.fillModel ?? "Ã¢â‚¬â€" },
+    { label: "Capital base", value: a.capitalBase != null ? `$${a.capitalBase.toLocaleString("en-US")}` : "Ã¢â‚¬â€" },
+    { label: "Data provider", value: a.provider ?? "Ã¢â‚¬â€" },
+    { label: "Venue", value: a.venue ?? "Ã¢â‚¬â€" },
+    { label: "Timeframe", value: a.timeframe ?? "Ã¢â‚¬â€" },
   ]
   return (
     <section>
@@ -768,10 +807,10 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
     <section>
       <SectionHeader eyebrow="Trade history" title="What this strategy did" />
       <div className="vr-card" style={{ overflow: "hidden" }}>
-        {/* Metadata strip — row count, symbols, cash + weight basis. */}
+        {/* Metadata strip Ã¢â‚¬â€ row count, symbols, cash + weight basis. */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--vr-line)", display: "flex", gap: 16, flexWrap: "wrap" }}>
           <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)" }}>
-            {rows.length} rows · {symbolCount} symbols
+            {rows.length} rows Ã‚Â· {symbolCount} symbols
           </div>
           <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)" }}>
             {tradeHistory?.cash_model?.toLowerCase().replace(/_/g, " ") ?? "residual cash"}
@@ -786,7 +825,7 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
           <TradeHistoryCarousel history={tradeHistory} />
         </div>
 
-        {/* Raw ledger rows behind a disclosure — keeps the power-user view
+        {/* Raw ledger rows behind a disclosure Ã¢â‚¬â€ keeps the power-user view
             reachable without crowding the default mobile read. */}
         <div style={{ borderTop: "1px solid var(--vr-line)" }}>
           <button
@@ -810,10 +849,10 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
             }}
           >
             {rawOpen ? "Hide raw rows" : "Show raw rows"}
-            <span aria-hidden style={{ fontSize: 11, transition: "transform 180ms ease", display: "inline-block", transform: rawOpen ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+            <span aria-hidden style={{ fontSize: 11, transition: "transform 180ms ease", display: "inline-block", transform: rawOpen ? "rotate(90deg)" : "rotate(0deg)" }}>Ã¢â‚¬Âº</span>
           </button>
           {rawOpen && (
-            <div style={{ overflowX: "auto", borderTop: "1px solid var(--vr-line)" }}>
+            <div data-allow-horizontal-scroll style={{ overflowX: "auto", borderTop: "1px solid var(--vr-line)" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
                 <thead>
                   <tr>
@@ -841,22 +880,22 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
                         {fmtDate(row.date)}
                       </td>
                       <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                        {row.symbol ?? "—"}
+                        {row.symbol ?? "Ã¢â‚¬â€"}
                       </td>
                       <td className="t-label" style={{ fontSize: 11, color: row.side === "BUY" ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                        {row.side ?? "—"}
+                        {row.side ?? "Ã¢â‚¬â€"}
                       </td>
                       <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                        {row.weight_after != null ? `${(row.weight_after * 100).toFixed(2)}%` : "—"}
+                        {row.weight_after != null ? `${(row.weight_after * 100).toFixed(2)}%` : "Ã¢â‚¬â€"}
                       </td>
                       <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                        {row.price != null ? `$${row.price.toFixed(2)}` : "—"}
+                        {row.price != null ? `$${row.price.toFixed(2)}` : "Ã¢â‚¬â€"}
                       </td>
                       <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
                         {fmtUsd(row.notional)}
                       </td>
                       <td className="t-num" style={{ fontSize: 12, color: (row.pnl_realized ?? 0) >= 0 ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                        {row.pnl_realized != null ? fmtUsd(row.pnl_realized) : "—"}
+                        {row.pnl_realized != null ? fmtUsd(row.pnl_realized) : "Ã¢â‚¬â€"}
                       </td>
                     </tr>
                   ))}
@@ -875,13 +914,33 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
   )
 }
 
-// â”€â”€â”€ Lifecycle timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Lifecycle timeline ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 const STAGE_ORDER = ["IDEATED", "SPEC", "BENCHED", "CONFIRMED", "PROMOTED", "PAPER", "LIVE_ELIGIBLE", "LIVE"]
 
 function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) {
   const events = lifecycle?.events ?? []
-  if (!events.length) return null
+  if (!events.length) {
+    return (
+      <section>
+        <SectionHeader eyebrow="Lifecycle" title="Stage timeline" />
+        <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            No lifecycle events are published for this passport yet. Promotion, monitoring, and demotion steps appear here once this strategy enters the governed workflow.
+          </div>
+        </div>
+      </section>
+    )
+  }
   const sorted = [...events].sort((a, b) => {
     const ia = STAGE_ORDER.indexOf((a.stage ?? "").toUpperCase())
     const ib = STAGE_ORDER.indexOf((b.stage ?? "").toUpperCase())
@@ -929,14 +988,14 @@ function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) 
   )
 }
 
-// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Page ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 
 export function ViresPassportView({ passport }: { passport: Passport | null }) {
   if (!passport) {
     return (
       <div className="vr-screen vires-screen-pad" style={{ maxWidth: 860, margin: "0 auto" }}>
         <Link href="/vires/bench" className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", textDecoration: "none" }}>
-          â† Back to Bench
+          ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to Bench
         </Link>
         <div className="vr-card" style={{ padding: 24, marginTop: 14 }}>
           <div className="t-eyebrow" style={{ marginBottom: 6 }}>Passport not found</div>
@@ -961,14 +1020,14 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     {
       label: "Total Return",
       term: "TotalReturn",
-      value: m.totalReturn != null ? `${m.totalReturn.toFixed(1)}%` : "—",
+      value: m.totalReturn != null ? `${m.totalReturn.toFixed(1)}%` : "Ã¢â‚¬â€",
       sub: m.benchReturn != null ? `bench ${m.benchReturn.toFixed(1)}%` : undefined,
       color: "var(--vr-up)",
     },
     {
       label: "vs Bench",
       term: "VsBench",
-      value: m.excess != null ? fmtPctSigned(m.excess, 1) : "—",
+      value: m.excess != null ? fmtPctSigned(m.excess, 1) : "Ã¢â‚¬â€",
       color: m.excess != null && m.excess >= 0 ? "var(--vr-up)" : "var(--vr-down)",
     },
     {
@@ -987,14 +1046,14 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     {
       label: "Max DD",
       term: "MaxDD",
-      value: m.maxDD != null ? `${m.maxDD.toFixed(2)}%` : "—",
+      value: m.maxDD != null ? `${m.maxDD.toFixed(2)}%` : "Ã¢â‚¬â€",
       sub: m.benchMaxDD != null ? `bench ${m.benchMaxDD.toFixed(2)}%` : undefined,
       color: "var(--vr-down)",
     },
     {
       label: "Win Rate",
       term: "WinRate",
-      value: m.winRate != null ? `${m.winRate.toFixed(1)}%` : "—",
+      value: m.winRate != null ? `${m.winRate.toFixed(1)}%` : "Ã¢â‚¬â€",
     },
     {
       label: "Profit Factor",
@@ -1003,7 +1062,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     },
     {
       label: "Trades",
-      value: m.trades != null ? m.trades.toLocaleString("en-US") : "—",
+      value: m.trades != null ? m.trades.toLocaleString("en-US") : "Ã¢â‚¬â€",
       sub: m.days != null ? `${m.days} days` : undefined,
     },
   ]
@@ -1026,7 +1085,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
           alignSelf: "flex-start",
         }}
       >
-        â† Back to Bench
+        ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Back to Bench
       </Link>
 
       {/* Identity */}
@@ -1034,7 +1093,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <SleeveChip sleeve={sleeve} />
           <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}>
-            · Strategy Passport
+            Ã‚Â· Strategy Passport
           </span>
         </div>
         <div className="t-h1" style={{ fontSize: 30, lineHeight: 1.1, letterSpacing: "-0.01em" }}>
@@ -1054,19 +1113,19 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
           <div>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Benchmark</div>
             <div className="t-ticker" style={{ fontSize: 12, color: "var(--vr-cream)", textTransform: "none" }}>
-              {passport.benchmark ?? "—"}
+              {passport.benchmark ?? "Ã¢â‚¬â€"}
             </div>
           </div>
           <div style={{ borderLeft: "1px solid var(--vr-line)", paddingLeft: 16 }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Window</div>
             <div className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)" }}>
-              {m.days != null ? `${m.days} days` : "—"}
+              {m.days != null ? `${m.days} days` : "Ã¢â‚¬â€"}
             </div>
           </div>
           <div style={{ borderLeft: "1px solid var(--vr-line)", paddingLeft: 16 }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Trades</div>
             <div className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)" }}>
-              {m.trades != null ? m.trades.toLocaleString("en-US") : "—"}
+              {m.trades != null ? m.trades.toLocaleString("en-US") : "Ã¢â‚¬â€"}
             </div>
           </div>
           {passport.manifest?.cadence && (
@@ -1130,7 +1189,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
       {/* Gates */}
       <GatesList gates={passport.gates ?? []} />
 
-      {/* Parameter stability — plateau heatmap when sweep data exists,
+      {/* Parameter stability Ã¢â‚¬â€ plateau heatmap when sweep data exists,
           honest empty state when the passport is a frozen reference. */}
       <ParameterStabilityCard plateau={passport.plateau_primer} />
 
