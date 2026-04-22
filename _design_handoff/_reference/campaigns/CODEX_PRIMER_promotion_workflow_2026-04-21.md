@@ -119,29 +119,43 @@ Once you're already extending the passport contract for promotion readiness (§3
 
 Add one new field to the passport contract: `trade_history`. The frontend derives two views from it (allocation stream chart + per-symbol contribution bar), presented as a swipeable carousel on mobile so the operator can A/B which view is more useful over time. One data shape, not two, so we can add a third view later (drawdown-by-position, holding-period distribution, etc.) without another contract revision.
 
-### Data shape
+### Data shape (refined with Codex 2026-04-21)
 
 ```jsonc
-"trade_history": [
-  {
-    "date":         "2023-01-12",
-    "symbol":       "NVDA",
-    "side":         "BUY" | "SELL" | "REBALANCE",
-    "weight":       0.17,          // portfolio weight AFTER this trade (0..1)
-    "price":        162.40,        // execution price
-    "notional":     15000,         // dollar size, optional
-    "pnl_realized": null           // only set on SELL / REBALANCE-out, optional
-  }
-  // ... one row per trade
-]
+"trade_history": {
+  "schema_version": "passport_trade_history.v1",
+  "weight_basis":   "POST_EVENT_TOTAL_PORTFOLIO",
+  "cash_model":     "RESIDUAL",
+  "rows": [
+    {
+      "date":         "2023-01-12",
+      "event_id":     "2023-01-12-rebalance-01",
+      "event_type":   "REBALANCE" | "TRADE",        // enum extensible
+      "symbol":       "NVDA",
+      "side":         "BUY" | "SELL",
+      "weight_after": 0.17,                         // portfolio weight AFTER this event (0..1)
+      "price":        162.40,                       // execution price
+      "notional":     15000,                        // dollar size, optional
+      "pnl_realized": null                          // SELL / REBALANCE-out only, optional
+    }
+    // ... one row per symbol whose weight changed
+  ]
+}
 ```
 
 ### Shape notes
 
-- **One row per trade**, not per position. Frontend aggregates to holdings-over-time by reading `weight` forward.
-- **`weight` is AFTER-trade portfolio weight.** Deterministic reconstruction of the allocation stream requires this — if you emit pre-trade weight, we lose the state post-trade. Consistency matters more than which snapshot.
-- **`pnl_realized` optional.** If you have it, we use it for the contribution-bar view. If not, we derive from buy/sell price deltas on the frontend.
-- **Size-wise benign.** A 1000-trading-day stocks backtest with monthly rebalance ≈ 100–300 trades. Fine to ship inline on the passport. If a higher-turnover strategy hits 10k+ trades, flag it and we'll move to a lazy-load path.
+- **Metadata wrapper:** semantics live on the envelope (`weight_basis`, `cash_model`), not inferred per-row. Lets us add variants (long/short, options net-notional) later without a breaking change.
+- **`weight_basis: "POST_EVENT_TOTAL_PORTFOLIO"`:** the `weight_after` on each row is the portfolio weight as of immediately after this row's event. Deterministic stream reconstruction.
+- **`cash_model: "RESIDUAL"`:** cash = `1 − sum(symbol weights)`. No synthetic CASH rows emitted. Contract explicitly declares this so future long/short or options sleeves can ship a different `cash_model` without ambiguity.
+- **Row granularity:** one row per *symbol whose weight changed* during an event. Rebalances share an `event_id` so the frontend can group them visually — the ledger stays row-atomic, the human meaning of "this was one rebalance" is preserved via the shared id.
+- **`event_type` is extensible.** Starting with `REBALANCE | TRADE`; add `DIVIDEND`, `STOP_HIT`, `TARGET_HIT`, `CORPORATE_ACTION` as real signals surface.
+- **`pnl_realized` optional.** If emitted we use it for the contribution-bar view; otherwise frontend derives from buy/sell price deltas.
+- **Size-wise benign today.** Stocks passports with monthly/quarterly rebalance ≈ low hundreds of rows. Managed-crypto daily ≈ manageable. Fine to ship inline on the passport.
+
+### Lazy-load trigger
+
+Ship inline now. Move to lazy-load when a passport approaches **~2,500 rows** — the first strategies likely to hit that are future 4H crypto or options, not today's stock/managed-crypto families. Earlier trigger than the original 10k — cheaper to design the lazy path up front than to retrofit it once a passport actually bloats.
 
 ### Why not ship pre-aggregated streams
 
@@ -164,11 +178,11 @@ You could emit `allocation_stream: [{date, holdings: {...}}]` directly. Rejected
 
 Lands with the promotion-readiness contract revision (§3A). One revision to the passport object, not two.
 
-### Questions
+### Questions (resolved by Codex 2026-04-21)
 
-- **Turnover ceiling.** Any current or near-future strategy where trade count would exceed ~5k in the eval window? If so, we design lazy-load up front.
-- **Cash position.** Do we model cash as a synthetic symbol (`"CASH"`) in `trade_history` weights, or infer it as `1 − sum(symbol weights)`? My lean: inferred, no CASH row needed. Your call.
-- **Rebalance semantics.** For strategies that rebalance monthly (e.g., ETF Replacement Momentum, C-Lite), do rebalance events emit one row per changed weight or one aggregated row per rebalance? My lean: one row per symbol whose weight changed, so the stream is always derivable from the ledger. Again, your call.
+- ~~**Turnover ceiling.**~~ Resolved: ship inline now, lazy-load trigger at ~2,500 rows. Realistic bloat comes from future 4H crypto / options, not today's families.
+- ~~**Cash position.**~~ Resolved: infer cash (`RESIDUAL`) for v1, declared explicitly in the `cash_model` field so non-cash variants can ship their own model later.
+- ~~**Rebalance semantics.**~~ Resolved: one row per symbol whose weight changed, all sharing an `event_id` + `event_type: "REBALANCE"` so the frontend can group cleanly without losing the atomic ledger.
 
 ---
 
