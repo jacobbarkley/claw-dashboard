@@ -417,6 +417,57 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
     full: "Distance Between the Leader and the Next-Best Candidate",
     body: "How far the second-best candidate trails the leader on the load-bearing metrics (return, Sharpe, drawdown). \u201CNot quantified\u201D is a legitimate state \u2014 it means the candidates haven\u2019t had enough fresh runs on matching windows for an honest delta to be computed yet.",
   },
+  // ─ Promotion readiness gates (Passport v2 §4.1) ─
+  PromotionReadiness: {
+    title: "Promotion Readiness",
+    full: "Live Scorecard of the Promotion Gates",
+    body: "Every gate the bench runs against a challenger. When all gates pass, the operator can nominate the candidate for promotion into the production ledger. The scorecard updates on every new run; \u201Cnominate\u201D is a one-tap action, but the operator always confirms \u2014 promotion never auto-fires.",
+  },
+  Gate_TRADE_COUNT: {
+    title: "Trade Count",
+    full: "Number of Trades in the Evaluation Window",
+    body: "Too-few-trades is a statistical red flag \u2014 the sample is too small to trust the returns. This gate sets a floor (e.g. 50 trades) below which we refuse to claim the strategy has proven itself.",
+  },
+  Gate_PROFIT_FACTOR: {
+    title: "Profit Factor",
+    full: "Gross Profit \u00F7 Gross Loss",
+    body: "Total winning P&L divided by total losing P&L. Above 1.5 is healthy; above 2.0 is strong. Direct measure of how much winners outweigh losers in dollar terms.",
+  },
+  Gate_EXPECTANCY: {
+    title: "Expectancy",
+    full: "Average P&L per Trade",
+    body: "Mean dollar P&L per trade after fees. Positive expectancy is the minimum bar; the threshold here asks for positive-enough to justify turnover costs and slippage in live execution.",
+  },
+  Gate_PROFITABLE_FOLDS: {
+    title: "Profitable Folds",
+    full: "Share of Era-Folds with Positive Net P&L",
+    body: "Across the bench\u2019s cross-validation folds, how many finished in the green. A strategy that only makes money in one fold is leaning on a lucky slice; we want breadth of wins, not a single outlier window.",
+  },
+  Gate_DRAWDOWN: {
+    title: "Drawdown Gate",
+    full: "Max Drawdown Within Bound",
+    body: "Largest peak-to-trough loss across the evaluation window, bounded below a ceiling (e.g. \u221215%). Anything that looks great in aggregate but had an unsurvivable dip along the way fails this gate \u2014 the ride has to be tolerable, not just the destination.",
+  },
+  Gate_BENCHMARK: {
+    title: "Benchmark Gate",
+    full: "Excess Return vs. Benchmark",
+    body: "Strategy return minus the benchmark\u2019s return on the same window. Positive excess is necessary but not sufficient \u2014 the other gates (drawdown, era robustness) make sure the excess didn\u2019t come from riding more risk.",
+  },
+  Gate_EXPECTANCY_DECAY: {
+    title: "Expectancy Decay",
+    full: "Forward-Period Expectancy vs. Training Expectancy",
+    body: "How much the per-trade expectancy deteriorates between the training window and the forward-test window. Strong decay is overfitting\u2019s signature: the strategy learned a historical quirk that didn\u2019t generalize.",
+  },
+  Gate_HOLDBACK: {
+    title: "Holdback Window",
+    full: "Out-of-Sample Result on the Held-Back Segment",
+    body: "A deliberately excluded segment of history that the optimizer never saw. Positive performance here is the honest test \u2014 the strategy is making money on data it wasn\u2019t fit to.",
+  },
+  Gate_ERA_ROBUSTNESS: {
+    title: "Era Robustness",
+    full: "Per-Era Pass Count Across the Bench Era Matrix",
+    body: "Sharpe and returns are re-measured across each named historical era (e.g. 2023 H1, 2024 H2). This gate demands the strategy pass in every era, not just the favorable ones \u2014 if it survives every regime on the bench, it has a shot at surviving the next one.",
+  },
 }
 
 export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {

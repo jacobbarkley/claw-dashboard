@@ -14,6 +14,29 @@
   "last_meaningful_change_at": "2026-04-14T16:00:00-04:00",
   "last_meaningful_change": "Dynamic Top 6 became the current aggressive leader after the first focused AI/tech screen batch.",
   "promotion_target": "Clear bench quality gates and earn paper eligibility without relying on one hot AI tape.",
+  "promotion_readiness": {
+    "schema_version": "campaign_promotion_readiness.v1",
+    "origin_candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
+    "passport_role_id": "STOCKS_AGGRESSIVE_AI",
+    "target_action": "CREATE_NEW",
+    "supersedes_record_id": null,
+    "readiness": {
+      "gates": [
+        { "gate_id": "TRADE_COUNT",      "label": "Trade count",       "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": 163,   "threshold": 50,    "summary": "163 trades in the eval window, well above the 50-trade floor." },
+        { "gate_id": "PROFIT_FACTOR",    "label": "Profit factor",     "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": 2.12,  "threshold": 1.5,   "summary": "2.12 gross profit over gross loss." },
+        { "gate_id": "EXPECTANCY",       "label": "Expectancy",        "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": 0.42,  "threshold": 0.10,  "summary": "Per-trade expectancy $0.42 on the modeled capital base." },
+        { "gate_id": "PROFITABLE_FOLDS", "label": "Profitable folds",  "status": "INCONCLUSIVE", "source_kind": "VALIDATION_GATE", "value": null,  "threshold": 0.60,  "summary": "Fold-level P&L not yet reconstructed from the new run bundle." },
+        { "gate_id": "DRAWDOWN",         "label": "Max drawdown",      "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": -8.89, "threshold": -15.0, "summary": "Max drawdown -8.89%, inside the -15% bound." },
+        { "gate_id": "BENCHMARK",        "label": "Beats benchmark",   "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": 10.05, "threshold": 0.0,   "summary": "Beats the broad-stock baseline by 10.05% on the 797-day window." },
+        { "gate_id": "EXPECTANCY_DECAY", "label": "Expectancy decay",  "status": "PENDING",      "source_kind": "VALIDATION_GATE", "value": null,  "threshold": -0.20, "summary": "Forward-period expectancy not yet computed; pending next run." },
+        { "gate_id": "HOLDBACK",         "label": "Holdback window",   "status": "PASS",         "source_kind": "VALIDATION_GATE", "value": 0.087, "threshold": 0.0,   "summary": "Positive Sharpe on the out-of-sample holdback segment." },
+        { "gate_id": "ERA_ROBUSTNESS",   "label": "Era sweep",         "status": "FAIL",         "source_kind": "BENCH_AGGREGATE", "value": 2,     "threshold": 4,     "summary": "Passes 2 of 4 eras. Needs all four to clear promotion." }
+      ],
+      "overall_status": "BLOCKED",
+      "blockers": ["ERA_ROBUSTNESS"],
+      "as_of": "2026-04-21T21:55:00-04:00"
+    }
+  },
   "baseline": {
     "kind": "PROMOTED_REFERENCE",
     "candidate_id": "q076b_regime_aware_momentum_frozen_reference",

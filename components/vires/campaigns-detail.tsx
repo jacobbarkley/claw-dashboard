@@ -34,6 +34,7 @@ import {
   relTime,
 } from "./campaigns-shared"
 import { InfoPop, SleeveChip, type Sleeve } from "./shared"
+import { PromotionReadinessCard } from "./promotion-readiness"
 
 // ─── Lever shell — action-shaped button (disabled in v1) ────────────────────
 // CRITICAL: element IS <button>, NOT div/span. disabled + aria-disabled true.
@@ -1158,33 +1159,10 @@ export function ViresCampaignsDetail({
         </div>
       </div>
 
-      {/* Promotion target — editorial callout, moved above the Leader card so
-          "what winning looks like" reads right after the title/objective. */}
-      {campaign.promotion_target && (
-        <div
-          style={{
-            padding: "14px 16px",
-            border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
-            borderRadius: 4,
-            background: "var(--vr-gold-soft, rgba(200,169,104,0.06))",
-          }}
-        >
-          <div className="t-eyebrow" style={{ color: "var(--vr-gold)", marginBottom: 6 }}>
-            Promotion target
-          </div>
-          <div
-            className="t-read"
-            style={{
-              fontSize: 13,
-              fontFamily: "var(--ff-serif)",
-              color: "var(--vr-cream)",
-              lineHeight: 1.55,
-            }}
-          >
-            {campaign.promotion_target}
-          </div>
-        </div>
-      )}
+      {/* Promotion readiness — Passport v2 §4. Renders as the live scorecard
+          when promotion_readiness.readiness is present; falls back to a
+          promotion_target-only callout when the backend hasn't landed yet. */}
+      <PromotionReadinessCard campaign={campaign} />
 
       {/* Leader card — role-tagged, with lever strip, baseline performance */}
       {featuredCandidate && (

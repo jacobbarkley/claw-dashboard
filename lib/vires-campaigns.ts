@@ -148,6 +148,44 @@ export interface CampaignPressure {
   as_of: string
 }
 
+// ─── Promotion readiness (Passport v2 spec §4) ─────────────────────────────
+// Per-campaign scorecard of promotion gates. Backend emits this on every
+// campaign refresh / run completion. Frontend renders a live scorecard;
+// promote button lights only when overall_status is READY_TO_NOMINATE.
+
+export type GateStatus = "PASS" | "FAIL" | "PENDING" | "INCONCLUSIVE"
+export type GateSourceKind = "VALIDATION_GATE" | "BENCH_AGGREGATE"
+
+export interface ReadinessGate {
+  gate_id: string
+  label: string
+  status: GateStatus
+  source_kind: GateSourceKind
+  value?: number | null
+  threshold?: number | null
+  summary?: string | null
+}
+
+export type OverallReadinessStatus = "READY_TO_NOMINATE" | "BLOCKED" | "PARTIAL"
+
+export interface Readiness {
+  gates: ReadinessGate[]
+  overall_status: OverallReadinessStatus
+  blockers: string[]
+  as_of: string
+}
+
+export type PromotionTargetAction = "CREATE_NEW" | "REPLACE_EXISTING"
+
+export interface PromotionReadiness {
+  schema_version?: string
+  origin_candidate_id: string | null
+  passport_role_id: string | null
+  target_action?: PromotionTargetAction
+  supersedes_record_id?: string | null
+  readiness: Readiness | null
+}
+
 export interface CampaignManifest {
   schema_version: "bench_campaign_manifest.v1" | "bench_campaign_manifest.v2" | string
   campaign_id: string
@@ -174,6 +212,9 @@ export interface CampaignManifest {
   baseline_performance?: BaselinePerformance | null
   leader_comparison_to_baseline?: LeaderComparisonToBaseline | null
   campaign_pressure?: CampaignPressure | null
+
+  // Passport v2 §4 — promotion readiness scorecard (optional until Codex ships)
+  promotion_readiness?: PromotionReadiness | null
 }
 
 export interface CampaignRegistryEntry {
@@ -253,6 +294,10 @@ export function getCampaignPressure(c: CampaignManifest): CampaignPressure | nul
 
 export function getLeaderComparison(c: CampaignManifest): LeaderComparisonToBaseline | null {
   return c.leader_comparison_to_baseline ?? null
+}
+
+export function getPromotionReadiness(c: CampaignManifest): PromotionReadiness | null {
+  return c.promotion_readiness ?? null
 }
 
 export function getBaseline(c: CampaignManifest): BaselineBlock | null {
