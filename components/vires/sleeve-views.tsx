@@ -395,9 +395,16 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
 
   const lastValue = series[series.length - 1]
   const firstPositiveValue = mode === "MV" ? series.find(value => value > 0) ?? series[0] : series[0]
-  const periodPct = mode === "MV" && firstPositiveValue > 0
-    ? ((lastValue - firstPositiveValue) / firstPositiveValue) * 100
-    : lastValue
+  // RET-mode header is the cumulative return at the end of the window
+  // (already a percentage). MV-mode header is the dollar delta from the
+  // first positive value in the window to the last value — NOT a percent.
+  // Earlier math computed (last - first) / first * 100 for MV, which
+  // inflated wildly whenever the series started with a tiny value (e.g.,
+  // a sleeve that got funded or added SGOV mid-window). Dollar delta is
+  // honest — a +$X header reads as "the sleeve's market value grew by
+  // $X across this window," which is what it actually means.
+  const periodValue: number =
+    mode === "MV" ? lastValue - firstPositiveValue : lastValue
 
   // Real-anchor positions for the scrubber dot. Density lives in the line
   // path (for visual smoothness), but hover snaps to real daily anchors so
@@ -413,8 +420,26 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
   })
   const hoverAnchor = hoverIdx != null && hoverIdx >= 0 && hoverIdx < anchorPts.length ? anchorPts[hoverIdx] : null
 
-  const readoutValue = hoverAnchor?.value ?? periodPct
+  const readoutValue = hoverAnchor?.value ?? periodValue
   const readoutDate = hoverAnchor?.date ?? null
+  // In MV mode, the headline is a dollar number — current value while
+  // scrubbing, dollar delta otherwise. In RET mode it's always a
+  // percentage. Kept separate from toneColor so a +$0 delta still reads
+  // neutral instead of tone-less.
+  const readoutLabel = (() => {
+    if (mode === "MV") {
+      if (hoverAnchor) return fmtCurrency(readoutValue)
+      // Dollar delta with explicit sign.
+      const sign = readoutValue >= 0 ? "+" : "−"
+      return `${sign}${fmtCurrency(Math.abs(readoutValue))}`
+    }
+    return `${readoutValue >= 0 ? "+" : ""}${readoutValue.toFixed(2)}%`
+  })()
+  const readoutTrailer = readoutDate
+    ? readoutDate
+    : mode === "MV"
+      ? `${tf} change`
+      : `${tf} return`
 
   return (
     <div style={{ marginTop: 18 }}>
@@ -430,14 +455,12 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
         }}
       >
         <div className="t-num" style={{ fontSize: 11, color: toneColor(toneOf(readoutValue)), fontWeight: 500 }}>
-          {mode === "MV" && hoverAnchor
-            ? fmtCurrency(readoutValue)
-            : `${readoutValue >= 0 ? "+" : ""}${readoutValue.toFixed(2)}%`}
+          {readoutLabel}
           <span
             className="t-label"
             style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginLeft: 5, letterSpacing: "0.12em", textTransform: "uppercase" }}
           >
-            {readoutDate ? readoutDate : `${tf} ${mode === "RET" ? "return" : "value"}`}
+            {readoutTrailer}
           </span>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>

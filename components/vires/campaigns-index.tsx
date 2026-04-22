@@ -379,10 +379,13 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         </div>
       </div>
 
-      {/* Footer meta */}
+      {/* Footer meta + Open affordance — meta is a small sub-line, the
+          Open-campaign action gets a prominent tap target of its own. The
+          whole card is still a Link; this CTA just makes the affordance
+          legible on mobile instead of hiding as tiny gold text. */}
       <div
         style={{
-          padding: "10px 14px 12px",
+          padding: "8px 14px 6px",
           borderTop: "1px solid var(--vr-line)",
           display: "flex",
           alignItems: "center",
@@ -394,13 +397,33 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
           Updated {relTime(campaign.updated_at)}
           {campaign.updated_by ? ` · by ${campaign.updated_by}` : ""}
         </div>
+      </div>
+      <div
+        style={{
+          padding: "10px 14px 14px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
         <span
           className="t-eyebrow"
-          style={{ fontSize: 9, color: "var(--vr-gold)", display: "inline-flex", gap: 5, alignItems: "center" }}
+          style={{
+            padding: "10px 14px",
+            background: "rgba(200,169,104,0.10)",
+            border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
+            color: "var(--vr-gold)",
+            borderRadius: 3,
+            display: "inline-flex",
+            gap: 8,
+            alignItems: "center",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.16em",
+          }}
         >
           Open campaign
-          <svg width="10" height="10" viewBox="0 0 8 8" fill="none">
-            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+          <svg width="12" height="12" viewBox="0 0 8 8" fill="none" aria-hidden>
+            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.6" />
           </svg>
         </span>
       </div>

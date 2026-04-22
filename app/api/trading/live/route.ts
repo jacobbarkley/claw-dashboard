@@ -67,16 +67,33 @@ export async function GET() {
       return "EQUITY"
     }
 
-    // Compute today's % change with a fallback chain. Alpaca returns
-    // `change_today` for equity positions, but returns null for crypto
-    // positions (crypto markets don't honor the same daily boundary). For
-    // crypto, fall back to `lastday_price` — Alpaca populates this on
-    // crypto positions using their 00:00 UTC boundary, so it's a reliable
-    // prior-close. Returns 0 only when both sources are unavailable.
-    const computeChangeTodayPct = (p: Record<string, string>): number => {
+    // Compute today's % change. Alpaca's `change_today` behaves differently
+    // per asset class:
+    //   - Equities: dollar delta from prior close (e.g. +$2.13 on a $100
+    //     stock that moved 2.13%). The straight (change_today / prior_close)
+    //     math is correct.
+    //   - Crypto: returns a near-zero value that does NOT represent the
+    //     actual daily move (observed: 0.037 on a $79k BTC that really
+    //     moved 2%+). Using it directly produces 0.00% displays. Alpaca
+    //     DOES populate `lastday_price` on crypto positions, so we prefer
+    //     that for crypto and compute from (current - lastday) / lastday.
+    const computeChangeTodayPct = (
+      p: Record<string, string>,
+      assetType: "EQUITY" | "CRYPTO",
+    ): number => {
       const currentPrice = Number(p.current_price)
       const changeToday = Number(p.change_today)
       const lastdayPrice = Number(p.lastday_price)
+      const hasLastday =
+        Number.isFinite(lastdayPrice) && lastdayPrice !== 0 && Number.isFinite(currentPrice)
+
+      // Crypto: lastday_price is authoritative when present. Alpaca's
+      // change_today for crypto is unreliable, so we skip it entirely.
+      if (assetType === "CRYPTO" && hasLastday) {
+        return ((currentPrice - lastdayPrice) / lastdayPrice) * 100
+      }
+
+      // Equity: change_today is a dollar delta; derive from that.
       if (
         Number.isFinite(changeToday) &&
         changeToday !== 0 &&
@@ -86,11 +103,10 @@ export async function GET() {
         const priorClose = currentPrice - changeToday
         if (priorClose !== 0) return (changeToday / priorClose) * 100
       }
-      if (
-        Number.isFinite(lastdayPrice) &&
-        lastdayPrice !== 0 &&
-        Number.isFinite(currentPrice)
-      ) {
+
+      // Final fallback for either asset class — if lastday_price exists and
+      // we haven't returned yet, use it.
+      if (hasLastday) {
         return ((currentPrice - lastdayPrice) / lastdayPrice) * 100
       }
       return 0
@@ -106,7 +122,7 @@ export async function GET() {
       unrealized_pnl: Number(p.unrealized_pl),
       unrealized_pct: Number(p.unrealized_plpc) * 100,
       change_today: Number(p.change_today),
-      change_today_pct: computeChangeTodayPct(p),
+      change_today_pct: computeChangeTodayPct(p, assetType),
       asset_type: assetType,
     })
 
