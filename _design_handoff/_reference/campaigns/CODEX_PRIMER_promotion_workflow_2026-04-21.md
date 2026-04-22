@@ -103,8 +103,72 @@ The UX is Claude's; the data contract, automation logic, and state transitions a
 2. **Proposed data contract shape** for the readiness scorecard (fields + events). Refine §3A.
 3. **Your preferred answer to each open question** in §3B–3E.
 4. **Anything we didn't think of** — your backend view sees things the design side can't.
+5. **Your take on §6 below** — the passport trade-history extension that lands in the same contract revision.
 
 Then Claude takes your input, writes the final spec in this same folder, and we both check in before implementation starts.
+
+---
+
+## 6. Adjacent feature — passport trade history + allocation views
+
+### Why it's in this primer
+
+Once you're already extending the passport contract for promotion readiness (§3A), this is the natural moment to also add trade-history data. Operator-side gap: passports today show stats, era results, gates, lifecycle — but not *what the strategy actually did*. No symbol-level detail, no allocation pattern, no sense of "was this one lucky pick or broad participation." Locked 2026-04-21 by Jacob.
+
+### Proposal — one data source, multiple views
+
+Add one new field to the passport contract: `trade_history`. The frontend derives two views from it (allocation stream chart + per-symbol contribution bar), presented as a swipeable carousel on mobile so the operator can A/B which view is more useful over time. One data shape, not two, so we can add a third view later (drawdown-by-position, holding-period distribution, etc.) without another contract revision.
+
+### Data shape
+
+```jsonc
+"trade_history": [
+  {
+    "date":         "2023-01-12",
+    "symbol":       "NVDA",
+    "side":         "BUY" | "SELL" | "REBALANCE",
+    "weight":       0.17,          // portfolio weight AFTER this trade (0..1)
+    "price":        162.40,        // execution price
+    "notional":     15000,         // dollar size, optional
+    "pnl_realized": null           // only set on SELL / REBALANCE-out, optional
+  }
+  // ... one row per trade
+]
+```
+
+### Shape notes
+
+- **One row per trade**, not per position. Frontend aggregates to holdings-over-time by reading `weight` forward.
+- **`weight` is AFTER-trade portfolio weight.** Deterministic reconstruction of the allocation stream requires this — if you emit pre-trade weight, we lose the state post-trade. Consistency matters more than which snapshot.
+- **`pnl_realized` optional.** If you have it, we use it for the contribution-bar view. If not, we derive from buy/sell price deltas on the frontend.
+- **Size-wise benign.** A 1000-trading-day stocks backtest with monthly rebalance ≈ 100–300 trades. Fine to ship inline on the passport. If a higher-turnover strategy hits 10k+ trades, flag it and we'll move to a lazy-load path.
+
+### Why not ship pre-aggregated streams
+
+You could emit `allocation_stream: [{date, holdings: {...}}]` directly. Rejected because:
+
+- **Duplicates data.** Trade events and the stream encode the same information.
+- **Brittle to new views.** Adding a third or fourth view ("holding-period distribution," "turnover over time") would need another contract revision.
+- **Frontend iteration is cheap** when the raw ledger is available.
+
+### Frontend plan
+
+- Expandable disclosure on the passport page (default collapsed, mobile-first)
+- On expand: horizontal scroll-snap carousel with two views
+  - **Allocation stream:** stacked-area of per-symbol weight over time
+  - **Symbol contribution:** horizontal bars sorted by realized P&L
+- Page dots + swipe or tap to move between
+- When the operator picks a winner over time, retire the other view
+
+### Sequencing
+
+Lands with the promotion-readiness contract revision (§3A). One revision to the passport object, not two.
+
+### Questions
+
+- **Turnover ceiling.** Any current or near-future strategy where trade count would exceed ~5k in the eval window? If so, we design lazy-load up front.
+- **Cash position.** Do we model cash as a synthetic symbol (`"CASH"`) in `trade_history` weights, or infer it as `1 − sum(symbol weights)`? My lean: inferred, no CASH row needed. Your call.
+- **Rebalance semantics.** For strategies that rebalance monthly (e.g., ETF Replacement Momentum, C-Lite), do rebalance events emit one row per changed weight or one aggregated row per rebalance? My lean: one row per symbol whose weight changed, so the stream is always derivable from the ledger. Again, your call.
 
 ---
 
