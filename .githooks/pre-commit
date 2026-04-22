@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Pre-commit checks for claw-dashboard. Keep this fast — anything slow
+# belongs in CI, not on every commit.
+
+set -e
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+python3 "$repo_root/scripts/check-mojibake.py"

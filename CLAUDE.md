@@ -108,6 +108,11 @@ Key sections top to bottom:
 - `scripts/prepare-production-operator-feed.sh` — regenerates canonical
   feed and verifies source_context.mode before continuing
 - `scripts/parse-tickets.py` — regenerates tickets.json from TICKET-*.md
+- `scripts/check-mojibake.py` — pre-commit guard, blocks commits that carry
+  known UTF-8→cp1252 round-trip byte sequences (em-dash, middle-dot, etc.).
+  Wired via `.githooks/pre-commit`; `npm install` activates `core.hooksPath`
+  via the `prepare` script. Fix offenders with ftfy — the script prints the
+  exact one-liner.
 
 ## Queued UI work
 
