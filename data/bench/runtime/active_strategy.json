@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "resolved_at": "2026-04-22T14:52:32.065068-04:00",
+  "resolved_at": "2026-04-22T15:17:33.554250-04:00",
   "record": {
     "record_id": "regime_aware_momentum::stop_5_target_15",
     "strategy_id": "regime_aware_momentum",
@@ -3696,7 +3696,7 @@
       ]
     },
     "registered_at": "2026-04-11T11:48:24.095819-04:00",
-    "updated_at": "2026-04-22T14:52:32.065068-04:00",
+    "updated_at": "2026-04-22T15:17:33.554250-04:00",
     "selected_at": "2026-04-11T13:31:26.522551-04:00"
   }
 }
