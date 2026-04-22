@@ -1047,17 +1047,26 @@ export function ViresCampaignsDetail({
   const leaderComp = getLeaderComparison(campaign)
   const perfState = baselinePerformanceState(campaign)
 
+  // The "Candidates by family" leaderboard is the challenger story. The
+  // baseline candidate (role: PROMOTED_REFERENCE) lives at the top of the
+  // page already — as the featured Leader card when no real leader exists,
+  // and as the source for the Baseline Performance block. Listing it again
+  // under its original family makes it look like a family is competing in
+  // the campaign when really it's just the bar everyone's jumping.
+  const leaderboardCandidates = campaign.candidates.filter(
+    c => c.role !== "PROMOTED_REFERENCE",
+  )
   const familiesWithCandidates = campaign.family_groups
     .map(f => ({
       family: f,
-      candidates: campaign.candidates.filter(c => c.family_id === f.family_id),
+      candidates: leaderboardCandidates.filter(c => c.family_id === f.family_id),
     }))
     .filter(g => g.candidates.length > 0)
 
   const groupedIds = new Set(
     familiesWithCandidates.flatMap(g => g.candidates.map(x => x.candidate_id)),
   )
-  const orphans = campaign.candidates.filter(x => !groupedIds.has(x.candidate_id))
+  const orphans = leaderboardCandidates.filter(x => !groupedIds.has(x.candidate_id))
 
   const sleeveKey = (campaign.sleeve ?? "").toString().toLowerCase()
   const sleeveIsValid = sleeveKey === "stocks" || sleeveKey === "options" || sleeveKey === "crypto"
