@@ -1,8 +1,168 @@
 {
   "schema_version": "1",
   "active_record_id": "regime_aware_momentum::stop_5_target_15",
-  "updated_at": "2026-04-11T13:31:26.522551-04:00",
+  "updated_at": "2026-04-22T12:48:24.866404-04:00",
   "strategies": [
+    {
+      "record_id": "btc_managed_exposure_v1::q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+      "strategy_id": "btc_managed_exposure_v1",
+      "variant_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "strategy_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
+      "display_name": "BTC Managed Exposure Daily Core Paper v1",
+      "description": "Promote the risk-adjusted managed BTC core first, while the tactical overlay remains research-only until a 4H scheduler is ready.",
+      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "runtime_selectable": false,
+      "passport_role_id": "CRYPTO_MANAGED_RISK_ADJUSTED",
+      "supersedes_record_id": null,
+      "signal_source": "validation_strategy",
+      "notes": [
+        "Passive manifest registration for passport convergence; this record is not eligible for the singleton active runtime slot until the strategy bank becomes sleeve-aware.",
+        "This manifest intentionally promotes the daily graduated core, not the tactical overlay.",
+        "The bench evidence comes from the q090c managed-exposure finalist package.",
+        "Future 4H crypto execution should promote a second manifest instead of mutating this one in place.",
+        "Hydrate q090c into the bank from Linux side to unblock crypto passport workflow fields"
+      ],
+      "planning_profile": {
+        "symbols": [
+          "BTC/USD"
+        ],
+        "allowed_sides": [
+          "LONG"
+        ],
+        "benchmark_symbol": "BTC/USD",
+        "benchmark_comparison_mode": "absolute",
+        "max_positions": 1,
+        "risk_pct_per_trade": 10.0,
+        "stop_loss_pct": null,
+        "target_pct": null,
+        "max_hold_days": null
+      },
+      "performance_summary": {
+        "verdict_reason": "BENCHMARK_GATE_FAILED",
+        "total_trades": 83,
+        "evaluated_trading_days": 3758,
+        "total_return_pct": 8409.8946,
+        "annualized_return_pct": 53.9912,
+        "annualized_volatility_pct": 44.5836,
+        "benchmark_return_pct": 17172.3116,
+        "excess_return_pct": -8762.417,
+        "deployment_matched_benchmark_return_pct": null,
+        "deployment_matched_excess_return_pct": null,
+        "sharpe_ratio": 1.1901,
+        "sortino_ratio": 1.0656,
+        "calmar_ratio": 0.9245,
+        "max_drawdown_pct": 58.4016,
+        "profit_factor": null,
+        "expectancy_per_trade_usd": null,
+        "win_rate_pct": null,
+        "profitable_fold_pct": null
+      },
+      "evidence": {
+        "campaign_id": null,
+        "campaign_run_id": null,
+        "source_manifest_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+        "source_manifest_path": "backtest/bench/manifests/q090c_btc_managed_exposure_risk_adjusted.execution_manifest.json",
+        "source_bench_id": "q090c_btc_managed_exposure_risk_adjusted",
+        "experiment_id": "q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
+        "validation_run_id": "q090c-risk-adjusted-finalists-20260417",
+        "campaign_summary_path": null,
+        "validation_report_path": "backtest/bench/results/q090c_btc_managed_exposure_risk_adjusted/q090c-risk-adjusted-finalists-20260417/crypto_sleeve_comparison_report.json",
+        "experiment_config_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json"
+      },
+      "origin": {
+        "campaign_id": null,
+        "candidate_id": null,
+        "run_id": "q090c-risk-adjusted-finalists-20260417",
+        "passport_role_id": "CRYPTO_MANAGED_RISK_ADJUSTED",
+        "supersedes_record_id": null
+      },
+      "paper_monitoring": null,
+      "trade_history": null,
+      "registered_at": "2026-04-22T12:48:10.939387-04:00",
+      "updated_at": "2026-04-22T12:48:10.939387-04:00",
+      "selected_at": null
+    },
+    {
+      "record_id": "btc_managed_exposure_v1::q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+      "strategy_id": "btc_managed_exposure_v1",
+      "variant_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "strategy_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json",
+      "display_name": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
+      "description": "Promote the managed BTC core with a 10% risk-off floor so the crypto sleeve stays partially deployed while preserving the risk-adjusted managed-exposure story; tactical overlay remains research-only.",
+      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "runtime_selectable": false,
+      "passport_role_id": "CRYPTO_MANAGED_PERSISTENT_FLOOR",
+      "supersedes_record_id": null,
+      "signal_source": "validation_strategy",
+      "notes": [
+        "Passive manifest registration for passport convergence; this record is not eligible for the singleton active runtime slot until the strategy bank becomes sleeve-aware.",
+        "This manifest intentionally promotes the daily graduated core with a small persistent risk-off floor, not the tactical overlay.",
+        "The bench evidence comes from the q090d managed-exposure persistent-floor finalist package.",
+        "Future 4H crypto execution should promote a second manifest instead of mutating this one in place.",
+        "Hydrate q090d into the bank alongside q090c"
+      ],
+      "planning_profile": {
+        "symbols": [
+          "BTC/USD"
+        ],
+        "allowed_sides": [
+          "LONG"
+        ],
+        "benchmark_symbol": "BTC/USD",
+        "benchmark_comparison_mode": "absolute",
+        "max_positions": 1,
+        "risk_pct_per_trade": 10.0,
+        "stop_loss_pct": null,
+        "target_pct": null,
+        "max_hold_days": null
+      },
+      "performance_summary": {
+        "verdict_reason": "BENCHMARK_GATE_FAILED",
+        "total_trades": 83,
+        "evaluated_trading_days": 3758,
+        "total_return_pct": 8693.515,
+        "annualized_return_pct": 54.4825,
+        "annualized_volatility_pct": 44.7309,
+        "benchmark_return_pct": 17172.3116,
+        "excess_return_pct": -8478.7966,
+        "deployment_matched_benchmark_return_pct": null,
+        "deployment_matched_excess_return_pct": null,
+        "sharpe_ratio": 1.1948,
+        "sortino_ratio": 1.2709,
+        "calmar_ratio": 0.8967,
+        "max_drawdown_pct": 60.7584,
+        "profit_factor": null,
+        "expectancy_per_trade_usd": null,
+        "win_rate_pct": null,
+        "profitable_fold_pct": null
+      },
+      "evidence": {
+        "campaign_id": null,
+        "campaign_run_id": null,
+        "source_manifest_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+        "source_manifest_path": "backtest/bench/manifests/q090d_btc_managed_exposure_persistent_floor.execution_manifest.json",
+        "source_bench_id": "q090d_btc_managed_exposure_persistent_floor",
+        "experiment_id": "q090d_btc_managed_exposure_persistent_floor.daily_core_paper_v1",
+        "validation_run_id": "q090d-persistent-floor-20260419",
+        "campaign_summary_path": null,
+        "validation_report_path": "backtest/bench/results/q090d_btc_managed_exposure_persistent_floor/q090d-persistent-floor-20260419/crypto_sleeve_comparison_report.json",
+        "experiment_config_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json"
+      },
+      "origin": {
+        "campaign_id": null,
+        "candidate_id": null,
+        "run_id": "q090d-persistent-floor-20260419",
+        "passport_role_id": "CRYPTO_MANAGED_PERSISTENT_FLOOR",
+        "supersedes_record_id": null
+      },
+      "paper_monitoring": null,
+      "trade_history": null,
+      "registered_at": "2026-04-22T12:48:24.866404-04:00",
+      "updated_at": "2026-04-22T12:48:24.866404-04:00",
+      "selected_at": null
+    },
     {
       "record_id": "regime_aware_momentum::stop_475_target_14",
       "strategy_id": "regime_aware_momentum",
@@ -12,6 +172,9 @@
       "display_name": "regime_aware_momentum:stop_475_target_14",
       "description": "Middle ground between the tighter stop and the looser stop while nudging the target earlier.",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "runtime_selectable": true,
+      "passport_role_id": null,
+      "supersedes_record_id": null,
       "signal_source": "validation_strategy",
       "notes": [
         "Current research leader.",
@@ -50,6 +213,8 @@
         "total_trades": 164,
         "evaluated_trading_days": 797,
         "total_return_pct": 90.7669,
+        "annualized_return_pct": null,
+        "annualized_volatility_pct": null,
         "benchmark_return_pct": 80.448,
         "excess_return_pct": 10.3189,
         "deployment_matched_benchmark_return_pct": 45.8913,
@@ -66,12 +231,18 @@
       "evidence": {
         "campaign_id": "q076b_regime_aware_momentum_opt_02",
         "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "source_manifest_id": null,
+        "source_manifest_path": null,
+        "source_bench_id": null,
         "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_475_target_14",
         "validation_run_id": "2026-04-11-q076b-regime-opt-02",
         "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
+      "origin": null,
+      "paper_monitoring": null,
+      "trade_history": null,
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
       "updated_at": "2026-04-11T13:31:26.522551-04:00",
       "selected_at": null
@@ -85,6 +256,9 @@
       "display_name": "regime_aware_momentum:stop_5_target_14",
       "description": "Looser stop plus slightly earlier target to improve fold closure quality.",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "runtime_selectable": true,
+      "passport_role_id": null,
+      "supersedes_record_id": null,
       "signal_source": "validation_strategy",
       "notes": [
         "Current research leader.",
@@ -123,6 +297,8 @@
         "total_trades": 163,
         "evaluated_trading_days": 797,
         "total_return_pct": 88.6065,
+        "annualized_return_pct": null,
+        "annualized_volatility_pct": null,
         "benchmark_return_pct": 80.448,
         "excess_return_pct": 8.1585,
         "deployment_matched_benchmark_return_pct": 48.1679,
@@ -139,12 +315,18 @@
       "evidence": {
         "campaign_id": "q076b_regime_aware_momentum_opt_02",
         "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "source_manifest_id": null,
+        "source_manifest_path": null,
+        "source_bench_id": null,
         "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_5_target_14",
         "validation_run_id": "2026-04-11-q076b-regime-opt-02",
         "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
+      "origin": null,
+      "paper_monitoring": null,
+      "trade_history": null,
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
       "updated_at": "2026-04-11T13:31:26.522551-04:00",
       "selected_at": null
@@ -158,6 +340,9 @@
       "display_name": "regime_aware_momentum:stop_5_target_15",
       "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "runtime_selectable": true,
+      "passport_role_id": null,
+      "supersedes_record_id": null,
       "signal_source": "validation_strategy",
       "notes": [
         "Current research leader.",
@@ -196,6 +381,8 @@
         "total_trades": 163,
         "evaluated_trading_days": 797,
         "total_return_pct": 90.4969,
+        "annualized_return_pct": null,
+        "annualized_volatility_pct": null,
         "benchmark_return_pct": 80.448,
         "excess_return_pct": 10.0489,
         "deployment_matched_benchmark_return_pct": 48.1679,
@@ -212,341 +399,21 @@
       "evidence": {
         "campaign_id": "q076b_regime_aware_momentum_opt_02",
         "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+        "source_manifest_id": null,
+        "source_manifest_path": null,
+        "source_bench_id": null,
         "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_5_target_15",
         "validation_run_id": "2026-04-11-q076b-regime-opt-02",
         "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
+      "origin": null,
+      "paper_monitoring": null,
+      "trade_history": null,
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
       "updated_at": "2026-04-11T13:31:26.522551-04:00",
-      "selected_at": "2026-04-11T13:31:26.522551-04:00",
-      "trade_history": {
-        "schema_version": "passport_trade_history.v1",
-        "weight_basis": "POST_EVENT_TOTAL_PORTFOLIO",
-        "cash_model": "RESIDUAL",
-        "rows": [
-          {
-            "date": "2024-06-28",
-            "event_id": "2024-06-28-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.18,
-            "price": 123.99,
-            "notional": 18000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-06-28",
-            "event_id": "2024-06-28-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "AAPL",
-            "side": "BUY",
-            "weight_after": 0.15,
-            "price": 210.62,
-            "notional": 15000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-06-28",
-            "event_id": "2024-06-28-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "MSFT",
-            "side": "BUY",
-            "weight_after": 0.15,
-            "price": 446.95,
-            "notional": 15000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-06-28",
-            "event_id": "2024-06-28-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "META",
-            "side": "BUY",
-            "weight_after": 0.12,
-            "price": 504.22,
-            "notional": 12000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-06-28",
-            "event_id": "2024-06-28-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "AMD",
-            "side": "BUY",
-            "weight_after": 0.1,
-            "price": 162.34,
-            "notional": 10000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "AMD",
-            "side": "SELL",
-            "weight_after": 0.0,
-            "price": 143.98,
-            "notional": 10000.0,
-            "pnl_realized": -1130.96
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.2,
-            "price": 117.02,
-            "notional": 2000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "META",
-            "side": "BUY",
-            "weight_after": 0.16,
-            "price": 487.94,
-            "notional": 4000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "MSFT",
-            "side": "SELL",
-            "weight_after": 0.14,
-            "price": 417.11,
-            "notional": 1000.0,
-            "pnl_realized": -66.76
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "GOOG",
-            "side": "BUY",
-            "weight_after": 0.12,
-            "price": 169.49,
-            "notional": 12000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-07-31",
-            "event_id": "2024-07-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "AAPL",
-            "side": "SELL",
-            "weight_after": 0.1,
-            "price": 222.08,
-            "notional": 5000.0,
-            "pnl_realized": 272.05
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "AAPL",
-            "side": "SELL",
-            "weight_after": 0.0,
-            "price": 229.0,
-            "notional": 10000.0,
-            "pnl_realized": 872.66
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.22,
-            "price": 119.37,
-            "notional": 2000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "META",
-            "side": "BUY",
-            "weight_after": 0.17,
-            "price": 521.31,
-            "notional": 1000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "MSFT",
-            "side": "SELL",
-            "weight_after": 0.13,
-            "price": 417.14,
-            "notional": 1000.0,
-            "pnl_realized": -66.7
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "GOOG",
-            "side": "SELL",
-            "weight_after": 0.11,
-            "price": 163.59,
-            "notional": 1000.0,
-            "pnl_realized": -34.81
-          },
-          {
-            "date": "2024-08-30",
-            "event_id": "2024-08-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "CRM",
-            "side": "BUY",
-            "weight_after": 0.1,
-            "price": 247.08,
-            "notional": 10000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-09-30",
-            "event_id": "2024-09-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "MSFT",
-            "side": "SELL",
-            "weight_after": 0.0,
-            "price": 430.17,
-            "notional": 13000.0,
-            "pnl_realized": -488.06
-          },
-          {
-            "date": "2024-09-30",
-            "event_id": "2024-09-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.24,
-            "price": 121.44,
-            "notional": 2000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-09-30",
-            "event_id": "2024-09-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "META",
-            "side": "BUY",
-            "weight_after": 0.18,
-            "price": 574.32,
-            "notional": 1000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-09-30",
-            "event_id": "2024-09-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "GOOG",
-            "side": "BUY",
-            "weight_after": 0.12,
-            "price": 165.85,
-            "notional": 1000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-09-30",
-            "event_id": "2024-09-30-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "CRM",
-            "side": "BUY",
-            "weight_after": 0.11,
-            "price": 274.85,
-            "notional": 1000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-10-31",
-            "event_id": "2024-10-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.25,
-            "price": 132.76,
-            "notional": 1000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-10-31",
-            "event_id": "2024-10-31-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "TSLA",
-            "side": "BUY",
-            "weight_after": 0.09,
-            "price": 249.85,
-            "notional": 9000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-11-29",
-            "event_id": "2024-11-29-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "CRM",
-            "side": "SELL",
-            "weight_after": 0.0,
-            "price": 325.69,
-            "notional": 11000.0,
-            "pnl_realized": 3499.72
-          },
-          {
-            "date": "2024-11-29",
-            "event_id": "2024-11-29-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "NVDA",
-            "side": "BUY",
-            "weight_after": 0.27,
-            "price": 138.25,
-            "notional": 2000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-11-29",
-            "event_id": "2024-11-29-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "TSLA",
-            "side": "BUY",
-            "weight_after": 0.14,
-            "price": 345.16,
-            "notional": 5000.0,
-            "pnl_realized": null
-          },
-          {
-            "date": "2024-11-29",
-            "event_id": "2024-11-29-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "META",
-            "side": "SELL",
-            "weight_after": 0.15,
-            "price": 574.85,
-            "notional": 3000.0,
-            "pnl_realized": 420.23
-          },
-          {
-            "date": "2024-11-29",
-            "event_id": "2024-11-29-rebal-01",
-            "event_type": "REBALANCE",
-            "symbol": "GOOG",
-            "side": "SELL",
-            "weight_after": 0.1,
-            "price": 169.24,
-            "notional": 2000.0,
-            "pnl_realized": -2.95
-          }
-        ]
-      }
+      "selected_at": "2026-04-11T13:31:26.522551-04:00"
     }
   ]
 }

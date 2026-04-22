@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "resolved_at": "2026-04-11T13:31:26.522551-04:00",
+  "resolved_at": "2026-04-22T12:48:24.866404-04:00",
   "record": {
     "record_id": "regime_aware_momentum::stop_5_target_15",
     "strategy_id": "regime_aware_momentum",
@@ -10,6 +10,9 @@
     "display_name": "regime_aware_momentum:stop_5_target_15",
     "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
     "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+    "runtime_selectable": true,
+    "passport_role_id": null,
+    "supersedes_record_id": null,
     "signal_source": "validation_strategy",
     "notes": [
       "Current research leader.",
@@ -48,6 +51,8 @@
       "total_trades": 163,
       "evaluated_trading_days": 797,
       "total_return_pct": 90.4969,
+      "annualized_return_pct": null,
+      "annualized_volatility_pct": null,
       "benchmark_return_pct": 80.448,
       "excess_return_pct": 10.0489,
       "deployment_matched_benchmark_return_pct": 48.1679,
@@ -64,12 +69,18 @@
     "evidence": {
       "campaign_id": "q076b_regime_aware_momentum_opt_02",
       "campaign_run_id": "2026-04-11-q076b-regime-opt-02",
+      "source_manifest_id": null,
+      "source_manifest_path": null,
+      "source_bench_id": null,
       "experiment_id": "q076b_regime_aware_momentum_opt_02__stop_5_target_15",
       "validation_run_id": "2026-04-11-q076b-regime-opt-02",
       "campaign_summary_path": "backtest/campaigns/q076b_regime_aware_momentum_opt_02/results/2026-04-11-q076b-regime-opt-02/campaign_summary.json",
       "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
       "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
     },
+    "origin": null,
+    "paper_monitoring": null,
+    "trade_history": null,
     "registered_at": "2026-04-11T11:48:24.095819-04:00",
     "updated_at": "2026-04-11T13:31:26.522551-04:00",
     "selected_at": "2026-04-11T13:31:26.522551-04:00"
