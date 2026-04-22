@@ -24,18 +24,32 @@ async function readJson<T>(absolutePath: string): Promise<T | null> {
   }
 }
 
-function resolveManifestPath(entry: CampaignRegistryEntry): string {
-  if (path.isAbsolute(entry.manifest_path)) return entry.manifest_path
-  return path.join(process.cwd(), entry.manifest_path)
+// Resolve a manifest path against both the stated location and the dashboard
+// mirror directory. The producer (trading-bot) writes its canonical path
+// (`backtest/bench/campaigns/foo.json`); the dashboard mirrors files next to
+// the registry at `data/bench/campaigns/foo.json`. Try the stated path first
+// so local trading-bot dev still works, then fall back to the mirror.
+function candidateManifestPaths(entry: CampaignRegistryEntry): string[] {
+  const stated = path.isAbsolute(entry.manifest_path)
+    ? entry.manifest_path
+    : path.join(process.cwd(), entry.manifest_path)
+  const mirror = path.join(CAMPAIGNS_DIR, path.basename(entry.manifest_path))
+  return stated === mirror ? [stated] : [stated, mirror]
+}
+
+async function readManifest(entry: CampaignRegistryEntry): Promise<CampaignManifest | null> {
+  for (const candidate of candidateManifestPaths(entry)) {
+    const manifest = await readJson<CampaignManifest>(candidate)
+    if (manifest) return manifest
+  }
+  return null
 }
 
 export async function loadCampaignsIndex(): Promise<CampaignsIndexData | null> {
   const registry = await readJson<CampaignRegistry>(REGISTRY_PATH)
   if (!registry) return null
 
-  const manifests = await Promise.all(
-    registry.campaigns.map(entry => readJson<CampaignManifest>(resolveManifestPath(entry))),
-  )
+  const manifests = await Promise.all(registry.campaigns.map(readManifest))
 
   const campaigns = manifests.filter((m): m is CampaignManifest => m != null)
   return { registry, campaigns }
