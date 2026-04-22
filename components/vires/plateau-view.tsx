@@ -106,7 +106,7 @@ function MiniGrid({ variant, accent }: { variant: "peak" | "plateau"; accent: st
 
 // ─── Real parameter heatmap ────────────────────────────────────────────────
 
-function ParameterHeatmap({ data }: { data: PlateauPayload }) {
+export function ParameterHeatmap({ data }: { data: PlateauPayload }) {
   const xValues = data.axes.x.values
   const yValues = data.axes.y.values
   const cells = data.cells

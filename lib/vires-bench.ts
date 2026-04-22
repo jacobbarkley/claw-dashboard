@@ -640,7 +640,10 @@ function buildStockPassport(
     supersedes_record_id: str(strategyRecord?.supersedes_record_id),
     paper_monitoring: strategyRecord?.paper_monitoring ?? null,
     promotion_events: promotionEventsForRecord(str(strategyRecord?.record_id), strategyPromotionEvents),
-    trade_history: null,
+    trade_history: strategyRecord?.trade_history ?? null,
+    // Stock passports today are frozen references, not parameter-sweep
+    // winners, so there's no neighborhood grid to render. Honest null.
+    plateau_primer: null,
   }
 }
 
@@ -786,6 +789,10 @@ function buildCryptoManagedPassport(
     paper_monitoring: null,
     promotion_events: [],
     trade_history: null,
+    // Managed-crypto passports are built from the comparison report, which
+    // doesn't carry a variant grid. Parameter-neighborhood analysis needs
+    // sweep artifacts; render the honest empty state on the passport.
+    plateau_primer: null,
   }
 }
 
@@ -913,6 +920,9 @@ function buildCryptoBenchOnlyPassport(spec: JsonObject | null, report: JsonObjec
     paper_monitoring: null,
     promotion_events: [],
     trade_history: null,
+    // Sweep-based passports carry their parameter neighborhood grid so the
+    // passport can show "plateau vs lucky peak" for the specific config.
+    plateau_primer: buildPlateauPrimer(report),
   }
 }
 

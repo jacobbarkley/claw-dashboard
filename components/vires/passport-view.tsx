@@ -1,6 +1,6 @@
 "use client"
 
-// Strategy Passport — drill-in view opened from the Bench Promoted row.
+// Strategy Passport â€” drill-in view opened from the Bench Promoted row.
 // Renders the passport payload Codex's lib/vires-bench.ts emits
 // (buildStockPassport / buildCryptoManagedPassport / etc.) into a full
 // editorial detail page: identity + verdict + era robustness + promotion
@@ -8,8 +8,9 @@
 
 import Link from "next/link"
 import { InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
+import { ParameterHeatmap, type PlateauPayload } from "./plateau-view"
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Matches the shape lib/vires-bench.ts returns for a passport entry.
 
 interface PassportEra {
@@ -74,6 +75,10 @@ interface PassportPaperMonitoring {
     remaining_days?: number | null
   } | null
   tracking?: {
+    source_kind?: string | null
+    source_detail?: string | null
+    actual_return_pct?: number | null
+    expected_return_pct?: number | null
     tracking_deviation_pct?: number | null
     threshold_pct?: number | null
     window_days?: number | null
@@ -158,9 +163,10 @@ export interface Passport {
   paper_monitoring?: PassportPaperMonitoring | null
   promotion_events?: PassportPromotionEvent[] | null
   trade_history?: PassportTradeHistory | null
+  plateau_primer?: PlateauPayload | null
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SLEEVE_LC: Record<string, Sleeve> = {
   STOCKS: "stocks",
@@ -177,20 +183,29 @@ function gateTone(status: string | null | undefined): "up" | "down" | "gold" | "
 }
 
 function fmtNum(v: number | null | undefined, digits = 2): string {
-  return v != null && Number.isFinite(v) ? v.toFixed(digits) : "—"
+  return v != null && Number.isFinite(v) ? v.toFixed(digits) : "â€”"
 }
 
 function fmtPctSigned(v: number | null | undefined, digits = 2): string {
-  if (v == null || !Number.isFinite(v)) return "—"
+  if (v == null || !Number.isFinite(v)) return "â€”"
   return `${v >= 0 ? "+" : ""}${v.toFixed(digits)}%`
 }
 
 function fmtDate(iso: string | null | undefined): string {
-  if (!iso) return "—"
+  if (!iso) return "â€”"
   return iso.slice(0, 10)
 }
 
-// ─── Verdict strip ─────────────────────────────────────────────────────────
+function fmtUsd(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return "â€”"
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(v)
+}
+
+// â”€â”€â”€ Verdict strip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function VerdictStrip({ passport }: { passport: Passport }) {
   const m = passport.manifest
@@ -202,12 +217,12 @@ function VerdictStrip({ passport }: { passport: Passport }) {
     if (stage === "PROMOTED") {
       return {
         eyebrow: "Verdict",
-        line: eligibility === "LIVE" ? "Promoted · Earning live capital" : "Promoted · Paper window",
+        line: eligibility === "LIVE" ? "Promoted Â· Earning live capital" : "Promoted Â· Paper window",
         accent: "var(--vr-gold)",
       }
     }
     if (stage === "BENCHED" || stage === "BENCH_ONLY") {
-      return { eyebrow: "Verdict", line: "Benched · Awaiting promotion", accent: "var(--vr-cream-dim)" }
+      return { eyebrow: "Verdict", line: "Benched Â· Awaiting promotion", accent: "var(--vr-cream-dim)" }
     }
     if (stage === "FALLBACK") {
       return { eyebrow: "Verdict", line: "Running on fallback manifest", accent: "var(--vr-gold)" }
@@ -227,15 +242,15 @@ function VerdictStrip({ passport }: { passport: Passport }) {
         <div style={{ padding: "12px 18px", borderRight: "1px solid var(--vr-line)" }}>
           <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 5 }}>Eligibility</div>
           <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)", letterSpacing: "0.04em" }}>
-            {eligibility === "LIVE" && <span style={{ color: "var(--vr-up)" }}>● LIVE</span>}
+            {eligibility === "LIVE" && <span style={{ color: "var(--vr-up)" }}>â— LIVE</span>}
             {eligibility === "PAPER" && (
               <span style={{ color: "var(--vr-gold)" }}>
-                ◐ PAPER
-                {m?.paperDays != null && m?.paperTarget != null && ` · day ${m.paperDays}/${m.paperTarget}`}
+                â— PAPER
+                {m?.paperDays != null && m?.paperTarget != null && ` Â· day ${m.paperDays}/${m.paperTarget}`}
               </span>
             )}
             {(eligibility === "BENCH_ONLY" || !eligibility) && (
-              <span style={{ color: "var(--vr-cream-mute)" }}>○ BENCH ONLY</span>
+              <span style={{ color: "var(--vr-cream-mute)" }}>â—‹ BENCH ONLY</span>
             )}
           </div>
         </div>
@@ -250,7 +265,7 @@ function VerdictStrip({ passport }: { passport: Passport }) {
               textTransform: "none",
             }}
           >
-            {provenanceWarn && "⚠ "}
+            {provenanceWarn && "âš  "}
             {(m?.provenance ?? "no manifest").toLowerCase().replace(/_/g, " ")}
           </div>
         </div>
@@ -266,7 +281,7 @@ function VerdictStrip({ passport }: { passport: Passport }) {
   )
 }
 
-// ─── Era robustness graph ──────────────────────────────────────────────────
+// â”€â”€â”€ Era robustness graph â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: number | null | undefined }) {
   if (!eras.length) return null
@@ -274,7 +289,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
   const allPending = populated.length === 0
 
   // Honest empty state when Codex's per-era sharpe values aren't yet
-  // populated on the passport — labels exist but values are null. Render
+  // populated on the passport â€” labels exist but values are null. Render
   // the same dotted-line baseline + label row so the section's visual
   // weight is preserved without faking any per-era performance.
   if (allPending) {
@@ -319,7 +334,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${eras.length}, 1fr)`, gap: 6, marginTop: 10 }}>
           {eras.map((e, i) => (
             <div key={i} style={{ textAlign: "center" }}>
-              <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>—</div>
+              <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>â€”</div>
               <div className="t-label" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginTop: 2 }}>
                 {e.label ?? `era ${i + 1}`}
               </div>
@@ -386,7 +401,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
                 `Inconclusive era (${reasonHuman ?? "low confidence"})`,
                 e.total_trades != null ? `${e.total_trades} trade${e.total_trades === 1 ? "" : "s"}` : null,
                 e.evaluated_trading_days != null ? `${e.evaluated_trading_days} day${e.evaluated_trading_days === 1 ? "" : "s"}` : null,
-              ].filter(Boolean).join(" · ")
+              ].filter(Boolean).join(" Â· ")
             : undefined
           return (
             <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }} title={tooltip}>
@@ -397,7 +412,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
                   background: tone,
                   opacity: inconclusive ? 0.35 : (e.pass ? 0.85 : 0.55),
                   borderRadius: 1,
-                  // Diagonal-stripe overlay for inconclusive eras — reads
+                  // Diagonal-stripe overlay for inconclusive eras â€” reads
                   // as "data is here but treat with caution."
                   backgroundImage: inconclusive
                     ? `repeating-linear-gradient(45deg, transparent 0 4px, rgba(0,0,0,0.18) 4px 5px)`
@@ -452,7 +467,7 @@ function EraStripe({ eras, minEraSharpe }: { eras: PassportEra[]; minEraSharpe: 
 
 function humanizeVerdictReason(reason: string | null | undefined): string | null {
   if (!reason) return null
-  // "INSUFFICIENT_TRADE_COUNT" → "Insufficient trade count"
+  // "INSUFFICIENT_TRADE_COUNT" â†’ "Insufficient trade count"
   return reason
     .toLowerCase()
     .split("_")
@@ -460,7 +475,7 @@ function humanizeVerdictReason(reason: string | null | undefined): string | null
     .join(" ")
 }
 
-// ─── Gates list ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Gates list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function GatesList({ gates }: { gates: PassportGate[] }) {
   if (!gates.length) return null
@@ -499,7 +514,7 @@ function GatesList({ gates }: { gates: PassportGate[] }) {
                   </div>
                 )}
               </div>
-              <StatusPill tone={gateTone(g.status)}>{g.status ?? "—"}</StatusPill>
+              <StatusPill tone={gateTone(g.status)}>{g.status ?? "â€”"}</StatusPill>
             </div>
           ))}
         </div>
@@ -508,18 +523,96 @@ function GatesList({ gates }: { gates: PassportGate[] }) {
   )
 }
 
-// ─── Assumptions ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Parameter stability â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Per-passport plateau: does THIS config live on a broad plateau, or is it
+// a lucky peak with brittle neighbors? Rendered when the passport was born
+// of a parameter sweep (i.e. plateau_primer is non-null). For frozen
+// references and comparison-lane sleeves we show an honest empty state
+// instead â€” plateaus only mean something if a neighborhood was searched.
+
+function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | undefined }) {
+  const winnerSharpe = plateau?.stats?.winnerSharpe ?? null
+  const plateauCount = plateau?.stats?.plateauCount ?? null
+  const totalEval = plateau?.stats?.totalEval ?? null
+  const hasLucky = !!plateau?.lucky
+  return (
+    <section>
+      <SectionHeader
+        eyebrow="Parameter stability"
+        title="Plateau or lucky peak?"
+        right={
+          <span style={{ display: "inline-flex", alignItems: "center" }}>
+            <InfoPop term="Plateau" size={12} />
+          </span>
+        }
+      />
+      {plateau ? (
+        <>
+          {/* Summary strip â€” "is this a plateau or peak?" at a glance. */}
+          <div
+            className="vr-card"
+            style={{
+              padding: "14px 16px 12px",
+              marginBottom: 10,
+              borderLeft: `2px solid ${hasLucky ? "var(--vr-down)" : "var(--vr-gold)"}`,
+            }}
+          >
+            <div
+              className="t-h3"
+              style={{ fontSize: 16, fontStyle: "italic", lineHeight: 1.35 }}
+            >
+              {hasLucky
+                ? "A brighter neighbor is isolated â€” watch for overfit."
+                : "The winner sits inside a stable neighborhood."}
+            </div>
+            <div
+              className="t-label"
+              style={{ fontSize: 11, color: "var(--vr-cream-dim)", marginTop: 6, lineHeight: 1.55 }}
+            >
+              {plateauCount != null && totalEval != null && (
+                <>
+                  {plateauCount} of {totalEval} non-rejected cells cleared the plateau check
+                  {winnerSharpe != null ? ` around a winner Sharpe of ${winnerSharpe.toFixed(2)}` : ""}.
+                </>
+              )}
+            </div>
+          </div>
+          <ParameterHeatmap data={plateau} />
+        </>
+      ) : (
+        <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
+          <div
+            className="t-read"
+            style={{
+              fontSize: 13,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            No parameter sweep backs this passport â€” it is a frozen reference or a
+            comparison-lane sleeve, not a neighborhood winner. Plateau checks
+            light up once a candidate is selected from a real parameter grid.
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+// â”€â”€â”€ Assumptions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"] }) {
   const a = assumptions ?? {}
   const rows: Array<{ label: string; value: string }> = [
-    { label: "Commission", value: a.commissionBps != null ? `${a.commissionBps.toFixed(1)} bps round trip` : "—" },
-    { label: "Slippage", value: a.slippageBps != null ? `${a.slippageBps.toFixed(1)} bps one way` : "—" },
-    { label: "Fill model", value: a.fillModel ?? "—" },
-    { label: "Capital base", value: a.capitalBase != null ? `$${a.capitalBase.toLocaleString("en-US")}` : "—" },
-    { label: "Data provider", value: a.provider ?? "—" },
-    { label: "Venue", value: a.venue ?? "—" },
-    { label: "Timeframe", value: a.timeframe ?? "—" },
+    { label: "Commission", value: a.commissionBps != null ? `${a.commissionBps.toFixed(1)} bps round trip` : "â€”" },
+    { label: "Slippage", value: a.slippageBps != null ? `${a.slippageBps.toFixed(1)} bps one way` : "â€”" },
+    { label: "Fill model", value: a.fillModel ?? "â€”" },
+    { label: "Capital base", value: a.capitalBase != null ? `$${a.capitalBase.toLocaleString("en-US")}` : "â€”" },
+    { label: "Data provider", value: a.provider ?? "â€”" },
+    { label: "Venue", value: a.venue ?? "â€”" },
+    { label: "Timeframe", value: a.timeframe ?? "â€”" },
   ]
   return (
     <section>
@@ -541,7 +634,163 @@ function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"]
   )
 }
 
-// ─── Lifecycle timeline ────────────────────────────────────────────────────
+function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monitoring"] }) {
+  if (!monitoring) return null
+
+  const status = (monitoring.status ?? "").toUpperCase()
+  const tone =
+    status === "COMPLETED" ? "var(--vr-up)"
+    : status === "DEMOTION_RECOMMENDED" ? "var(--vr-down)"
+    : status === "AT_RISK" ? "var(--vr-gold)"
+    : "var(--vr-cream)"
+
+  const rows: Array<{ label: string; value: string }> = [
+    { label: "Window start", value: fmtDate(monitoring.window?.start) },
+    {
+      label: "Elapsed",
+      value:
+        monitoring.window?.elapsed_days != null && monitoring.window?.target_days != null
+          ? `${monitoring.window.elapsed_days}/${monitoring.window.target_days} days`
+          : "-",
+    },
+    {
+      label: "Remaining",
+      value: monitoring.window?.remaining_days != null ? `${monitoring.window.remaining_days} days` : "-",
+    },
+    {
+      label: "Actual return",
+      value: fmtPctSigned(monitoring.tracking?.actual_return_pct, 2),
+    },
+    {
+      label: "Modeled return",
+      value: fmtPctSigned(monitoring.tracking?.expected_return_pct, 2),
+    },
+    {
+      label: "Tracking deviation",
+      value: fmtPctSigned(monitoring.tracking?.tracking_deviation_pct, 2),
+    },
+    {
+      label: "Demotion threshold",
+      value:
+        monitoring.tracking?.threshold_pct != null && monitoring.tracking?.window_days != null
+          ? `${monitoring.tracking.threshold_pct.toFixed(2)}% over ${monitoring.tracking.window_days} days`
+          : "-",
+    },
+    {
+      label: "Monitoring source",
+      value: monitoring.tracking?.source_detail ?? monitoring.tracking?.source_kind ?? "-",
+    },
+  ]
+
+  return (
+    <section>
+      <SectionHeader eyebrow="Monitoring" title="Paper confirmation window" />
+      <div className="vr-card">
+        <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--vr-line)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <div className="t-eyebrow" style={{ fontSize: 9, color: tone }}>
+            {status || "ACTIVE"}
+          </div>
+          {monitoring.recommendation?.reason && (
+            <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.45 }}>
+              {monitoring.recommendation.reason}
+            </div>
+          )}
+        </div>
+        <div className="vr-divide">
+          {rows.map(row => (
+            <div key={row.label} style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, padding: "10px 16px" }}>
+              <div className="t-eyebrow" style={{ fontSize: 9 }}>{row.label}</div>
+              <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", textAlign: "right" }}>{row.value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_history"] }) {
+  const rows = tradeHistory?.rows ?? []
+  if (!rows.length) return null
+
+  const symbolCount = new Set(rows.map(row => row.symbol).filter(Boolean)).size
+
+  return (
+    <section>
+      <SectionHeader eyebrow="Trade history" title="Raw ledger preview" />
+      <div className="vr-card" style={{ overflow: "hidden" }}>
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--vr-line)", display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)" }}>
+            {rows.length} rows Â· {symbolCount} symbols
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)" }}>
+            {tradeHistory?.cash_model?.toLowerCase().replace(/_/g, " ") ?? "residual cash"}
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)" }}>
+            {tradeHistory?.weight_basis?.toLowerCase().replace(/_/g, " ") ?? "post event total portfolio"}
+          </div>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+            <thead>
+              <tr>
+                {["Date", "Symbol", "Side", "Weight after", "Price", "Notional", "Realized P&L"].map(label => (
+                  <th
+                    key={label}
+                    className="t-eyebrow"
+                    style={{
+                      fontSize: 9,
+                      textAlign: "left",
+                      padding: "10px 16px",
+                      borderBottom: "1px solid var(--vr-line)",
+                      color: "var(--vr-cream-faint)",
+                    }}
+                  >
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.slice(0, 18).map((row, index) => (
+                <tr key={`${row.event_id ?? "row"}-${index}`}>
+                  <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {fmtDate(row.date)}
+                  </td>
+                  <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {row.symbol ?? "â€”"}
+                  </td>
+                  <td className="t-label" style={{ fontSize: 11, color: row.side === "BUY" ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {row.side ?? "â€”"}
+                  </td>
+                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {row.weight_after != null ? `${(row.weight_after * 100).toFixed(2)}%` : "â€”"}
+                  </td>
+                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {row.price != null ? `$${row.price.toFixed(2)}` : "â€”"}
+                  </td>
+                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {fmtUsd(row.notional)}
+                  </td>
+                  <td className="t-num" style={{ fontSize: 12, color: (row.pnl_realized ?? 0) >= 0 ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                    {row.pnl_realized != null ? fmtUsd(row.pnl_realized) : "â€”"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {rows.length > 18 && (
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", padding: "10px 16px" }}>
+            Showing the first 18 ledger rows. This raw stream is the source for the fuller allocation and contribution views.
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// â”€â”€â”€ Lifecycle timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const STAGE_ORDER = ["IDEATED", "SPEC", "BENCHED", "CONFIRMED", "PROMOTED", "PAPER", "LIVE_ELIGIBLE", "LIVE"]
 
@@ -595,14 +844,14 @@ function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) 
   )
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function ViresPassportView({ passport }: { passport: Passport | null }) {
   if (!passport) {
     return (
       <div className="vr-screen vires-screen-pad" style={{ maxWidth: 860, margin: "0 auto" }}>
         <Link href="/vires/bench" className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", textDecoration: "none" }}>
-          ← Back to Bench
+          â† Back to Bench
         </Link>
         <div className="vr-card" style={{ padding: 24, marginTop: 14 }}>
           <div className="t-eyebrow" style={{ marginBottom: 6 }}>Passport not found</div>
@@ -627,14 +876,14 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     {
       label: "Total Return",
       term: "TotalReturn",
-      value: m.totalReturn != null ? `${m.totalReturn.toFixed(1)}%` : "—",
+      value: m.totalReturn != null ? `${m.totalReturn.toFixed(1)}%` : "â€”",
       sub: m.benchReturn != null ? `bench ${m.benchReturn.toFixed(1)}%` : undefined,
       color: "var(--vr-up)",
     },
     {
       label: "vs Bench",
       term: "VsBench",
-      value: m.excess != null ? fmtPctSigned(m.excess, 1) : "—",
+      value: m.excess != null ? fmtPctSigned(m.excess, 1) : "â€”",
       color: m.excess != null && m.excess >= 0 ? "var(--vr-up)" : "var(--vr-down)",
     },
     {
@@ -653,14 +902,14 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     {
       label: "Max DD",
       term: "MaxDD",
-      value: m.maxDD != null ? `${m.maxDD.toFixed(2)}%` : "—",
+      value: m.maxDD != null ? `${m.maxDD.toFixed(2)}%` : "â€”",
       sub: m.benchMaxDD != null ? `bench ${m.benchMaxDD.toFixed(2)}%` : undefined,
       color: "var(--vr-down)",
     },
     {
       label: "Win Rate",
       term: "WinRate",
-      value: m.winRate != null ? `${m.winRate.toFixed(1)}%` : "—",
+      value: m.winRate != null ? `${m.winRate.toFixed(1)}%` : "â€”",
     },
     {
       label: "Profit Factor",
@@ -669,7 +918,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
     },
     {
       label: "Trades",
-      value: m.trades != null ? m.trades.toLocaleString("en-US") : "—",
+      value: m.trades != null ? m.trades.toLocaleString("en-US") : "â€”",
       sub: m.days != null ? `${m.days} days` : undefined,
     },
   ]
@@ -692,7 +941,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
           alignSelf: "flex-start",
         }}
       >
-        ← Back to Bench
+        â† Back to Bench
       </Link>
 
       {/* Identity */}
@@ -700,7 +949,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <SleeveChip sleeve={sleeve} />
           <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}>
-            · Strategy Passport
+            Â· Strategy Passport
           </span>
         </div>
         <div className="t-h1" style={{ fontSize: 30, lineHeight: 1.1, letterSpacing: "-0.01em" }}>
@@ -720,19 +969,19 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
           <div>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Benchmark</div>
             <div className="t-ticker" style={{ fontSize: 12, color: "var(--vr-cream)", textTransform: "none" }}>
-              {passport.benchmark ?? "—"}
+              {passport.benchmark ?? "â€”"}
             </div>
           </div>
           <div style={{ borderLeft: "1px solid var(--vr-line)", paddingLeft: 16 }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Window</div>
             <div className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)" }}>
-              {m.days != null ? `${m.days} days` : "—"}
+              {m.days != null ? `${m.days} days` : "â€”"}
             </div>
           </div>
           <div style={{ borderLeft: "1px solid var(--vr-line)", paddingLeft: 16 }}>
             <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Trades</div>
             <div className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)" }}>
-              {m.trades != null ? m.trades.toLocaleString("en-US") : "—"}
+              {m.trades != null ? m.trades.toLocaleString("en-US") : "â€”"}
             </div>
           </div>
           {passport.manifest?.cadence && (
@@ -796,8 +1045,18 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
       {/* Gates */}
       <GatesList gates={passport.gates ?? []} />
 
+      {/* Parameter stability â€” plateau heatmap when sweep data exists,
+          honest empty state when the passport is a frozen reference. */}
+      <ParameterStabilityCard plateau={passport.plateau_primer} />
+
       {/* Assumptions */}
       <AssumptionsCard assumptions={passport.assumptions} />
+
+      {/* Paper monitoring */}
+      <PaperMonitoringCard monitoring={passport.paper_monitoring} />
+
+      {/* Raw trade ledger */}
+      <TradeHistoryCard tradeHistory={passport.trade_history} />
 
       {/* Lifecycle */}
       <LifecycleTimeline lifecycle={passport.lifecycle} />
