@@ -24,6 +24,7 @@ import {
 import { ElevatedStrategies, MarketRegime, DeskStatus } from "./home-extras"
 import { useViresTalon } from "./talon"
 import { useSharedTimeframe, TimeframeDropdown, TIMEFRAMES as SHARED_TIMEFRAMES, type Timeframe } from "./timeframe-context"
+import { useChartScrubber } from "./use-chart-scrubber"
 
 // ─── Types matching the operator feed subset this page consumes ────────────
 // Keep narrow on purpose so a downstream feed change only breaks the screens
@@ -433,7 +434,6 @@ function EquityChart({ curve, baseValue }: {
   baseValue: number | null
 }) {
   const { tf } = useSharedTimeframe()
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null)
 
   const tfMeta = TIMEFRAMES.find(t => t.k === tf)!
 
@@ -485,6 +485,10 @@ function EquityChart({ curve, baseValue }: {
   const baseInRange = baseY != null && baseY >= 0 && baseY <= H
   const last = visible[visible.length - 1]
   const periodPct = ((last.equity - visible[0].equity) / visible[0].equity) * 100
+
+  const { svgRef, hoverIdx, pointerHandlers, touchActionStyle } = useChartScrubber<SVGSVGElement>({
+    length: visible.length,
+  })
   const hover = hoverIdx != null && hoverIdx >= 0 && hoverIdx < visible.length ? visible[hoverIdx] : null
 
   return (
@@ -512,18 +516,13 @@ function EquityChart({ curve, baseValue }: {
           across the card instead of stopping inside the 18px padding. */}
       <div style={{ margin: "0 -18px -18px", overflow: "hidden", borderBottomLeftRadius: 6, borderBottomRightRadius: 6 }}>
       <svg
+        ref={svgRef}
         width="100%"
         height={H}
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="none"
-        style={{ display: "block", overflow: "visible" }}
-        onMouseLeave={() => setHoverIdx(null)}
-        onMouseMove={(e) => {
-          const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect()
-          const x = ((e.clientX - rect.left) / rect.width) * W
-          const i = Math.max(0, Math.min(visible.length - 1, Math.round((x / W) * (visible.length - 1))))
-          setHoverIdx(i)
-        }}
+        style={{ display: "block", overflow: "visible", ...touchActionStyle }}
+        {...pointerHandlers}
       >
         <defs>
           <linearGradient id="vrEqGrad" x1="0" y1="0" x2="0" y2="1">

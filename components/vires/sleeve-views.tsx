@@ -15,6 +15,7 @@ import type { ViresTradingData } from "./trading-home"
 import { useSharedTimeframe, TimeframeDropdown, TIMEFRAMES } from "./timeframe-context"
 import { ActiveStrategy, type ActiveStrategyOperator } from "./active-strategy"
 import { AllocationHistory, type AllocationHistoryOperator } from "./allocation-history"
+import { useChartScrubber } from "./use-chart-scrubber"
 
 interface ViresPosition {
   symbol: string
@@ -398,6 +399,23 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
     ? ((lastValue - firstPositiveValue) / firstPositiveValue) * 100
     : lastValue
 
+  // Real-anchor positions for the scrubber dot. Density lives in the line
+  // path (for visual smoothness), but hover snaps to real daily anchors so
+  // the readout reports real data, not interpolated noise.
+  const anchorPts = rawSeries.map((v, i) => {
+    const x = (i / Math.max(1, rawSeries.length - 1)) * W
+    const y = H - ((v - minP) / range) * H
+    return { x, y, value: v, date: normalizedRealWindow[i]?.date ?? "" }
+  })
+
+  const { svgRef, hoverIdx, pointerHandlers, touchActionStyle } = useChartScrubber<SVGSVGElement>({
+    length: anchorPts.length,
+  })
+  const hoverAnchor = hoverIdx != null && hoverIdx >= 0 && hoverIdx < anchorPts.length ? anchorPts[hoverIdx] : null
+
+  const readoutValue = hoverAnchor?.value ?? periodPct
+  const readoutDate = hoverAnchor?.date ?? null
+
   return (
     <div style={{ marginTop: 18 }}>
       {/* Controls row: period delta + timeframe pills + RET/MV toggle */}
@@ -411,13 +429,15 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
           flexWrap: "wrap",
         }}
       >
-        <div className="t-num" style={{ fontSize: 11, color: toneColor(toneOf(periodPct)), fontWeight: 500 }}>
-          {periodPct >= 0 ? "+" : ""}{periodPct.toFixed(2)}%
+        <div className="t-num" style={{ fontSize: 11, color: toneColor(toneOf(readoutValue)), fontWeight: 500 }}>
+          {mode === "MV" && hoverAnchor
+            ? fmtCurrency(readoutValue)
+            : `${readoutValue >= 0 ? "+" : ""}${readoutValue.toFixed(2)}%`}
           <span
             className="t-label"
             style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginLeft: 5, letterSpacing: "0.12em", textTransform: "uppercase" }}
           >
-            {tf} {mode === "RET" ? "return" : "value"}
+            {readoutDate ? readoutDate : `${tf} ${mode === "RET" ? "return" : "value"}`}
           </span>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -426,8 +446,16 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
         </div>
       </div>
 
-      {/* The line + area */}
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: "block" }}>
+      {/* The line + area — with scrubber crosshair + anchor dot on hover. */}
+      <svg
+        ref={svgRef}
+        width="100%"
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="none"
+        style={{ display: "block", overflow: "visible", ...touchActionStyle }}
+        {...pointerHandlers}
+      >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={color} stopOpacity="0.22" />
@@ -439,6 +467,27 @@ function SleeveSparkline({ sleeve, currentValue, color, equityCurve, sleeveHisto
         )}
         <path d={fd} fill={`url(#${gradId})`} />
         <path d={d} stroke={color} strokeWidth="1.1" fill="none" strokeLinejoin="round" />
+        {hoverAnchor && (
+          <g>
+            <line
+              x1={hoverAnchor.x}
+              y1={0}
+              x2={hoverAnchor.x}
+              y2={H}
+              stroke="var(--vr-cream-faint)"
+              strokeWidth="0.6"
+              strokeDasharray="1 3"
+            />
+            <circle
+              cx={hoverAnchor.x}
+              cy={hoverAnchor.y}
+              r="3"
+              fill="var(--vr-ink)"
+              stroke={color}
+              strokeWidth="1.3"
+            />
+          </g>
+        )}
       </svg>
     </div>
   )
