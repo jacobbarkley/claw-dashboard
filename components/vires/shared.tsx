@@ -468,6 +468,42 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
     full: "Per-Era Pass Count Across the Bench Era Matrix",
     body: "Sharpe and returns are re-measured across each named historical era (e.g. 2023 H1, 2024 H2). This gate demands the strategy pass in every era, not just the favorable ones \u2014 if it survives every regime on the bench, it has a shot at surviving the next one.",
   },
+  // ─ Promotion lifecycle events (Passport v2 §6) ─
+  Event_PROMOTION_NOMINATED: {
+    title: "Promotion Nominated",
+    full: "Auto-nomination after Gates Passed",
+    body: "Backend raised this event when the campaign\u2019s readiness scorecard flipped to READY_TO_NOMINATE. The operator still has to confirm \u2014 nomination is the bell, not the promotion.",
+  },
+  Event_PROMOTION_CONFIRMED: {
+    title: "Promotion Confirmed",
+    full: "Operator Graduated the Candidate into Production",
+    body: "The operator confirmed the nomination and the strategy bank committed or updated the passport record in the slot. The record enters the CONFIRMING stage \u2014 in production ledger, still in monitoring.",
+  },
+  Event_PASSPORT_SUPERSEDED: {
+    title: "Passport Superseded",
+    full: "An Older Record Was Archived in the Same Slot",
+    body: "A new promotion replaced the prior record at this passport role. The old record is archived (not deleted) for audit. Slot-based replacement means \u201Csame role, new record\u201D \u2014 never destructive overwrite.",
+  },
+  Event_CAMPAIGN_MONITORED: {
+    title: "Campaign Monitored",
+    full: "Campaign Moved Into Monitored State Post-Promotion",
+    body: "After a confirmed promotion, the originating campaign stays open in a monitored state. It can be reopened if the promoted candidate later fails on paper \u2014 campaigns are durable research memory.",
+  },
+  Event_CAMPAIGN_REOPENED: {
+    title: "Campaign Reopened",
+    full: "Monitored Campaign Returned to Active Research",
+    body: "A demotion on the promoted passport kicked the campaign back into active research. Same campaign_id, history appended, baseline reverted. No fresh campaign created.",
+  },
+  Event_DEMOTION_RECOMMENDED: {
+    title: "Demotion Recommended",
+    full: "Paper Monitoring Tripped a Threshold",
+    body: "Backend surfaced that the promoted record should be demoted based on paper monitoring thresholds. This is a recommendation; the operator confirms to actually demote.",
+  },
+  Event_DEMOTION_CONFIRMED: {
+    title: "Demotion Confirmed",
+    full: "Operator Removed the Record from Production",
+    body: "The operator confirmed the demotion. The passport record transitions to DEMOTED (alive as research input, not active in production). The originating campaign reopens.",
+  },
 }
 
 export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {

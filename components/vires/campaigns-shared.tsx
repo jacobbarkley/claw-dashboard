@@ -13,7 +13,10 @@ import type {
   CampaignStatus,
   LeaderComparisonStatus,
   CampaignPressureStatus,
+  ProductionLinks,
+  PromotionEvent,
 } from "@/lib/vires-campaigns"
+import { InfoPop } from "./shared"
 
 // ─── Time formatting ────────────────────────────────────────────────────────
 
@@ -231,6 +234,225 @@ export function LeaderComparisonChip({ status }: { status: LeaderComparisonStatu
     >
       {meta.label}
     </span>
+  )
+}
+
+// ─── Promotion events — event type → glyph + label + glossary term ─────────
+
+const PROMOTION_EVENT_META: Record<string, { label: string; glyph: string; term?: string }> = {
+  PROMOTION_NOMINATED:   { label: "Nominated",            glyph: "◇", term: "Event_PROMOTION_NOMINATED" },
+  PROMOTION_CONFIRMED:   { label: "Promoted",             glyph: "★", term: "Event_PROMOTION_CONFIRMED" },
+  PASSPORT_SUPERSEDED:   { label: "Superseded",           glyph: "⤳", term: "Event_PASSPORT_SUPERSEDED" },
+  CAMPAIGN_MONITORED:    { label: "Monitored",            glyph: "◎", term: "Event_CAMPAIGN_MONITORED" },
+  CAMPAIGN_REOPENED:     { label: "Reopened",             glyph: "↻", term: "Event_CAMPAIGN_REOPENED" },
+  DEMOTION_RECOMMENDED:  { label: "Demotion recommended", glyph: "⚠", term: "Event_DEMOTION_RECOMMENDED" },
+  DEMOTION_CONFIRMED:    { label: "Demoted",              glyph: "×", term: "Event_DEMOTION_CONFIRMED" },
+}
+
+function promotionEventMeta(kind: string): { label: string; glyph: string; term?: string } {
+  const meta = PROMOTION_EVENT_META[kind]
+  if (meta) return meta
+  return { label: kind.toLowerCase().replace(/_/g, " "), glyph: "·" }
+}
+
+// ─── Promotion Lineage strip ───────────────────────────────────────────────
+// Surfaces the campaign's production-ledger history. Combines
+// production_links.history (slot-level: who has held the passport slot and
+// when) with promotion_events (event-level: what the bank actually did).
+// Renders as a compact vertical timeline; omitted entirely when both are
+// empty so new campaigns don't carry a "no activity" placeholder.
+
+export function PromotionLineageStrip({
+  productionLinks,
+  promotionEvents,
+}: {
+  productionLinks: ProductionLinks | null | undefined
+  promotionEvents: PromotionEvent[] | null | undefined
+}) {
+  const events = (promotionEvents ?? []).slice().sort(
+    (a, b) => Date.parse(b.at) - Date.parse(a.at),
+  )
+  const slotHistory = productionLinks?.history ?? []
+  const activeRecordId = productionLinks?.active_record_id ?? null
+  const slotId = productionLinks?.passport_role_id ?? null
+
+  // Honest empty — nothing meaningful to render.
+  if (events.length === 0 && slotHistory.length === 0 && !activeRecordId) {
+    return null
+  }
+
+  return (
+    <div className="vr-card" style={{ padding: 0, background: "var(--vr-ink)" }}>
+      <div
+        style={{
+          padding: "12px 16px 10px",
+          borderBottom: events.length > 0 ? "1px solid var(--vr-line)" : "none",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 3 }}
+          >
+            Promotion lineage
+          </div>
+          <div className="t-h3" style={{ fontSize: 15 }}>
+            Who has held the slot
+          </div>
+        </div>
+        {slotId && (
+          <div
+            className="t-ticker"
+            style={{
+              fontSize: 9,
+              color: "var(--vr-cream-faint)",
+              textTransform: "none",
+              maxWidth: 180,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={`passport_role_id = ${slotId}`}
+          >
+            slot · {slotId}
+          </div>
+        )}
+      </div>
+
+      {/* Active record callout (when present). */}
+      {activeRecordId && (
+        <div
+          style={{
+            padding: "10px 16px",
+            background: "rgba(127,194,155,0.05)",
+            borderBottom: events.length > 0 ? "1px solid var(--vr-line)" : "none",
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-up)", marginBottom: 3 }}
+          >
+            Active in slot
+          </div>
+          <div
+            className="t-ticker"
+            style={{
+              fontSize: 11,
+              color: "var(--vr-cream)",
+              textTransform: "none",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {activeRecordId}
+          </div>
+        </div>
+      )}
+
+      {/* Event rail. */}
+      {events.length > 0 && (
+        <div style={{ padding: "10px 16px 14px" }}>
+          {events.map((e, i) => {
+            const meta = promotionEventMeta(e.event_type)
+            const isLast = i === events.length - 1
+            return (
+              <div
+                key={e.event_id}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "18px 1fr auto",
+                  gap: 10,
+                  alignItems: "flex-start",
+                  paddingTop: i === 0 ? 0 : 8,
+                  paddingBottom: isLast ? 0 : 8,
+                  borderBottom: isLast ? "none" : "1px dashed var(--vr-line)",
+                }}
+              >
+                <span
+                  aria-hidden
+                  style={{
+                    fontSize: 12,
+                    lineHeight: 1.2,
+                    color: "var(--vr-cream-mute)",
+                    textAlign: "center",
+                  }}
+                >
+                  {meta.glyph}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span
+                      className="t-eyebrow"
+                      style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}
+                    >
+                      {meta.label}
+                    </span>
+                    {meta.term && <InfoPop term={meta.term} size={10} />}
+                  </div>
+                  {e.notes && (
+                    <div
+                      className="t-read"
+                      style={{
+                        fontSize: 12,
+                        color: "var(--vr-cream-dim)",
+                        lineHeight: 1.45,
+                        marginTop: 2,
+                      }}
+                    >
+                      {e.notes}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      marginTop: 4,
+                    }}
+                  >
+                    <ActorChip actor={e.actor} />
+                    {e.candidate_id && (
+                      <span
+                        className="t-ticker"
+                        style={{
+                          fontSize: 9,
+                          color: "var(--vr-cream-faint)",
+                          textTransform: "none",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          maxWidth: 200,
+                        }}
+                        title={e.candidate_id}
+                      >
+                        · {e.candidate_id}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div
+                  className="t-eyebrow"
+                  style={{
+                    fontSize: 9,
+                    color: "var(--vr-cream-faint)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {relTime(e.at)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -28,6 +28,7 @@ import {
   ActorChip,
   LeaderComparisonChip,
   PressureChip,
+  PromotionLineageStrip,
   RoleTag,
   StatusPillCampaign,
   changeMeta,
@@ -1289,8 +1290,17 @@ export function ViresCampaignsDetail({
         </div>
       )}
 
+
       {/* Leader vs baseline — v2 only */}
       {leaderComp && <LeaderVsBaselineBlock comp={leaderComp} />}
+
+      {/* Promotion lineage — who has held this campaign's production slot,
+          rendered from production_links.history + promotion_events. Omitted
+          entirely when neither has content. */}
+      <PromotionLineageStrip
+        productionLinks={campaign.production_links}
+        promotionEvents={campaign.promotion_events}
+      />
 
       {/* Leaderboard by family */}
       <div
