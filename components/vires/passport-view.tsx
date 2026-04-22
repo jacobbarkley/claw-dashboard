@@ -160,6 +160,7 @@ export interface Passport {
     passport_role_id?: string | null
     supersedes_record_id?: string | null
   } | null
+  record_id?: string | null
   passport_role_id?: string | null
   supersedes_record_id?: string | null
   paper_monitoring?: PassportPaperMonitoring | null
@@ -675,7 +676,59 @@ function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"]
   )
 }
 
-function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monitoring"] }) {
+function PaperMonitoringCard({
+  monitoring,
+  recordId,
+  campaignId,
+  passportRoleId,
+}: {
+  monitoring: Passport["paper_monitoring"]
+  recordId: string | null
+  campaignId: string | null
+  passportRoleId: string | null
+}) {
+  const [requestState, setRequestState] = useState<"idle" | "submitting" | "success" | "error">("idle")
+  const [requestMessage, setRequestMessage] = useState<string | null>(null)
+
+  const submitDemotion = async () => {
+    if (!recordId) {
+      setRequestState("error")
+      setRequestMessage("No strategy-bank record_id wired on this passport — cannot file a demotion request.")
+      return
+    }
+    setRequestState("submitting")
+    setRequestMessage(null)
+    try {
+      const response = await fetch("/api/passport/workflow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "CONFIRM_DEMOTION",
+          actor: "operator",
+          record_id: recordId,
+          campaign_id: campaignId,
+          passport_role_id: passportRoleId,
+          reopen_status: "MONITORED",
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to record the demotion request.")
+      }
+      setRequestState("success")
+      setRequestMessage(
+        payload?.mode === "direct"
+          ? "Demotion confirmed in the local strategy bank."
+          : payload?.mode === "github"
+            ? "Demotion request recorded for the live workflow."
+            : "Demotion request recorded locally for the next backend sync.",
+      )
+    } catch (error) {
+      setRequestState("error")
+      setRequestMessage(error instanceof Error ? error.message : "Unable to record the demotion request.")
+    }
+  }
+
   if (!monitoring) {
     return (
       <section>
@@ -767,6 +820,98 @@ function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monit
             </div>
           ))}
         </div>
+
+        {/* Action footer — demote-confirm appears when the monitoring
+            recommendation has flipped to DEMOTION_RECOMMENDED; the return-
+            to-campaign deep-link appears whenever the origin carries a
+            campaign_id so operators can reopen the campaign and re-shuffle
+            candidates. Either or both may be present. */}
+        {((monitoring.recommendation?.status ?? "").toUpperCase() === "DEMOTION_RECOMMENDED" || campaignId) && (
+          <div
+            style={{
+              padding: "12px 16px",
+              borderTop: "1px solid var(--vr-line)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+            }}
+          >
+            {(monitoring.recommendation?.status ?? "").toUpperCase() === "DEMOTION_RECOMMENDED" && (
+              <>
+                <button
+                  type="button"
+                  disabled={requestState === "submitting" || requestState === "success" || !recordId}
+                  onClick={() => void submitDemotion()}
+                  title={
+                    !recordId
+                      ? "No record_id wired on this passport — cannot file a demotion"
+                      : requestState === "success"
+                        ? "Demotion already requested"
+                        : "File a governed demotion request for this slot"
+                  }
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 6,
+                    padding: "9px 14px",
+                    border: `1px solid ${requestState === "success" ? "var(--vr-down)" : "var(--vr-down-soft, rgba(201,122,122,0.3))"}`,
+                    background: "rgba(201,122,122,0.08)",
+                    color: "var(--vr-down)",
+                    borderRadius: 3,
+                    fontFamily: "var(--ff-sans)",
+                    fontWeight: 600,
+                    fontSize: 10,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    cursor: requestState === "submitting" || requestState === "success" || !recordId ? "default" : "pointer",
+                    alignSelf: "flex-start",
+                    opacity: !recordId ? 0.5 : 1,
+                  }}
+                >
+                  {requestState === "submitting"
+                    ? "Submitting request"
+                    : requestState === "success"
+                      ? "Demotion requested"
+                      : "Confirm demotion"}
+                </button>
+                {requestMessage && (
+                  <div
+                    className="t-read"
+                    style={{
+                      fontSize: 11,
+                      color: requestState === "error" ? "var(--vr-down)" : "var(--vr-cream-dim)",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {requestMessage}
+                  </div>
+                )}
+              </>
+            )}
+
+            {campaignId && (
+              <Link
+                href={`/vires/bench/campaigns/${encodeURIComponent(campaignId)}`}
+                className="t-eyebrow"
+                style={{
+                  fontSize: 9,
+                  color: "var(--vr-gold)",
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  alignSelf: "flex-start",
+                }}
+              >
+                Return to campaign
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden>
+                  <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+                </svg>
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -1197,7 +1342,12 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
       <AssumptionsCard assumptions={passport.assumptions} />
 
       {/* Paper monitoring */}
-      <PaperMonitoringCard monitoring={passport.paper_monitoring} />
+      <PaperMonitoringCard
+        monitoring={passport.paper_monitoring}
+        recordId={passport.record_id ?? null}
+        campaignId={passport.origin?.campaign_id ?? null}
+        passportRoleId={passport.passport_role_id ?? passport.origin?.passport_role_id ?? null}
+      />
 
       {/* Raw trade ledger */}
       <TradeHistoryCard tradeHistory={passport.trade_history} />
