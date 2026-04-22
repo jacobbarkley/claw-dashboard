@@ -392,6 +392,26 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
     full: "Excess Return Over Buy-and-Hold",
     body: "Strategy return minus the naive buy-and-hold return. For crypto specifically, beating HODL on raw return is not the goal \u2014 risk-adjusted participation is. A Calmar improvement with modest or even negative excess can still be the right trade.",
   },
+  LeaderStability: {
+    title: "Leader Stability",
+    full: "Sessions the Current Leader Has Held",
+    body: "Number of consecutive research sessions the current leader candidate has held its position before being unseated. High values mean stable conviction; low values mean the campaign is still churning through candidates.",
+  },
+  LastRun: {
+    title: "Last Run",
+    full: "Freshness of the Latest Bench Run",
+    body: "When the most recent bench run landed on this campaign. A stale last-run signal means the thesis isn\u2019t being actively stress-tested right now and the numbers you\u2019re seeing may be dated.",
+  },
+  ParamSweep: {
+    title: "Param Sweep",
+    full: "Last Parameter Search Across Variants",
+    body: "When the last parameter search ran across this campaign\u2019s variants. Different from \u201Clast run\u201D because not every run is a sweep \u2014 a sweep tests many configurations together, a run is one configuration on fresh data.",
+  },
+  CandidatesCount: {
+    title: "Candidates",
+    full: "Strategy Variants Under This Thesis",
+    body: "Number of strategy variants checked into this campaign. Variants compete under the same thesis \u2014 different implementations of the same research question, grouped into families.",
+  },
 }
 
 export function InfoPop({ term, size = 12 }: { term: string; size?: number }) {

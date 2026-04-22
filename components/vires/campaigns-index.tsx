@@ -13,16 +13,14 @@ import type {
   CampaignManifest,
   CampaignRegistry,
   CampaignsIndexData,
-  RunnerUpGap,
 } from "@/lib/vires-campaigns"
 import { countsBySleeve, getBaseline, statusCounts } from "@/lib/vires-campaigns"
 import {
-  ChangeLogPreviewRow,
   RoleTag,
   StatusPillCampaign,
   relTime,
 } from "./campaigns-shared"
-import { SleeveChip, type Sleeve } from "./shared"
+import { InfoPop, SleeveChip, fmtNum, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 
 // ─── Masthead ───────────────────────────────────────────────────────────────
 
@@ -183,89 +181,40 @@ function SleeveFilterBar({
 }
 
 // ─── Lever cell (index-card — NOT a button; detail page uses LeverShell) ───
+// Supports two flavors: activity signals (leader stability, last run) and
+// performance metrics (excess vs bench, sharpe). `infoTerm` maps to the shared
+// glossary; renders an inline "i" affordance one tap from a definition.
 
 function LeverCell({
   eyebrow,
   value,
   sub,
+  valueColor,
+  infoTerm,
 }: {
   eyebrow: string
   value: string
   sub?: string | null
+  valueColor?: string
+  infoTerm?: string
 }) {
   return (
     <div style={{ padding: "10px 12px" }}>
-      <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, color: "var(--vr-cream-mute)" }}>
-        {eyebrow}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 3 }}>
+        <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
+          {eyebrow}
+        </span>
+        {infoTerm && <InfoPop term={infoTerm} size={11} />}
       </div>
-      <div className="t-num" style={{ fontSize: 14, color: "var(--vr-cream)", fontWeight: 500 }}>
+      <div
+        className="t-num"
+        style={{ fontSize: 14, color: valueColor ?? "var(--vr-cream)", fontWeight: 500 }}
+      >
         {value}
       </div>
       {sub && (
         <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-faint)", marginTop: 3 }}>
           {sub}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Runner-up band ─────────────────────────────────────────────────────────
-// If value is null, the honest summary IS the surface. Italic serif copy, no
-// "—" / "pending" / "0" substitution.
-
-function RunnerUpBand({
-  gap,
-  runnerUpTitle,
-}: {
-  gap: RunnerUpGap | null | undefined
-  runnerUpTitle: string | null | undefined
-}) {
-  if (!gap || !gap.summary) return null
-  const quantified = gap.value != null
-  return (
-    <div
-      style={{
-        padding: "10px 14px",
-        background: "rgba(241,236,224,0.02)",
-        borderTop: "1px solid var(--vr-line)",
-        borderBottom: "1px solid var(--vr-line)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 10,
-          marginBottom: 4,
-        }}
-      >
-        <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
-          Runner-up gap
-        </div>
-        <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}>
-          {quantified ? gap.metric : "not yet quantified"}
-        </div>
-      </div>
-      <div
-        className="t-read"
-        style={{
-          fontSize: 12,
-          fontFamily: "var(--ff-serif)",
-          fontStyle: "italic",
-          color: "var(--vr-cream-dim)",
-          lineHeight: 1.5,
-        }}
-      >
-        {gap.summary}
-      </div>
-      {runnerUpTitle && (
-        <div
-          className="t-label"
-          style={{ fontSize: 10, color: "var(--vr-cream-faint)", marginTop: 5 }}
-        >
-          Runner-up: {runnerUpTitle}
         </div>
       )}
     </div>
@@ -284,21 +233,13 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
       ? campaign.candidates.find(c => c.candidate_id === baseline.candidate_id)
       : null
   const featuredCandidate = leader ?? baselineCandidate ?? null
-  const runnerUp = campaign.candidates.find(
-    c => c.candidate_id === campaign.recency_signals.runner_up_candidate_id,
-  )
-  const familyCounts = campaign.family_groups
-    .map(f => ({
-      title: f.title,
-      count: campaign.candidates.filter(c => c.family_id === f.family_id).length,
-    }))
-    .filter(f => f.count > 0)
 
   const rs = campaign.recency_signals
+  const perf = campaign.baseline_performance
+  const excessPct = perf?.excess_return_pct ?? null
+  const sharpe = perf?.sharpe ?? null
   const sleeveKey = (campaign.sleeve ?? "").toString().toLowerCase()
   const sleeveIsValid = sleeveKey === "stocks" || sleeveKey === "options" || sleeveKey === "crypto"
-  const latestChange = campaign.change_log?.[0] ?? null
-  const pressure = campaign.campaign_pressure
 
   return (
     <Link
@@ -312,7 +253,7 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         background: "var(--vr-ink)",
       }}
     >
-      {/* Header: sleeve · benchmark · status */}
+      {/* Header: sleeve · benchmark · status (status is the primary card-state cue) */}
       <div
         style={{
           padding: "14px 16px 10px",
@@ -330,7 +271,7 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         <StatusPillCampaign status={campaign.status} />
       </div>
 
-      {/* Title + summary */}
+      {/* Title + summary (campaign_pressure sentence lives on the detail page only) */}
       <div style={{ padding: "0 16px 12px" }}>
         <div className="t-h3" style={{ fontSize: 18, lineHeight: 1.25, marginBottom: 6 }}>
           {campaign.title}
@@ -341,23 +282,9 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         >
           {campaign.summary}
         </div>
-        {pressure?.summary && (
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 11,
-              fontFamily: "var(--ff-serif)",
-              fontStyle: "italic",
-              color: "var(--vr-cream-dim)",
-              lineHeight: 1.5,
-            }}
-          >
-            {pressure.summary}
-          </div>
-        )}
       </div>
 
-      {/* Leader row */}
+      {/* Featured candidate row: current leader OR baseline when no leader yet */}
       {featuredCandidate && (
         <div
           style={{
@@ -408,7 +335,7 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         </div>
       )}
 
-      {/* 2x2 lever grid */}
+      {/* 2x2 hybrid grid — two performance metrics + two activity signals */}
       <div
         style={{
           display: "grid",
@@ -417,6 +344,21 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
       >
         <div style={{ borderRight: "1px solid var(--vr-line)", borderBottom: "1px solid var(--vr-line)" }}>
           <LeverCell
+            eyebrow={`vs ${campaign.benchmark_symbol}`}
+            value={excessPct != null ? fmtPct(excessPct, { sign: true }) : "—"}
+            valueColor={toneColor(toneOf(excessPct))}
+            infoTerm="VsBench"
+          />
+        </div>
+        <div style={{ borderBottom: "1px solid var(--vr-line)" }}>
+          <LeverCell
+            eyebrow="Sharpe"
+            value={sharpe != null ? fmtNum(sharpe) : "—"}
+            infoTerm="Sharpe"
+          />
+        </div>
+        <div style={{ borderRight: "1px solid var(--vr-line)" }}>
+          <LeverCell
             eyebrow="Leader stability"
             value={
               rs.leader_stability_sessions != null
@@ -424,71 +366,18 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
                 : "—"
             }
             sub={rs.last_leader_change_at ? `changed ${relTime(rs.last_leader_change_at)}` : null}
-          />
-        </div>
-        <div style={{ borderBottom: "1px solid var(--vr-line)" }}>
-          <LeverCell
-            eyebrow="Last run"
-            value={campaign.last_run_at ? relTime(campaign.last_run_at) : "—"}
-            sub={null}
-          />
-        </div>
-        <div style={{ borderRight: "1px solid var(--vr-line)" }}>
-          <LeverCell
-            eyebrow="Param sweep"
-            value={rs.last_param_sweep_at ? relTime(rs.last_param_sweep_at) : "—"}
-            sub={rs.days_since_param_sweep != null ? `${rs.days_since_param_sweep}d since` : null}
+            infoTerm="LeaderStability"
           />
         </div>
         <div>
           <LeverCell
-            eyebrow="Candidates"
-            value={`${campaign.candidates.length}`}
-            sub={`${familyCounts.length} ${familyCounts.length === 1 ? "family" : "families"}`}
+            eyebrow="Last run"
+            value={campaign.last_run_at ? relTime(campaign.last_run_at) : "—"}
+            sub={null}
+            infoTerm="LastRun"
           />
         </div>
       </div>
-
-      {/* Runner-up band (honest-data surface) */}
-      <RunnerUpBand gap={rs.runner_up_gap} runnerUpTitle={runnerUp?.title ?? null} />
-
-      {/* Families-in-play chip strip */}
-      {familyCounts.length > 0 && (
-        <div style={{ padding: "10px 14px 6px" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 6, color: "var(--vr-cream-mute)" }}>
-            Families in play
-          </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {familyCounts.map(f => (
-              <span
-                key={f.title}
-                className="t-eyebrow"
-                style={{
-                  fontSize: 9,
-                  padding: "3px 8px 2px",
-                  color: "var(--vr-cream-dim)",
-                  border: "1px solid var(--vr-line)",
-                  borderRadius: 2,
-                  letterSpacing: "0.12em",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 5,
-                }}
-              >
-                {f.title}
-                <span style={{ opacity: 0.7 }}>· {f.count}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Latest change-log preview */}
-      {latestChange && (
-        <div style={{ padding: "8px 14px 10px", borderTop: "1px solid var(--vr-line)" }}>
-          <ChangeLogPreviewRow event={latestChange} />
-        </div>
-      )}
 
       {/* Footer meta */}
       <div
