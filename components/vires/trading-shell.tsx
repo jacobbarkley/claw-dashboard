@@ -106,8 +106,23 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   const [tab, setTab] = useState<SubTab>("home")
   const [liveData, setLiveData] = useState<ViresTradingData | null>(initialData)
   const [liveOperator, setLiveOperator] = useState<OperatorBlock | undefined>(initialOperator)
+  const [slideDir, setSlideDir] = useState<"forward" | "back" | null>(null)
   const router = useRouter()
   const swipeContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Tab change with direction tracked for the slide animation. Button taps
+  // on the sub-nav infer direction from the index delta; swipe gestures
+  // pre-set direction before calling setTab.
+  const switchTab = useCallback(
+    (nextKey: SubTab, direction?: "forward" | "back") => {
+      if (nextKey === tab) return
+      const curIdx = TABS.findIndex(t => t.key === tab)
+      const nextIdx = TABS.findIndex(t => t.key === nextKey)
+      setSlideDir(direction ?? (nextIdx > curIdx ? "forward" : "back"))
+      setTab(nextKey)
+    },
+    [tab],
+  )
 
   // Swipe navigation — horizontal swipes on the content body cycle through
   // Home → Stocks → Options → Crypto. Right-edge swipe LEFT pushes to the
@@ -116,13 +131,13 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
   const handleNext = useCallback(() => {
     const idx = TABS.findIndex(t => t.key === tab)
     const next = TABS[Math.min(TABS.length - 1, idx + 1)]
-    if (next && next.key !== tab) setTab(next.key)
-  }, [tab])
+    if (next && next.key !== tab) switchTab(next.key, "forward")
+  }, [tab, switchTab])
   const handlePrev = useCallback(() => {
     const idx = TABS.findIndex(t => t.key === tab)
     const prev = TABS[Math.max(0, idx - 1)]
-    if (prev && prev.key !== tab) setTab(prev.key)
-  }, [tab])
+    if (prev && prev.key !== tab) switchTab(prev.key, "back")
+  }, [tab, switchTab])
   const handleEdgeRight = useCallback(() => {
     router.push("/vires/bench")
   }, [router])
@@ -234,18 +249,32 @@ export function ViresTradingShell({ data: initialData, operator: initialOperator
     )
   }
 
+  const slideClass = slideDir === "forward"
+    ? "vr-tab-slide-forward"
+    : slideDir === "back"
+      ? "vr-tab-slide-back"
+      : undefined
+
   return (
     <ViresTimeframeProvider>
-      <SubNav tab={tab} onTab={setTab} />
+      <SubNav tab={tab} onTab={switchTab} />
       <div
         ref={swipeContainerRef}
-        className="vr-screen vires-screen-pad"
-        style={{ maxWidth: 1100, margin: "0 auto", touchAction: "pan-y" }}
+        style={{ touchAction: "pan-y" }}
       >
-        {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={setTab} />}
-        {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} operator={currentOperator} />}
-        {tab === "options" && <OptionsScreen data={currentData} operator={currentOperator} />}
-        {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
+        <div
+          key={tab}
+          className={slideClass}
+          onAnimationEnd={() => setSlideDir(null)}
+          style={{ maxWidth: 1100, margin: "0 auto" }}
+        >
+          <div className="vr-screen vires-screen-pad">
+            {tab === "home"    && <ViresTradingHome data={currentData} operator={currentOperator as never} onNavigateSleeve={switchTab} />}
+            {tab === "stocks"  && <StocksScreen data={currentData as Parameters<typeof StocksScreen>[0]["data"]} rules={extractStrategyRules(currentOperator)} operator={currentOperator} />}
+            {tab === "options" && <OptionsScreen data={currentData} operator={currentOperator} />}
+            {tab === "crypto"  && <CryptoScreen data={currentData} operator={currentOperator} />}
+          </div>
+        </div>
       </div>
     </ViresTimeframeProvider>
   )

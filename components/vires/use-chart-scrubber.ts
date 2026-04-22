@@ -3,8 +3,15 @@
 // Shared scrubber interaction for charts on the Vires surface. iOS Stocks-
 // app behavior: finger-down/move sets the scrubber index; finger-up keeps
 // the scrubber where it was; tap anywhere else on the page dismisses it.
-// On desktop, mouse-leave dismisses (hover semantics). Vertical page scroll
-// still works because we only claim horizontal pan.
+// On desktop, mouse-leave dismisses (hover semantics).
+//
+// To keep finger-drag tracking working on mobile, the chart SVG needs to
+// own its gestures — we call setPointerCapture on pointerdown so
+// subsequent pointermove events keep firing even when the finger drifts
+// off the element, and the caller must set touch-action: none on the
+// chart element (not pan-y) so the browser doesn't intercept horizontal
+// pan. Vertical page scroll then requires touching OFF the chart — the
+// tradeoff matches the iOS Stocks scrubber feel.
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react"
 
@@ -15,9 +22,10 @@ export interface ChartScrubber<E extends SVGSVGElement> {
   pointerHandlers: {
     onPointerDown: (e: ReactPointerEvent<E>) => void
     onPointerMove: (e: ReactPointerEvent<E>) => void
+    onPointerUp: (e: ReactPointerEvent<E>) => void
     onPointerLeave: (e: ReactPointerEvent<E>) => void
   }
-  touchActionStyle: { touchAction: "pan-y" }
+  touchActionStyle: { touchAction: "none" }
 }
 
 export function useChartScrubber<E extends SVGSVGElement = SVGSVGElement>({
@@ -60,6 +68,16 @@ export function useChartScrubber<E extends SVGSVGElement = SVGSVGElement>({
       if (disabled) return
       const rect = e.currentTarget.getBoundingClientRect()
       setIdxFromPointer(e.clientX, rect)
+      // Capture the pointer so subsequent pointermove events keep firing
+      // even when the finger drifts off the element. Without this, iOS
+      // Safari stops delivering moves as soon as the touch leaves the
+      // chart bounds and the scrubber freezes mid-drag.
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      } catch {
+        // Some older browsers may throw; acceptable — hover scrub still
+        // works via standard event delivery.
+      }
     },
     [disabled, setIdxFromPointer],
   )
@@ -67,15 +85,24 @@ export function useChartScrubber<E extends SVGSVGElement = SVGSVGElement>({
   const onPointerMove = useCallback(
     (e: ReactPointerEvent<E>) => {
       if (disabled) return
-      // Only track when a button/touch is actively down on pointer devices
-      // that distinguish hover from press. For mouse we still want
-      // hover-tracking, so accept e.buttons === 0 (hover) for mouse too.
-      if (e.pointerType === "touch" && e.pressure === 0) return
+      // Mouse: hover-tracking is intended (buttons === 0 is hover).
+      // Touch / pen: only track while the pointer is actively down.
+      // iOS Safari reports pressure as 0 even during active touch, so
+      // use buttons instead of pressure for the "down" test.
+      if (e.pointerType !== "mouse" && e.buttons === 0) return
       const rect = e.currentTarget.getBoundingClientRect()
       setIdxFromPointer(e.clientX, rect)
     },
     [disabled, setIdxFromPointer],
   )
+
+  const onPointerUp = useCallback((e: ReactPointerEvent<E>) => {
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // swallow — nothing to release on some browsers
+    }
+  }, [])
 
   const onPointerLeave = useCallback((e: ReactPointerEvent<E>) => {
     // Desktop mouse: hover-leave clears.
@@ -87,7 +114,11 @@ export function useChartScrubber<E extends SVGSVGElement = SVGSVGElement>({
     svgRef,
     hoverIdx,
     clearHover,
-    pointerHandlers: { onPointerDown, onPointerMove, onPointerLeave },
-    touchActionStyle: { touchAction: "pan-y" },
+    pointerHandlers: { onPointerDown, onPointerMove, onPointerUp, onPointerLeave },
+    // touch-action: none tells the browser not to handle any native
+    // gestures here, so the chart element receives every pointermove.
+    // Vertical page scroll still works — the user just needs to touch
+    // off the chart to scroll. Matches iOS Stocks app behavior.
+    touchActionStyle: { touchAction: "none" },
   }
 }
