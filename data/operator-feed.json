@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-22T13:45:01.696375+00:00",
+  "generated_at": "2026-04-22T13:50:02.190376+00:00",
   "as_of_date": "2026-04-22",
   "source_context": {
     "mode": "canonical",
@@ -18,11 +18,11 @@
     "total_pnl_pct": -14.4806,
     "today_pnl": 59.59,
     "today_pnl_pct": 0.0697,
-    "positions_value": 57967.16,
-    "equity_deployed": 57081.08,
-    "crypto_deployed": 886.07,
+    "positions_value": 57963.88,
+    "equity_deployed": 57077.17,
+    "crypto_deployed": 886.71,
     "options_deployed": 0,
-    "unrealized_pnl": 87.78,
+    "unrealized_pnl": 84.5,
     "unrealized_pnl_pct": 0.15
   },
   "positions": [
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 272.294,
-      "current_price": 267.95,
-      "market_value": 1339.75,
-      "unrealized_pnl": -21.72,
-      "unrealized_pct": -1.59,
-      "change_today_pct": 0.67,
+      "current_price": 268.37,
+      "market_value": 1341.85,
+      "unrealized_pnl": -19.62,
+      "unrealized_pct": -1.44,
+      "change_today_pct": 0.83,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 407.885,
-      "market_value": 1223.655,
-      "unrealized_pnl": 18.654999,
-      "unrealized_pct": 1.55,
-      "change_today_pct": 1.42,
+      "current_price": 407.16,
+      "market_value": 1221.48,
+      "unrealized_pnl": 16.479999,
+      "unrealized_pct": 1.37,
+      "change_today_pct": 1.24,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78544.89,
-      "market_value": 886.07268,
-      "unrealized_pnl": 25.595617,
-      "unrealized_pct": 2.97,
-      "change_today_pct": 2.94,
+      "current_price": 78601.06,
+      "market_value": 886.706339,
+      "unrealized_pnl": 26.229276,
+      "unrealized_pct": 3.05,
+      "change_today_pct": 3.01,
       "asset_type": "CRYPTO"
     },
     {
@@ -67,11 +67,11 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 200.73,
-      "market_value": 3211.68,
-      "unrealized_pnl": 29.65,
-      "unrealized_pct": 0.93,
-      "change_today_pct": 0.43,
+      "current_price": 200.49,
+      "market_value": 3207.84,
+      "unrealized_pnl": 25.81,
+      "unrealized_pct": 0.81,
+      "change_today_pct": 0.3,
       "asset_type": "EQUITY"
     },
     {
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-22T13:45:01.696417+00:00"
+    "audit_written_at": "2026-04-22T13:50:02.190413+00:00"
   },
   "kpis": {
     "total_trades": 62,
@@ -847,7 +847,7 @@
         },
         {
           "date": "2026-04-22",
-          "market_value": 57081.08
+          "market_value": 57077.17
         }
       ]
     },
@@ -888,7 +888,7 @@
         },
         {
           "date": "2026-04-22",
-          "market_value": 886.07
+          "market_value": 886.71
         }
       ]
     },
@@ -935,15 +935,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-04-22T13:45:04.706819619Z",
+    "as_of": "2026-04-22T13:50:01.734327149Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 268.325,
+        "current_price": 268.53,
         "prior_close": 266.16,
-        "change_usd": 2.165,
-        "change_pct": 0.8134,
+        "change_usd": 2.37,
+        "change_pct": 0.8904,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -951,10 +951,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 407.28,
+        "current_price": 405.78,
         "prior_close": 402.26,
-        "change_usd": 5.02,
-        "change_pct": 1.2479,
+        "change_usd": 3.52,
+        "change_pct": 0.8751,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -962,10 +962,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1000.605,
+        "current_price": 1003.72,
         "prior_close": 1005.76,
-        "change_usd": -5.155,
-        "change_pct": -0.5125,
+        "change_usd": -2.04,
+        "change_pct": -0.2028,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -973,10 +973,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 915.2,
+        "current_price": 919.155,
         "prior_close": 902.92,
-        "change_usd": 12.28,
-        "change_pct": 1.36,
+        "change_usd": 16.235,
+        "change_pct": 1.7981,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -984,10 +984,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 673.17,
+        "current_price": 672.12,
         "prior_close": 668.69,
-        "change_usd": 4.48,
-        "change_pct": 0.67,
+        "change_usd": 3.43,
+        "change_pct": 0.5129,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -995,10 +995,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 200.48,
+        "current_price": 199.89,
         "prior_close": 199.82,
-        "change_usd": 0.66,
-        "change_pct": 0.3303,
+        "change_usd": 0.07,
+        "change_pct": 0.035,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1662,7 +1662,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 886.07268,
+          "market_value": 886.706339,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -1702,13 +1702,13 @@
           {
             "date": "2026-04-22",
             "weights": {
-              "SGOV": 89.88,
-              "NVDA": 5.63,
+              "SGOV": 89.89,
+              "NVDA": 5.62,
               "AAPL": 2.35,
               "AVGO": 2.14
             },
             "cash": 0.0,
-            "total": 57081.08
+            "total": 57077.17
           }
         ]
       },
@@ -1752,7 +1752,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 886.07
+            "total": 886.71
           }
         ]
       },
