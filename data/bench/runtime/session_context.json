@@ -1,6 +1,6 @@
 {
-  "run_id": "2026-04-20-shadow-midday-01",
-  "trading_date": "2026-04-20",
+  "run_id": "2026-04-21-shadow-midday-01",
+  "trading_date": "2026-04-21",
   "phase": "INTRADAY",
   "entry_mode": "OPEN",
   "operator_mode": "AUTONOMOUS_PAPER",
@@ -12,5 +12,5 @@
   "active_execution_manifest_source_kind": "CHECKED_IN",
   "entry_mode_advisory": null,
   "policy_version": "0.1.0",
-  "started_at": "2026-04-20T11:45:14.341236-04:00"
+  "started_at": "2026-04-21T11:45:10.737382-04:00"
 }
