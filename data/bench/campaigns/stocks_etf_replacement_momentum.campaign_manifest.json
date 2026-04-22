@@ -1,0 +1,152 @@
+{
+  "schema_version": "bench_campaign_manifest.v1",
+  "campaign_id": "stocks_etf_replacement_momentum",
+  "title": "ETF Replacement Momentum",
+  "sleeve": "STOCKS",
+  "objective": "Build a serious-retail stock sleeve that can plausibly replace a passive broad-equity allocation instead of just screenshotting one hot niche run.",
+  "benchmark_symbol": "SPY",
+  "status": "CONVERGING",
+  "summary": "This is the broad stock thesis closest to product shape. It already has a promoted reference, but the bench still needs to keep testing broader and stronger challengers.",
+  "updated_at": "2026-04-20T21:55:00-04:00",
+  "updated_by": "codex",
+  "current_leader_candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+  "last_run_at": "2026-04-17T20:30:00-04:00",
+  "last_meaningful_change_at": "2026-04-17T20:30:00-04:00",
+  "last_meaningful_change": "The frozen q076b momentum reference was promoted into the manifest-native path while broader ETF-replacement challengers remained in bench research.",
+  "promotion_target": "Keep broad equity replacement as the user-facing stock story while the bench searches for challengers that beat the frozen reference honestly.",
+  "recency_signals": {
+    "last_leader_change_at": "2026-04-17T20:30:00-04:00",
+    "leader_stability_sessions": 3,
+    "runner_up_candidate_id": "q085_clite_v2_monthly_top12.stop_5_target_15",
+    "runner_up_gap": {
+      "metric": "READINESS",
+      "value": null,
+      "summary": "The promoted frozen reference is still the clear baseline; broader challengers are present but need fresh runs before the gap can be quantified honestly."
+    },
+    "last_param_sweep_at": "2026-04-14T16:00:00-04:00",
+    "days_since_param_sweep": 6
+  },
+  "family_groups": [
+    {
+      "family_id": "REGIME_AWARE_MOMENTUM",
+      "title": "Regime-Aware Momentum",
+      "summary": "The current promoted stock reference family and the most mature broad-equity implementation we have."
+    },
+    {
+      "family_id": "STRATEGY_ALIGNED_COMPOSITE_SCREEN",
+      "title": "Strategy-Aligned Composite Screens",
+      "summary": "Broader top-N screening variants meant to widen the ETF-replacement thesis without abandoning the momentum core."
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+      "title": "Frozen Reference",
+      "family_id": "REGIME_AWARE_MOMENTUM",
+      "role": "PROMOTED_REFERENCE",
+      "artifact_kind": "EXECUTION_MANIFEST",
+      "artifact_refs": {
+        "execution_manifest_path": "backtest/bench/manifests/q076b_regime_aware_momentum_frozen_reference.execution_manifest.json",
+        "bench_result_bundle_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/bench_run_bundle.json",
+        "bench_report_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json"
+      },
+      "latest_run": {
+        "run_id": "q076b-frozen-reference-20260417",
+        "completed_at": "2026-04-17T20:30:00-04:00",
+        "summary": "Current promoted stock reference and the baseline every broader ETF-replacement challenger must beat honestly.",
+        "result_summary_path": "backtest/bench/results/q076b_regime_aware_momentum_frozen_reference/q076b-frozen-reference-20260417/stock_bench_report.json",
+        "run_stats": {
+          "period": { "start": "2022-01-01", "end": "2024-11-30", "trading_days": 797 },
+          "eras": [
+            { "label": "2023 H1", "pass": true },
+            { "label": "2023 H2", "pass": true },
+            { "label": "2024 H1", "pass": true },
+            { "label": "2024 H2", "pass": true }
+          ],
+          "eras_passed": 4,
+          "eras_total": 4,
+          "total_return_pct": 90.50,
+          "benchmark_return_pct": 80.45,
+          "excess_return_pct": 10.05,
+          "max_drawdown_pct": -8.89,
+          "benchmark_max_drawdown_pct": -13.40,
+          "sharpe": 1.93,
+          "benchmark_sharpe": 1.12,
+          "sortino": 3.17,
+          "calmar": 2.55,
+          "profit_factor": 2.12,
+          "win_rate_pct": 61.96,
+          "trades": 163
+        },
+        "run_stats_status": "INDEXED"
+      },
+      "notes": [
+        "This is the current stock promotion reference, not the end of research."
+      ]
+    },
+    {
+      "candidate_id": "q085_clite_monthly_top12.stop_5_target_15",
+      "title": "C-Lite Monthly Top 12",
+      "family_id": "STRATEGY_ALIGNED_COMPOSITE_SCREEN",
+      "role": "CHALLENGER",
+      "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
+      "artifact_refs": {
+        "campaign_config_path": "backtest/campaigns/q085_clite_monthly_top12/campaign_config.json"
+      },
+      "latest_run": {
+        "run_id": null,
+        "completed_at": null,
+        "summary": "Broader top-12 ETF-replacement challenger using the first composite monthly screen.",
+        "result_summary_path": null,
+        "run_stats": null,
+        "run_stats_status": "NO_RUN"
+      },
+      "notes": [
+        "This stays in the campaign because it pushes the ETF-replacement thesis broader than the frozen six-name reference."
+      ]
+    },
+    {
+      "candidate_id": "q085_clite_v2_monthly_top12.stop_5_target_15",
+      "title": "C-Lite v2 Monthly Top 12",
+      "family_id": "STRATEGY_ALIGNED_COMPOSITE_SCREEN",
+      "role": "CHALLENGER",
+      "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
+      "artifact_refs": {
+        "campaign_config_path": "backtest/campaigns/q085_clite_v2_monthly_top12/campaign_config.json"
+      },
+      "latest_run": {
+        "run_id": null,
+        "completed_at": null,
+        "summary": "Second-generation ETF-replacement challenger using the winning C-lite ablation weights.",
+        "result_summary_path": null,
+        "run_stats": null,
+        "run_stats_status": "NO_RUN"
+      },
+      "notes": [
+        "Good example of why campaign != family: same thesis, different implementation weighting."
+      ]
+    }
+  ],
+  "change_log": [
+    {
+      "at": "2026-04-17T20:30:00-04:00",
+      "kind": "PROMOTION_REFERENCE_ADDED",
+      "title": "Frozen stock reference promoted",
+      "detail": "The q076b frozen reference became the manifest-native promoted stock baseline while broader ETF-replacement challengers remained in research.",
+      "actor": "codex",
+      "candidate_id": "q076b_regime_aware_momentum_frozen_reference",
+      "from_candidate_id": null,
+      "to_candidate_id": "q076b_regime_aware_momentum_frozen_reference"
+    },
+    {
+      "at": "2026-04-20T21:45:00-04:00",
+      "kind": "CANDIDATE_ADDED",
+      "title": "Broader ETF challengers tracked under one thesis",
+      "detail": "The campaign now explicitly groups the promoted reference and the broader C-lite monthly challengers so the app can show research pressure against the live stock baseline.",
+      "actor": "codex",
+      "candidate_id": null,
+      "from_candidate_id": null,
+      "to_candidate_id": null
+    }
+  ]
+}

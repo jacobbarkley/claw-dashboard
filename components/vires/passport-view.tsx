@@ -44,8 +44,8 @@ interface PassportManifest {
   ref?: string | null
   stage?: string | null
   eligibility?: string | null
-  shadowDays?: number | null
-  shadowTarget?: number | null
+  paperDays?: number | null
+  paperTarget?: number | null
   runtimeContract?: string | null
   cadence?: string | null
   broker?: { broker_adapter?: string; broker_environment?: string } | null
@@ -137,7 +137,7 @@ function VerdictStrip({ passport }: { passport: Passport }) {
     if (stage === "PROMOTED") {
       return {
         eyebrow: "Verdict",
-        line: eligibility === "LIVE" ? "Promoted · Earning live capital" : "Promoted · Paper shadow window",
+        line: eligibility === "LIVE" ? "Promoted · Earning live capital" : "Promoted · Paper window",
         accent: "var(--vr-gold)",
       }
     }
@@ -163,10 +163,10 @@ function VerdictStrip({ passport }: { passport: Passport }) {
           <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 5 }}>Eligibility</div>
           <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)", letterSpacing: "0.04em" }}>
             {eligibility === "LIVE" && <span style={{ color: "var(--vr-up)" }}>● LIVE</span>}
-            {eligibility === "PAPER_SHADOW" && (
+            {eligibility === "PAPER" && (
               <span style={{ color: "var(--vr-gold)" }}>
                 ◐ PAPER
-                {m?.shadowDays != null && m?.shadowTarget != null && ` · day ${m.shadowDays}/${m.shadowTarget}`}
+                {m?.paperDays != null && m?.paperTarget != null && ` · day ${m.paperDays}/${m.paperTarget}`}
               </span>
             )}
             {(eligibility === "BENCH_ONLY" || !eligibility) && (

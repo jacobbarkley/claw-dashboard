@@ -1,0 +1,20 @@
+{
+  "schema_version": "bench_campaign_registry.v1",
+  "generated_at": "2026-04-20T22:15:00-04:00",
+  "campaigns": [
+    {
+      "campaign_id": "stocks_ai_wall_street_aggressive",
+      "title": "Aggressive AI Wall Street",
+      "sleeve": "STOCKS",
+      "status": "EXPLORING",
+      "manifest_path": "data/bench/campaigns/stocks_ai_wall_street_aggressive.campaign_manifest.json"
+    },
+    {
+      "campaign_id": "stocks_etf_replacement_momentum",
+      "title": "ETF Replacement Momentum",
+      "sleeve": "STOCKS",
+      "status": "CONVERGING",
+      "manifest_path": "data/bench/campaigns/stocks_etf_replacement_momentum.campaign_manifest.json"
+    }
+  ]
+}

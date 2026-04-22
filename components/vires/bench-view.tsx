@@ -86,23 +86,35 @@ interface OperatorBundle {
 }
 
 // ─── Bench hero — headline + 4-stat strip ──────────────────────────────────
+// Home = production-only. Research lives on the Campaigns tab. The 4 stats
+// are a production snapshot: what's live, what's on paper, what's been
+// promoted, and how many campaigns are in play behind the scenes.
 
-function BenchHero({ runs, promotedCount }: { runs: BenchRun[]; promotedCount: number }) {
+function BenchHero({
+  liveCount,
+  paperCount,
+  promotedCount,
+  campaignCount,
+}: {
+  liveCount: number
+  paperCount: number
+  promotedCount: number
+  campaignCount: number
+}) {
   const stats = [
-    { label: "Runs",       value: runs.length },
-    { label: "Succeeded",  value: runs.filter(r => r.status === "SUCCEEDED").length },
-    { label: "Partial",    value: runs.filter(r => r.status === "PARTIAL").length },
-    { label: "Promoted",   value: promotedCount },
+    { label: "Live",      value: liveCount },
+    { label: "Paper",     value: paperCount },
+    { label: "Promoted",  value: promotedCount },
+    { label: "Campaigns", value: campaignCount },
   ]
   return (
     <div className="vr-card-hero" style={{ padding: 22 }}>
-      <div className="t-eyebrow" style={{ marginBottom: 10 }}>The Bench</div>
-      <div className="t-h2" style={{ lineHeight: 1.25, maxWidth: 320, marginBottom: 14 }}>
-        Where strategies <span className="t-accent">earn</span> capital.
+      <div className="t-eyebrow" style={{ marginBottom: 10 }}>Bench · Home</div>
+      <div className="t-h2" style={{ lineHeight: 1.25, maxWidth: 340, marginBottom: 14 }}>
+        What is <span className="t-accent">in production</span> right now.
       </div>
-      <div className="t-read" style={{ fontSize: 12, maxWidth: 310 }}>
-        Bench runs validate strategies through risk-aware participation across market eras. Only
-        survivors promote to live allocation.
+      <div className="t-read" style={{ fontSize: 12, maxWidth: 340 }}>
+        Home shows what is in production right now. Research lives under Campaigns.
       </div>
       <div
         style={{
@@ -263,114 +275,18 @@ function PromotedEmptyRow({ sleeve, copy }: { sleeve: Sleeve; copy: string }) {
   )
 }
 
-// ─── Run card ───────────────────────────────────────────────────────────────
-
-const SLEEVE_FROM_RUN: Record<string, Sleeve> = {
-  STOCKS: "stocks",
-  CRYPTO: "crypto",
-  OPTIONS: "options",
-}
-
-const STATUS_TONE: Record<string, "up" | "down" | "warn" | "neutral"> = {
-  SUCCEEDED: "up",
-  COMPLETED: "up",
-  PARTIAL:   "warn",
-  IN_PROGRESS: "warn",
-  RUNNING:   "warn",
-  FAILED:    "down",
-  ERRORED:   "down",
-}
-
-function RunCard({ run }: { run: BenchRun }) {
-  const sl = SLEEVE_FROM_RUN[(run.sleeve ?? "STOCKS").toUpperCase()] ?? "stocks"
-  const color = `var(--vr-sleeve-${sl})`
-  const evaluated = run.evaluated_candidate_count ?? 0
-  const total = run.search_space_size ?? 0
-  const pct = total > 0 ? Math.min(100, (evaluated / total) * 100) : 0
-  const tone = STATUS_TONE[(run.status ?? "").toUpperCase()] ?? "neutral"
-  const detailHref = `/vires/bench/run/${encodeURIComponent(run.bench_id)}/${encodeURIComponent(run.run_id)}`
-
-  return (
-    <Link
-      href={detailHref}
-      className="vr-card"
-      style={{
-        padding: 14,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        background: "var(--vr-ink)",
-        border: "1px solid var(--vr-line)",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-            <SleeveChip sleeve={sl} />
-            {run.promotion_target && (
-              <span className="t-eyebrow" style={{ color: "var(--vr-cream-faint)" }}>
-                · {run.promotion_target.toLowerCase()}
-              </span>
-            )}
-          </div>
-          <div className="t-h4" style={{ fontSize: 14, lineHeight: 1.3 }}>{run.title}</div>
-        </div>
-        {run.status && <StatusPill tone={tone}>{run.status}</StatusPill>}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 2 }}>
-        <div>
-          <div className="t-eyebrow" style={{ fontSize: 9 }}>{run.primary_metric ?? "metric"}</div>
-          <div
-            className="t-num"
-            style={{ fontSize: 18, color, fontWeight: 500, marginTop: 3, fontFamily: "var(--ff-mono)" }}
-          >
-            {run.primary_metric_value != null ? run.primary_metric_value.toFixed(4) : "—"}
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9 }}>Evaluated</div>
-          <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", marginTop: 3 }}>
-            {evaluated.toLocaleString()}
-            {total > 0 && (
-              <span style={{ color: "var(--vr-cream-faint)" }}> / {total.toLocaleString()}</span>
-            )}
-          </div>
-        </div>
-      </div>
-      {total > 0 && (
-        <div style={{ height: 2, background: "rgba(241,236,224,0.04)", overflow: "hidden" }}>
-          <div style={{ width: `${pct}%`, height: "100%", background: color, transition: "width 1s" }} />
-        </div>
-      )}
-      {run.selected_config_id && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderTop: "1px solid var(--vr-line)",
-            paddingTop: 8,
-          }}
-        >
-          <span className="t-eyebrow" style={{ fontSize: 9 }}>Winner</span>
-          <span className="t-ticker" style={{ fontSize: 11, color: "var(--vr-gold)", textTransform: "none" }}>
-            {run.selected_config_id}
-          </span>
-        </div>
-      )}
-    </Link>
-  )
-}
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
-export function ViresBenchView({ benchData: initialBench, operator: initialOperator }: {
+export function ViresBenchView({
+  benchData: initialBench,
+  operator: initialOperator,
+  campaignCount = 0,
+}: {
   benchData: BenchData | null
   operator: OperatorBundle | null
+  campaignCount?: number
 }) {
-  const [filter, setFilter] = useState<"ALL" | "STOCKS" | "CRYPTO">("ALL")
   const [liveBenchData, setLiveBenchData] = useState<BenchData | null>(initialBench)
   const [liveOperator, setLiveOperator] = useState<OperatorBundle | null>(initialOperator)
 
@@ -421,38 +337,31 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
 
   const currentBenchData = liveBenchData ?? initialBench
 
-  if (!currentBenchData?.runs?.length) {
-    return (
-      <div className="vr-screen" style={{ padding: 16 }}>
-        <BenchHero runs={[]} promotedCount={0} />
-        <div className="vr-card" style={{ padding: 24, marginTop: 14 }}>
-          <div className="t-eyebrow" style={{ marginBottom: 6 }}>No bench runs</div>
-          <div className="t-label">
-            Run scripts/pull-bench-data.py to ingest from trading-bot, or wait for the publication
-            cron.
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Sort runs newest-first by generated_at
-  const sortedRuns = [...currentBenchData.runs].sort((a, b) => {
-    const ta = a.generated_at ? new Date(a.generated_at).getTime() : 0
-    const tb = b.generated_at ? new Date(b.generated_at).getTime() : 0
-    return tb - ta
-  })
-  const filtered = filter === "ALL" ? sortedRuns : sortedRuns.filter(r => (r.sleeve ?? "").toUpperCase() === filter)
-
   const promotedBySleeve = mapAllPromotedBySleeve(liveOperator)
   const promotedCount = promotedBySleeve.stocks.length + promotedBySleeve.options.length + promotedBySleeve.crypto.length
+
+  // Production counts by eligibility. Prefer live manifest data when present;
+  // passports expose `manifest.eligibility` from the lib/vires-bench.ts reader.
+  const passports = currentBenchData?.passports ?? []
+  const liveCount  = passports.filter(p => {
+    const e = (p as unknown as { manifest?: { eligibility?: string | null } })?.manifest?.eligibility?.toUpperCase?.()
+    return e === "LIVE"
+  }).length
+  const paperCount = passports.filter(p => {
+    const e = (p as unknown as { manifest?: { eligibility?: string | null } })?.manifest?.eligibility?.toUpperCase?.()
+    return e === "PAPER"
+  }).length
+
+  // No-runs empty state — fall through and render the production blocks, which
+  // each have their own per-sleeve empty copy. The old "no bench runs" wall
+  // only made sense while Home was the research surface; post-v3 it's not.
 
   // Resolve a passport link per sleeve. Today the bench data ships passports
   // tagged by sleeve, so we link the first card per sleeve to that sleeve's
   // first matching passport. Future: match by manifest_id once passports
   // expose it.
   const passportBySleeve: Record<Sleeve, string | null> = { stocks: null, options: null, crypto: null }
-  for (const p of currentBenchData.passports ?? []) {
+  for (const p of currentBenchData?.passports ?? []) {
     const sleeveToken = (p.sleeve ?? "").toLowerCase()
     if (sleeveToken === "stocks" && !passportBySleeve.stocks) passportBySleeve.stocks = `/vires/bench/passport/${encodeURIComponent(p.id)}`
     else if (sleeveToken === "crypto" && !passportBySleeve.crypto) passportBySleeve.crypto = `/vires/bench/passport/${encodeURIComponent(p.id)}`
@@ -467,7 +376,12 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
 
   return (
     <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
-      <BenchHero runs={sortedRuns} promotedCount={promotedCount} />
+      <BenchHero
+        liveCount={liveCount}
+        paperCount={paperCount}
+        promotedCount={promotedCount}
+        campaignCount={campaignCount}
+      />
 
       <SectionHeader
         eyebrow="Promoted"
@@ -497,38 +411,43 @@ export function ViresBenchView({ benchData: initialBench, operator: initialOpera
         })}
       </div>
 
-      <SectionHeader
-        eyebrow="Research"
-        title="Active runs"
-        right={
-          <div style={{ display: "flex", gap: 2, padding: 2, background: "rgba(241,236,224,0.02)", border: "1px solid var(--vr-line)", borderRadius: 3 }}>
-            {(["ALL", "STOCKS", "CRYPTO"] as const).map(f => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className="t-eyebrow"
-                style={{
-                  padding: "3px 7px",
-                  borderRadius: 2,
-                  border: "none",
-                  cursor: "pointer",
-                  background: filter === f ? "var(--vr-gold)" : "transparent",
-                  color: filter === f ? "var(--vr-ink)" : "var(--vr-cream-mute)",
-                  fontWeight: 600,
-                  fontSize: 9,
-                }}
-              >
-                {f}
-              </button>
-            ))}
+      {/* Research-pressure pointer row — zero-overlap invariant sends operators
+          to Campaigns for anything research-facing. */}
+      <Link
+        href="/vires/bench/campaigns"
+        className="vr-card"
+        style={{
+          padding: "14px 16px",
+          marginTop: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          background: "rgba(241,236,224,0.015)",
+          textDecoration: "none",
+          color: "inherit",
+        }}
+      >
+        <div>
+          <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 4 }}>
+            Research pressure
           </div>
-        }
-      />
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {filtered.map(r => <RunCard key={`${r.bench_id}/${r.run_id}`} run={r} />)}
-      </div>
+          <div className="t-h4" style={{ fontSize: 14, color: "var(--vr-cream)" }}>
+            {campaignCount === 0
+              ? "No campaigns yet — research lands here as theses mature"
+              : `${campaignCount} active ${campaignCount === 1 ? "campaign" : "campaigns"} competing for promotion`}
+          </div>
+        </div>
+        <span
+          className="t-eyebrow"
+          style={{ fontSize: 10, color: "var(--vr-gold)", display: "inline-flex", gap: 6, alignItems: "center" }}
+        >
+          Open Campaigns
+          <svg width="10" height="10" viewBox="0 0 8 8" fill="none">
+            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+          </svg>
+        </span>
+      </Link>
 
       {/* Suppress unused-var noise — fmtPct will be used once leaderboard lands. */}
       {(false as boolean) && <span>{fmtPct(0)}</span>}

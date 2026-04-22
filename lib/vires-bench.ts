@@ -359,7 +359,7 @@ function stageLabelForManifest(manifest: JsonObject | null): string {
 
 function eligibilityForManifest(manifest: JsonObject | null): string {
   if (!manifest) return "BENCH_ONLY"
-  return isObject(manifest.broker) && manifest.broker.paper_only ? "PAPER_SHADOW" : "LIVE_ELIGIBLE"
+  return isObject(manifest.broker) && manifest.broker.paper_only ? "PAPER" : "LIVE_ELIGIBLE"
 }
 
 function buildLifecycle(
@@ -544,8 +544,8 @@ function buildStockPassport(
       ref: str(manifest.manifest_id) ?? str(manifest.title),
       stage: stageLabelForManifest(manifest),
       eligibility: eligibilityForManifest(manifest),
-      shadowDays: null,
-      shadowTarget: null,
+      paperDays: null,
+      paperTarget: null,
       runtimeContract: str(manifest.runtime_contract),
       cadence: str(manifest.cadence),
       broker: manifest.broker ?? null,
@@ -676,8 +676,8 @@ function buildCryptoManagedPassport(
       ref: str(manifest.manifest_id) ?? str(manifest.title),
       stage: stageLabelForManifest(manifest),
       eligibility: eligibilityForManifest(manifest),
-      shadowDays: null,
-      shadowTarget: null,
+      paperDays: null,
+      paperTarget: null,
       runtimeContract: str(manifest.runtime_contract),
       cadence: str(manifest.cadence),
       broker: manifest.broker ?? null,
@@ -795,8 +795,8 @@ function buildCryptoBenchOnlyPassport(spec: JsonObject | null, report: JsonObjec
       ref: str(report?.bench_id) ?? "bench-only",
       stage: "STRONG_NOT_PROMOTED",
       eligibility: "BENCH_ONLY",
-      shadowDays: null,
-      shadowTarget: null,
+      paperDays: null,
+      paperTarget: null,
       runtimeContract: null,
       cadence: null,
       broker: null,
