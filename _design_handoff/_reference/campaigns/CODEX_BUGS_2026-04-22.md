@@ -75,9 +75,69 @@ Or loosen the Pydantic model with a validator that accepts `date | datetime | st
 
 ---
 
-## Bug 2 — (none at this time)
+## Bug 2 — Crypto records still emit empty `trade_history` after the Bug 1 fix
 
-Reserved for the next pass if more surfaces while running the rest of Codex's workflow.
+### Status
+
+Bug 1 is landed (`codex/passport-v2-workflow @ 5a8c979`) and verified from the
+Linux side. `refresh-passport-v2` now completes without the pydantic error.
+Stock records in the bank populate trade_history cleanly (330 / 328 / 328
+rows, dates as ISO strings). **Crypto records still have empty
+`trade_history`** (`{}`, no `rows` key at all), so the dashboard's
+Trade-history carousel still shows the honest empty state on q090c / q090d.
+
+### What's on disk for crypto
+
+Both records carry evidence metadata pointing to real files:
+
+- `source_manifest_path` → exists
+- `validation_report_path` → exists (`.../crypto_sleeve_comparison_report.json`)
+- `experiment_config_path` → exists
+- `campaign_summary_path` → null (crypto wasn't promoted via the campaign path)
+
+The `crypto_sleeve_comparison_report.json` top-level keys look like:
+
+```
+generated_at, symbol, dataset_bar_count, daily_bar_count,
+coverage_start, coverage_end, fee_bps_round_trip, slippage_bps_one_way,
+benchmark, core_regime, graduated_core, tactical,
+core_gated_tactical, graduated_core_tactical_overlay,
+benchmark_baseline
+```
+
+That's a **sleeve-level comparison artifact**, not a per-event ledger. There
+are no trade rows in this file — only aggregated sleeve stats.
+
+### Diagnosis
+
+The crypto bench run produced sleeve-comparison output, not a
+simulation-rows artifact. The refresh-passport-v2 row builder finds no
+simulation evidence to iterate → `trade_history.rows = []` → the bank's
+normalization emits an empty-dict `trade_history` (observed: `{}` with no
+`rows` key at all).
+
+Two directions for the fix, both on Codex:
+
+1. **Producer-side**: make the crypto bench also emit a simulation-rows
+   artifact (per-event ledger), the way the stock bench does. Adapter then
+   finds evidence to iterate and the carousel lights up on its own.
+2. **Adapter-side lift**: recognize "crypto with only sleeve-comparison
+   evidence" as an explicit state rather than a silent empty, e.g. write
+   `trade_history = { "status": "SLEEVE_COMPARISON_ONLY", "rows": [] }`
+   so the passport UI can render a slightly more specific empty-state copy.
+
+Either is additive — the current frontend render is already honest, so no
+blocking action there.
+
+### Verification after fix
+
+Same pattern as Bug 1:
+1. Rerun `refresh-passport-v2` from Linux side.
+2. Confirm `state/rebuild_latest/strategy_bank.json` has non-null
+   `trade_history.rows` for both crypto records (or an explicit status
+   field if going option 2).
+3. `python3 scripts/pull-bench-data.py` from dashboard.
+4. Crypto passport carousel populates.
 
 ---
 
