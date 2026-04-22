@@ -466,7 +466,7 @@ export const VIRES_GLOSSARY: Record<string, GlossaryEntry> = {
   Gate_ERA_ROBUSTNESS: {
     title: "Era Robustness",
     full: "Per-Era Pass Count Across the Bench Era Matrix",
-    body: "Sharpe and returns are re-measured across each named historical era (e.g. 2023 H1, 2024 H2). This gate demands the strategy pass in every era, not just the favorable ones \u2014 if it survives every regime on the bench, it has a shot at surviving the next one.",
+    body: "Sharpe and returns are re-measured across each named historical era (e.g. 2023 H1, 2024 H2). This gate demands the strategy pass in every era, not just the favorable ones. Same family as the parameter plateau check \u2014 both ask \u201Cdoes this survive small reasonable changes?\u201D A strategy that wins on one era but fails the others is a lucky peak in time, not a broad plateau. Era robustness tests against time regimes; the plateau check tests against parameter neighbors. Both need to clear.",
   },
   // ─ Promotion lifecycle events (Passport v2 §6) ─
   Event_PROMOTION_NOMINATED: {
