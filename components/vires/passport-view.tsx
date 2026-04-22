@@ -7,8 +7,10 @@
 // gates + assumptions + lifecycle timeline.
 
 import Link from "next/link"
+import { useState } from "react"
 import { InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 import { ParameterHeatmap, type PlateauPayload } from "./plateau-view"
+import { TradeHistoryCarousel } from "./trade-history-carousel"
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Matches the shape lib/vires-bench.ts returns for a passport entry.
@@ -90,7 +92,7 @@ interface PassportPaperMonitoring {
   } | null
 }
 
-interface PassportTradeHistoryRow {
+export interface PassportTradeHistoryRow {
   date?: string | null
   event_id?: string | null
   event_type?: string | null
@@ -102,7 +104,7 @@ interface PassportTradeHistoryRow {
   pnl_realized?: number | null
 }
 
-interface PassportTradeHistory {
+export interface PassportTradeHistory {
   schema_version?: string | null
   weight_basis?: string | null
   cash_model?: string | null
@@ -711,14 +713,16 @@ function PaperMonitoringCard({ monitoring }: { monitoring: Passport["paper_monit
 
 function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_history"] }) {
   const rows = tradeHistory?.rows ?? []
-  if (!rows.length) return null
+  const [rawOpen, setRawOpen] = useState(false)
+  if (!rows.length || !tradeHistory) return null
 
   const symbolCount = new Set(rows.map(row => row.symbol).filter(Boolean)).size
 
   return (
     <section>
-      <SectionHeader eyebrow="Trade history" title="Raw ledger preview" />
+      <SectionHeader eyebrow="Trade history" title="What this strategy did" />
       <div className="vr-card" style={{ overflow: "hidden" }}>
+        {/* Metadata strip — row count, symbols, cash + weight basis. */}
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--vr-line)", display: "flex", gap: 16, flexWrap: "wrap" }}>
           <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream)" }}>
             {rows.length} rows · {symbolCount} symbols
@@ -730,61 +734,96 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
             {tradeHistory?.weight_basis?.toLowerCase().replace(/_/g, " ") ?? "post event total portfolio"}
           </div>
         </div>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
-            <thead>
-              <tr>
-                {["Date", "Symbol", "Side", "Weight after", "Price", "Notional", "Realized P&L"].map(label => (
-                  <th
-                    key={label}
-                    className="t-eyebrow"
-                    style={{
-                      fontSize: 9,
-                      textAlign: "left",
-                      padding: "10px 16px",
-                      borderBottom: "1px solid var(--vr-line)",
-                      color: "var(--vr-cream-faint)",
-                    }}
-                  >
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 18).map((row, index) => (
-                <tr key={`${row.event_id ?? "row"}-${index}`}>
-                  <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {fmtDate(row.date)}
-                  </td>
-                  <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {row.symbol ?? "—"}
-                  </td>
-                  <td className="t-label" style={{ fontSize: 11, color: row.side === "BUY" ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {row.side ?? "—"}
-                  </td>
-                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {row.weight_after != null ? `${(row.weight_after * 100).toFixed(2)}%` : "—"}
-                  </td>
-                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {row.price != null ? `$${row.price.toFixed(2)}` : "—"}
-                  </td>
-                  <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {fmtUsd(row.notional)}
-                  </td>
-                  <td className="t-num" style={{ fontSize: 12, color: (row.pnl_realized ?? 0) >= 0 ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
-                    {row.pnl_realized != null ? fmtUsd(row.pnl_realized) : "—"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        {/* Derived-views carousel is the primary read. */}
+        <div style={{ padding: "14px 0 10px" }}>
+          <TradeHistoryCarousel history={tradeHistory} />
         </div>
-        {rows.length > 18 && (
-          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", padding: "10px 16px" }}>
-            Showing the first 18 ledger rows. This raw stream is the source for the fuller allocation and contribution views.
-          </div>
-        )}
+
+        {/* Raw ledger rows behind a disclosure — keeps the power-user view
+            reachable without crowding the default mobile read. */}
+        <div style={{ borderTop: "1px solid var(--vr-line)" }}>
+          <button
+            type="button"
+            onClick={() => setRawOpen(v => !v)}
+            className="t-eyebrow"
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              background: "transparent",
+              border: "none",
+              color: "var(--vr-cream-mute)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: 10,
+              letterSpacing: "0.18em",
+              fontFamily: "var(--ff-sans)",
+              textTransform: "uppercase",
+            }}
+          >
+            {rawOpen ? "Hide raw rows" : "Show raw rows"}
+            <span aria-hidden style={{ fontSize: 11, transition: "transform 180ms ease", display: "inline-block", transform: rawOpen ? "rotate(90deg)" : "rotate(0deg)" }}>›</span>
+          </button>
+          {rawOpen && (
+            <div style={{ overflowX: "auto", borderTop: "1px solid var(--vr-line)" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
+                <thead>
+                  <tr>
+                    {["Date", "Symbol", "Side", "Weight after", "Price", "Notional", "Realized P&L"].map(label => (
+                      <th
+                        key={label}
+                        className="t-eyebrow"
+                        style={{
+                          fontSize: 9,
+                          textAlign: "left",
+                          padding: "10px 16px",
+                          borderBottom: "1px solid var(--vr-line)",
+                          color: "var(--vr-cream-faint)",
+                        }}
+                      >
+                        {label}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, 18).map((row, index) => (
+                    <tr key={`${row.event_id ?? "row"}-${index}`}>
+                      <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {fmtDate(row.date)}
+                      </td>
+                      <td className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {row.symbol ?? "—"}
+                      </td>
+                      <td className="t-label" style={{ fontSize: 11, color: row.side === "BUY" ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {row.side ?? "—"}
+                      </td>
+                      <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {row.weight_after != null ? `${(row.weight_after * 100).toFixed(2)}%` : "—"}
+                      </td>
+                      <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {row.price != null ? `$${row.price.toFixed(2)}` : "—"}
+                      </td>
+                      <td className="t-num" style={{ fontSize: 12, color: "var(--vr-cream)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {fmtUsd(row.notional)}
+                      </td>
+                      <td className="t-num" style={{ fontSize: 12, color: (row.pnl_realized ?? 0) >= 0 ? "var(--vr-up)" : "var(--vr-down)", padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
+                        {row.pnl_realized != null ? fmtUsd(row.pnl_realized) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rows.length > 18 && (
+                <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", padding: "10px 16px" }}>
+                  Showing the first 18 of {rows.length} ledger rows.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )
