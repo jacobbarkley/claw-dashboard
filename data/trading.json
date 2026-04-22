@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-22T14:00:11.203552+00:00",
+  "generated_at": "2026-04-22T14:15:12.178184+00:00",
   "as_of_date": "2026-04-22",
   "account": {
     "equity": 85526.35,
@@ -1587,6 +1587,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "IP",
+        "price": 36.5,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-15",
+        "dte": 23,
+        "short_strike": 40.0,
+        "long_strike": 35.0,
+        "spread_width": 5.0,
+        "net_credit": 2.9,
+        "credit_width_ratio": 0.58,
+        "annualized_yield_pct": 1008.1,
+        "max_loss_per_contract": 210.0,
+        "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "COO",
         "price": 71.21,
         "sector": "Healthcare",
@@ -1603,12 +1621,30 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
+      },
+      {
+        "symbol": "SCHW",
+        "price": 94.8,
+        "sector": "Financial Services",
+        "expiry": "2026-05-15",
+        "dte": 23,
+        "short_strike": 95.0,
+        "long_strike": 90.0,
+        "spread_width": 5.0,
+        "net_credit": 2.11,
+        "credit_width_ratio": 0.422,
+        "annualized_yield_pct": 733.5,
+        "max_loss_per_contract": 289.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 1,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "BKNG",
