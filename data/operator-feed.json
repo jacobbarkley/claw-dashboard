@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-22T17:40:03.088353+00:00",
+  "generated_at": "2026-04-22T17:45:01.841231+00:00",
   "as_of_date": "2026-04-22",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-22T17:40:03.088393+00:00"
+    "audit_written_at": "2026-04-22T17:45:01.841291+00:00"
   },
   "kpis": {
     "total_trades": 62,
@@ -935,15 +935,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-04-22T17:40:01.518701686Z",
+    "as_of": "2026-04-22T17:45:03.844637611Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 273.58,
+        "current_price": 273.6,
         "prior_close": 266.16,
-        "change_usd": 7.42,
-        "change_pct": 2.7878,
+        "change_usd": 7.44,
+        "change_pct": 2.7953,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -951,10 +951,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 419.64,
+        "current_price": 419.7,
         "prior_close": 402.26,
-        "change_usd": 17.38,
-        "change_pct": 4.3206,
+        "change_usd": 17.44,
+        "change_pct": 4.3355,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -962,10 +962,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1006.33,
+        "current_price": 1005.94,
         "prior_close": 1005.76,
-        "change_usd": 0.57,
-        "change_pct": 0.0567,
+        "change_usd": 0.18,
+        "change_pct": 0.0179,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -973,10 +973,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 918.725,
+        "current_price": 918.085,
         "prior_close": 902.92,
-        "change_usd": 15.805,
-        "change_pct": 1.7504,
+        "change_usd": 15.165,
+        "change_pct": 1.6796,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -984,10 +984,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 675.34,
+        "current_price": 677.48,
         "prior_close": 668.69,
-        "change_usd": 6.65,
-        "change_pct": 0.9945,
+        "change_usd": 8.79,
+        "change_pct": 1.3145,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
