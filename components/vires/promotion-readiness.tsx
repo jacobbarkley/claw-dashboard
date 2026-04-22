@@ -46,34 +46,79 @@ const GATE_INFO_TERM: Record<string, string> = {
   ERA_ROBUSTNESS:    "Gate_ERA_ROBUSTNESS",
 }
 
-// ─── Value formatting ──────────────────────────────────────────────────────
+// ─── Value + threshold formatting ──────────────────────────────────────────
+// Each gate has distinct units and a distinct threshold direction. DRAWDOWN
+// is a ceiling (value must be ≤ threshold); the rest are floors (value ≥
+// threshold); ERA_ROBUSTNESS uses "X of Y" instead of a comparison.
+// Defined per-gate rather than by heuristic so the real producer's shape
+// (e.g. drawdown as a positive magnitude, expectancy as raw dollars)
+// renders without accidental sign prefixes or reversed directions.
+
+type GateFormatter = {
+  valueFmt: (v: number) => string
+  thresholdFmt: (t: number) => string
+}
+
+const DEFAULT_FMT: GateFormatter = {
+  valueFmt: v => v.toFixed(2),
+  thresholdFmt: t => `≥ ${t.toFixed(2)}`,
+}
+
+const GATE_FMT: Record<string, GateFormatter> = {
+  TRADE_COUNT: {
+    valueFmt: v => `${Math.round(v)}`,
+    thresholdFmt: t => `≥ ${Math.round(t)}`,
+  },
+  PROFIT_FACTOR: {
+    valueFmt: v => v.toFixed(2),
+    thresholdFmt: t => `≥ ${t.toFixed(2)}`,
+  },
+  EXPECTANCY: {
+    // Raw per-trade dollars on the modeled capital base.
+    valueFmt: v => `$${v.toFixed(2)}`,
+    thresholdFmt: t => `≥ $${t.toFixed(2)}`,
+  },
+  PROFITABLE_FOLDS: {
+    // Percentage of folds that closed green. Always non-negative; no sign prefix.
+    valueFmt: v => `${v.toFixed(2)}%`,
+    thresholdFmt: t => `≥ ${t.toFixed(0)}%`,
+  },
+  DRAWDOWN: {
+    // Producer emits a positive magnitude; display as magnitude (no sign).
+    // This is a ceiling — value must be LESS than the threshold.
+    valueFmt: v => `${Math.abs(v).toFixed(2)}%`,
+    thresholdFmt: t => `≤ ${Math.abs(t).toFixed(0)}%`,
+  },
+  BENCHMARK: {
+    // Signed excess vs benchmark. Sign matters — show +/− prefix.
+    valueFmt: v => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`,
+    thresholdFmt: t => `≥ ${t.toFixed(2)}%`,
+  },
+  EXPECTANCY_DECAY: {
+    valueFmt: v => v.toFixed(2),
+    thresholdFmt: t => `≥ ${t.toFixed(2)}`,
+  },
+  HOLDBACK: {
+    valueFmt: v => v.toFixed(3),
+    thresholdFmt: t => `≥ ${t.toFixed(2)}`,
+  },
+  ERA_ROBUSTNESS: {
+    // "Passes X of Y" phrasing — no ≥/≤, just the pass count.
+    valueFmt: v => `${Math.round(v)}`,
+    thresholdFmt: t => `of ${Math.round(t)}`,
+  },
+}
 
 function formatValue(gate: ReadinessGate): string {
-  const { value, gate_id } = gate
-  if (value == null) return "—"
-  // Heuristic: percentage-flavored gates render with % suffix; count-flavored
-  // gates render as integers; ratio-flavored gates render with 2 decimals.
-  if (gate_id === "BENCHMARK" || gate_id === "DRAWDOWN" || gate_id === "PROFITABLE_FOLDS") {
-    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`
-  }
-  if (gate_id === "TRADE_COUNT" || gate_id === "ERA_ROBUSTNESS") {
-    return `${Math.round(value)}`
-  }
-  return value.toFixed(2)
+  if (gate.value == null) return "—"
+  const fmt = GATE_FMT[gate.gate_id] ?? DEFAULT_FMT
+  return fmt.valueFmt(gate.value)
 }
 
 function formatThreshold(gate: ReadinessGate): string | null {
-  const { threshold, gate_id } = gate
-  if (threshold == null) return null
-  if (gate_id === "BENCHMARK" || gate_id === "DRAWDOWN" || gate_id === "PROFITABLE_FOLDS") {
-    return threshold >= 0 ? `≥ ${threshold.toFixed(2)}%` : `≥ ${threshold.toFixed(2)}%`
-  }
-  if (gate_id === "TRADE_COUNT") return `≥ ${Math.round(threshold)}`
-  if (gate_id === "ERA_ROBUSTNESS") {
-    // Threshold here is "required pass count"
-    return `of ${Math.round(threshold)}`
-  }
-  return `≥ ${threshold.toFixed(2)}`
+  if (gate.threshold == null) return null
+  const fmt = GATE_FMT[gate.gate_id] ?? DEFAULT_FMT
+  return fmt.thresholdFmt(gate.threshold)
 }
 
 // ─── Status chip ───────────────────────────────────────────────────────────
