@@ -3,6 +3,7 @@ import "../vires.css"
 import { ViresInnerNav } from "@/components/vires/inner-nav"
 import { ViresFrame } from "@/components/vires/frame"
 import { ViresTalonProvider } from "@/components/vires/talon"
+import { ViresRouteTransition } from "@/components/vires/route-transition"
 
 // Vires Capital design system fonts — loaded only inside /vires routes so
 // the existing /trading, /bench, /queue surfaces keep their DM_Sans + DM_Mono.
@@ -33,7 +34,7 @@ export default function ViresLayout({ children }: { children: React.ReactNode })
       <ViresFrame>
         <ViresTalonProvider>
           <ViresInnerNav mode="PAPER" />
-          {children}
+          <ViresRouteTransition>{children}</ViresRouteTransition>
         </ViresTalonProvider>
       </ViresFrame>
     </div>
