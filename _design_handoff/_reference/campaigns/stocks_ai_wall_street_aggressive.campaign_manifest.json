@@ -1,0 +1,126 @@
+{
+  "schema_version": "bench_campaign_manifest.v1",
+  "campaign_id": "stocks_ai_wall_street_aggressive",
+  "title": "Aggressive AI Wall Street",
+  "sleeve": "STOCKS",
+  "objective": "Find a concentrated AI and technology leadership sleeve that compounds faster than broad large-cap market exposure without faking robustness.",
+  "benchmark_symbol": "QQQ",
+  "status": "EXPLORING",
+  "summary": "Aggressive concentrated-tech research lane. Current leader exists, but nothing in this campaign is close enough to quality-gated promotion yet.",
+  "updated_at": "2026-04-20T21:55:00-04:00",
+  "updated_by": "codex",
+  "current_leader_candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
+  "last_run_at": "2026-04-14T16:00:00-04:00",
+  "last_meaningful_change_at": "2026-04-14T16:00:00-04:00",
+  "last_meaningful_change": "Dynamic Top 6 became the current aggressive leader after the first focused AI/tech screen batch.",
+  "promotion_target": "Clear bench quality gates and earn paper eligibility without relying on one hot AI tape.",
+  "recency_signals": {
+    "last_leader_change_at": "2026-04-14T16:00:00-04:00",
+    "leader_stability_sessions": 1,
+    "runner_up_candidate_id": "q085_dynamic_tech_top8.stop_5_target_15",
+    "runner_up_gap": {
+      "metric": "QUALITY_GATE_STATUS",
+      "value": null,
+      "summary": "Leader and runner-up are still clustered in exploratory territory; neither has earned promotion pressure yet."
+    },
+    "last_param_sweep_at": "2026-04-14T16:00:00-04:00",
+    "days_since_param_sweep": 6
+  },
+  "family_groups": [
+    {
+      "family_id": "DYNAMIC_TECH_SCREEN",
+      "title": "Dynamic Tech Screens",
+      "summary": "Month-frozen or screen-driven universes that keep the candidate set concentrated in current AI and software leadership."
+    },
+    {
+      "family_id": "REGIME_AWARE_MOMENTUM",
+      "title": "Regime-Gated Momentum",
+      "summary": "The underlying implementation family currently executing these aggressive screens."
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
+      "title": "Dynamic Top 6",
+      "family_id": "DYNAMIC_TECH_SCREEN",
+      "role": "LEADER",
+      "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
+      "artifact_refs": {
+        "campaign_config_path": "backtest/campaigns/q085_dynamic_tech_top6/campaign_config.json",
+        "campaign_summary_path": "backtest/campaigns/q085_dynamic_tech_top6/results/2026-04-14-dynamic-top6/campaign_summary.json"
+      },
+      "latest_run": {
+        "run_id": "2026-04-14-dynamic-top6",
+        "completed_at": "2026-04-14T16:00:00-04:00",
+        "summary": "Current aggressive leader. Still failed quality gates across the era sweep, so this is a bench leader, not a promotion candidate yet.",
+        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top6/results/2026-04-14-dynamic-top6/campaign_summary.json"
+      },
+      "notes": [
+        "This is the sharpest expression of the aggressive AI thesis currently checked in.",
+        "Leader status here does not imply promotion readiness."
+      ]
+    },
+    {
+      "candidate_id": "q085_dynamic_tech_top8.stop_5_target_15",
+      "title": "Dynamic Top 8",
+      "family_id": "DYNAMIC_TECH_SCREEN",
+      "role": "CHALLENGER",
+      "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
+      "artifact_refs": {
+        "campaign_config_path": "backtest/campaigns/q085_dynamic_tech_top8/campaign_config.json",
+        "campaign_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
+      },
+      "latest_run": {
+        "run_id": "2026-04-14-q085-dynamic-tech-01",
+        "completed_at": "2026-04-14T16:00:00-04:00",
+        "summary": "Broader aggressive challenger using the same frozen stop/target structure on a wider top-8 AI/tech screen.",
+        "result_summary_path": "backtest/campaigns/q085_dynamic_tech_top8/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
+      },
+      "notes": [
+        "Useful as the immediate breadth check against the top-6 concentration bet."
+      ]
+    },
+    {
+      "candidate_id": "q085_momentum_dynamic_tech_screen.stop_5_target_15",
+      "title": "Dynamic Tech Screen",
+      "family_id": "DYNAMIC_TECH_SCREEN",
+      "role": "CHALLENGER",
+      "artifact_kind": "BENCH_CAMPAIGN_VARIANT",
+      "artifact_refs": {
+        "campaign_config_path": "backtest/campaigns/q085_momentum_dynamic_tech_screen/campaign_config.json",
+        "campaign_summary_path": "backtest/campaigns/q085_momentum_dynamic_tech_screen/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
+      },
+      "latest_run": {
+        "run_id": "2026-04-14-q085-dynamic-tech-01",
+        "completed_at": "2026-04-14T16:00:00-04:00",
+        "summary": "Dynamic aggressive screen using the same regime-aware momentum engine with a broader rotating tech leadership universe.",
+        "result_summary_path": "backtest/campaigns/q085_momentum_dynamic_tech_screen/results/2026-04-14-q085-dynamic-tech-01/campaign_summary.json"
+      },
+      "notes": [
+        "Keeps the campaign from over-anchoring on one specific top-N concentration choice."
+      ]
+    }
+  ],
+  "change_log": [
+    {
+      "at": "2026-04-14T16:00:00-04:00",
+      "kind": "LEADER_CHANGED",
+      "title": "Dynamic Top 6 took the lead",
+      "detail": "The first aggressive AI/tech batch gave Dynamic Top 6 the internal lead, but the campaign remains exploratory because the era results still fail quality gates.",
+      "actor": "codex",
+      "candidate_id": "q085_dynamic_tech_top6.stop_5_target_15",
+      "from_candidate_id": null,
+      "to_candidate_id": "q085_dynamic_tech_top6.stop_5_target_15"
+    },
+    {
+      "at": "2026-04-20T21:45:00-04:00",
+      "kind": "CANDIDATE_ADDED",
+      "title": "Campaign manifest checked in",
+      "detail": "Bench Campaigns now model this thesis as a first-class research program instead of leaving the candidates as disconnected passports.",
+      "actor": "codex",
+      "candidate_id": null,
+      "from_candidate_id": null,
+      "to_candidate_id": null
+    }
+  ]
+}
