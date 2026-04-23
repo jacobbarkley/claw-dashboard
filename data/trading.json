@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-23T14:45:12.036428+00:00",
+  "generated_at": "2026-04-23T15:00:10.662523+00:00",
   "as_of_date": "2026-04-23",
   "account": {
     "equity": 85636.1,
@@ -1608,29 +1608,11 @@
         "short_strike": 75.0,
         "long_strike": 70.0,
         "spread_width": 5.0,
-        "net_credit": 2.7,
-        "credit_width_ratio": 0.54,
-        "annualized_yield_pct": 938.6,
-        "max_loss_per_contract": 230.0,
+        "net_credit": 2.4,
+        "credit_width_ratio": 0.48,
+        "annualized_yield_pct": 834.3,
+        "max_loss_per_contract": 260.0,
         "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-15",
-        "dte": 22,
-        "short_strike": 40.0,
-        "long_strike": 35.0,
-        "spread_width": 5.0,
-        "net_credit": 2.6,
-        "credit_width_ratio": 0.52,
-        "annualized_yield_pct": 903.8,
-        "max_loss_per_contract": 240.0,
-        "iv_rank_proxy": 0.031,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1675,7 +1657,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 4,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "BKNG",
