@@ -1034,9 +1034,11 @@ function FamilyGroupView({
 export function ViresCampaignsDetail({
   campaign,
   passportByCandidateId = {},
+  targetPassport = null,
 }: {
   campaign: CampaignManifest
   passportByCandidateId?: Record<string, string>
+  targetPassport?: { id: string; name: string; recordId: string | null } | null
 }) {
   const candidatesById = useMemo(() => {
     const m: Record<string, Candidate> = {}
@@ -1159,6 +1161,73 @@ export function ViresCampaignsDetail({
           {campaign.objective}
         </div>
       </div>
+
+      {/* Target-passport deep-link — shown when this campaign's promotion
+          readiness role (or supersedes record id) matches an existing
+          passport. REPLACE_EXISTING campaigns point at the passport they're
+          trying to supersede; CREATE_NEW campaigns into an already-held role
+          also resolve. CREATE_NEW into an empty role renders no chip. */}
+      {targetPassport && (
+        <Link
+          href={`/vires/bench/passport/${encodeURIComponent(targetPassport.id)}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            padding: "10px 14px",
+            borderRadius: 3,
+            border: "1px solid var(--vr-line)",
+            background: "rgba(241,236,224,0.015)",
+            textDecoration: "none",
+            color: "inherit",
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div
+              className="t-eyebrow"
+              style={{
+                fontSize: 9,
+                color: "var(--vr-cream-mute)",
+                marginBottom: 3,
+                letterSpacing: "0.14em",
+              }}
+            >
+              {campaign.promotion_readiness?.target_action === "REPLACE_EXISTING"
+                ? "Targets passport"
+                : "Role holder"}
+            </div>
+            <div
+              className="t-h4"
+              style={{
+                fontSize: 13,
+                color: "var(--vr-cream)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {targetPassport.name}
+            </div>
+          </div>
+          <span
+            className="t-eyebrow"
+            style={{
+              fontSize: 10,
+              color: "var(--vr-gold)",
+              display: "inline-flex",
+              gap: 6,
+              alignItems: "center",
+              flexShrink: 0,
+            }}
+          >
+            Open passport
+            <svg width="10" height="10" viewBox="0 0 8 8" fill="none">
+              <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </span>
+        </Link>
+      )}
 
       {/* Promotion readiness — Passport v2 §4. Renders as the live scorecard
           when promotion_readiness.readiness is present; falls back to a

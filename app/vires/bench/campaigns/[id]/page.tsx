@@ -7,27 +7,58 @@ export const metadata = {
   title: "Vires Capital — Campaign",
 }
 
-// Build a candidate_id → passport.id map by matching against the bench index.
-// We match on either passport.id or passport.bench_id because Codex's producer
-// emits the canonical strategy/bench id as both possible keys. Candidates
-// without a passport aren't in the map; the UI renders them without a link.
-async function buildCandidatePassportMap(
+type CampaignPassportLinks = {
+  candidateMap: Record<string, string>
+  target: { id: string; name: string; recordId: string | null } | null
+}
+
+// One pass over the bench-index passports: build the per-candidate map AND
+// find the campaign-level "target" passport. The target is the passport a
+// campaign is pointing at — matched first by passport_role_id (robust for
+// both REPLACE_EXISTING and CREATE_NEW-into-an-already-held-role), then by
+// supersedes_record_id ↔ passport.record_id as a fallback for REPLACE_EXISTING
+// campaigns whose role match lags behind. No match → no link; the UI renders
+// candidates/campaigns without a linked passport in their usual shape.
+async function buildCampaignPassportLinks(
   candidateIds: string[],
-): Promise<Record<string, string>> {
-  if (!candidateIds.length) return {}
+  targetRoleId: string | null,
+  targetSupersedesRecordId: string | null,
+): Promise<CampaignPassportLinks> {
   const index = await loadBenchIndexWithViresContracts()
   const passports = Array.isArray(index?.passports)
-    ? (index.passports as Array<{ id?: string | null; bench_id?: string | null }>)
+    ? (index.passports as Array<{
+        id?: string | null
+        bench_id?: string | null
+        name?: string | null
+        record_id?: string | null
+        passport_role_id?: string | null
+      }>)
     : []
-  const map: Record<string, string> = {}
+
+  const candidateMap: Record<string, string> = {}
+  let target: CampaignPassportLinks["target"] = null
+
   for (const p of passports) {
     const pid = p.id
     if (!pid) continue
     for (const cid of candidateIds) {
-      if (cid === pid || cid === p.bench_id) map[cid] = pid
+      if (cid === pid || cid === p.bench_id) candidateMap[cid] = pid
+    }
+    if (!target) {
+      const roleMatch = !!targetRoleId && p.passport_role_id === targetRoleId
+      const recordMatch =
+        !!targetSupersedesRecordId && p.record_id === targetSupersedesRecordId
+      if (roleMatch || recordMatch) {
+        target = {
+          id: pid,
+          name: p.name ?? pid,
+          recordId: p.record_id ?? null,
+        }
+      }
     }
   }
-  return map
+
+  return { candidateMap, target }
 }
 
 export default async function ViresCampaignDetailPage({
@@ -78,10 +109,16 @@ export default async function ViresCampaignDetailPage({
       </div>
     )
   }
-  const passportByCandidateId = await buildCandidatePassportMap(
+  const { candidateMap, target } = await buildCampaignPassportLinks(
     campaign.candidates.map(c => c.candidate_id),
+    campaign.promotion_readiness?.passport_role_id ?? null,
+    campaign.promotion_readiness?.supersedes_record_id ?? null,
   )
   return (
-    <ViresCampaignsDetail campaign={campaign} passportByCandidateId={passportByCandidateId} />
+    <ViresCampaignsDetail
+      campaign={campaign}
+      passportByCandidateId={candidateMap}
+      targetPassport={target}
+    />
   )
 }
