@@ -58,6 +58,10 @@ TRADING_BOT_REBUILD_LATEST = _path_from_env(
     "TRADING_BOT_REBUILD_LATEST",
     Path.home() / ".openclaw/workspace/trading-bot/state/rebuild_latest",
 )
+TRADING_BOT_REBUILD_HISTORY = _path_from_env(
+    "TRADING_BOT_REBUILD_HISTORY",
+    Path.home() / ".openclaw/workspace/trading-bot/state/rebuild_history",
+)
 DASHBOARD_BENCH_DATA = _path_from_env(
     "DASHBOARD_BENCH_DATA",
     Path.home() / "claude/claw-dashboard/data/bench",
@@ -92,6 +96,17 @@ def parse_iso(ts: str | None) -> datetime:
         return datetime.fromisoformat(ts)
     except ValueError:
         return datetime.min
+
+
+def runtime_artifact_source(fname: str) -> Path:
+    """Resolve runtime mirror inputs across latest snapshots and history logs."""
+
+    latest_src = TRADING_BOT_REBUILD_LATEST / fname
+    if latest_src.exists():
+        return latest_src
+    if fname == "strategy_promotion_events.jsonl":
+        return TRADING_BOT_REBUILD_HISTORY / fname
+    return latest_src
 
 
 def pull() -> None:
@@ -233,7 +248,7 @@ def pull() -> None:
     runtime_dest.mkdir(parents=True, exist_ok=True)
     runtime_present: list[str] = []
     for fname in RUNTIME_ARTIFACT_FILES:
-        src = TRADING_BOT_REBUILD_LATEST / fname
+        src = runtime_artifact_source(fname)
         if src.exists():
             shutil.copy2(src, runtime_dest / fname)
             runtime_present.append(fname)

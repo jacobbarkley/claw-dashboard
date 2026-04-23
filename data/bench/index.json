@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-23T11:52:05.860034-04:00",
+  "generated_at": "2026-04-23T12:00:34.619914-04:00",
   "source": "local_dev_pull",
   "runs": [
     {
@@ -330,6 +330,7 @@
   "runtime_artifacts": [
     "active_strategy.json",
     "strategy_bank.json",
+    "strategy_promotion_events.jsonl",
     "execution_manifest.json",
     "session_context.json"
   ]
