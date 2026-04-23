@@ -1,17 +1,47 @@
 # Research Lab — Spec Review (2026-04-23)
 
-**Status:** Draft for Codex + Jacob review. Not implementation yet.
+**Status:** Rev 2 — amended after Codex P1/P2 review (same day). Ready
+for implementation once locked.
 **Scope:** App-driven strategy research. From idea → bench campaign →
 results → promotion candidate, with nightly autopilot and AI-assisted
 reporting as later phases.
 **Supersedes:** n/a (new surface).
+
+**Rev 2 changes (post-Codex review, 2026-04-23):**
+
+1. **Hot state split from cold audit.** `jobs.db`, heartbeats, live job
+   snapshots now explicitly live in a runtime (gitignored) state
+   directory. Only terminal artifacts (final `result.v1`, `candidate.v1`,
+   `morning_report.v1`, audit-log rollups, ideas, presets) get committed
+   to git. Fixes Codex P1.1.
+2. **Ingress + state channels are explicit.** New §2.9 names the two
+   channels: **submit** via governed request files committed to the
+   dashboard repo (same pattern as `/api/passport/workflow`); **live
+   read** via a managed state store (Upstash Redis or Vercel KV) the
+   worker publishes to and the dashboard reads from. No Vercel-to-WSL
+   mutation. Fixes Codex P1.2.
+3. **False atomicity claim removed.** SQLite is authoritative. The audit
+   file trail is an outbox written idempotently by the worker after DB
+   commit — recoverable from mid-write crashes. Fixes Codex P1.3.
+4. **Promotion handoff adapter is a named artifact.** New `nomination.v1`
+   artifact + backend-owned CLI. Dashboard Promote button POSTs through
+   the same governed-request channel; no fork of existing promotion
+   logic, no undocumented side effects. Fixes Codex P1.4.
+5. **Phase 1 split into 1a / 1b.** Phase 1a = stocks-only E2E proof
+   (beachhead). Phase 1b = crypto + options preset YAMLs + empty-state
+   readiness wiring (no new worker code). Resolves Codex P2 scope
+   inconsistency. Both 1a and 1b ship before Phase 2 starts.
+
 **Locked decisions (Jacob, 2026-04-23):**
 
 - Idea spec shape: shared header + per-sleeve typed body.
-- Executor model: persistent job queue + git-backed audit log alongside.
-- Phase 1 preset library: all three sleeves (stocks, crypto, options) on
-  day one, with honest empty-state readiness for crypto/options until
-  the backend adapters land.
+- Executor model: persistent job queue (SQLite, runtime dir) +
+  git-backed cold audit for terminal artifacts only.
+- Phase 1 preset library ships in two slices:
+  - **Phase 1a:** stocks preset only (E2E proof).
+  - **Phase 1b:** crypto + options preset YAMLs added + honest
+    empty-state readiness wiring. Same worker, same contracts; just
+    registry + UI additions.
 - Idea capture: conversation-cued save ("save this idea") + manual YAML
   commits ship at Phase 2; dashboard UI form Phase 3.
 - **Scope model:** three-level from day 0 — `user_id` + `account_id` +
@@ -25,6 +55,9 @@ reporting as later phases.
   `state/rebuild_history/strategy_promotion_events.jsonl` as manual
   strategy-bank promotions, with an `origin` field
   (`"manual"` | `"research_lab"`) to distinguish.
+- **Ingress + state channels:** submit via governed request files
+  committed to the dashboard repo; live read via managed state store.
+  Details in §2.9.
 - **On-demand is first-class.** The research lab is runnable at will,
   any time of day — not just overnight. Autopilot (Phase 3) is *one
   additional submitter* into the same queue, not a replacement for the
@@ -39,24 +72,36 @@ reporting as later phases.
 ## 1. TL;DR architecture
 
 ```
-  Dashboard (app)                      Trading bot (engine)
-  ----------------                     --------------------
-  /vires/lab  UI            ──POST──►  /api/research/*        ──write──►  request file (git)
-                                                              ──enqueue─► jobs.db (SQLite)
-                                                                            │
-                                       research-lab worker ◄──poll────────┘
-                                           │
-                                           ├─ Compiler (idea → bench bundle)
-                                           ├─ Executor.run(bundle)   (LocalExecutor in P1)
-                                           ├─ Result summarizer
-                                           └─ Promotion-readiness adapter
-                                           │
-                                           └──► artifacts (git) + SQLite state transitions
-                                           │
-                                           └──► audit_log.jsonl (append-only, git-tracked)
+  Dashboard (Vercel)                                     Trading bot host (WSL today, anything tomorrow)
+  ------------------                                     ------------------------------------------------
+  /vires/lab  UI
+      │ submit
+      ▼
+  /api/research/requests ──commits request file──► dashboard-repo/requests/*.json (git, audit)
+                                                         │
+                                                         │ worker git-fetch poll (15s)
+                                                         ▼
+                                                   research-lab worker
+                                                         │
+                                                         ├─ Compiler (idea + preset → bench bundle)
+                                                         ├─ LocalExecutor.run(bundle)
+                                                         ├─ Summarizer → result.v1 (cold, git)
+                                                         ├─ Candidate adapter → candidate.v1 (cold, git)
+                                                         ├─ Nomination adapter (on Promote) → strategy-bank record
+                                                         │
+                                                         ├─ jobs.db (SQLite) — runtime, gitignored
+                                                         └─ outbox writer: audit_log rollup → git (cold)
+                                                         │
+                                                         └── live-state publisher ──► managed store (Redis/KV)
+                                                                                                       ▲
+  /api/research/jobs/:id ◄──────────────────────────────── GET live state ────────────────────────────┘
+  /api/research/results/:id ◄── GET cold artifact via dashboard mirror (git)
 
-  Dashboard reads artifacts the same way it reads operator-feed.json:
-  through a versioned contract. No ad hoc JSON. No direct state picking.
+  Two channels, by design:
+  • SUBMIT: governed request file, git-audit free, asynchronous poll.
+  • LIVE READ: managed store (~15s freshness), no git involvement.
+  Dashboard never mutates trading-bot state directly. No ad hoc JSON.
+  No direct state picking through trading-bot internals.
 ```
 
 Three surfaces, each with a real boundary:
@@ -213,8 +258,15 @@ This is the artifact that enforces "app doesn't author backend truth."
 
 ### 2.4 Research job / run status — `job.v1`
 
-Source of truth lives in SQLite (`jobs.db`). A JSON mirror is emitted on
-each state transition for git audit + dashboard consumption.
+**Source of truth lives in SQLite** (`jobs.db`) in the runtime state
+directory (gitignored). The worker publishes a live snapshot to the
+managed state store (§2.9) on every state transition and on every
+heartbeat. No git commits happen during `RUNNING` — that's the whole
+point of the hot/cold split.
+
+Terminal-state snapshots (`DONE`, `FAILED`, `CANCELLED`) are written
+once to the cold git-tracked path `jobs/<job_id>.final.json`, driven by
+the outbox writer (§6.8). Intermediate states never touch git.
 
 ```jsonc
 {
@@ -384,6 +436,81 @@ When a candidate is promoted, the candidate adapter appends a row to
 One log, one source of truth for every promotion in the system. Manual
 strategy-bank promotions get `origin: "manual"` and no `origin_ref`.
 
+### 2.6a Promotion handoff — `nomination.v1`
+
+Named artifact that bridges the research lab to the existing promotion
+machinery. The dashboard's "Promote" button does NOT reach into the
+strategy bank directly; it submits a nomination request through the
+same governed-request channel as campaign requests, and the backend
+adapter materializes the strategy-bank record + promotion event + any
+required bank-schema fields. This is the fix for the "Promote button —
+calls existing promotion flow" gap Codex flagged.
+
+```jsonc
+{
+  "schema_version": "research_lab.nomination.v1",
+  "nomination_id": "nom_01HXXX...",
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "candidate_id": "candidate_01HXXX...",
+  "result_id": "result_01HXXX...",
+  "submitted_at": "2026-04-23T15:10:00Z",
+  "actor": "jacob",
+  "submitted_by": "USER_ONDEMAND",
+  "identity_resolution": {
+    "mode": "NEW_RECORD",             // NEW_RECORD | REPLACE_EXISTING
+    "replaces_record_id": null,       // set only when mode == REPLACE_EXISTING
+    "resolution_rule": "no_existing_role_holder"  // or: "supersedes_<record_id>_in_role_<role_id>"
+  },
+  "materialized_bank_record": {
+    // The strategy-bank record shape — sleeve, runtime_contract,
+    // passport_role_id, active_record_ids, performance_summary, etc.
+    // The adapter fills this from candidate.v1 + result.v1 + the existing
+    // promotion_readiness output. The shape MUST match what the strategy
+    // bank already expects — no new fields here.
+    ...
+  },
+  "campaign_state_on_promotion": {
+    "campaign_status_after": "MONITORED",  // per campaign-to-passport
+                                           // workflow decision (2026-04-21)
+    "baseline_reshuffle": "PROMOTED_REFERENCE"  // baseline moves to the
+                                                // promoted candidate
+  },
+  "promotion_event_id": null,           // populated after append
+  "state": "PENDING"                    // PENDING | APPLIED | REJECTED
+}
+```
+
+**Backend adapter:**
+`openclaw_core.services.research_lab.nomination_adapter` takes a
+`nomination.v1`, resolves identity, materializes the bank record,
+appends the promotion event to the shared log, and updates the existing
+strategy bank file. The adapter is the ONLY place the research lab
+mutates strategy-bank state. No other code path in the research lab
+writes to the bank.
+
+**CLI entry point:**
+```
+python -m openclaw_core.cli.research_lab promote-candidate \
+  --candidate-id <id> --actor <actor> [--dry-run]
+```
+
+**Dashboard flow:**
+1. User clicks Promote on the candidate scorecard.
+2. Dashboard submits a nomination request (governed request file in the
+   dashboard repo — same channel as campaign requests).
+3. Worker picks up the request, runs the nomination adapter, writes the
+   resulting `nomination.v1` artifact with `state: APPLIED` and the
+   populated `promotion_event_id`.
+4. Dashboard reads the final artifact + the updated strategy-bank state
+   on next poll.
+
+**Why this matters:** without this named adapter, the Promote button
+either forks promotion logic (bad) or reaches into strategy-bank
+internals (also bad). The adapter is the translation layer; the
+strategy bank's existing contracts stay untouched.
+
 ### 2.7 Morning report summary — `morning_report.v1`
 
 Generated by the nightly autopilot (Phase 3 templated, Phase 4 AI-narrated).
@@ -438,8 +565,97 @@ bounds:
   max_wallclock_minutes: 30
 ```
 
-Phase 1 ships three presets — one per sleeve. Adding a preset = adding a
-YAML file + one entry in the mirrored index. No UI code change.
+Phase 1 ships three presets — one per sleeve (1a delivers stocks; 1b
+adds crypto + options). Adding a preset = adding a YAML file + one
+entry in the mirrored index. No UI code change.
+
+### 2.9 Ingress + state channels
+
+The dashboard (Vercel) and the worker (trading-bot host, today WSL,
+tomorrow possibly a cloud box) cannot trust each other's filesystem.
+Two explicit channels, each with a narrow purpose:
+
+#### 2.9.1 Submit channel — governed request files
+
+**Purpose:** how the dashboard asks the worker to do something (submit
+campaign, submit nomination, cancel job).
+
+**Mechanics:**
+- Dashboard `POST /api/research/requests` (and `/nominations`,
+  `/cancels`) writes a request file to the dashboard repo under
+  `data/research_lab/<user>/<account>/<group>/requests/inbox/`.
+- Dashboard commits the file via the GitHub App token already used by
+  the push scripts. Commit SHA is returned to the caller.
+- Worker runs a git-fetch poll every ~15s on the dashboard repo, picks
+  up new request files, validates, and enqueues into SQLite. After
+  successful enqueue it moves the request file to `requests/processed/`
+  via a worker-side commit (or leaves it in place and tracks state in
+  the DB — implementation choice, but pick one and stick with it).
+
+**Why files-in-git:** auditability is free. Every request is timestamped,
+attributed, and reviewable in git log. Matches the existing
+`/api/passport/workflow` governed-request fallback pattern, so no new
+infra for Phase 1a.
+
+**Submit latency:** ~15-30s from click to enqueue. Acceptable — this is
+a research tool, not a trading gateway. The user sees a "submitted,
+waiting to enqueue" state in the UI via the live-read channel.
+
+#### 2.9.2 Live-read channel — managed state store
+
+**Purpose:** how the dashboard renders live job status, progress,
+heartbeats, and the current snapshot of the SQLite queue.
+
+**Mechanics:**
+- Worker publishes state snapshots to a managed key-value store on
+  every state transition and every 30s heartbeat.
+- Key format: `research_lab:<user>:<account>:<group>:job:<job_id>`
+  (value = latest `job.v1` JSON) and
+  `research_lab:<user>:<account>:<group>:queue` (value = compact queue
+  index).
+- Dashboard `GET /api/research/jobs/:id` reads from the store (server-
+  side, with the store's read token); the app then polls that endpoint.
+
+**Store choice:** Upstash Redis (free tier, generous read limits) or
+Vercel KV. Jacob's call. Default assumption: **Upstash Redis** — the
+free tier covers single-user volume by a wide margin. Cost scales
+gracefully to multi-tenant.
+
+**Why not git:** heartbeats and progress updates shouldn't create
+commits. A one-user research session generates 100+ state transitions
+per night; as a commit stream that's both noisy and slow. The store is
+the right substrate for hot state.
+
+**Fallback if store unreachable:** the worker continues writing to
+SQLite (authoritative). Dashboard degrades to "live status unavailable,
+last seen at <ts>" by reading the cold mirror (see below). Queue
+continues running.
+
+#### 2.9.3 Cold mirror — final artifacts only
+
+**Purpose:** long-term record of completed research. Historical views
+in the dashboard.
+
+**Mechanics:**
+- On terminal state, the outbox writer commits the final
+  `job.v1.final.json`, `result.v1.json`, `candidate.v1.json`, and any
+  other terminal artifacts to the trading-bot repo under the scope path.
+- `scripts/pull-research-lab.py` (dashboard side) mirrors the subset
+  the app needs into the dashboard repo on a separate cron.
+- Dashboard historical views (`/api/research/results/:id`,
+  `/api/research/reports/morning/:date`) read from the dashboard-side
+  mirror — the same pattern `data/bench/` already uses.
+
+**Latency:** minutes, not seconds. That's fine — historical views don't
+need sub-second freshness.
+
+#### 2.9.4 Channel summary
+
+| Purpose | Channel | Freshness | Substrate | Who writes | Who reads |
+|---|---|---|---|---|---|
+| Submit campaign / nomination / cancel | Governed request file | 15-30s to enqueue | Git (dashboard repo) | Dashboard API route | Worker (git-fetch poll) |
+| Live job status / heartbeat / progress | Managed state store | 15-30s | Upstash Redis (default) | Worker | Dashboard API route |
+| Historical artifacts (results, reports) | Cold mirror | Minutes | Git (both repos) | Outbox writer | Dashboard API route |
 
 ---
 
@@ -447,34 +663,40 @@ YAML file + one entry in the mirrored index. No UI code change.
 
 ### Trading bot (authoritative)
 
+Split into two trees by lifecycle: **cold** (git-tracked, authored +
+terminal artifacts) and **hot** (runtime, gitignored, mutable).
+
+**Cold tree — git-tracked:**
 ```
 ~/.openclaw/workspace/trading-bot/
   data/research_lab/
-    presets/                          # git-tracked YAML (scope-independent)
-      stocks.momentum.stop_target.v1.yaml
-      crypto.tsmom_4h.v1.yaml
-      options.covered_call.v1.yaml
-      _index.json                     # generated mirror
+    presets/                          # authored YAML (scope-independent)
+      stocks.momentum.stop_target.v1.yaml   # Phase 1a
+      crypto.tsmom_4h.v1.yaml               # Phase 1b
+      options.covered_call.v1.yaml          # Phase 1b
+      _index.json                     # generated, git-tracked
     <user_id>/<account_id>/<strategy_group_id>/
-      ideas/                          # git-tracked YAML
+      ideas/                          # authored YAML
         idea_01HXXX.yaml
-      requests/                       # git-tracked JSON (audit)
-        2026-04-23_req_01HXXX.json
-      bundles/                        # git-tracked JSON (audit)
+      bundles/                        # compiler output, written once
         bundle_01HXXX.json
-      jobs.db                         # SQLite — source of truth
-      jobs/                           # git-tracked JSON mirrors
-        job_01HXXX.json               # snapshot per state transition
-      results/                        # git-tracked JSON
+      jobs/                           # TERMINAL snapshots only — never
+        job_01HXXX.final.json         # intermediate. Written by outbox
+                                      # writer after DB commit of
+                                      # DONE/FAILED/CANCELLED.
+      results/                        # terminal
         result_01HXXX.json
         result_01HXXX.raw/            # bench runner artifacts (leaderboard
                                       # files, validation reports, plateau
-                                      # grids — existing shapes)
-      candidates/                     # git-tracked JSON
+                                      # grids)
+      candidates/                     # terminal
         candidate_01HXXX.json
+      nominations/                    # terminal (one per Promote action)
+        nomination_01HXXX.json
       reports/morning/
         2026-04-24.json
-      audit_log.jsonl                 # append-only, git-tracked
+      audit_log.jsonl                 # rollup — written periodically by
+                                      # outbox writer, NOT append-per-event
 
     # Phase 1 default path resolves to:
     # data/research_lab/jacob/paper_main/default/...
@@ -483,15 +705,39 @@ YAML file + one entry in the mirrored index. No UI code change.
     compiler.py                       # idea + preset + sweep → bundle
     executor.py                       # Executor interface + LocalExecutor
     job_queue.py                      # SQLite wrapper
+    state_publisher.py                # writes hot snapshots to managed store
+    outbox_writer.py                  # derives cold artifacts from DB
     summarizer.py                     # bench results → result.v1
-    candidate_adapter.py              # result → promotion_readiness adapter
-    morning_report.py                 # templated (P3) and AI-narrated (P4)
+    candidate_adapter.py              # result → promotion_readiness
+    nomination_adapter.py             # candidate → strategy-bank record
+    morning_report.py                 # templated (P3) / AI-narrated (P4)
   bin/
     research_lab_worker.py            # long-running worker (Phase 1)
     research_lab_nightly.py           # cron entrypoint (Phase 3)
   tests/openclaw_core/research_lab/
     ...
+  .gitignore                          # asserts state/research_lab/ stays out
 ```
+
+**Hot tree — runtime, gitignored:**
+```
+~/.openclaw/workspace/trading-bot/
+  state/research_lab/                 # ENTIRE tree gitignored
+    <user_id>/<account_id>/<strategy_group_id>/
+      jobs.db                         # SQLite — authoritative queue +
+                                      # in-flight job state
+      jobs/                           # per-job live snapshots (hot mirror
+        job_01HXXX.current.json       # of DB; rewritten on every
+                                      # transition; published to store)
+      logs/
+        worker.log
+```
+
+Rationale: the cold tree is history; the hot tree is the running system.
+Git commits during `RUNNING` are forbidden by construction — the hot
+tree is gitignored at the repo root. The outbox writer (§6.8) is the
+only path from hot to cold, and it runs on terminal-state triggers +
+periodic audit-log rollups.
 
 ### Dashboard (mirror + control plane)
 
@@ -565,39 +811,89 @@ previous one has an agreed contract.
 - Audit the existing strategy registry — enumerate what's registered per
   sleeve, which have promotion adapters wired, which are code-complete-
   unwired, which don't exist.
-- Commit the three Phase 1 presets.
+- Commit the Phase 1a stocks preset only.
 - Ship the generated TypeScript contracts file.
+- Wire the `state/research_lab/` path into `.gitignore` so the hot tree
+  cannot accidentally be committed.
+- Choose and provision the managed state store (default: Upstash Redis
+  free tier). Capture the read/write tokens in the dashboard's Vercel
+  env + the worker's local env.
 
-### Phase 1 — manual submit loop end-to-end (Codex + Claude, ~2-3 sessions)
+### Phase 1a — stocks-only E2E proof (Codex + Claude, ~2 sessions)
+
+The beachhead. Proves submit → compile → run → result → promote works
+end-to-end with one sleeve and one preset. No crypto, no options, no
+autopilot. Phase 1b is the immediate follow-on, not a deferred backlog
+item.
 
 **Codex:**
-- `research_lab.compiler` — validates + produces bundle.
+- `research_lab.compiler` — validates + produces `bench_bundle.v1`.
 - `research_lab.executor.LocalExecutor` — runs a bundle on the existing
   bench runner, emits artifacts.
-- `research_lab.job_queue` — SQLite wrapper (schema below).
-- `research_lab_worker.py` — polls queue, runs jobs, writes artifacts +
-  state transitions + audit log.
+- `research_lab.job_queue` — SQLite wrapper (hot tree).
+- `research_lab.state_publisher` — writes `job.v1` snapshots to the
+  managed state store on transitions + heartbeats.
+- `research_lab.outbox_writer` — derives cold artifacts from DB after
+  terminal state; idempotent, resumable (see §6.8).
+- `research_lab_worker.py` — long-running: git-fetches dashboard repo
+  for new request files (submit channel), processes the SQLite queue,
+  runs jobs, publishes live state, writes terminal cold artifacts.
 - `research_lab.summarizer` + `candidate_adapter` — bench output →
-  `result.v1` + `candidate.v1` via existing promotion readiness.
-- `scripts/pull-research-lab.py` — mirror path.
+  `result.v1` + `candidate.v1`.
+- `research_lab.nomination_adapter` — `candidate.v1` → strategy-bank
+  record + promotion event (per §2.6a).
+- CLIs: `promote-candidate`, `submit-campaign` (for local testing).
+- `scripts/pull-research-lab.py` — cold-mirror path into dashboard repo.
 
 **Claude:**
 - `/vires/lab` route + home.
-- Idea card (manual YAML ideas only in P1 — one seeded per sleeve).
-- Campaign-submit form — preset dropdown + param sweep UI (bounded by
-  preset schema) + thesis/notes + Submit.
-- Job-status card — polls `/api/research/jobs/:id`, renders state
-  machine with progress.
+- Idea card (manual YAML idea committed in advance — one seeded stocks
+  idea is enough for 1a).
+- Campaign-submit form — preset dropdown (stocks only in 1a) + param-
+  sweep UI (bounded by preset schema) + thesis/notes + Submit.
+- `/api/research/requests` route — writes governed request file to the
+  dashboard repo, commits, returns the commit SHA + expected job_id.
+- Job-status card — polls `/api/research/jobs/:id` (managed-store read)
+  and renders state machine with progress.
 - Result leaderboard + candidate scorecard (reuses existing readiness
   scorecard component).
-- Promote button — calls existing promotion workflow; no new logic.
+- Promote button — submits a nomination request through the governed
+  request channel. No direct strategy-bank access.
 
-**Acceptance:** Click Submit on a seeded stocks idea → job runs → result
-renders with real metrics → candidate scorecard shows real gates → Promote
-triggers the existing promotion flow. Then repeat for crypto (gate
-scorecard empty-state honest) and options (scorecard empty-state honest).
+**Acceptance (1a):** Click Submit on the seeded stocks idea → request
+file is committed to dashboard repo → worker picks it up within ~30s →
+job transitions QUEUED → COMPILING → RUNNING (with live progress in the
+UI from the managed store) → POST_PROCESSING → DONE → result renders
+with real metrics → candidate scorecard shows real gates → Promote
+submits a nomination → worker runs nomination adapter → strategy-bank
+gets a new record → promotion event appended to shared log → UI reflects
+the promoted candidate.
 
-**This surface is permanent.** The "Run now" flow Phase 1 ships is the
+### Phase 1b — crypto + options presets + empty-state readiness (~1 session)
+
+Same worker, same contracts. No new engine code.
+
+**Codex:**
+- Commit `crypto.tsmom_4h.v1.yaml` and `options.covered_call.v1.yaml`
+  preset files.
+- Extend the preset index.
+- Confirm the candidate adapter emits `adapter_status: WIRED |
+  CODE_COMPLETE_UNWIRED | NOT_IMPLEMENTED` correctly per sleeve.
+
+**Claude:**
+- Preset dropdown now shows all three sleeves.
+- Candidate scorecard renders the honest `EMPTY_STATE` when
+  `adapter_status != WIRED`, with copy that names the gap (e.g., "Crypto
+  readiness adapter is code-complete but not yet wired into the producer
+  path — promotion requires manual review for this sleeve").
+- Small "adapter status" chip on each result card indicating which
+  sleeves can auto-promote vs. require manual review.
+
+**Acceptance (1b):** Submit a crypto idea → runs cleanly → result
+renders → candidate scorecard shows honest empty-state with named gap
+→ Promote button disabled with explanatory tooltip. Same for options.
+
+**This surface (1a + 1b) is permanent.** The "Run now" flow is the
 primary user path to the research lab, full stop. Phase 3's autopilot
 adds a second *submitter* into the same queue; it does not replace the
 on-demand surface. On-demand runs continue to work during market hours,
@@ -668,31 +964,37 @@ until after they're computed.
 
 ---
 
-## 5. Phase 1 "smallest strong first slice"
+## 5. Phase 1a beachhead — "smallest strong first slice"
 
-The minimum to prove the loop end-to-end, so everything else builds on
-verified infrastructure:
+This section is now aligned with the Phase 1a/1b split in §4. The Phase
+1a slice is the beachhead: the minimum to prove the loop E2E before
+widening to the other sleeves.
 
 1. **One seeded stocks idea** committed manually as YAML.
 2. **One preset** (`stocks.momentum.stop_target.v1`) with a 3×3 sweep
    bound.
 3. **Compiler** validates idea + preset + sweep → bundle.
 4. **LocalExecutor** runs the bundle via the existing bench runner.
-5. **Result + candidate** emitted.
-6. **Dashboard submit form + job status card + result leaderboard.**
-7. **Existing promotion flow** wired to the Promote button.
+5. **State publisher** writes live `job.v1` snapshots to the managed
+   store on every transition + heartbeat.
+6. **Outbox writer** commits terminal artifacts to the cold tree after
+   DB commit of `DONE`.
+7. **Result + candidate + (on Promote) nomination** emitted.
+8. **Dashboard submit form, job status card (reads from store), result
+   leaderboard, candidate scorecard, Promote button (submits nomination
+   through governed request channel).**
 
-Before this slice, no crypto/options preset code is written. After this
-slice passes a real end-to-end cycle, the crypto and options presets land
-as fast-follows — same code path, just add YAML files + preset-schema
-validation + wire the UI preset dropdown.
+Rationale for stocks-first: the stocks promotion adapter is the only
+one currently wired in the producer path. Crypto is code-complete-
+unwired; options doesn't exist. Stocks-first lets the Promote path
+actually exercise the nomination adapter with real gate data — we won't
+know the end-to-end loop works until at least one sleeve can actually
+promote.
 
-Rationale for stocks-first: the stocks promotion adapter is the only one
-currently wired in the producer path. Crypto is code-complete-unwired;
-options doesn't exist. Stocks-first lets the full loop (including the
-Promote button) work with real gate data. Crypto/options follow with
-honest empty-state readiness, which is fine — but we won't know if the
-Promote-button code path works until one sleeve can actually promote.
+Phase 1b (crypto + options preset YAMLs + honest empty-state readiness
+scorecards + adapter-status chips) ships **immediately after** 1a
+passes. It's not a deferred backlog item — it's the second half of
+Phase 1, adding zero new engine code.
 
 ---
 
@@ -753,14 +1055,71 @@ research-lab artifacts. Code review guards: any new frontend type must be
 imported from `lib/research-lab-contracts.ts`, which is generated. No
 frontend-only types for backend concepts.
 
-### 6.8 Request file + job queue divergence
+### 6.8 Request file ↔ job queue ↔ audit log divergence
 
-We chose job queue + audit log alongside. If the request file lands but
-enqueue fails (or vice versa), the two surfaces disagree. Mitigation:
-the dashboard's `POST /api/research/requests` is a single atomic action
-on the trading-bot side — request file write + enqueue happen inside one
-SQLite transaction (with the request-file write via `fsync` + rename).
-Dashboard doesn't get a 200 until both have landed.
+**Rev 2 fix (Codex P1.3).** The earlier draft claimed a single atomic
+action covered "request file write + SQLite enqueue." That claim is
+not achievable — SQLite can atomically own the queue; `fsync`+rename
+can atomically own a file write; nothing atomically covers both. The
+corrected model:
+
+**SQLite is authoritative for every state the research lab cares about:**
+the queue, in-flight job state, heartbeats, retry counters. Every other
+persistent surface (request file in dashboard repo, cold artifact in
+trading-bot repo, audit log rollup) is an **outbox-derived projection**
+of DB state, written by an idempotent writer that runs after each DB
+transaction commits.
+
+**Submit-side divergence mitigation:**
+- Dashboard writes request file to dashboard repo → commits → returns
+  commit SHA to the caller. The file is an input, not a state snapshot.
+- Worker's git-fetch poll sees the new request file, reads it, runs an
+  enqueue transaction in SQLite. If SQLite commits, the worker moves
+  the request file to `requests/processed/` (or marks it processed via
+  a marker file — pick one).
+- If the worker crashes between SQLite commit and the processed-marker
+  move: on restart, the worker sees the request file is present AND a
+  matching row exists in the DB → it resumes by moving the file (no
+  duplicate enqueue). This is idempotent because enqueue uses the
+  request_id as a UNIQUE key; a re-enqueue attempt no-ops.
+- If the worker crashes between receiving the file and the SQLite
+  commit: the request file is still in the inbox; on restart, the
+  worker re-processes it from scratch. No partial state.
+
+**Cold-artifact-side divergence mitigation (outbox pattern):**
+- On every DB state transition to a terminal state (`DONE`, `FAILED`,
+  `CANCELLED`), the transaction inserts a row into an `outbox` table in
+  the same SQLite DB. Same transaction = atomic with the state
+  transition.
+- A separate outbox-writer task reads unprocessed outbox rows, writes
+  the corresponding cold artifact (e.g., `job_<id>.final.json`,
+  `result_<id>.json`), commits the git tree, and marks the outbox row
+  `done` — all idempotent.
+- Crash recovery: on restart the writer processes any `pending` outbox
+  rows, re-derives the cold artifact from current DB state, and writes
+  it. Re-writing an already-present file with the same content is a
+  no-op via `rename` semantics.
+
+**Live-state-side divergence (managed store):**
+- The state publisher is fire-and-forget best-effort. A store-write
+  failure logs a warning but does NOT fail the DB transaction. Dashboard
+  just sees stale live data; historical views remain correct because
+  they read cold artifacts via the mirror, not the store.
+
+**What this buys us:** SQLite is the single source of truth. Every other
+surface is a derived projection, writable idempotently. No two-phase
+commit claim; no partial-state corruption on crash.
+
+### 6.9 Hot tree accidentally committed to git
+
+If `state/research_lab/` isn't in `.gitignore` from day 0, a `git add .`
+will sweep `jobs.db` and every live job snapshot into a commit. Repos
+get bloated fast; per-transition git writes during `RUNNING` defeat the
+entire hot/cold split. Mitigation: Phase 0 commits a `.gitignore` entry
+for `state/research_lab/` alongside the contracts doc. Also add a
+pre-commit check (extend the existing dashboard mojibake pre-commit, or
+add a simple `git-check-attr` rule trading-bot side) that refuses to
+commit anything under `state/`.
 
 ---
 
