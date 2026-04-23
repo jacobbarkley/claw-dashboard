@@ -261,13 +261,32 @@ python3 scripts/pull-bench-data.py
 
 ---
 
-## Bug 5 — pytest regression suite + test-side-effect pushes to dashboard main
+## Bug 5 — pytest regression suite + test-side-effect pushes to dashboard main — CLOSED
 
 ### Status
 
-**Partially fixed by `codex/bug5-test-isolation-readiness @ 9aabe1e`.**
-- **Class B (test pollution pushes): CLOSED.** Verified — pytest now runs without writing to claw-dashboard main.
-- **Class A (test failures): 4 of 8 fixed, 4 remaining.** Current state: `4 failed, 27 passed`. Details below.
+**CLOSED on trading-bot `codex/bug5-test-isolation-readiness @ 8c1e532`.**
+Verified from Linux side on 2026-04-23:
+
+```
+collected 31 items
+============================== 31 passed in 1.55s ==============================
+```
+
+Zero pushes to claw-dashboard main during the test run — Class B isolation
+fix verified holding across the full suite, not just the earlier spot check.
+
+Journey of the bug across the day:
+- `9aabe1e` (first attempt) — 4 of 8 remaining failures; Class B closed.
+- `9889f8a` (local-only, never reached origin) — had a syntax error at
+  `strategy_bank.py:2083` (extra indent on `deviations.append(...)`), so
+  nothing could be tested. Also wasn't actually on origin because of a
+  race between parallel commit + push.
+- `8c1e532` — syntax fixed, push actually verified against origin SHA, all
+  31 tests green.
+
+All failure categories below are now green. Keeping the detail sections
+as historical record of what this slice covered.
 
 Post-3327036 runtime verification. Claude ran `pytest tests/openclaw_core/test_strategy_bank.py` from the Linux side (which Codex couldn't do from his WSL-broken desktop). Two distinct classes of problem surfaced: real test regressions and test isolation leakage.
 

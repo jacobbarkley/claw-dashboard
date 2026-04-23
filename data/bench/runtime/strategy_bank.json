@@ -4,7 +4,7 @@
   "active_record_ids": {
     "stocks": "regime_aware_momentum::stop_5_target_15"
   },
-  "updated_at": "2026-04-22T22:52:17.034523-04:00",
+  "updated_at": "2026-04-23T00:10:20.350780-04:00",
   "strategies": [
     {
       "record_id": "btc_managed_exposure_v1::q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
@@ -1067,7 +1067,7 @@
         ]
       },
       "registered_at": "2026-04-22T12:48:10.939387-04:00",
-      "updated_at": "2026-04-22T22:52:17.034523-04:00",
+      "updated_at": "2026-04-23T00:10:20.350780-04:00",
       "selected_at": null
     },
     {
@@ -2131,7 +2131,7 @@
         ]
       },
       "registered_at": "2026-04-22T12:48:24.866404-04:00",
-      "updated_at": "2026-04-22T22:52:17.034523-04:00",
+      "updated_at": "2026-04-23T00:10:20.350780-04:00",
       "selected_at": null
     },
     {
@@ -5937,7 +5937,7 @@
         "blockers": []
       },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T22:52:17.034523-04:00",
+      "updated_at": "2026-04-23T00:10:20.350780-04:00",
       "selected_at": null
     },
     {
@@ -9721,7 +9721,7 @@
         "blockers": []
       },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T22:52:17.034523-04:00",
+      "updated_at": "2026-04-23T00:10:20.350780-04:00",
       "selected_at": null
     },
     {
@@ -13505,7 +13505,7 @@
         "blockers": []
       },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T22:52:17.034523-04:00",
+      "updated_at": "2026-04-23T00:10:20.350780-04:00",
       "selected_at": "2026-04-11T13:31:26.522551-04:00"
     }
   ]
