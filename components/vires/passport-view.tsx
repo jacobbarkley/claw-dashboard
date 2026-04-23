@@ -682,11 +682,13 @@ function PaperMonitoringCard({
   recordId,
   campaignId,
   passportRoleId,
+  stage,
 }: {
   monitoring: Passport["paper_monitoring"]
   recordId: string | null
   campaignId: string | null
   passportRoleId: string | null
+  stage: string | null
 }) {
   const [requestState, setRequestState] = useState<"idle" | "submitting" | "success" | "error">("idle")
   const [requestMessage, setRequestMessage] = useState<string | null>(null)
@@ -731,6 +733,18 @@ function PaperMonitoringCard({
   }
 
   if (!monitoring) {
+    const stageToken = (stage ?? "").toUpperCase()
+    const hasStage = stageToken.length > 0
+    // Pre-confirmation stages: the bank has a record but no paper window
+    // exists yet. Post-confirmation stages (CONFIRMING / PAPER_SHADOW /
+    // PROMOTED_PAPER) should never hit this branch — monitoring is
+    // populated by the producer once the stage advances. If we're here
+    // AND the stage is post-confirmation, that's a producer gap worth
+    // surfacing honestly rather than defaulting to the pre-confirm copy.
+    const postConfirm =
+      stageToken === "CONFIRMING" ||
+      stageToken === "PAPER_SHADOW" ||
+      stageToken === "PROMOTED_PAPER"
     return (
       <section>
         <SectionHeader eyebrow="Paper monitoring" title="Tracking under monitoring window" />
@@ -745,9 +759,30 @@ function PaperMonitoringCard({
               lineHeight: 1.55,
             }}
           >
-            Paper monitoring activates once this passport enters the CONFIRMING
-            stage. Until the strategy bank accepts a promotion for this slot,
-            there is no monitored window to track against.
+            {postConfirm ? (
+              <>
+                Stage is <span style={{ fontStyle: "normal", color: "var(--vr-cream)" }}>{stageToken}</span>{" "}
+                but no monitoring window is attached — the producer hasn't
+                populated paper-monitoring data for this record yet. Expected
+                once the next bank refresh runs.
+              </>
+            ) : hasStage ? (
+              <>
+                This passport is at{" "}
+                <span style={{ fontStyle: "normal", color: "var(--vr-cream)" }}>{stageToken}</span>.
+                Paper monitoring activates once the stage advances to
+                CONFIRMING — either automatically when a bench candidate
+                passes the promotion gates, or when an operator explicitly
+                confirms a promotion. The 21-day monitoring window starts at
+                that transition.
+              </>
+            ) : (
+              <>
+                Paper monitoring activates once this passport enters the
+                CONFIRMING stage. Until the strategy bank accepts a promotion
+                for this slot, there is no monitored window to track against.
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -1348,6 +1383,7 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
         recordId={passport.record_id ?? null}
         campaignId={passport.origin?.campaign_id ?? null}
         passportRoleId={passport.passport_role_id ?? passport.origin?.passport_role_id ?? null}
+        stage={passport.manifest?.stage ?? null}
       />
 
       {/* Raw trade ledger */}

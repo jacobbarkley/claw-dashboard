@@ -19,6 +19,24 @@ import type {
 import { InfoPop } from "./shared"
 import { relTime } from "./campaigns-shared"
 
+// Canonical stocks 9-gate set. Used as the shape for the null-readiness
+// empty state so every campaign renders the same section layout
+// regardless of whether the producer has scored it yet. Mirrors the
+// "passport convergence" fix — every section preserves its shape; only
+// contents change. Source of truth for real scoring is the producer;
+// this list is UI scaffolding only.
+const STOCKS_GATE_SHAPE: Array<{ gate_id: string; label: string }> = [
+  { gate_id: "TRADE_COUNT",        label: "Minimum trade count" },
+  { gate_id: "PROFIT_FACTOR",      label: "Profit factor" },
+  { gate_id: "EXPECTANCY",         label: "Expectancy per trade" },
+  { gate_id: "PROFITABLE_FOLDS",   label: "Profitable folds" },
+  { gate_id: "DRAWDOWN",           label: "Max drawdown bound" },
+  { gate_id: "BENCHMARK",          label: "Beats benchmark" },
+  { gate_id: "EXPECTANCY_DECAY",   label: "Expectancy decay" },
+  { gate_id: "HOLDBACK",           label: "Held-out window" },
+  { gate_id: "ERA_ROBUSTNESS",     label: "Era sweep" },
+]
+
 // ─── Status visuals ────────────────────────────────────────────────────────
 
 const GATE_STATUS_META: Record<GateStatus, { label: string; color: string; glyph: string }> = {
@@ -237,44 +255,109 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
   const [requestMessage, setRequestMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Degraded case — no readiness data yet but promotion_target present.
-  // Render a pared-down version that still carries the editorial narrative.
+  // No-readiness case — render the full scorecard shape with each gate
+  // in PENDING. Preserves section layout across every campaign so the
+  // template converges even when the producer hasn't scored gates yet.
+  // (The old pared-down card made ETF Replacement Momentum and AI Wall
+  // Street read as visually divergent when the only real divergence was
+  // data maturity.)
   if (!readiness) {
-    if (!promotionTarget) return null
+    const statusLabel = campaign.status ?? null
+    const placeholderGates: ReadinessGate[] = STOCKS_GATE_SHAPE.map(g => ({
+      gate_id: g.gate_id,
+      label: g.label,
+      status: "PENDING",
+      source_kind: "VALIDATION_GATE",
+      value: null,
+      threshold: null,
+      summary: null,
+    }))
     return (
       <div
+        className="vr-card"
         style={{
-          padding: "14px 16px",
-          border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
-          borderRadius: 4,
-          background: "var(--vr-gold-soft, rgba(200,169,104,0.06))",
+          padding: 0,
+          background: "var(--vr-ink)",
         }}
       >
-        <div className="t-eyebrow" style={{ color: "var(--vr-gold)", marginBottom: 6 }}>
-          Promotion target
-        </div>
+        {/* Header strip — mirrors the scored variant. */}
         <div
-          className="t-read"
           style={{
-            fontSize: 13,
-            fontFamily: "var(--ff-serif)",
-            color: "var(--vr-cream)",
-            lineHeight: 1.55,
+            padding: "14px 16px 12px",
+            borderBottom: "1px solid var(--vr-line)",
+            display: "flex",
+            alignItems: "baseline",
+            justifyContent: "space-between",
+            gap: 10,
+            flexWrap: "wrap",
           }}
         >
-          {promotionTarget}
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <span className="t-eyebrow" style={{ color: "var(--vr-gold)" }}>
+              Promotion readiness
+            </span>
+            <InfoPop term="PromotionReadiness" size={11} />
+          </div>
+          <span
+            className="t-label"
+            style={{
+              color: "var(--vr-cream-mute)",
+              border: "1px solid var(--vr-cream-mute)",
+              padding: "3px 8px",
+              borderRadius: 2,
+              letterSpacing: "0.14em",
+              fontSize: 9,
+            }}
+          >
+            Not yet scored
+          </span>
         </div>
+
+        {/* Editorial intro — promotion target stays where it is on the scored variant. */}
+        {promotionTarget && (
+          <div style={{ padding: "10px 16px 6px" }}>
+            <div
+              className="t-read"
+              style={{
+                fontSize: 12,
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                color: "var(--vr-cream-dim)",
+                lineHeight: 1.55,
+              }}
+            >
+              {promotionTarget}
+            </div>
+          </div>
+        )}
+
+        {/* Honest empty-state explanation — same slot as the freshness row. */}
         <div
-          className="t-label"
           style={{
-            fontSize: 10,
-            color: "var(--vr-cream-faint)",
-            marginTop: 8,
-            fontStyle: "italic",
-            fontFamily: "var(--ff-serif)",
+            padding: "0 16px 10px",
           }}
         >
-          Readiness scorecard lands once a candidate is under review.
+          <span
+            className="t-label"
+            style={{
+              fontSize: 10,
+              color: "var(--vr-cream-faint)",
+              fontFamily: "var(--ff-serif)",
+              fontStyle: "italic",
+              lineHeight: 1.55,
+            }}
+          >
+            {statusLabel
+              ? `Gates score once the campaign has converged — currently ${statusLabel}, waiting for sufficient runs.`
+              : "Gates score once the campaign has converged. Shape below is the canonical 9-gate layout; each will fill in as evidence lands."}
+          </span>
+        </div>
+
+        {/* Gate list — same shape as scored, all PENDING. */}
+        <div>
+          {placeholderGates.map((g, idx) => (
+            <GateRow key={g.gate_id} gate={g} isLast={idx === placeholderGates.length - 1} />
+          ))}
         </div>
       </div>
     )
