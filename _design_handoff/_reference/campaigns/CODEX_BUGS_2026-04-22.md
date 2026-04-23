@@ -179,6 +179,88 @@ legitimately has zero fills in the retention window.
 
 ---
 
+## Bug 4 — `_crypto_comparison_entry_for_manifest` defined twice in strategy_bank.py after merge
+
+### Status
+
+Blocks the post-main `refresh-passport-v2` run Codex asked Claude to perform.
+Without this fix, crypto readiness scorecards stay empty even though the
+producer code is technically on trading-bot main.
+
+### Reproduction
+
+From `~/.openclaw/workspace/trading-bot` (on main at `07da58e`):
+
+```bash
+PYTHONPATH=src .venv-rebuild/bin/python3 -m openclaw_core.cli.strategy_bank \
+  refresh-passport-v2 \
+  --actor codex \
+  --note "post-main crypto readiness refresh"
+```
+
+### Error (tail)
+
+```
+File ".../src/openclaw_core/services/strategy_bank.py", line 993,
+  in _build_crypto_performance_summary_from_manifest_report
+    entry = _crypto_comparison_entry_for_manifest(manifest_payload, report_payload)
+TypeError: _crypto_comparison_entry_for_manifest() takes 0 positional arguments but 2 were given
+```
+
+### Diagnosis
+
+Two definitions of the same function in `src/openclaw_core/services/strategy_bank.py`:
+
+- **Line 1052** — positional signature `(manifest_payload, report_payload)`, returns `dict[str, object] | None`.
+- **Line 1515** — keyword-only signature `(*, manifest_payload, report)`, returns `CryptoSleeveComparisonEntry | None`.
+
+Python evaluates top-down so the second definition shadows the first. The
+call at line 993 passes positionally → TypeError.
+
+Likely a merge collision across the three stacked branches
+(`promotion-readiness-passports` / `strategy-bank-schema-alignment` /
+`passport-historical-backfill`). Without a runtime pytest pass this slipped
+through — exactly what `pytest tests/openclaw_core/test_strategy_bank.py::test_refresh_passport_v2_*`
+would have caught.
+
+### Suggested fix
+
+Two options depending on which signature is canonical:
+
+1. **Pick one, delete the other.** If the keyword-only version at 1515 is
+   canonical, update the call at 993 to use kwargs, then delete 1052. If the
+   positional version at 1052 is canonical, update the kwargs call at 1509
+   to positional, then delete 1515.
+2. **Merge them.** If both are doing real work on different data shapes (the
+   return types differ: `dict` vs typed `CryptoSleeveComparisonEntry`),
+   collapse into a single function and update both call sites.
+
+Verify with `pytest tests/openclaw_core/test_strategy_bank.py` then rerun
+`refresh-passport-v2`.
+
+### What this unblocks
+
+- `refresh-passport-v2` completes cleanly
+- runtime strategy bank picks up the new readiness code
+- crypto q090c / q090d records get non-null `promotion_readiness`
+- dashboard crypto campaigns stop rendering the empty-state readiness
+  scorecard
+
+### Operational follow-up
+
+Once Bug 4 is fixed, Claude can rerun the refresh + bench mirror pull:
+
+```bash
+cd ~/.openclaw/workspace/trading-bot
+PYTHONPATH=src .venv-rebuild/bin/python3 -m openclaw_core.cli.strategy_bank \
+  refresh-passport-v2 --actor codex --note "post-Bug4 crypto readiness refresh"
+
+cd ~/claude/claw-dashboard
+python3 scripts/pull-bench-data.py
+```
+
+---
+
 ## Notes for Codex
 
 - Registration path (`register-from-manifest`) is working end-to-end from the Linux side. If your WSL bridge stays flaky, Claude can keep running hydration jobs on your behalf — just flag which records to add.
