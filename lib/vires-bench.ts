@@ -38,6 +38,50 @@ function parseDate(value: unknown): number {
   return Number.isFinite(ts) ? ts : 0
 }
 
+function formatReadinessValue(value: unknown): string | null {
+  const parsed = num(value)
+  if (parsed == null) return null
+  if (Math.abs(parsed) >= 100 || Number.isInteger(parsed)) return `${parsed}`
+  return parsed.toFixed(2)
+}
+
+function buildPassportGatesFromPromotionReadiness(
+  strategyRecord: JsonObject | null,
+  options: { manifestDetail: string },
+): JsonObject[] | null {
+  const { manifestDetail } = options
+  const readinessGates = arr<JsonObject>(strategyRecord?.promotion_readiness?.gates)
+  if (!readinessGates.length) return null
+
+  return [
+    {
+      label: "Manifest provenance",
+      status: "PASS",
+      detail: manifestDetail,
+    },
+    ...readinessGates.map(gate => {
+      const gateId = str(gate.gate_id)
+      const value = formatReadinessValue(gate.value)
+      const threshold = formatReadinessValue(gate.threshold)
+      const quantitativeDetail = [value != null ? `value ${value}` : null, threshold != null ? `threshold ${threshold}` : null]
+        .filter(Boolean)
+        .join(" · ")
+      return {
+        gate_id: gateId,
+        label: str(gate.label) ?? str(gate.gate_id) ?? "Gate",
+        status: str(gate.status) ?? "PENDING",
+        detail:
+          str(gate.summary) ??
+          (quantitativeDetail.length ? quantitativeDetail : "Readiness gate published without detail."),
+      }
+    }),
+  ]
+}
+
+function readinessGatePresent(gates: JsonObject[] | null, gateId: string): boolean {
+  return (gates ?? []).some(gate => str(gate.gate_id) === gateId)
+}
+
 function titleCaseToken(value: string | null | undefined): string {
   if (!value) return "Unknown"
   return value
@@ -562,32 +606,44 @@ function buildStockPassport(
     .filter((value): value is number => value != null)
   const minEraSharpe = finiteEraSharpes.length ? Math.min(...finiteEraSharpes) : null
   const rejectRules = buildStockRejectRules(spec, arr<JsonObject>(report?.leaderboard ?? report?.candidate_rows ?? []))
-  const gates: JsonObject[] = [
-    {
-      label: "Manifest provenance",
-      status: "PASS",
-      detail: "Checked-in execution manifest exists for this stock sleeve.",
-    },
-    {
-      label: "Benchmark comparison",
-      status: (num(selected.excess_return_pct) ?? -Infinity) > 0 ? "PASS" : "WARN",
-      detail: benchmarkRet != null && totalRet != null
-        ? `${totalRet.toFixed(2)}% vs ${benchmarkRet.toFixed(2)}% benchmark return.`
-        : "Benchmark-relative comparison is partially populated.",
-    },
-    {
-      label: "Era robustness",
-      status: minEraSharpe == null ? "WARN" : minEraSharpe >= 1 ? "PASS" : minEraSharpe >= 0 ? "WARN" : "FAIL",
-      detail: minEraSharpe != null
-        ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
-        : "Promoted era metrics are not populated yet.",
-    },
-    ...rejectRules.map(rule => ({
-      label: str(rule.label) ?? "Gate",
-      status: rule.cleared === rule.total ? "PASS" : rule.cleared > 0 ? "WARN" : "FAIL",
-      detail: `${rule.cleared}/${rule.total} variants cleared this published rule.`,
-    })),
-  ]
+  const readinessGates = buildPassportGatesFromPromotionReadiness(strategyRecord, {
+    manifestDetail: "Checked-in execution manifest exists for this stock sleeve.",
+  })
+  const legacyEraGate = {
+    label: "Era robustness",
+    status: minEraSharpe == null ? "WARN" : minEraSharpe >= 1 ? "PASS" : minEraSharpe >= 0 ? "WARN" : "FAIL",
+    detail: minEraSharpe != null
+      ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
+      : "Promoted era metrics are not populated yet.",
+  }
+  const rejectRuleGates = rejectRules.map(rule => ({
+    label: str(rule.label) ?? "Gate",
+    status: rule.cleared === rule.total ? "PASS" : rule.cleared > 0 ? "WARN" : "FAIL",
+    detail: `${rule.cleared}/${rule.total} variants cleared this published rule.`,
+  }))
+  const gates =
+    readinessGates != null
+      ? [
+          ...readinessGates,
+          ...(readinessGatePresent(readinessGates, "ERA_ROBUSTNESS") ? [] : [legacyEraGate]),
+          ...rejectRuleGates,
+        ]
+      : [
+      {
+        label: "Manifest provenance",
+        status: "PASS",
+        detail: "Checked-in execution manifest exists for this stock sleeve.",
+      },
+      {
+        label: "Benchmark comparison",
+        status: (num(selected.excess_return_pct) ?? -Infinity) > 0 ? "PASS" : "WARN",
+        detail: benchmarkRet != null && totalRet != null
+          ? `${totalRet.toFixed(2)}% vs ${benchmarkRet.toFixed(2)}% benchmark return.`
+          : "Benchmark-relative comparison is partially populated.",
+      },
+      legacyEraGate,
+      ...rejectRuleGates,
+    ]
 
   return {
     id: str(manifest.strategy_id) ?? str(manifest.manifest_id) ?? "stock-passport",
@@ -699,41 +755,51 @@ function buildCryptoManagedPassport(
     ? Math.min(...eraRows.map(era => era.sharpe ?? Infinity).filter(value => Number.isFinite(value)))
     : null
 
-  const gates: JsonObject[] = [
-    {
-      label: "Manifest provenance",
-      status: "PASS",
-      detail: "Checked-in execution manifest exists for this crypto sleeve.",
-    },
-    {
-      label: "Sharpe vs benchmark",
-      status: (num(comparison.sharpe_delta) ?? -Infinity) > 0 ? "PASS" : "WARN",
-      detail: num(comparison.sharpe_delta) != null
-        ? `${Number(comparison.sharpe_delta).toFixed(3)} delta versus HODL.`
-        : "Sharpe delta is not populated.",
-    },
-    {
-      label: "Calmar vs benchmark",
-      status: (num(comparison.calmar_delta) ?? -Infinity) > 0 ? "PASS" : "WARN",
-      detail: num(comparison.calmar_delta) != null
-        ? `${Number(comparison.calmar_delta).toFixed(3)} delta versus HODL.`
-        : "Calmar delta is not populated.",
-    },
-    {
-      label: "Drawdown improvement",
-      status: (num(comparison.drawdown_improvement_pct) ?? -Infinity) > 0 ? "PASS" : "WARN",
-      detail: num(comparison.drawdown_improvement_pct) != null
-        ? `${Number(comparison.drawdown_improvement_pct).toFixed(2)}% shallower max drawdown than HODL.`
-        : "Drawdown comparison is not populated.",
-    },
-    {
-      label: "Era robustness",
-      status: minEraSharpe == null ? "WARN" : minEraSharpe >= 0.5 ? "PASS" : "WARN",
-      detail: minEraSharpe != null
-        ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
-        : "Promoted era metrics are not populated yet.",
-    },
-  ]
+  const readinessGates = buildPassportGatesFromPromotionReadiness(strategyRecord, {
+    manifestDetail: "Checked-in execution manifest exists for this crypto sleeve.",
+  })
+  const legacyEraGate = {
+    label: "Era robustness",
+    status: minEraSharpe == null ? "WARN" : minEraSharpe >= 0.5 ? "PASS" : "WARN",
+    detail: minEraSharpe != null
+      ? `Minimum promoted-era Sharpe ${minEraSharpe.toFixed(2)}.`
+      : "Promoted era metrics are not populated yet.",
+  }
+  const gates =
+    readinessGates != null
+      ? [
+          ...readinessGates,
+          ...(readinessGatePresent(readinessGates, "ERA_ROBUSTNESS") ? [] : [legacyEraGate]),
+        ]
+      : [
+      {
+        label: "Manifest provenance",
+        status: "PASS",
+        detail: "Checked-in execution manifest exists for this crypto sleeve.",
+      },
+      {
+        label: "Sharpe vs benchmark",
+        status: (num(comparison.sharpe_delta) ?? -Infinity) > 0 ? "PASS" : "WARN",
+        detail: num(comparison.sharpe_delta) != null
+          ? `${Number(comparison.sharpe_delta).toFixed(3)} delta versus HODL.`
+          : "Sharpe delta is not populated.",
+      },
+      {
+        label: "Calmar vs benchmark",
+        status: (num(comparison.calmar_delta) ?? -Infinity) > 0 ? "PASS" : "WARN",
+        detail: num(comparison.calmar_delta) != null
+          ? `${Number(comparison.calmar_delta).toFixed(3)} delta versus HODL.`
+          : "Calmar delta is not populated.",
+      },
+      {
+        label: "Drawdown improvement",
+        status: (num(comparison.drawdown_improvement_pct) ?? -Infinity) > 0 ? "PASS" : "WARN",
+        detail: num(comparison.drawdown_improvement_pct) != null
+          ? `${Number(comparison.drawdown_improvement_pct).toFixed(2)}% shallower max drawdown than HODL.`
+          : "Drawdown comparison is not populated.",
+      },
+      legacyEraGate,
+    ]
 
   return {
     id: str(manifest.strategy_id) ?? str(manifest.manifest_id) ?? "crypto-managed-passport",
