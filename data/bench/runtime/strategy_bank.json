@@ -4,7 +4,7 @@
   "active_record_ids": {
     "stocks": "regime_aware_momentum::stop_5_target_15"
   },
-  "updated_at": "2026-04-23T00:37:36.466685-04:00",
+  "updated_at": "2026-04-23T11:50:13.147846-04:00",
   "strategies": [
     {
       "record_id": "btc_managed_exposure_v1::q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
@@ -9734,9 +9734,9 @@
       "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
       "sleeve": "STOCKS",
       "runtime_contract": "POSITION_CANDIDATES",
-      "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
+      "promotion_stage": "CONFIRMING",
       "runtime_selectable": true,
-      "passport_role_id": null,
+      "passport_role_id": "STOCKS_BROAD_MOMENTUM",
       "supersedes_record_id": null,
       "signal_source": "validation_strategy",
       "notes": [
@@ -9749,7 +9749,8 @@
         "Exposure profile: 81.69% of evaluated trading days active, 34.52% average capital deployed, 82.17% peak capital deployed.",
         "Deployment-matched benchmark SPY return: 48.17% (excess 42.33%).",
         "Risk-adjusted summary: annualized return 22.63%, annualized volatility 10.88%, Sharpe 1.93, Sortino 3.17, Calmar 2.55.",
-        "The strategy cleared the minimum thresholds for profit factor, expectancy, fold consistency, drawdown, benchmark comparison, and sample-quality gates."
+        "The strategy cleared the minimum thresholds for profit factor, expectancy, fold consistency, drawdown, benchmark comparison, and sample-quality gates.",
+        "legacy manual exception: operator-confirmed promotion for pre-current-gates regime-aware momentum record so passport v2/paper-monitoring can reflect the existing approved stock slot"
       ],
       "planning_profile": {
         "symbols": [
@@ -9807,10 +9808,33 @@
         "campaign_id": "q076b_regime_aware_momentum_opt_02",
         "candidate_id": null,
         "run_id": "2026-04-11-q076b-regime-opt-02",
-        "passport_role_id": null,
+        "passport_role_id": "STOCKS_BROAD_MOMENTUM",
         "supersedes_record_id": null
       },
-      "paper_monitoring": null,
+      "paper_monitoring": {
+        "schema_version": "passport_paper_monitoring.v1",
+        "status": "ACTIVE",
+        "window": {
+          "start": "2026-04-23T11:50:13.147846-04:00",
+          "target_days": 21,
+          "elapsed_days": 0,
+          "remaining_days": 21
+        },
+        "tracking": {
+          "source_kind": null,
+          "source_detail": null,
+          "actual_return_pct": null,
+          "expected_return_pct": null,
+          "tracking_deviation_pct": null,
+          "threshold_pct": 4.0,
+          "window_days": 5
+        },
+        "recommendation": {
+          "status": null,
+          "raised_at": null,
+          "reason": null
+        }
+      },
       "trade_history": {
         "schema_version": "passport_trade_history.v1",
         "weight_basis": "POST_EVENT_TOTAL_PORTFOLIO",
@@ -13505,8 +13529,8 @@
         "blockers": []
       },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-23T00:37:36.466685-04:00",
-      "selected_at": "2026-04-11T13:31:26.522551-04:00"
+      "updated_at": "2026-04-23T11:50:13.147846-04:00",
+      "selected_at": "2026-04-23T11:50:13.147846-04:00"
     }
   ]
 }
