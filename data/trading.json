@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-23T19:15:12.279563+00:00",
+  "generated_at": "2026-04-23T19:30:11.367524+00:00",
   "as_of_date": "2026-04-23",
   "account": {
     "equity": 85631.19,
@@ -1644,29 +1644,11 @@
         "short_strike": 125.0,
         "long_strike": 120.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.5,
+        "credit_width_ratio": 0.3,
+        "annualized_yield_pct": 521.4,
+        "max_loss_per_contract": 350.0,
         "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "COF",
-        "price": 193.0,
-        "sector": "Financial Services",
-        "expiry": "2026-05-15",
-        "dte": 22,
-        "short_strike": 195.0,
-        "long_strike": 190.0,
-        "spread_width": 5.0,
-        "net_credit": 1.3,
-        "credit_width_ratio": 0.26,
-        "annualized_yield_pct": 451.9,
-        "max_loss_per_contract": 370.0,
-        "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1675,7 +1657,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 4,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "BKNG",
