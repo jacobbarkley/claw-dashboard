@@ -1,11 +1,33 @@
 # Research Lab — Spec Review (2026-04-23)
 
-**Status:** Rev 2 — amended after Codex P1/P2 review (same day). Ready
-for implementation once locked.
+**Status:** Rev 3 — amended after Codex's Rev-2 P2 review (same day).
+No remaining P1 blockers. Ready for implementation.
 **Scope:** App-driven strategy research. From idea → bench campaign →
 results → promotion candidate, with nightly autopilot and AI-assisted
 reporting as later phases.
 **Supersedes:** n/a (new surface).
+
+**Rev 3 changes (post-Codex review, 2026-04-23):**
+
+1. **Preallocated `job_id`.** Dashboard generates a ULID at submit time,
+   includes it in the request file, returns it to the caller, and the
+   worker uses it as the authoritative job-row primary key. Keeps
+   `request_id` and `job_id` as distinct identifiers with room for
+   future resubmit semantics. Fixes Codex Rev-2 P2.1.
+2. **Honest store-outage degradation.** When the managed store is
+   unreachable, the UI says "Live progress unavailable — the job is
+   still running; results will appear on completion." No "last seen at"
+   pretense. Jobs continue; cold artifacts still flow through the
+   outbox. Fixes Codex Rev-2 P2.2.
+3. **Cancel explicitly deferred from Phase 1a/1b.** `CANCELLED` state
+   remains reserved in the state machine but is not exercised in 1a or
+   1b. No `cancel_request.v1` contract, no `/api/research/cancels`
+   route, no executor cancellation semantics. Moved to Phase 1c as the
+   first follow-up slice once the happy path is proven. Fixes Codex
+   Rev-2 P2.3.
+4. **Phase 1a acceptance tests enumerated as §11.** Six required tests,
+   including the Codex five plus idempotent-enqueue on duplicate
+   request replay.
 
 **Rev 2 changes (post-Codex review, 2026-04-23):**
 
@@ -197,6 +219,12 @@ git-tracked, and enqueued in the job queue.
 {
   "schema_version": "research_lab.campaign_request.v1",
   "request_id": "req_01HXXX...",
+  "job_id": "job_01HXXX...",             // PREALLOCATED by the submitter.
+                                          // Worker uses this as the job-row
+                                          // primary key. One request, one
+                                          // job — if a future resubmit
+                                          // spawns a new job, it carries a
+                                          // new request_id + job_id pair.
   "user_id": "jacob",
   "account_id": "paper_main",
   "strategy_group_id": "default",
@@ -271,7 +299,9 @@ the outbox writer (§6.8). Intermediate states never touch git.
 ```jsonc
 {
   "schema_version": "research_lab.job.v1",
-  "job_id": "job_01HXXX...",
+  "job_id": "job_01HXXX...",           // preallocated by submitter in the
+                                        // campaign_request; worker treats
+                                        // this as the authoritative row key
   "user_id": "jacob",
   "account_id": "paper_main",
   "strategy_group_id": "default",
@@ -310,7 +340,10 @@ QUEUED → COMPILING → COMPILE_FAILED (terminal)
               ↓
          (else terminal)
 
-CANCELLED reachable from any non-terminal state (operator action).
+CANCELLED — reserved state; NOT exercised in Phase 1a or 1b.
+            Added in Phase 1c (first follow-up slice after happy path
+            is proven). No cancel_request.v1 contract, no cancel
+            route, no executor cancellation semantics defined yet.
 ```
 
 Heartbeat convention: worker writes `heartbeat_at` every 30s during
@@ -578,19 +611,26 @@ Two explicit channels, each with a narrow purpose:
 #### 2.9.1 Submit channel — governed request files
 
 **Purpose:** how the dashboard asks the worker to do something (submit
-campaign, submit nomination, cancel job).
+campaign, submit nomination — cancel deferred to Phase 1c).
 
 **Mechanics:**
-- Dashboard `POST /api/research/requests` (and `/nominations`,
-  `/cancels`) writes a request file to the dashboard repo under
+- Dashboard `POST /api/research/requests` (and `/nominations`) writes a
+  request file to the dashboard repo under
   `data/research_lab/<user>/<account>/<group>/requests/inbox/`.
+  `/cancels` is explicitly not shipped in Phase 1a/1b (see §2.4 state
+  machine — cancel lands in Phase 1c).
+- Dashboard generates `job_id` (ULID) at submit time, writes it into
+  the request file, and returns `{commit_sha, request_id, job_id}` to
+  the caller.
 - Dashboard commits the file via the GitHub App token already used by
-  the push scripts. Commit SHA is returned to the caller.
+  the push scripts.
 - Worker runs a git-fetch poll every ~15s on the dashboard repo, picks
-  up new request files, validates, and enqueues into SQLite. After
-  successful enqueue it moves the request file to `requests/processed/`
-  via a worker-side commit (or leaves it in place and tracks state in
-  the DB — implementation choice, but pick one and stick with it).
+  up new request files, validates, and enqueues into SQLite using the
+  preallocated `job_id` as the row primary key. Enqueue is idempotent
+  on `(request_id, job_id)` — a duplicate file (git reprocessing,
+  worker restart mid-move) does not create a second row.
+- After successful enqueue, the worker moves the request file to
+  `requests/processed/` via a worker-side commit.
 
 **Why files-in-git:** auditability is free. Every request is timestamped,
 attributed, and reviewable in git log. Matches the existing
@@ -627,9 +667,16 @@ per night; as a commit stream that's both noisy and slow. The store is
 the right substrate for hot state.
 
 **Fallback if store unreachable:** the worker continues writing to
-SQLite (authoritative). Dashboard degrades to "live status unavailable,
-last seen at <ts>" by reading the cold mirror (see below). Queue
-continues running.
+SQLite (authoritative). Jobs keep running; cold artifacts continue to
+flow through the outbox on terminal states, so historical views stay
+correct. The dashboard's live-progress surface degrades honestly — no
+"last seen at" pretense (we don't persist a durable last-live snapshot
+anywhere the dashboard can reach without the store).
+
+UI copy on outage: "Live progress unavailable — the job is still
+running; results will appear on completion. Refresh once live state
+recovers." On store recovery, the publisher's next transition/heartbeat
+write repopulates the store and live progress resumes seamlessly.
 
 #### 2.9.3 Cold mirror — final artifacts only
 
@@ -653,7 +700,7 @@ need sub-second freshness.
 
 | Purpose | Channel | Freshness | Substrate | Who writes | Who reads |
 |---|---|---|---|---|---|
-| Submit campaign / nomination / cancel | Governed request file | 15-30s to enqueue | Git (dashboard repo) | Dashboard API route | Worker (git-fetch poll) |
+| Submit campaign / nomination (cancel deferred to 1c) | Governed request file | 15-30s to enqueue | Git (dashboard repo) | Dashboard API route | Worker (git-fetch poll) |
 | Live job status / heartbeat / progress | Managed state store | 15-30s | Upstash Redis (default) | Worker | Dashboard API route |
 | Historical artifacts (results, reports) | Cold mirror | Minutes | Git (both repos) | Outbox writer | Dashboard API route |
 
@@ -851,8 +898,11 @@ item.
   idea is enough for 1a).
 - Campaign-submit form — preset dropdown (stocks only in 1a) + param-
   sweep UI (bounded by preset schema) + thesis/notes + Submit.
-- `/api/research/requests` route — writes governed request file to the
-  dashboard repo, commits, returns the commit SHA + expected job_id.
+- `/api/research/requests` route — generates a ULID for `job_id`,
+  writes a governed request file to the dashboard repo (with the
+  preallocated `job_id` embedded), commits, returns
+  `{commit_sha, request_id, job_id}` to the caller. Dashboard
+  immediately begins polling live state by `job_id`.
 - Job-status card — polls `/api/research/jobs/:id` (managed-store read)
   and renders state machine with progress.
 - Result leaderboard + candidate scorecard (reuses existing readiness
@@ -898,6 +948,34 @@ primary user path to the research lab, full stop. Phase 3's autopilot
 adds a second *submitter* into the same queue; it does not replace the
 on-demand surface. On-demand runs continue to work during market hours,
 off hours, mid-session — whenever the user wants them.
+
+### Phase 1c — cancel (first follow-up after happy path, ~1 session)
+
+Deferred from 1a/1b to keep the beachhead brutally tight. Lands once
+submit/run/observe/summarize/nominate/promote is proven in production.
+
+**Codex:**
+- New `cancel_request.v1` contract (small — `request_id`, `job_id`,
+  `actor`, `reason`).
+- `/api/research/cancels` submit channel route (same governed-request
+  pattern).
+- `LocalExecutor.cancel(job_id)` — SIGTERM the running bench
+  subprocess; worker catches, transitions the job to `CANCELLED`,
+  writes a terminal snapshot via the outbox.
+- Partial-artifact handling: any `result_<id>.raw/` dir from an
+  interrupted run is preserved but marked incomplete — no `result.v1`
+  summary emitted.
+- Cancel interacts with retry by disabling it: a `CANCELLED` job is
+  never eligible for auto-retry regardless of how it was terminated.
+
+**Claude:**
+- Cancel button on the job-status card; disabled on terminal states.
+- Honest "cancelled at <ts> by <actor>" copy on the terminal view.
+
+**Acceptance (1c):** Click Cancel on a RUNNING job → request file
+commits → worker receives → SIGTERM fires → job transitions to
+CANCELLED within the heartbeat window → UI reflects the terminal state
+→ no stray artifacts in the cold tree.
 
 ### Phase 2 — idea bank (Codex + Claude, ~1-2 sessions)
 
@@ -1213,13 +1291,93 @@ to retrofit.
 If this spec review is accepted as the direction:
 
 1. **Codex:** draft `docs/architecture-rebuild/33-research-lab-contracts.md`
-   with the full field definitions in §2 and the SQLite DDL.
+   with the full field definitions in §2 and the SQLite DDL (including
+   the `outbox` table).
 2. **Codex:** registry audit — output a short markdown listing per-sleeve
    strategy families and their promotion-adapter status.
-3. **Codex:** commit the three Phase 1 presets.
-4. **Claude:** once contracts land, scaffold `/vires/lab` shell route
-   and the generated TS import so Phase 1 UI work can proceed in parallel
-   with Codex's worker implementation.
+3. **Codex:** commit the Phase 1a stocks preset.
+4. **Codex:** wire `state/research_lab/` into `.gitignore` and provision
+   the managed state store (Upstash Redis default).
+5. **Claude:** once contracts land, scaffold `/vires/lab` shell route
+   and the generated TS import so Phase 1a UI work can proceed in
+   parallel with Codex's worker implementation.
 
-Phase 1 end-to-end should be achievable in 2-3 focused sessions across
-Codex + Claude once Phase 0 contracts are locked.
+Phase 1a end-to-end should be achievable in ~2 focused sessions across
+Codex + Claude once Phase 0 contracts are locked. Phase 1b follows
+immediately (~1 session). Phase 1c (cancel) lands as the first
+post-happy-path slice.
+
+---
+
+## 11. Phase 1a acceptance tests (required)
+
+Six tests that MUST pass before Phase 1a is called done. These prove
+the infrastructure is actually crash-safe, not just green on the happy
+path. Codex's five original asks plus one on idempotent enqueue.
+
+### 11.1 request_id / job_id correlation
+
+- Submit a campaign request via the dashboard API.
+- Verify the returned `{commit_sha, request_id, job_id}` matches what
+  ends up in the DB row and in every downstream artifact
+  (`bundle.v1.request_id`, `job.v1.request_id`, `result.v1.job_id`,
+  `candidate.v1.result_id → result.v1.job_id → job.v1.request_id`).
+- Verify the dashboard can poll live state from the store using the
+  returned `job_id` before the worker has actually picked up the
+  request (expected: "queued / not yet enqueued" state from the
+  publisher's initial write, or empty with a honest "not yet
+  materialized" tombstone).
+
+### 11.2 Outbox crash recovery
+
+- Start a job, let it reach `POST_PROCESSING`.
+- Kill the worker mid-transition (between DB commit of terminal state
+  and outbox writer completing the cold artifacts).
+- Restart the worker.
+- Verify: outbox rows are re-processed, `result.v1.json`,
+  `candidate.v1.json`, and `job.v1.final.json` all land in the cold
+  tree exactly once, no duplicate git commits, SQLite state matches
+  on-disk artifacts.
+
+### 11.3 Managed-store outage behavior
+
+- Block the worker's Redis/KV endpoint (e.g., firewall rule).
+- Submit a job, let it run to completion.
+- Verify: job runs to `DONE` in SQLite, cold artifacts land in the cold
+  tree via the outbox, and dashboard historical views render correctly.
+- Verify: dashboard's live-status surface renders the honest "live
+  progress unavailable" state without errors.
+- Unblock the store; submit a second job; verify live progress resumes.
+
+### 11.4 Two-scope isolation
+
+- Create a second scope alongside the default: `jacob/paper_main/
+  test_group`.
+- Submit a job into each scope.
+- Verify: ideas, jobs, results, candidates, cold artifacts, and store
+  keys are all scoped — nothing from `default` appears in `test_group`
+  listings or vice versa.
+- Verify: both scopes can run concurrently without interference.
+
+### 11.5 Nomination dry-run against real strategy-bank schema
+
+- Run a stocks campaign to DONE with a winner candidate.
+- Submit a nomination request with `--dry-run` equivalent (flag on the
+  nomination artifact, or a read-only adapter mode).
+- Verify: the materialized bank record matches the current strategy-
+  bank schema exactly (no extra fields, no missing required fields).
+- Verify: no actual write happens to the bank file or promotion log.
+
+### 11.6 Duplicate request replay / idempotent enqueue
+
+- Submit a campaign request.
+- Simulate duplicate delivery: replay the same request file (e.g., via
+  a force-push that re-introduces the file, or via worker restart that
+  re-reads the inbox).
+- Verify: a second row is NOT created in the jobs table
+  (`(request_id, job_id)` UNIQUE key enforcement).
+- Verify: the worker's second processing of the file is a no-op that
+  leaves the file in `processed/` as before — no error, no duplicate
+  cold artifacts, no duplicate store entries.
+
+Running all six as part of the Phase 1a CI smoke is the bar.
