@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-23T15:45:11.965786+00:00",
+  "generated_at": "2026-04-23T16:00:16.991029+00:00",
   "as_of_date": "2026-04-23",
   "account": {
-    "equity": 85645.24,
+    "equity": 85630.88,
     "cash": 27562.63,
-    "buying_power": 112320.76,
+    "buying_power": 112308.44,
     "base_value": 100000.0,
-    "total_pnl": -14354.76,
-    "total_pnl_pct": -14.3548,
-    "today_pnl": 18.38,
-    "today_pnl_pct": 0.0215,
-    "positions_value": 58085.22,
-    "equity_deployed": 58085.22,
+    "total_pnl": -14369.12,
+    "total_pnl_pct": -14.3691,
+    "today_pnl": 4.02,
+    "today_pnl_pct": 0.0047,
+    "positions_value": 58067.81,
+    "equity_deployed": 58067.81,
     "options_deployed": 0,
-    "unrealized_pnl": 205.84,
-    "unrealized_pnl_pct": 0.36
+    "unrealized_pnl": 188.43,
+    "unrealized_pnl_pct": 0.33
   },
   "positions": [
     {
@@ -22,55 +22,55 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 272.294,
-      "current_price": 273.24,
-      "market_value": 1366.2,
-      "unrealized_pnl": 4.73,
-      "unrealized_pct": 0.35,
-      "change_today_pct": 0.03
+      "current_price": 273.365,
+      "market_value": 1366.825,
+      "unrealized_pnl": 5.355,
+      "unrealized_pct": 0.39,
+      "change_today_pct": 0.07
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 429.07,
-      "market_value": 1287.21,
-      "unrealized_pnl": 82.209999,
-      "unrealized_pct": 6.82,
-      "change_today_pct": 1.52
+      "current_price": 428.09,
+      "market_value": 1284.27,
+      "unrealized_pnl": 79.269999,
+      "unrealized_pct": 6.58,
+      "change_today_pct": 1.29
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78636.43,
-      "market_value": 887.105352,
-      "unrealized_pnl": 26.628289,
-      "unrealized_pct": 3.09,
-      "change_today_pct": 0.3
+      "current_price": 78456.249,
+      "market_value": 885.072712,
+      "unrealized_pnl": 24.595649,
+      "unrealized_pct": 2.86,
+      "change_today_pct": 0.07
     },
     {
       "symbol": "NVDA",
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 202.1,
-      "market_value": 3233.6,
-      "unrealized_pnl": 51.57,
-      "unrealized_pct": 1.62,
-      "change_today_pct": -0.2
+      "current_price": 201.4845,
+      "market_value": 3223.752,
+      "unrealized_pnl": 41.722,
+      "unrealized_pct": 1.31,
+      "change_today_pct": -0.5
     },
     {
       "symbol": "SGOV",
       "qty": 510.0,
       "side": "long",
       "entry_price": 100.530196,
-      "current_price": 100.61,
-      "market_value": 51311.1,
-      "unrealized_pnl": 40.70004,
-      "unrealized_pct": 0.08,
-      "change_today_pct": 0.01
+      "current_price": 100.6037,
+      "market_value": 51307.887,
+      "unrealized_pnl": 37.48704,
+      "unrealized_pct": 0.07,
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -1626,10 +1626,10 @@
         "short_strike": 125.0,
         "long_strike": 120.0,
         "spread_width": 5.0,
-        "net_credit": 2.0,
-        "credit_width_ratio": 0.4,
-        "annualized_yield_pct": 695.2,
-        "max_loss_per_contract": 300.0,
+        "net_credit": 2.1,
+        "credit_width_ratio": 0.42,
+        "annualized_yield_pct": 730.0,
+        "max_loss_per_contract": 290.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1652,12 +1652,30 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
+      },
+      {
+        "symbol": "COF",
+        "price": 193.0,
+        "sector": "Financial Services",
+        "expiry": "2026-05-15",
+        "dte": 22,
+        "short_strike": 195.0,
+        "long_strike": 190.0,
+        "spread_width": 5.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
