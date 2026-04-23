@@ -1,0 +1,10 @@
+Research Lab scope mirror directory — Phase 0 placeholder.
+
+Resolves to: scope = { user_id: "jacob", account_id: "paper_main", strategy_group_id: "default" }.
+
+The dashboard-side mirror of research-lab artifacts (ideas, jobs, results,
+candidates, reports) will land here once Codex's Phase 0 producer ships.
+Until then this directory exists only so the scope path is committed to git
+and the commit path is exercised.
+
+See: _design_handoff/_reference/research_lab/SPEC_REVIEW_2026-04-23.md §3.
