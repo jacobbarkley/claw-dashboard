@@ -11,7 +11,7 @@ import json
 from datetime import datetime, timedelta, timezone
 import os
 from pathlib import Path
-import time
+import sys
 from typing import Optional
 import urllib.error
 import urllib.parse
@@ -58,7 +58,6 @@ ALPACA_REQUIRED_KEYS = ('ALPACA_API_KEY_ID', 'ALPACA_API_SECRET_KEY')
 ALPACA_DATA_BASE_URL = 'https://data.alpaca.markets'
 ORDER_BLOTTER_RETENTION_DAYS = 60
 ORDER_BLOTTER_MAX_ROWS = 60
-ALPACA_FETCH_RETRY_DELAYS_SECONDS = (1.0, 2.0)
 BENCH_COMPARISON_KEYS = (
     'benchmark',
     'benchmark_baseline',
@@ -92,83 +91,6 @@ def load(path: Path):
         return json.loads(path.read_text(encoding='utf-8'))
     except Exception:
         return {}
-
-
-def build_freshness_marker(
-    subsystem: str,
-    *,
-    status: str,
-    source: str,
-    attempts: int = 0,
-    reason: Optional[str] = None,
-    fallback_used: bool = False,
-    stale_from: Optional[str] = None,
-) -> dict:
-    return {
-        'subsystem': subsystem,
-        'status': status,
-        'source': source,
-        'as_of': datetime.now(timezone.utc).isoformat(),
-        'attempts': attempts,
-        'fallback_used': fallback_used,
-        'stale_from': stale_from,
-        'reason': reason,
-    }
-
-
-def previous_feed_freshness(previous_feed: dict, subsystem: str) -> dict:
-    operator = previous_feed.get('operator', {}) if isinstance(previous_feed, dict) else {}
-    freshness = operator.get('freshness', {}) if isinstance(operator, dict) else {}
-    marker = freshness.get(subsystem) if isinstance(freshness, dict) else None
-    return marker if isinstance(marker, dict) else {}
-
-
-def previous_feed_stale_from(previous_feed: dict, subsystem: str) -> Optional[str]:
-    marker = previous_feed_freshness(previous_feed, subsystem)
-    return str(marker.get('as_of') or marker.get('stale_from') or previous_feed.get('generated_at') or '') or None
-
-
-def fetch_with_retry(
-    subsystem: str,
-    *,
-    source: str,
-    fetcher,
-    previous_available: bool = False,
-    stale_from: Optional[str] = None,
-):
-    attempts = 0
-    last_error: Optional[str] = None
-    total_attempts = len(ALPACA_FETCH_RETRY_DELAYS_SECONDS) + 1
-    for attempt_index in range(total_attempts):
-        attempts += 1
-        try:
-            return (
-                fetcher(),
-                build_freshness_marker(
-                    subsystem,
-                    status='fresh',
-                    source=source,
-                    attempts=attempts,
-                ),
-            )
-        except AlpacaFetchError as exc:
-            last_error = str(exc)
-            if attempt_index < total_attempts - 1:
-                time.sleep(ALPACA_FETCH_RETRY_DELAYS_SECONDS[attempt_index])
-
-    status = 'stale' if previous_available else 'failed'
-    return (
-        None,
-        build_freshness_marker(
-            subsystem,
-            status=status,
-            source=source,
-            attempts=attempts,
-            reason=last_error,
-            fallback_used=previous_available,
-            stale_from=stale_from,
-        ),
-    )
 
 
 def build_source_context() -> dict:
@@ -227,14 +149,12 @@ def fetch_stock_snapshots(symbols: list[str], creds: Optional[dict]) -> dict[str
     if creds is None or not symbols:
         return {}
     payload = alpaca_data_request(creds, '/v2/stocks/snapshots', params={'symbols': ','.join(symbols)})
-    if payload is None:
-        raise AlpacaFetchError('Alpaca /v2/stocks/snapshots fetch failed')
     if not isinstance(payload, dict):
-        raise AlpacaFetchError(f"Alpaca /v2/stocks/snapshots returned unexpected shape: {type(payload).__name__}")
+        return {}
     snapshots = payload.get('snapshots')
     if isinstance(snapshots, dict):
         return snapshots
-    raise AlpacaFetchError('Alpaca /v2/stocks/snapshots payload missing snapshots map')
+    return payload
 
 
 def alpaca_trading_request(creds: dict, path: str, *, params: Optional[dict] = None):
@@ -307,10 +227,8 @@ def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dic
             'sort': 'asc',
         },
     )
-    if payload is None:
-        raise AlpacaFetchError('Alpaca /v2/stocks/bars fetch failed')
     if not isinstance(payload, dict):
-        raise AlpacaFetchError(f"Alpaca /v2/stocks/bars returned unexpected shape: {type(payload).__name__}")
+        return {}
 
     raw_bars = payload.get('bars')
     grouped: dict[str, list[dict]] = {}
@@ -329,8 +247,6 @@ def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dic
             if not symbol:
                 continue
             grouped.setdefault(symbol, []).append(bar)
-    else:
-        raise AlpacaFetchError('Alpaca /v2/stocks/bars payload missing bars data')
 
     out: dict[str, float] = {}
     for symbol, bars in grouped.items():
@@ -741,12 +657,6 @@ def validate_output_contract(output: dict) -> None:
     symbols = strategy_universe.get('symbols')
     if not isinstance(symbols, list):
         raise RuntimeError('operator feed contract violation: strategy_universe.symbols missing')
-    universe_freshness = strategy_universe.get('freshness')
-    if not isinstance(universe_freshness, dict):
-        raise RuntimeError('operator feed contract violation: strategy_universe.freshness missing')
-    for key in ('stock_snapshots', 'stock_return_20d'):
-        if not isinstance(universe_freshness.get(key), dict):
-            raise RuntimeError(f'operator feed contract violation: strategy_universe.freshness.{key} missing')
 
     for item in symbols:
         if not isinstance(item, dict):
@@ -778,11 +688,6 @@ def validate_output_contract(output: dict) -> None:
     order_blotter = operator.get('order_blotter')
     if not isinstance(order_blotter, dict):
         raise RuntimeError('operator feed contract violation: operator.order_blotter missing')
-    operator_freshness = operator.get('freshness')
-    if not isinstance(operator_freshness, dict):
-        raise RuntimeError('operator feed contract violation: operator.freshness missing')
-    if not isinstance(operator_freshness.get('recent_orders'), dict):
-        raise RuntimeError('operator feed contract violation: operator.freshness.recent_orders missing')
 
     for sleeve in ('stocks', 'options', 'crypto'):
         if sleeve not in sleeve_equity_history:
@@ -1195,49 +1100,12 @@ def build_order_blotter(
     positions: list[dict],
     crypto_execution_plan: dict,
     crypto_execution_report: dict,
-) -> tuple[dict[str, list[dict]], dict]:
+) -> dict[str, list[dict]]:
     creds = load_alpaca_creds()
-    previous_feed = load(OUTPUT)
-    previous_operator = previous_feed.get('operator', {}) if isinstance(previous_feed, dict) else {}
-    previous_order_blotter = previous_operator.get('order_blotter', {}) if isinstance(previous_operator, dict) else {}
-    previous_order_blotter_available = any(
-        isinstance(rows, list) and len(rows) > 0
-        for rows in (previous_order_blotter.values() if isinstance(previous_order_blotter, dict) else [])
-    )
-    if creds is None:
-        recent_orders: dict[str, dict] = {}
-        freshness = build_freshness_marker(
-            'recent_orders',
-            status='unavailable',
-            source='alpaca_trading',
-            reason='missing_credentials',
-        )
-    else:
-        recent_orders_payload, freshness = fetch_with_retry(
-            'recent_orders',
-            source='alpaca_trading',
-            fetcher=lambda: fetch_recent_orders_map(creds),
-            previous_available=previous_order_blotter_available,
-            stale_from=previous_feed_stale_from(previous_feed, 'recent_orders'),
-        )
-        recent_orders = recent_orders_payload if isinstance(recent_orders_payload, dict) else {}
-
+    recent_orders = fetch_recent_orders_map(creds)
     events = collect_order_blotter_events(positions, crypto_execution_plan, crypto_execution_report)
     blotter: dict[str, list[tuple[str, dict]]] = {'stocks': [], 'crypto': [], 'options': []}
     seen_order_ids: set[str] = set()
-    seen_entry_signatures: set[str] = set()
-
-    if freshness.get('status') == 'stale' and isinstance(previous_order_blotter, dict):
-        for sleeve in ('stocks', 'crypto', 'options'):
-            rows = previous_order_blotter.get(sleeve, [])
-            if not isinstance(rows, list):
-                continue
-            for entry in rows:
-                if not isinstance(entry, dict):
-                    continue
-                sort_key = str(entry.get('date') or '')
-                blotter[sleeve].append((sort_key, entry))
-                seen_entry_signatures.add(order_blotter_entry_signature(entry))
 
     for event in events:
         order_id = event.get('order_id')
@@ -1275,23 +1143,12 @@ def build_order_blotter(
             'usd': round(float(usd), 2) if usd is not None else None,
             'note': event.get('note'),
         }
-        signature = order_blotter_entry_signature(entry)
-        if signature in seen_entry_signatures:
-            continue
-        seen_entry_signatures.add(signature)
         blotter[event['sleeve']].append((sort_key, entry))
 
-    return ({
+    return {
         sleeve: [item for _, item in sorted(rows, key=lambda row: row[0])][-ORDER_BLOTTER_MAX_ROWS:]
         for sleeve, rows in blotter.items()
-    }, freshness)
-
-
-def order_blotter_entry_signature(entry: dict) -> str:
-    return '|'.join(
-        str(entry.get(key) if entry.get(key) is not None else '')
-        for key in ('date', 'side', 'sym', 'qty', 'price', 'usd', 'note')
-    )
+    }
 
 
 def build_allocation_history(
@@ -1470,8 +1327,6 @@ def build_strategy_universe(
     positions: list[dict],
     research_dataset: dict,
 ) -> dict:
-    previous_feed = load(OUTPUT)
-    previous_universe = previous_feed.get('strategy_universe', {}) if isinstance(previous_feed, dict) else {}
     active_record = active_strategy.get('record', {}) if isinstance(active_strategy, dict) else {}
     planning_profile = active_record.get('planning_profile', {}) if isinstance(active_record, dict) else {}
     configured_symbols = planning_profile.get('symbols', [])
@@ -1495,20 +1350,6 @@ def build_strategy_universe(
             'as_of': None,
             'source': 'alpaca_market_data_snapshots',
             'symbols': [],
-            'freshness': {
-                'stock_snapshots': build_freshness_marker(
-                    'stock_snapshots',
-                    status='unavailable',
-                    source='alpaca_market_data',
-                    reason='no_symbols',
-                ),
-                'stock_return_20d': build_freshness_marker(
-                    'stock_return_20d',
-                    status='unavailable',
-                    source='alpaca_market_data',
-                    reason='no_symbols',
-                ),
-            },
         }
 
     research_items = research_dataset.get('items', []) if isinstance(research_dataset, dict) else []
@@ -1517,20 +1358,6 @@ def build_strategy_universe(
         for item in research_items
         if item.get('symbol')
     }
-    previous_items = previous_universe.get('symbols', []) if isinstance(previous_universe, dict) else []
-    previous_symbol_map = {
-        str(item.get('symbol')).strip().upper(): item
-        for item in previous_items
-        if isinstance(item, dict) and item.get('symbol')
-    }
-    previous_snapshot_available = any(
-        isinstance(item, dict) and any(item.get(key) is not None for key in ('current_price', 'prior_close', 'change_usd', 'change_pct'))
-        for item in previous_items
-    )
-    previous_return_available = any(
-        isinstance(item, dict) and safe_float(item.get('return_20d_pct')) is not None
-        for item in previous_items
-    )
     position_map = {
         str(item.get('symbol')).strip().upper(): item
         for item in positions
@@ -1538,47 +1365,9 @@ def build_strategy_universe(
     }
 
     creds = load_alpaca_creds()
-    if creds is None:
-        snapshots: dict[str, dict] = {}
-        return_20d_map: dict[str, float] = {}
-        snapshot_freshness = build_freshness_marker(
-            'stock_snapshots',
-            status='unavailable',
-            source='alpaca_market_data',
-            reason='missing_credentials',
-        )
-        return_20d_freshness = build_freshness_marker(
-            'stock_return_20d',
-            status='unavailable',
-            source='alpaca_market_data',
-            reason='missing_credentials',
-        )
-    else:
-        snapshots_payload, snapshot_freshness = fetch_with_retry(
-            'stock_snapshots',
-            source='alpaca_market_data',
-            fetcher=lambda: fetch_stock_snapshots(ordered_symbols, creds),
-            previous_available=previous_snapshot_available,
-            stale_from=previous_feed_stale_from(previous_feed, 'stock_snapshots'),
-        )
-        return_payload, return_20d_freshness = fetch_with_retry(
-            'stock_return_20d',
-            source='alpaca_market_data',
-            fetcher=lambda: fetch_stock_return_20d_map(ordered_symbols, creds),
-            previous_available=previous_return_available,
-            stale_from=previous_feed_stale_from(previous_feed, 'stock_return_20d'),
-        )
-        snapshots = snapshots_payload if isinstance(snapshots_payload, dict) else {}
-        return_20d_map = return_payload if isinstance(return_payload, dict) else {}
-
-    if snapshot_freshness.get('status') == 'fresh':
-        source = 'alpaca_market_data_snapshots'
-    elif snapshot_freshness.get('status') == 'stale':
-        source = 'alpaca_market_data_snapshots_stale_fallback'
-    else:
-        source = 'rebuild_research_dataset_fallback'
-    allow_snapshot_stale_fallback = snapshot_freshness.get('status') == 'stale'
-    allow_return_stale_fallback = return_20d_freshness.get('status') == 'stale'
+    snapshots = fetch_stock_snapshots(ordered_symbols, creds)
+    return_20d_map = fetch_stock_return_20d_map(ordered_symbols, creds)
+    source = 'alpaca_market_data_snapshots' if snapshots else 'rebuild_research_dataset_fallback'
     as_of_candidates: list[str] = []
     items: list[dict] = []
 
@@ -1590,7 +1379,6 @@ def build_strategy_universe(
         prev_daily_bar = snapshot.get('prevDailyBar', {}) if isinstance(snapshot, dict) else {}
         research_item = research_map.get(symbol, {})
         position_item = position_map.get(symbol, {})
-        previous_item = previous_symbol_map.get(symbol, {})
 
         current_price = safe_float(latest_trade.get('p'))
         if current_price is None:
@@ -1599,26 +1387,18 @@ def build_strategy_universe(
             current_price = safe_float(research_item.get('price'))
         if current_price is None:
             current_price = safe_float(position_item.get('current_price'))
-        if current_price is None and allow_snapshot_stale_fallback:
-            current_price = safe_float(previous_item.get('current_price'))
 
         prior_close = safe_float(prev_daily_bar.get('c'))
         if prior_close is None:
             held_change_pct = safe_float(position_item.get('change_today_pct'))
             if held_change_pct not in (None, -100.0) and current_price is not None:
                 prior_close = current_price / (1 + held_change_pct / 100)
-        if prior_close is None and allow_snapshot_stale_fallback:
-            prior_close = safe_float(previous_item.get('prior_close'))
 
         change_usd = None
         change_pct = None
         if current_price is not None and prior_close not in (None, 0):
             change_usd = current_price - prior_close
             change_pct = change_usd / prior_close * 100
-        if change_usd is None and allow_snapshot_stale_fallback:
-            change_usd = safe_float(previous_item.get('change_usd'))
-        if change_pct is None and allow_snapshot_stale_fallback:
-            change_pct = safe_float(previous_item.get('change_pct'))
 
         timestamp = (
             latest_trade.get('t')
@@ -1636,24 +1416,16 @@ def build_strategy_universe(
             'prior_close': round(prior_close, 4) if prior_close is not None else None,
             'change_usd': round(change_usd, 4) if change_usd is not None else None,
             'change_pct': round(change_pct, 4) if change_pct is not None else None,
-            'return_20d_pct': return_20d_map.get(symbol)
-            if symbol in return_20d_map
-            else (safe_float(previous_item.get('return_20d_pct')) if allow_return_stale_fallback else None),
+            'return_20d_pct': return_20d_map.get(symbol),
             'in_position': symbol in position_map,
             'strategy_member': symbol in active_symbols,
             'position_qty': position_qty if position_qty is not None else 0.0,
         })
 
     return {
-        'as_of': max(as_of_candidates) if as_of_candidates else (
-            previous_universe.get('as_of') if isinstance(previous_universe, dict) and previous_universe.get('as_of') else datetime.now(ET).isoformat()
-        ),
+        'as_of': max(as_of_candidates) if as_of_candidates else datetime.now(ET).isoformat(),
         'source': source,
         'symbols': items,
-        'freshness': {
-            'stock_snapshots': snapshot_freshness,
-            'stock_return_20d': return_20d_freshness,
-        },
     }
 
 
@@ -2039,15 +1811,9 @@ def main():
 
     positions = build_positions(market, legacy_positions, broker_snapshot)
     allocation_history = build_allocation_history(positions, promoted_manifests, crypto_execution_plan, as_of_date)
-    order_blotter, order_blotter_freshness = build_order_blotter(positions, crypto_execution_plan, crypto_execution_report)
+    order_blotter = build_order_blotter(positions, crypto_execution_plan, crypto_execution_report)
     sleeve_equity_history = build_sleeve_equity_history(positions, as_of_date)
     held_symbols = {item.get('symbol') for item in positions if item.get('symbol')}
-    strategy_universe = build_strategy_universe(market, active_strategy, positions, research_dataset)
-    operator_freshness = {
-        'recent_orders': order_blotter_freshness,
-        'stock_snapshots': (strategy_universe.get('freshness', {}) if isinstance(strategy_universe, dict) else {}).get('stock_snapshots', {}),
-        'stock_return_20d': (strategy_universe.get('freshness', {}) if isinstance(strategy_universe, dict) else {}).get('stock_return_20d', {}),
-    }
     output = {
         'contract_version': '1',
         'generated_at': datetime.now(timezone.utc).isoformat(),
@@ -2060,7 +1826,7 @@ def main():
         'daily_performance': build_daily_performance(),
         'equity_curve': build_equity_curve(legacy_positions),
         'sleeve_equity_history': sleeve_equity_history,
-        'strategy_universe': strategy_universe,
+        'strategy_universe': build_strategy_universe(market, active_strategy, positions, research_dataset),
         'watchlist': build_watchlist(pre_gate, trade_plan, thesis_set, held_symbols),
         'exit_candidates': [],
         'tunables': build_tunables(policy, session, mode_state),
@@ -2089,7 +1855,6 @@ def main():
             order_blotter,
         ),
     }
-    output['operator']['freshness'] = operator_freshness
     output['kpis']['positions_count'] = len(positions)
     validate_output_contract(output)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -2098,4 +1863,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except AlpacaFetchError as exc:
+        print(f'operator feed push skipped: {exc}', file=sys.stderr)
+        sys.exit(2)

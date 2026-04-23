@@ -181,7 +181,6 @@ function gateTone(status: string | null | undefined): "up" | "down" | "gold" | "
   const s = (status ?? "").toUpperCase()
   if (s === "PASS") return "up"
   if (s === "FAIL") return "down"
-  if (s === "INCONCLUSIVE") return "warn"
   if (s === "PENDING" || s === "WARN" || s === "BLOCKED") return "warn"
   return "neutral"
 }
