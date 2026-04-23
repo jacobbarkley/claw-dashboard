@@ -261,6 +261,77 @@ python3 scripts/pull-bench-data.py
 
 ---
 
+## Bug 5 — pytest regression suite (8 failures) + test-side-effect pushes to dashboard main
+
+### Status
+
+Post-3327036 runtime verification. Claude ran `pytest tests/openclaw_core/test_strategy_bank.py` from the Linux side (which Codex couldn't do from his WSL-broken desktop). Two distinct classes of problem surfaced: real test regressions and test isolation leakage.
+
+### Class A — 8 of 31 test_strategy_bank.py tests fail on main @ 3327036
+
+```
+8 failed, 23 passed in 18.45s
+
+FAILED test_strategy_bank_registers_campaign_winner_and_selects_active
+FAILED test_strategy_bank_confirm_promotion_creates_confirming_record
+FAILED test_strategy_bank_registers_crypto_manifest_as_passive_record
+FAILED test_crypto_comparison_entry_helpers_do_not_shadow_each_other
+FAILED test_strategy_bank_refresh_passport_v2_backfills_crypto_trade_history_from_state_changes
+FAILED test_trade_history_rows_preserve_symbol_weight_across_overlapping_round_trips
+FAILED test_strategy_bank_refresh_passport_v2_applies_crypto_defaults_for_confirming_record
+FAILED test_strategy_bank_cli_registers_and_shows_active
+```
+
+Three of these are directly attributable to the threshold wiring work or its merge neighbors:
+
+- `test_strategy_bank_refresh_passport_v2_applies_crypto_defaults_for_confirming_record` — the threshold-defaults test Codex wrote for this slice is failing. Primary diagnostic target.
+- `test_crypto_comparison_entry_helpers_do_not_shadow_each_other` — the regression Codex added for Bug 4 is failing. Suggests the shadowing is back, or the test setup drifted.
+- `test_strategy_bank_confirm_promotion_creates_confirming_record` — the CONFIRMING-stage creation path, which is exactly what paper_monitoring depends on. Must pass before thresholds can be observed end-to-end.
+
+The other five are from earlier slices (trade_history rows, crypto backfill, CLI registration) and may have drifted without anyone catching them. Full stack traces are reproducible with:
+
+```bash
+cd ~/.openclaw/workspace/trading-bot
+PYTHONPATH=src .venv-rebuild/bin/python3 -m pytest tests/openclaw_core/test_strategy_bank.py --tb=long
+```
+
+**Before fixing:** confirm it's really 3327036 that regressed these by running the same suite on 85b9422 (immediately prior). If they were already failing, Claude's earlier review passes missed them — which is also worth knowing.
+
+### Class B — pytest triggered a real push to claw-dashboard main
+
+During the first test run, one test fired the production push-operator-feed flow and actually committed + pushed to dashboard main. The commit is on record as `3ea95a3` on `claw-dashboard @ main`:
+
+```
+Wrote operator-feed.json -> /home/jacobbarkley/claude/claw-dashboard/data/operator-feed.json
+Canonical operator feed ready: data/operator-feed.json
+[main 3ea95a3] data: operator feed update 2026-04-22
+ 1 file changed, 11 insertions(+), 11 deletions(-)
+To github.com:jacobbarkley/claw-dashboard.git
+   7608923..3ea95a3  main -> main
+```
+
+Same class of bug as the Discord incident pollution from 2026-04-16, but different fan-out. The conftest autouse fixture that patches `send_rebuild_incident_alert_once` doesn't cover `push-operator-feed.py`. The content happens to be benign (identical shape to a normal 5-min cron push) but it SHOULDN'T be happening.
+
+**Suggested isolation layer:**
+- Extend the conftest autouse fixture to patch the test path that invokes the operator-feed push shell wrapper. Or detect `PYTEST_CURRENT_TEST` inside `push-operator-feed.py` / its shell wrapper and no-op the `git commit` / `git push` steps when set (mirroring the incident-sender gate).
+- The refresh-passport-v2 CLI appears to be invoking the push as a post-step side effect. If that's legitimate in production but never desirable under tests, the environment gate is cleanest.
+
+### What this unblocks
+
+- End-to-end trust that thresholds actually apply to a confirming record.
+- Ability for Claude to run pytest on his Linux side as a verification backstop for future Codex slices without polluting git history.
+
+### Verification after fix
+
+```bash
+PYTHONPATH=src .venv-rebuild/bin/python3 -m pytest tests/openclaw_core/test_strategy_bank.py
+# expect: 31 passed
+```
+
+Then check git log on claw-dashboard main — no new `data: operator feed update` commits should appear during the test run (only cron-driven ones at 5-min intervals).
+
+---
+
 ## Notes for Codex
 
 - Registration path (`register-from-manifest`) is working end-to-end from the Linux side. If your WSL bridge stays flaky, Claude can keep running hydration jobs on your behalf — just flag which records to add.
