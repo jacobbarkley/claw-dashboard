@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-23T14:00:10.971390+00:00",
+  "generated_at": "2026-04-23T14:15:11.042980+00:00",
   "as_of_date": "2026-04-23",
   "account": {
     "equity": 85636.1,
@@ -1598,11 +1598,48 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "COO",
+        "price": 71.21,
+        "sector": "Healthcare",
+        "expiry": "2026-05-15",
+        "dte": 22,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
+        "spread_width": 5.0,
+        "net_credit": 2.3,
+        "credit_width_ratio": 0.46,
+        "annualized_yield_pct": 799.5,
+        "max_loss_per_contract": 270.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "PRU",
+        "price": 96.9,
+        "sector": "Financial Services",
+        "expiry": "2026-05-15",
+        "dte": 22,
+        "short_strike": 100.0,
+        "long_strike": 95.0,
+        "spread_width": 5.0,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
