@@ -261,9 +261,13 @@ python3 scripts/pull-bench-data.py
 
 ---
 
-## Bug 5 — pytest regression suite (8 failures) + test-side-effect pushes to dashboard main
+## Bug 5 — pytest regression suite + test-side-effect pushes to dashboard main
 
 ### Status
+
+**Partially fixed by `codex/bug5-test-isolation-readiness @ 9aabe1e`.**
+- **Class B (test pollution pushes): CLOSED.** Verified — pytest now runs without writing to claw-dashboard main.
+- **Class A (test failures): 4 of 8 fixed, 4 remaining.** Current state: `4 failed, 27 passed`. Details below.
 
 Post-3327036 runtime verification. Claude ran `pytest tests/openclaw_core/test_strategy_bank.py` from the Linux side (which Codex couldn't do from his WSL-broken desktop). Two distinct classes of problem surfaced: real test regressions and test isolation leakage.
 
@@ -329,6 +333,81 @@ PYTHONPATH=src .venv-rebuild/bin/python3 -m pytest tests/openclaw_core/test_stra
 ```
 
 Then check git log on claw-dashboard main — no new `data: operator feed update` commits should appear during the test run (only cron-driven ones at 5-min intervals).
+
+---
+
+## Bug 5 — 4 remaining failures after `9aabe1e` (tails relayed from Linux pytest run)
+
+Run: `cd ~/.openclaw/workspace/trading-bot && PYTHONPATH=src .venv-rebuild/bin/python3 -m pytest tests/openclaw_core/test_strategy_bank.py --tb=long`
+
+Summary: `4 failed, 27 passed in 1.42s`
+
+Grouped by root cause below.
+
+### 5.1 — `trade_history` not populated on the CONFIRM_PROMOTION path (2 failures)
+
+Both `test_strategy_bank_registers_campaign_winner_and_selects_active` and `test_strategy_bank_confirm_promotion_creates_confirming_record` fail at the same assertion: they register/confirm a campaign winner, read back the record, and expect `record.trade_history is not None`. It is None.
+
+```
+AssertionError: assert None is not None
+ +  where None = PromotedStrategyRecord(record_id='regime_aware_momentum::winner', ...).trade_history
+tests/openclaw_core/test_strategy_bank.py:445
+tests/openclaw_core/test_strategy_bank.py:535
+```
+
+Both paths run: `_write_campaign_fixture(repo_root)` → `runtime.confirm_promotion_from_campaign(...)`. The fixture writes a campaign with simulation rows; the path is supposed to derive trade_history from that evidence during the CONFIRM_PROMOTION write. Something in the registration→confirmation wiring skips the trade_history build for campaign-fixture evidence. Likely adjacent to `_build_trade_history_from_record` / the CONFIRM_PROMOTION path in `strategy_bank.py`.
+
+### 5.2 — stale enum in one simulation fixture (1 failure)
+
+`test_trade_history_rows_preserve_symbol_weight_across_overlapping_round_trips` fails at `SimulationRun.model_validate(...)` — the test fixture uses `exit_reason="TARGET_HIT"` which isn't a valid enum value.
+
+```
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for SimulationRun
+trades.0.exit_reason
+  Input should be 'STOP', 'TARGET', 'TIME_STOP' or 'WINDOW_END'
+    [type=literal_error, input_value='TARGET_HIT', input_type=str]
+trades.1.exit_reason
+  Input should be 'STOP', 'TARGET', 'TIME_STOP' or 'WINDOW_END'
+    [type=literal_error, input_value='TARGET_HIT', input_type=str]
+tests/openclaw_core/test_strategy_bank.py:870
+```
+
+Trivial fixture fix: `TARGET_HIT` → `TARGET` on both trades in the fixture literal at `test_strategy_bank.py:870`.
+
+### 5.3 — crypto CONFIRMING record's streak-breach detection doesn't fire (1 failure)
+
+`test_strategy_bank_refresh_passport_v2_applies_crypto_defaults_for_confirming_record` — the test sets up a CONFIRMING crypto record with an equity curve that drops 100000 → 89500 over 5 consecutive days (roughly -10.5% cumulative, which is past the 10.0% crypto threshold sustained for the full 5-day `window_days`). It then asserts status transitions to `DEMOTION_RECOMMENDED`. It stays `ACTIVE`.
+
+```
+assert refreshed_record.paper_monitoring.window.target_days == 14
+assert refreshed_record.paper_monitoring.tracking.threshold_pct == 10.0
+assert refreshed_record.paper_monitoring.tracking.window_days == 5
+# All three above PASS — defaults are wired correctly.
+
+assert refreshed_record.paper_monitoring.status == "DEMOTION_RECOMMENDED"
+AssertionError: assert 'ACTIVE' == 'DEMOTION_RECOMMENDED'
+  - DEMOTION_RECOMMENDED
+  + ACTIVE
+tests/openclaw_core/test_strategy_bank.py:1706
+```
+
+This is the core threshold semantics. The defaults are picked up correctly (`target_days=14`, `threshold_pct=10.0`, `window_days=5` all assert fine). What doesn't fire is the streak-detection logic that should transition `ACTIVE → DEMOTION_RECOMMENDED` after `window_days` consecutive measurement days at-or-worse-than threshold.
+
+Candidate root causes (Claude's guesses, not authoritative):
+- The streak counter may only consider daily deltas, not cumulative deviation against the monitoring-start baseline.
+- The streak may be cleared by an intermediate day if daily-change is flat/positive even while cumulative deviation stays at-or-below threshold.
+- The threshold comparison may be symmetric/absolute (`abs(dev) >= threshold`) but the deviation is being computed differently than assumed.
+
+This one is the material remaining gap — 5.1 and 5.2 are wiring/fixture cleanup. 5.3 means the threshold contract Codex + Jacob + Claude locked doesn't yet manifest in runtime behavior.
+
+### Verification after fix
+
+```bash
+PYTHONPATH=src .venv-rebuild/bin/python3 -m pytest tests/openclaw_core/test_strategy_bank.py
+# expect: 31 passed
+```
+
+Claude reruns refresh-passport-v2 + pull-bench-data.py after the next commit lands on main.
 
 ---
 
