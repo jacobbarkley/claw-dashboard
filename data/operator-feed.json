@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-23T02:53:47.936183+00:00",
+  "generated_at": "2026-04-23T04:10:28.187322+00:00",
   "as_of_date": "2026-04-22",
   "source_context": {
     "mode": "canonical",
@@ -16,8 +16,8 @@
     "base_value": 100000.0,
     "total_pnl": -14412.66,
     "total_pnl_pct": -14.4127,
-    "today_pnl": 127.57,
-    "today_pnl_pct": 0.1493,
+    "today_pnl": null,
+    "today_pnl_pct": null,
     "positions_value": 58054.46,
     "equity_deployed": 57168.76,
     "crypto_deployed": 885.7,
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-23T02:53:47.936222+00:00"
+    "audit_written_at": "2026-04-23T04:10:28.187364+00:00"
   },
   "kpis": {
     "total_trades": 62,
@@ -1029,20 +1029,20 @@
         "subsystem": "stock_snapshots",
         "status": "stale",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-23T02:53:44.576618+00:00",
+        "as_of": "2026-04-23T04:10:24.811531+00:00",
         "attempts": 3,
         "fallback_used": true,
-        "stale_from": "2026-04-23T02:53:35.904376+00:00",
+        "stale_from": "2026-04-23T02:53:44.576618+00:00",
         "reason": "Alpaca /v2/stocks/snapshots payload missing snapshots map"
       },
       "stock_return_20d": {
         "subsystem": "stock_return_20d",
         "status": "failed",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-23T02:53:47.936034+00:00",
+        "as_of": "2026-04-23T04:10:28.187147+00:00",
         "attempts": 3,
         "fallback_used": false,
-        "stale_from": "2026-04-23T02:53:39.270257+00:00",
+        "stale_from": "2026-04-23T02:53:47.936034+00:00",
         "reason": "Alpaca /v2/stocks/bars fetch failed"
       }
     }
@@ -2122,7 +2122,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-04-23T02:53:41.154275+00:00",
+        "as_of": "2026-04-23T04:10:21.251581+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2132,20 +2132,20 @@
         "subsystem": "stock_snapshots",
         "status": "stale",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-23T02:53:44.576618+00:00",
+        "as_of": "2026-04-23T04:10:24.811531+00:00",
         "attempts": 3,
         "fallback_used": true,
-        "stale_from": "2026-04-23T02:53:35.904376+00:00",
+        "stale_from": "2026-04-23T02:53:44.576618+00:00",
         "reason": "Alpaca /v2/stocks/snapshots payload missing snapshots map"
       },
       "stock_return_20d": {
         "subsystem": "stock_return_20d",
         "status": "failed",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-23T02:53:47.936034+00:00",
+        "as_of": "2026-04-23T04:10:28.187147+00:00",
         "attempts": 3,
         "fallback_used": false,
-        "stale_from": "2026-04-23T02:53:39.270257+00:00",
+        "stale_from": "2026-04-23T02:53:47.936034+00:00",
         "reason": "Alpaca /v2/stocks/bars fetch failed"
       }
     }
