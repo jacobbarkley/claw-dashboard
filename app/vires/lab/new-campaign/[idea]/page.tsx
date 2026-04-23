@@ -30,7 +30,7 @@ export default async function ViresLabNewCampaignPage({
         />
         <LabPhaseZeroSlot
           label="Submit button"
-          note="POST /api/research/requests — writes the request file, commits via the GitHub App token, returns {commit_sha, request_id, job_id}. Dashboard redirects to the job view immediately."
+          note="POST /api/research/requests — writes the governed request file, commits via the GitHub App token, and returns a research_lab.job_pending.v1 receipt (state: PENDING_ENQUEUE). Dashboard redirects to the job view immediately and renders the pending receipt until the worker materializes a real job.v1 row in SQLite + publishes the first live snapshot to the managed store (~15-30s)."
         />
       </LabPhaseZeroShell>
     </>

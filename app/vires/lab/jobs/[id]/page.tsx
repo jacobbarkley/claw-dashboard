@@ -21,8 +21,12 @@ export default async function ViresLabJobDetailPage({
         pitch="State machine from QUEUED through POST_PROCESSING to DONE, with live progress polled from the managed state store every ~15 seconds. When the store is unreachable the surface degrades honestly — the job keeps running; results land on completion."
       >
         <LabPhaseZeroSlot
+          label="Pending receipt → live state"
+          note="Pre-enqueue: renders the job_pending.v1 receipt returned by submit (state: PENDING_ENQUEUE). Once the worker git-fetches the request file and creates the SQLite row, the live projection in the managed store supersedes the receipt — dashboard polling switches to the real job.v1 snapshot on the next tick."
+        />
+        <LabPhaseZeroSlot
           label="State + progress"
-          note="QUEUED · COMPILING · RUNNING · POST_PROCESSING · DONE. Progress shows variants_complete / variants_total and a phase label (compile, grid_sweep, validate, summarize)."
+          note="QUEUED · COMPILING · RUNNING · POST_PROCESSING · DONE. Progress shows variants_complete / variants_total and a phase label (compile, grid_sweep, validate, summarize). Heartbeats every 30s during RUNNING."
         />
         <LabPhaseZeroSlot
           label="Leaderboard (on DONE)"

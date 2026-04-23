@@ -473,7 +473,7 @@ export function ViresBenchView({
             className="t-eyebrow"
             style={{ fontSize: 9, color: "var(--vr-gold)", marginBottom: 4, letterSpacing: "0.14em" }}
           >
-            Research Lab · Phase 0 scaffolding
+            Research Lab · Phase 0 contracts locked · 1a worker next
           </div>
           <div className="t-h4" style={{ fontSize: 14, color: "var(--vr-cream)" }}>
             Run campaigns from the app — idea to promotion, without leaving here
@@ -486,7 +486,7 @@ export function ViresBenchView({
               lineHeight: 1.5,
             }}
           >
-            Shell is live; real submit + live status land once Phase 0 contracts ship.
+            Shell is live and typed against the locked contracts; real submit + live status light up once Phase 1a lands.
           </div>
         </div>
         <span

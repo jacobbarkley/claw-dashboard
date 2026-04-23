@@ -99,13 +99,15 @@ export function LabPhaseZeroShell({
             letterSpacing: "0.14em",
           }}
         >
-          Phase 0 · awaiting backend contracts
+          Phase 0 · contracts locked · Phase 1a worker next
         </div>
         <div style={{ fontSize: 13, lineHeight: 1.5, color: "var(--vr-cream)" }}>
-          The UI shell is scaffolded. Real data lights up once Codex's
-          Phase 0 contracts + worker land on the trading-bot side. Nothing
-          here invents backend truth — when you see a number or a state
-          chip on this page, it came from a real artifact.
+          Codex landed the Phase 0 contracts, first stocks preset, and the
+          SQLite DDL on branch <span className="t-mono">codex/research-lab-phase0</span>{" "}
+          (commit <span className="t-mono">0514fdd</span>). UI types are
+          regenerated against that source. Real data lights up once the
+          Phase 1a worker + managed state store are wired and the branch
+          merges. Nothing here invents backend truth.
         </div>
         <div
           style={{

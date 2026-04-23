@@ -1,27 +1,26 @@
-// Research Lab — TypeScript contracts stub.
+// Research Lab — TypeScript contracts.
 //
-// This file is a placeholder. The canonical types live in the trading-bot
-// repo under src/openclaw_core/research_lab/schemas.py (or equivalent) and
-// are generated into this file by Codex's Phase 0 delivery.
+// Regenerated from trading-bot/docs/architecture-rebuild/33-research-lab-contracts.md
+// (commit 0514fdd on codex/research-lab-phase0). Keep this file in lockstep
+// with that source — it is the only way the dashboard authors shapes that
+// downstream code can trust.
 //
-// Until that delivery lands, every research-lab surface imports from this
-// stub and renders an honest empty state. Do NOT invent fields here —
-// the spec review explicitly names the dashboard as a thin surface, not a
-// second source of truth.
-//
-// Contract source of truth: SPEC_REVIEW_2026-04-23.md §2.
+// Do NOT extend these types with fields the contracts doc doesn't declare.
+// If a new field is needed, it lands in 33-research-lab-contracts.md first;
+// this file follows.
 
-// Opaque scope triple. All artifacts carry this.
-export type ScopedId = {
+// ─── Scope ─────────────────────────────────────────────────────────────────
+
+export interface ScopeTriple {
   user_id: string
   account_id: string
   strategy_group_id: string
 }
 
-// Sleeve tag matches the rest of Vires (uppercased in research-lab contracts).
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
 export type ResearchSleeve = "STOCKS" | "CRYPTO" | "OPTIONS"
 
-// Status tokens referenced by the UI even before the producer is wired.
 export type IdeaStatus =
   | "DRAFT"
   | "READY"
@@ -30,16 +29,36 @@ export type IdeaStatus =
   | "SHELVED"
   | "RETIRED"
 
+export type IdeaSource = "CONVERSATION" | "MANUAL" | "IMPORTED"
+
+// Phase 1a/1b allowed job states. CANCELLED is reserved but not exercised
+// until Phase 1c.
 export type JobState =
   | "QUEUED"
   | "COMPILING"
-  | "COMPILE_FAILED"
   | "RUNNING"
   | "POST_PROCESSING"
   | "DONE"
   | "FAILED"
   | "RETRY_QUEUED"
-  | "CANCELLED" // reserved; not exercised in Phase 1a/1b
+  | "CANCELLED"
+
+export type JobPhase = "compile" | "grid_sweep" | "validate" | "summarize"
+
+export type Submitter =
+  | "USER_ONDEMAND"
+  | "AUTOPILOT_NIGHTLY"
+  | "API"
+  | "AI_TRIAGE"
+
+export type ExecutionIntent = "FULL_CAMPAIGN" | "DRY_RUN"
+
+export type Priority = "LOW" | "NORMAL" | "HIGH"
+
+export type AdapterStatus =
+  | "WIRED"
+  | "CODE_COMPLETE_UNWIRED"
+  | "NOT_IMPLEMENTED"
 
 export type ReadinessOverallStatus =
   | "READY_TO_NOMINATE"
@@ -47,17 +66,325 @@ export type ReadinessOverallStatus =
   | "BLOCKED"
   | "EMPTY_STATE"
 
-export type AdapterStatus =
-  | "WIRED"
-  | "CODE_COMPLETE_UNWIRED"
-  | "NOT_IMPLEMENTED"
+export type ReadinessGateStatus =
+  | "PASS"
+  | "FAIL"
+  | "PENDING"
+  | "INCONCLUSIVE"
+  | "BLOCKED"
 
-// Phase-0 placeholder: the real contract lands via Codex's generator.
-// This type is intentionally imprecise so nothing downstream pretends to
-// know a shape that isn't validated yet.
-export type ResearchLabPlaceholder = {
-  schema_version: string
-  __contract_status: "phase_0_stub_awaiting_codex"
+export type NominationState = "PENDING" | "APPLIED" | "REJECTED"
+
+export type NominationIdentityMode = "NEW_RECORD" | "REPLACE_EXISTING"
+
+export type PlateauAnalysis =
+  | "STABLE"
+  | "LUCKY_PEAK"
+  | "MIXED"
+  | "INSUFFICIENT_EVIDENCE"
+
+// ─── Provenance ─────────────────────────────────────────────────────────────
+
+export interface ResearchLabProvenance {
+  conversation_id?: string | null
+  commit_sha?: string | null
+  notes?: string | null
 }
 
-export const CONTRACT_STATUS = "phase_0_stub_awaiting_codex" as const
+// ─── idea.v1 ────────────────────────────────────────────────────────────────
+
+export interface IdeaV1 extends ScopeTriple {
+  schema_version: "research_lab.idea.v1"
+  idea_id: string
+  title: string
+  thesis: string
+  sleeve: ResearchSleeve
+  /** Registry join key — MUST match backtest/bench/strategy_registry.json. */
+  strategy_id: string
+  status: IdeaStatus
+  created_at: string
+  created_by: string
+  source: IdeaSource
+  params: Record<string, unknown>
+  /** Descriptive only; strategy_id is the authoritative join. */
+  strategy_family?: string | null
+  tags?: string[] | null
+  provenance?: ResearchLabProvenance | null
+}
+
+// ─── preset.v1 ──────────────────────────────────────────────────────────────
+
+export interface PresetParamSchemaEntry {
+  type: "enum_decimal" | "enum_int" | "enum_string" | "named_universe"
+  units?: string | null
+  default?: unknown
+  options?: unknown[] | null
+}
+
+export interface PresetBounds {
+  max_sweep_size: number
+  max_era_windows: number
+  max_wallclock_minutes: number
+}
+
+export interface PresetV1 {
+  schema_version: "research_lab.preset.v1"
+  preset_id: string
+  display_name: string
+  /** Phase tag for the preset surface (e.g. "1a", "1b"). */
+  phase: string
+  sleeve: ResearchSleeve
+  /** Registry join key — MUST match backtest/bench/strategy_registry.json. */
+  strategy_id: string
+  strategy_family: string
+  /** Must match one entry in registry `campaign_presets[].preset_id`. */
+  source_registry_preset_id: string
+  description: string
+  param_schema: Record<string, PresetParamSchemaEntry>
+  bounds: PresetBounds
+  /** Compiler materializes the base campaign envelope from this block. */
+  base_experiment: Record<string, unknown>
+  notes?: string[] | null
+}
+
+export interface PresetIndexEntry {
+  preset_id: string
+  display_name: string
+  phase: string
+  sleeve: ResearchSleeve
+  strategy_id: string
+  strategy_family: string
+  path: string
+}
+
+export interface PresetIndexV1 {
+  schema_version: "research_lab.preset_index.v1"
+  presets: PresetIndexEntry[]
+}
+
+// ─── campaign_request.v1 ────────────────────────────────────────────────────
+
+export interface CampaignRequestV1 extends ScopeTriple {
+  schema_version: "research_lab.campaign_request.v1"
+  request_id: string
+  /** Preallocated by the submitter. */
+  job_id: string
+  idea_id: string
+  actor: string
+  submitted_at: string
+  submitted_by: Submitter
+  preset_id: string
+  /** Keys MUST be declared in the preset's param_schema. */
+  param_sweep: Record<string, unknown[]>
+  execution_intent: ExecutionIntent
+  priority: Priority
+  notes?: string | null
+}
+
+// ─── job_pending.v1 ─────────────────────────────────────────────────────────
+//
+// Transport-only receipt returned by the submit route. Not canonical queue
+// state; not persisted in SQLite. The dashboard renders this until the
+// worker materializes the first real job.v1 projection.
+
+export interface JobPendingV1 extends ScopeTriple {
+  schema_version: "research_lab.job_pending.v1"
+  request_id: string
+  job_id: string
+  submitted_at: string
+  submitted_by: Submitter
+  state: "PENDING_ENQUEUE"
+  summary: string
+}
+
+// ─── bench_bundle.v1 ────────────────────────────────────────────────────────
+
+export interface BenchBundleValidation {
+  compiler_checks_passed: boolean
+  strategy_family_valid: boolean
+  param_sweep_bounded: boolean
+  universe_resolved: boolean
+}
+
+export interface BenchBundleV1 extends ScopeTriple {
+  schema_version: "research_lab.bench_bundle.v1"
+  bundle_id: string
+  job_id: string
+  request_id: string
+  idea_id: string
+  generated_at: string
+  compiler_version: string
+  /** The only artifact the executor actually runs. App never authors this. */
+  bench_manifest: Record<string, unknown>
+  validation: BenchBundleValidation
+}
+
+// ─── job.v1 ─────────────────────────────────────────────────────────────────
+
+export interface JobProgress {
+  variants_complete: number
+  variants_total: number
+  phase: JobPhase
+}
+
+export interface JobV1 extends ScopeTriple {
+  schema_version: "research_lab.job.v1"
+  /** Row primary key — preallocated via campaign_request.job_id. */
+  job_id: string
+  /** UNIQUE — enforces idempotent enqueue on duplicate request replay. */
+  request_id: string
+  state: JobState
+  created_at: string
+  updated_at: string
+  bundle_id?: string | null
+  executor_id?: string | null
+  started_at?: string | null
+  finished_at?: string | null
+  heartbeat_at?: string | null
+  progress?: JobProgress | null
+  retry_count?: number | null
+  retry_eligible_after?: string | null
+  result_id?: string | null
+  error_code?: string | null
+  error?: string | null
+}
+
+// ─── result.v1 ──────────────────────────────────────────────────────────────
+
+export interface ResultVariantMetrics {
+  total_return_pct?: number | null
+  sharpe_ratio?: number | null
+  sortino_ratio?: number | null
+  calmar_ratio?: number | null
+  max_drawdown_pct?: number | null
+  win_rate_pct?: number | null
+  profit_factor?: number | null
+  trades?: number | null
+}
+
+export interface ResultVariant {
+  variant_id: string
+  params: Record<string, unknown>
+  metrics: ResultVariantMetrics
+  era_scores?: number[] | null
+  rank?: number | null
+  winner?: boolean | null
+}
+
+export interface ResultBenchmark {
+  symbol: string
+  total_return_pct?: number | null
+  sharpe_ratio?: number | null
+}
+
+export interface ResultV1 extends ScopeTriple {
+  schema_version: "research_lab.result.v1"
+  result_id: string
+  job_id: string
+  idea_id: string
+  sleeve: ResearchSleeve
+  completed_at: string
+  variants: ResultVariant[]
+  plateau_analysis: PlateauAnalysis
+  plateau_spread?: number | null
+  benchmark?: ResultBenchmark | null
+  /** AI-filled from Phase 4; null until then. */
+  interpretation_summary?: string | null
+}
+
+// ─── candidate.v1 ───────────────────────────────────────────────────────────
+
+export interface ReadinessGate {
+  gate_id: string
+  label: string
+  status: ReadinessGateStatus
+  source_kind?: string | null
+  value?: number | null
+  threshold?: number | null
+  summary?: string | null
+  detail?: string | null
+}
+
+export interface ReadinessSnapshot {
+  overall_status: ReadinessOverallStatus
+  gates: ReadinessGate[]
+  blockers?: string[] | null
+  as_of?: string | null
+}
+
+export interface CandidateV1 extends ScopeTriple {
+  schema_version: "research_lab.candidate.v1"
+  candidate_id: string
+  result_id: string
+  idea_id: string
+  sleeve: ResearchSleeve
+  strategy_id: string
+  evaluated_at: string
+  adapter_status: AdapterStatus
+  readiness: ReadinessSnapshot
+  promotion_event_id?: string | null
+  nomination_uri?: string | null
+}
+
+// ─── nomination.v1 ──────────────────────────────────────────────────────────
+
+export interface NominationIdentityResolution {
+  mode: NominationIdentityMode
+  replaces_record_id?: string | null
+  resolution_rule?: string | null
+}
+
+export interface NominationV1 extends ScopeTriple {
+  schema_version: "research_lab.nomination.v1"
+  nomination_id: string
+  request_id: string
+  candidate_id: string
+  result_id: string
+  actor: string
+  submitted_at: string
+  state: NominationState
+  identity_resolution: NominationIdentityResolution
+  /** Shape matches what the existing strategy bank already expects. */
+  materialized_bank_record: Record<string, unknown>
+  submitted_by?: Submitter | null
+  campaign_state_on_promotion?: Record<string, unknown> | null
+  promotion_event_id?: string | null
+}
+
+// ─── morning_report.v1 ──────────────────────────────────────────────────────
+
+export interface MorningReportV1 extends ScopeTriple {
+  schema_version: "research_lab.morning_report.v1"
+  report_id: string
+  generated_at: string
+  window: { from: string; to: string }
+  jobs_run: number
+  by_sleeve: Record<ResearchSleeve, { jobs: number; candidates: number; promotions_proposed: number }>
+  promotions_proposed: Array<Record<string, unknown>>
+  strong_not_promoted: Array<Record<string, unknown>>
+  interesting_findings: Array<Record<string, unknown>>
+  postmortems: Array<Record<string, unknown>>
+  /** Templated prose in Phase 3; AI-narrated in Phase 4. */
+  narrative?: {
+    opener?: string | null
+    per_sleeve?: Partial<Record<ResearchSleeve, string>> | null
+  } | null
+}
+
+// ─── Dashboard-side helpers ─────────────────────────────────────────────────
+
+/**
+ * Phase-0 scope default. Every UI surface that needs to render the default
+ * scope without waiting for a user-selector uses this constant.
+ */
+export const PHASE_1_DEFAULT_SCOPE: ScopeTriple = {
+  user_id: "jacob",
+  account_id: "paper_main",
+  strategy_group_id: "default",
+}
+
+export const CONTRACTS_SOURCE = {
+  doc: "trading-bot/docs/architecture-rebuild/33-research-lab-contracts.md",
+  phase_0_branch: "codex/research-lab-phase0",
+  phase_0_commit: "0514fdd",
+} as const
