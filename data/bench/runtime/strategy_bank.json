@@ -1,7 +1,10 @@
 {
   "schema_version": "1",
   "active_record_id": "regime_aware_momentum::stop_5_target_15",
-  "updated_at": "2026-04-22T15:17:33.554250-04:00",
+  "active_record_ids": {
+    "stocks": "regime_aware_momentum::stop_5_target_15"
+  },
+  "updated_at": "2026-04-22T20:35:58.445233-04:00",
   "strategies": [
     {
       "record_id": "btc_managed_exposure_v1::q090c_btc_managed_exposure_risk_adjusted.daily_core_paper_v1",
@@ -11,6 +14,8 @@
       "strategy_path": "backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json",
       "display_name": "BTC Managed Exposure Daily Core Paper v1",
       "description": "Promote the risk-adjusted managed BTC core first, while the tactical overlay remains research-only until a 4H scheduler is ready.",
+      "sleeve": "CRYPTO",
+      "runtime_contract": "TARGET_EXPOSURE",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
       "runtime_selectable": false,
       "passport_role_id": "CRYPTO_MANAGED_RISK_ADJUSTED",
@@ -998,8 +1003,71 @@
           }
         ]
       },
+      "promotion_readiness": {
+        "gates": [
+          {
+            "gate_id": "TRADE_COUNT",
+            "label": "Minimum trade count",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 83.0,
+            "threshold": 10.0,
+            "summary": "83 completed crypto trades in the current sleeve comparison."
+          },
+          {
+            "gate_id": "BENCHMARK",
+            "label": "Beats benchmark",
+            "status": "FAIL",
+            "source_kind": "VALIDATION_GATE",
+            "value": -8762.417,
+            "threshold": 0.0,
+            "summary": "Net compounded return delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "SHARPE_DELTA",
+            "label": "Sharpe vs benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 0.1112,
+            "threshold": 0.0,
+            "summary": "Sharpe delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "CALMAR_DELTA",
+            "label": "Calmar vs benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 0.1529,
+            "threshold": 0.0,
+            "summary": "Calmar delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "DRAWDOWN",
+            "label": "Drawdown improvement",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 25.7783,
+            "threshold": 0.0,
+            "summary": "Positive values mean shallower max drawdown than buy-and-hold BTC."
+          },
+          {
+            "gate_id": "ERA_ROBUSTNESS",
+            "label": "Era sweep",
+            "status": "FAIL",
+            "source_kind": "BENCH_AGGREGATE",
+            "value": 2.0,
+            "threshold": 6.0,
+            "summary": "2/6 era windows passed."
+          }
+        ],
+        "overall_status": "BLOCKED",
+        "blockers": [
+          "BENCHMARK",
+          "ERA_ROBUSTNESS"
+        ]
+      },
       "registered_at": "2026-04-22T12:48:10.939387-04:00",
-      "updated_at": "2026-04-22T15:17:33.554250-04:00",
+      "updated_at": "2026-04-22T20:35:58.445233-04:00",
       "selected_at": null
     },
     {
@@ -1010,6 +1078,8 @@
       "strategy_path": "backtest/bench/specs/q090d_btc_managed_exposure_persistent_floor.bench_spec.json",
       "display_name": "BTC Managed Exposure Daily Core Persistent Floor Paper v1",
       "description": "Promote the managed BTC core with a 10% risk-off floor so the crypto sleeve stays partially deployed while preserving the risk-adjusted managed-exposure story; tactical overlay remains research-only.",
+      "sleeve": "CRYPTO",
+      "runtime_contract": "TARGET_EXPOSURE",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
       "runtime_selectable": false,
       "passport_role_id": "CRYPTO_MANAGED_PERSISTENT_FLOOR",
@@ -1997,8 +2067,71 @@
           }
         ]
       },
+      "promotion_readiness": {
+        "gates": [
+          {
+            "gate_id": "TRADE_COUNT",
+            "label": "Minimum trade count",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 83.0,
+            "threshold": 10.0,
+            "summary": "83 completed crypto trades in the current sleeve comparison."
+          },
+          {
+            "gate_id": "BENCHMARK",
+            "label": "Beats benchmark",
+            "status": "FAIL",
+            "source_kind": "VALIDATION_GATE",
+            "value": -8478.7966,
+            "threshold": 0.0,
+            "summary": "Net compounded return delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "SHARPE_DELTA",
+            "label": "Sharpe vs benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 0.1159,
+            "threshold": 0.0,
+            "summary": "Sharpe delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "CALMAR_DELTA",
+            "label": "Calmar vs benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 0.1251,
+            "threshold": 0.0,
+            "summary": "Calmar delta versus buy-and-hold BTC."
+          },
+          {
+            "gate_id": "DRAWDOWN",
+            "label": "Drawdown improvement",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 23.4215,
+            "threshold": 0.0,
+            "summary": "Positive values mean shallower max drawdown than buy-and-hold BTC."
+          },
+          {
+            "gate_id": "ERA_ROBUSTNESS",
+            "label": "Era sweep",
+            "status": "FAIL",
+            "source_kind": "BENCH_AGGREGATE",
+            "value": 3.0,
+            "threshold": 6.0,
+            "summary": "3/6 era windows passed."
+          }
+        ],
+        "overall_status": "BLOCKED",
+        "blockers": [
+          "BENCHMARK",
+          "ERA_ROBUSTNESS"
+        ]
+      },
       "registered_at": "2026-04-22T12:48:24.866404-04:00",
-      "updated_at": "2026-04-22T15:17:33.554250-04:00",
+      "updated_at": "2026-04-22T20:35:58.445233-04:00",
       "selected_at": null
     },
     {
@@ -2009,6 +2142,8 @@
       "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
       "display_name": "regime_aware_momentum:stop_475_target_14",
       "description": "Middle ground between the tighter stop and the looser stop while nudging the target earlier.",
+      "sleeve": "STOCKS",
+      "runtime_contract": "POSITION_CANDIDATES",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
       "runtime_selectable": true,
       "passport_role_id": null,
@@ -2078,7 +2213,13 @@
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_475_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
-      "origin": null,
+      "origin": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "candidate_id": null,
+        "run_id": "2026-04-11-q076b-regime-opt-02",
+        "passport_role_id": null,
+        "supersedes_record_id": null
+      },
       "paper_monitoring": null,
       "trade_history": {
         "schema_version": "passport_trade_history.v1",
@@ -5717,8 +5858,86 @@
           }
         ]
       },
+      "promotion_readiness": {
+        "gates": [
+          {
+            "gate_id": "TRADE_COUNT",
+            "label": "Minimum trade count",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 164.0,
+            "threshold": 30.0,
+            "summary": "Completed-trade floor required before a decisive verdict is allowed."
+          },
+          {
+            "gate_id": "PROFIT_FACTOR",
+            "label": "Profit factor",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 2.0541,
+            "threshold": null,
+            "summary": "Gross-profit-to-gross-loss ratio for the full chained run."
+          },
+          {
+            "gate_id": "EXPECTANCY",
+            "label": "Expectancy per trade",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 276.7288,
+            "threshold": null,
+            "summary": "Average PnL per trade across the full chained run."
+          },
+          {
+            "gate_id": "PROFITABLE_FOLDS",
+            "label": "Profitable folds",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 50.0,
+            "threshold": 50.0,
+            "summary": "Percent of folds that closed positive."
+          },
+          {
+            "gate_id": "DRAWDOWN",
+            "label": "Max drawdown bound",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 9.1246,
+            "threshold": 20.0,
+            "summary": "Maximum chained drawdown allowed for a promotable edge."
+          },
+          {
+            "gate_id": "BENCHMARK",
+            "label": "Beats benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Strategy return cleared the configured benchmark comparison mode."
+          },
+          {
+            "gate_id": "EXPECTANCY_DECAY",
+            "label": "Expectancy decay",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Second-half expectancy stayed within the allowed decay envelope."
+          },
+          {
+            "gate_id": "HOLDBACK",
+            "label": "Held-out window",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "The held-out window confirmed positive return and expectancy."
+          }
+        ],
+        "overall_status": "READY_TO_NOMINATE",
+        "blockers": []
+      },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T15:17:33.554250-04:00",
+      "updated_at": "2026-04-22T20:35:58.445233-04:00",
       "selected_at": null
     },
     {
@@ -5729,6 +5948,8 @@
       "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
       "display_name": "regime_aware_momentum:stop_5_target_14",
       "description": "Looser stop plus slightly earlier target to improve fold closure quality.",
+      "sleeve": "STOCKS",
+      "runtime_contract": "POSITION_CANDIDATES",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
       "runtime_selectable": true,
       "passport_role_id": null,
@@ -5798,7 +6019,13 @@
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_14/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
-      "origin": null,
+      "origin": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "candidate_id": null,
+        "run_id": "2026-04-11-q076b-regime-opt-02",
+        "passport_role_id": null,
+        "supersedes_record_id": null
+      },
       "paper_monitoring": null,
       "trade_history": {
         "schema_version": "passport_trade_history.v1",
@@ -9415,8 +9642,86 @@
           }
         ]
       },
+      "promotion_readiness": {
+        "gates": [
+          {
+            "gate_id": "TRADE_COUNT",
+            "label": "Minimum trade count",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 163.0,
+            "threshold": 30.0,
+            "summary": "Completed-trade floor required before a decisive verdict is allowed."
+          },
+          {
+            "gate_id": "PROFIT_FACTOR",
+            "label": "Profit factor",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 2.1053,
+            "threshold": null,
+            "summary": "Gross-profit-to-gross-loss ratio for the full chained run."
+          },
+          {
+            "gate_id": "EXPECTANCY",
+            "label": "Expectancy per trade",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 271.7993,
+            "threshold": null,
+            "summary": "Average PnL per trade across the full chained run."
+          },
+          {
+            "gate_id": "PROFITABLE_FOLDS",
+            "label": "Profitable folds",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 52.38,
+            "threshold": 50.0,
+            "summary": "Percent of folds that closed positive."
+          },
+          {
+            "gate_id": "DRAWDOWN",
+            "label": "Max drawdown bound",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 8.8647,
+            "threshold": 20.0,
+            "summary": "Maximum chained drawdown allowed for a promotable edge."
+          },
+          {
+            "gate_id": "BENCHMARK",
+            "label": "Beats benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Strategy return cleared the configured benchmark comparison mode."
+          },
+          {
+            "gate_id": "EXPECTANCY_DECAY",
+            "label": "Expectancy decay",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Second-half expectancy stayed within the allowed decay envelope."
+          },
+          {
+            "gate_id": "HOLDBACK",
+            "label": "Held-out window",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "The held-out window confirmed positive return and expectancy."
+          }
+        ],
+        "overall_status": "READY_TO_NOMINATE",
+        "blockers": []
+      },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T15:17:33.554250-04:00",
+      "updated_at": "2026-04-22T20:35:58.445233-04:00",
       "selected_at": null
     },
     {
@@ -9427,6 +9732,8 @@
       "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
       "display_name": "regime_aware_momentum:stop_5_target_15",
       "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
+      "sleeve": "STOCKS",
+      "runtime_contract": "POSITION_CANDIDATES",
       "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
       "runtime_selectable": true,
       "passport_role_id": null,
@@ -9496,7 +9803,13 @@
         "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
         "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
       },
-      "origin": null,
+      "origin": {
+        "campaign_id": "q076b_regime_aware_momentum_opt_02",
+        "candidate_id": null,
+        "run_id": "2026-04-11-q076b-regime-opt-02",
+        "passport_role_id": null,
+        "supersedes_record_id": null
+      },
       "paper_monitoring": null,
       "trade_history": {
         "schema_version": "passport_trade_history.v1",
@@ -13113,8 +13426,86 @@
           }
         ]
       },
+      "promotion_readiness": {
+        "gates": [
+          {
+            "gate_id": "TRADE_COUNT",
+            "label": "Minimum trade count",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 163.0,
+            "threshold": 30.0,
+            "summary": "Completed-trade floor required before a decisive verdict is allowed."
+          },
+          {
+            "gate_id": "PROFIT_FACTOR",
+            "label": "Profit factor",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 2.1217,
+            "threshold": null,
+            "summary": "Gross-profit-to-gross-loss ratio for the full chained run."
+          },
+          {
+            "gate_id": "EXPECTANCY",
+            "label": "Expectancy per trade",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 277.5978,
+            "threshold": null,
+            "summary": "Average PnL per trade across the full chained run."
+          },
+          {
+            "gate_id": "PROFITABLE_FOLDS",
+            "label": "Profitable folds",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 52.38,
+            "threshold": 50.0,
+            "summary": "Percent of folds that closed positive."
+          },
+          {
+            "gate_id": "DRAWDOWN",
+            "label": "Max drawdown bound",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": 8.8878,
+            "threshold": 20.0,
+            "summary": "Maximum chained drawdown allowed for a promotable edge."
+          },
+          {
+            "gate_id": "BENCHMARK",
+            "label": "Beats benchmark",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Strategy return cleared the configured benchmark comparison mode."
+          },
+          {
+            "gate_id": "EXPECTANCY_DECAY",
+            "label": "Expectancy decay",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "Second-half expectancy stayed within the allowed decay envelope."
+          },
+          {
+            "gate_id": "HOLDBACK",
+            "label": "Held-out window",
+            "status": "PASS",
+            "source_kind": "VALIDATION_GATE",
+            "value": null,
+            "threshold": null,
+            "summary": "The held-out window confirmed positive return and expectancy."
+          }
+        ],
+        "overall_status": "READY_TO_NOMINATE",
+        "blockers": []
+      },
       "registered_at": "2026-04-11T11:48:24.095819-04:00",
-      "updated_at": "2026-04-22T15:17:33.554250-04:00",
+      "updated_at": "2026-04-22T20:35:58.445233-04:00",
       "selected_at": "2026-04-11T13:31:26.522551-04:00"
     }
   ]

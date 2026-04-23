@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "resolved_at": "2026-04-22T15:17:33.554250-04:00",
+  "resolved_at": "2026-04-22T20:35:58.445233-04:00",
   "record": {
     "record_id": "regime_aware_momentum::stop_5_target_15",
     "strategy_id": "regime_aware_momentum",
@@ -9,6 +9,8 @@
     "strategy_path": "src/openclaw_core/strategies/regime_aware_momentum.py",
     "display_name": "regime_aware_momentum:stop_5_target_15",
     "description": "Slightly looser stop to reduce fold whipsaw while keeping the longer hold.",
+    "sleeve": "STOCKS",
+    "runtime_contract": "POSITION_CANDIDATES",
     "promotion_stage": "FROZEN_CONFIRMATION_PENDING",
     "runtime_selectable": true,
     "passport_role_id": null,
@@ -78,7 +80,13 @@
       "validation_report_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/validation_report.json",
       "experiment_config_path": "backtest/experiments/q076b_regime_aware_momentum_opt_02__stop_5_target_15/results/2026-04-11-q076b-regime-opt-02/experiment_config.json"
     },
-    "origin": null,
+    "origin": {
+      "campaign_id": "q076b_regime_aware_momentum_opt_02",
+      "candidate_id": null,
+      "run_id": "2026-04-11-q076b-regime-opt-02",
+      "passport_role_id": null,
+      "supersedes_record_id": null
+    },
     "paper_monitoring": null,
     "trade_history": {
       "schema_version": "passport_trade_history.v1",
@@ -3695,8 +3703,86 @@
         }
       ]
     },
+    "promotion_readiness": {
+      "gates": [
+        {
+          "gate_id": "TRADE_COUNT",
+          "label": "Minimum trade count",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": 163.0,
+          "threshold": 30.0,
+          "summary": "Completed-trade floor required before a decisive verdict is allowed."
+        },
+        {
+          "gate_id": "PROFIT_FACTOR",
+          "label": "Profit factor",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": 2.1217,
+          "threshold": null,
+          "summary": "Gross-profit-to-gross-loss ratio for the full chained run."
+        },
+        {
+          "gate_id": "EXPECTANCY",
+          "label": "Expectancy per trade",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": 277.5978,
+          "threshold": null,
+          "summary": "Average PnL per trade across the full chained run."
+        },
+        {
+          "gate_id": "PROFITABLE_FOLDS",
+          "label": "Profitable folds",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": 52.38,
+          "threshold": 50.0,
+          "summary": "Percent of folds that closed positive."
+        },
+        {
+          "gate_id": "DRAWDOWN",
+          "label": "Max drawdown bound",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": 8.8878,
+          "threshold": 20.0,
+          "summary": "Maximum chained drawdown allowed for a promotable edge."
+        },
+        {
+          "gate_id": "BENCHMARK",
+          "label": "Beats benchmark",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": null,
+          "threshold": null,
+          "summary": "Strategy return cleared the configured benchmark comparison mode."
+        },
+        {
+          "gate_id": "EXPECTANCY_DECAY",
+          "label": "Expectancy decay",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": null,
+          "threshold": null,
+          "summary": "Second-half expectancy stayed within the allowed decay envelope."
+        },
+        {
+          "gate_id": "HOLDBACK",
+          "label": "Held-out window",
+          "status": "PASS",
+          "source_kind": "VALIDATION_GATE",
+          "value": null,
+          "threshold": null,
+          "summary": "The held-out window confirmed positive return and expectancy."
+        }
+      ],
+      "overall_status": "READY_TO_NOMINATE",
+      "blockers": []
+    },
     "registered_at": "2026-04-11T11:48:24.095819-04:00",
-    "updated_at": "2026-04-22T15:17:33.554250-04:00",
+    "updated_at": "2026-04-22T20:35:58.445233-04:00",
     "selected_at": "2026-04-11T13:31:26.522551-04:00"
   }
 }
