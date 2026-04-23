@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-23T14:15:11.042980+00:00",
+  "generated_at": "2026-04-23T14:30:11.414311+00:00",
   "as_of_date": "2026-04-23",
   "account": {
     "equity": 85636.1,
@@ -1600,6 +1600,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "IP",
+        "price": 36.5,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-15",
+        "dte": 22,
+        "short_strike": 40.0,
+        "long_strike": 35.0,
+        "spread_width": 5.0,
+        "net_credit": 2.5,
+        "credit_width_ratio": 0.5,
+        "annualized_yield_pct": 869.0,
+        "max_loss_per_contract": 250.0,
+        "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "COO",
         "price": 71.21,
         "sector": "Healthcare",
@@ -1626,10 +1644,28 @@
         "short_strike": 100.0,
         "long_strike": 95.0,
         "spread_width": 5.0,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.32,
-        "annualized_yield_pct": 556.2,
-        "max_loss_per_contract": 340.0,
+        "net_credit": 1.7,
+        "credit_width_ratio": 0.34,
+        "annualized_yield_pct": 591.0,
+        "max_loss_per_contract": 330.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "LVS",
+        "price": 53.45,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-15",
+        "dte": 22,
+        "short_strike": 55.0,
+        "long_strike": 50.0,
+        "spread_width": 5.0,
+        "net_credit": 1.49,
+        "credit_width_ratio": 0.298,
+        "annualized_yield_pct": 518.0,
+        "max_loss_per_contract": 351.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1639,7 +1675,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
