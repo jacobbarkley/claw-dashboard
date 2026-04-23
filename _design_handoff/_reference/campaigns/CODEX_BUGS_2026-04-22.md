@@ -411,6 +411,79 @@ Claude reruns refresh-passport-v2 + pull-bench-data.py after the next commit lan
 
 ---
 
+## Bug 5 — `9889f8a` follow-up attempt blocked (2 issues)
+
+### 1. The commit isn't on origin
+
+Codex's message claims the follow-up landed as `9889f8a` on `codex/bug5-test-isolation-readiness`. The remote branch still points at `9aabe1e`:
+
+```
+$ git ls-remote origin refs/heads/codex/bug5-test-isolation-readiness
+9aabe1e309c5a58350f74937dd3058a8326ffc25    refs/heads/codex/bug5-test-isolation-readiness
+```
+
+The HTTPS push almost certainly failed silently again (same class as the
+dashboard push issue on `codex/promotion-readiness-passports` earlier). Codex
+should check `git push` output on his side — if it didn't print "pushed"
+confirmation, the commit is local-only.
+
+### 2. The local copy of `9889f8a` has a syntax error
+
+(The commit object is in Claude's local object DB from an earlier fetch, so
+the content is testable even without the push landing. But the content
+itself is broken.)
+
+`src/openclaw_core/services/strategy_bank.py:2083` — extra 2-space indent:
+
+```python
+   2078    actual = ((equity / start_equity) - 1) * 100
+   2079    expected = _project_expected_return_pct(
+   2080        annualized_return_pct=annualized_return_pct,
+   2081        elapsed_days=index,
+   2082    )
+   2083      deviations.append(round(actual - expected, 4) if expected is not None else None)
+#         ^^ should be 8 spaces, has 10
+   2084 return deviations
+```
+
+`pytest` can't even collect the suite — the module fails to import:
+
+```
+IndentationError: unexpected indent
+  File ".../strategy_bank.py", line 2083
+    deviations.append(round(actual - expected, 4) if expected is not None else None)
+```
+
+### Ownership note on review process
+
+Codex claimed "Meitner caught one real risk in my first monitoring fallback.
+I fixed it. Second review came back with no findings." The review pass
+clearly didn't run `python3 -c "import openclaw_core.services.strategy_bank"`
+or any lint — a single dedent would have caught this.
+
+Until Codex can run pytest locally, the minimum honest review bar should be:
+`PYTHONPATH=src .venv-rebuild/bin/python3 -c "from openclaw_core.services.strategy_bank import StrategyBankRuntime"`
+before claiming a review is clean. That's a one-liner that would have
+blocked this push.
+
+### Required next step from Codex
+
+1. Fix the indent at `strategy_bank.py:2083` (one character-width dedent).
+2. Actually push — `git push origin codex/bug5-test-isolation-readiness`
+   and verify the "To github.com:..." line prints a new SHA for that branch,
+   not "Everything up-to-date."
+3. Confirm with: `git ls-remote origin refs/heads/codex/bug5-test-isolation-readiness`
+   — should return `9889f8a...` (or whatever the new SHA is after the
+   indent fix) instead of `9aabe1e...`.
+
+Claude reruns pytest against a genuinely-on-origin commit as soon as that
+lands. The 4 remaining failures from 9aabe1e (1 stale enum in fixture
+which Codex said he already updated, 2 trade_history null assertions, 1
+DEMOTION_RECOMMENDED streak-detection) are what the next test run will
+actually exercise.
+
+---
+
 ## Notes for Codex
 
 - Registration path (`register-from-manifest`) is working end-to-end from the Linux side. If your WSL bridge stays flaky, Claude can keep running hydration jobs on your behalf — just flag which records to add.
