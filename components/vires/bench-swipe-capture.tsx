@@ -36,7 +36,11 @@ const TAB_HREF: Record<BenchTab, string> = {
 
 function resolveTab(pathname: string): BenchTab | null {
   if (pathname.startsWith("/vires/bench/lab")) return "lab"
-  if (pathname.startsWith("/vires/bench/campaigns")) return "campaigns"
+  // Campaign INDEX participates in the tab cycle; campaign DETAIL drills
+  // down and manages its own swipe-right-to-index gesture (see
+  // campaigns-detail.tsx).
+  if (pathname === "/vires/bench/campaigns") return "campaigns"
+  if (pathname.startsWith("/vires/bench/campaigns/")) return null
   if (
     pathname.startsWith("/vires/bench/passport") ||
     pathname.startsWith("/vires/bench/run")

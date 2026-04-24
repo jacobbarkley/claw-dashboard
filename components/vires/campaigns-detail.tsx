@@ -12,7 +12,9 @@
 // Leader-vs-Baseline block is omitted.
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useCallback, useMemo, useRef, useState } from "react"
+import { useSwipeNavigation } from "./use-swipe-navigation"
 import type {
   BaselinePerformance,
   BaselinePerformanceState,
@@ -324,49 +326,71 @@ function BaselinePerformanceBlock({
 
   return (
     <div style={{ borderTop: "1px solid var(--vr-line)" }}>
-      <div style={{ padding: "12px 16px 10px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-            gap: 10,
-            marginBottom: 4,
-          }}
-        >
-          <div className="t-eyebrow" style={{ fontSize: 9 }}>
-            {label}
-          </div>
-          <div
-            className="t-ticker"
-            style={{
-              fontSize: 9,
-              textTransform: "none",
-              color: "var(--vr-cream-faint)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              maxWidth: 180,
-            }}
-          >
+      <div
+        style={{
+          padding: "14px 16px 10px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        {/* Period (duration + days) — centered, lever-cell typography:
+            eyebrow + value. Replaces the "Baseline performance" label +
+            help copy; window information alone carries the meaning. */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", letterSpacing: "0.12em" }}>
+            Period
+          </span>
+          <span className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
             {windowSpan}
-          </div>
+          </span>
         </div>
-        {helpCopy && (
+
+        {/* Era pass/fail strip — centered, era labels promoted to the
+            lever-cell "value" treatment (cream, not dim). Dots still green
+            for pass and red for fail. */}
+        {stats.eras && stats.eras.length > 0 && (
           <div
-            className="t-label"
             style={{
-              fontSize: 10,
-              color: "var(--vr-cream-faint)",
-              marginBottom: 8,
-              fontStyle: "italic",
-              fontFamily: "var(--ff-serif)",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              justifyContent: "center",
             }}
           >
-            {helpCopy}
+            {stats.eras.map((era, i) => (
+              <span
+                key={i}
+                className="t-num"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 11,
+                  color: era.pass ? "var(--vr-cream)" : "var(--vr-down)",
+                  fontWeight: 500,
+                }}
+              >
+                <span
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: era.pass ? "var(--vr-up)" : "var(--vr-down)",
+                  }}
+                />
+                {era.label}
+              </span>
+            ))}
+            {stats.eras_passed != null && stats.eras_total != null && (
+              <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
+                {stats.eras_passed}/{stats.eras_total} pass
+              </span>
+            )}
           </div>
         )}
-        {eraStrip(stats) && <div style={{ marginBottom: 8 }}>{eraStrip(stats)}</div>}
       </div>
 
       {/* Row 1: total return · excess vs bench · max DD vs bench */}
@@ -1142,32 +1166,24 @@ export function ViresCampaignsDetail({
   const sleeveKey = (campaign.sleeve ?? "").toString().toLowerCase()
   const sleeveIsValid = sleeveKey === "stocks" || sleeveKey === "options" || sleeveKey === "crypto"
 
-  return (
-    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Back nav — icon-forward so it reads as an action, not a label. */}
-      <Link
-        href="/vires/bench/campaigns"
-        aria-label="Back to Campaigns"
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 32,
-          height: 32,
-          borderRadius: 3,
-          border: "1px solid var(--vr-line)",
-          color: "var(--vr-cream-mute)",
-          textDecoration: "none",
-          alignSelf: "flex-start",
-          background: "transparent",
-          transition: "color 120ms ease, border-color 120ms ease",
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </Link>
+  // Drill-up gesture — swipe-right anywhere on the page returns to the
+  // campaigns index. The bench-level tab cycle (home ↔ campaigns ↔ lab)
+  // is explicitly disabled on /vires/bench/campaigns/[id] so this local
+  // gesture doesn't fight it.
+  const swipeRef = useRef<HTMLDivElement | null>(null)
+  const router = useRouter()
+  const goBack = useCallback(() => router.push("/vires/bench/campaigns"), [router])
+  useSwipeNavigation({
+    containerRef: swipeRef,
+    onPrev: goBack,
+    onEdgeSwipeFromLeft: goBack,
+  })
 
+  return (
+    <div
+      ref={swipeRef}
+      style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14, touchAction: "pan-y" }}
+    >
       {/* Header */}
       <div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
@@ -1308,20 +1324,6 @@ export function ViresCampaignsDetail({
                 >
                   {featuredCandidate.title}
                 </div>
-                <div
-                  className="t-ticker"
-                  style={{
-                    fontSize: 9,
-                    marginTop: 3,
-                    color: "var(--vr-cream-faint)",
-                    textTransform: "none",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {featuredCandidate.candidate_id}
-                </div>
               </div>
               <RoleTag role={featuredCandidate.role} />
             </div>
@@ -1393,8 +1395,6 @@ export function ViresCampaignsDetail({
           <BaselinePerformanceBlock
             state={perfState}
             benchmarkSymbol={campaign.benchmark_symbol}
-            label="Baseline performance"
-            helpCopy="What this campaign must beat."
           />
         </div>
       )}
