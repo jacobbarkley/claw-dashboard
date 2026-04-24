@@ -185,9 +185,11 @@ function Celestial({
   )
 }
 
-// ─── Hero: Account Equity + allocation bar + celestial ─────────────────────
-function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
+// ─── Hero: Account Equity + allocation bar + celestial + equity curve ───────
+function HomeHero({ account, curve, baseValue, onOpenTalon, onNavigateSleeve }: {
   account: ViresTradingData["account"]
+  curve: ViresTradingData["equity_curve"]
+  baseValue: number | null
   onOpenTalon?: () => void
   onNavigateSleeve?: (sleeve: "stocks" | "crypto" | "options") => void
 }) {
@@ -218,7 +220,7 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
   return (
     <div
       ref={heroRef}
-      className="vr-card-hero vires-hero-pad"
+      className="vr-card-hero vires-hero-pad vires-hero-home"
       style={{ overflow: "hidden", position: "relative" }}
       onMouseMove={handleMouse}
       onMouseLeave={() => setPx({ x: 0, y: 0 })}
@@ -262,21 +264,42 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
             />
           ))}
         </div>
-        <div className="vires-alloc-grid">
+        <div className="vires-alloc-grid" style={{ marginTop: 12 }}>
           {alloc.map(x => {
             // Non-cash segments jump to their sleeve sub-tab. Cash stays
             // display-only — it's not a tab.
             const clickable = x.k !== "cash" && !!onNavigateSleeve
             const Inner = (
               <>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                  <span style={{ width: 4, height: 4, background: x.color }} />
-                  <span className="t-eyebrow" style={{ fontSize: 9 }}>{x.label}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 3 }}>
+                  <span style={{ width: 4, height: 4, background: x.color, flexShrink: 0 }} />
+                  <span
+                    className="t-eyebrow"
+                    style={{
+                      fontSize: 8.5,
+                      letterSpacing: "0.08em",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {x.label}
+                  </span>
                 </div>
-                <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
+                <div
+                  className="t-num"
+                  style={{
+                    fontSize: 12,
+                    color: "var(--vr-cream)",
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
                   {fmtCurrency(x.value, { compact: true })}
                 </div>
-                <div className="t-num" style={{ fontSize: 10, color: "var(--vr-cream-mute)", marginTop: 2 }}>
+                <div className="t-num" style={{ fontSize: 9.5, color: "var(--vr-cream-mute)", marginTop: 1 }}>
                   {((x.value / total) * 100).toFixed(1)}%
                 </div>
               </>
@@ -299,6 +322,22 @@ function HomeHero({ account, onOpenTalon, onNavigateSleeve }: {
             )
           })}
         </div>
+      </div>
+
+      {/* Equity curve inline — lives inside the hero so the whole surface
+          reads as one Account Equity card. Timeframe dropdown + sparkline;
+          value is omitted because the account equity number is already at
+          the top of this card. */}
+      <div
+        style={{
+          marginTop: 20,
+          paddingTop: 16,
+          borderTop: "1px solid var(--vr-line)",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <EquityChart curve={curve} baseValue={baseValue} compact />
       </div>
     </div>
   )
@@ -429,9 +468,14 @@ function upsampleIntraday(daily: CurvePoint[], stepsPerDay: number): CurvePoint[
   return out
 }
 
-function EquityChart({ curve, baseValue }: {
+function EquityChart({ curve, baseValue, compact = false }: {
   curve: ViresTradingData["equity_curve"]
   baseValue: number | null
+  /** Compact mode: strips the card chrome, eyebrow, and value number —
+   *  designed to live inside another card (e.g. the home hero) where the
+   *  enclosing surface already shows equity. Delta + timeframe dropdown
+   *  + sparkline are preserved. */
+  compact?: boolean
 }) {
   const { tf } = useSharedTimeframe()
 
@@ -458,6 +502,13 @@ function EquityChart({ curve, baseValue }: {
   }, [curve, tf, tfMeta.days, tfMeta.intradaySteps])
 
   if (!visible.length) {
+    if (compact) {
+      return (
+        <div className="t-label" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>
+          No equity history yet.
+        </div>
+      )
+    }
     return (
       <div className="vr-card" style={{ padding: 18 }}>
         <div className="t-eyebrow" style={{ marginBottom: 8 }}>Equity Curve</div>
@@ -491,9 +542,30 @@ function EquityChart({ curve, baseValue }: {
   })
   const hover = hoverIdx != null && hoverIdx >= 0 && hoverIdx < visible.length ? visible[hoverIdx] : null
 
-  return (
-    <div className="vr-card" style={{ padding: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
+  const chartHeader = (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        marginBottom: compact ? 10 : 14,
+        gap: 10,
+      }}
+    >
+      {compact ? (
+        <div>
+          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, color: "var(--vr-cream-mute)" }}>
+            Equity Curve
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-faint)" }}>
+            {hover
+              ? `${hover.date}${hover.hour ? ` · ${hover.hour}` : ""} · ${fmtCurrency(hover.equity)}`
+              : tfMeta.intradaySteps > 0
+                ? `${tfMeta.label} · modeled intraday`
+                : tfMeta.label}
+          </div>
+        </div>
+      ) : (
         <div>
           <div className="t-eyebrow" style={{ marginBottom: 4 }}>Equity Curve</div>
           <div className="t-num" style={{ fontSize: 16, color: "var(--vr-cream)", fontWeight: 500 }}>
@@ -507,11 +579,65 @@ function EquityChart({ curve, baseValue }: {
                 : tfMeta.label}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-          <Delta value={periodPct} />
-          <TimeframeDropdown />
+      )}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+        <Delta value={periodPct} />
+        <TimeframeDropdown />
+      </div>
+    </div>
+  )
+
+  if (compact) {
+    // No card chrome — caller provides it (e.g., home hero wraps us).
+    return (
+      <div style={{ position: "relative", zIndex: 2 }}>
+        {chartHeader}
+        <div style={{ overflow: "visible" }}>
+          <svg
+            ref={svgRef}
+            width="100%"
+            height={H}
+            viewBox={`0 0 ${W} ${H}`}
+            preserveAspectRatio="none"
+            data-allow-horizontal-scroll
+            style={{ display: "block", overflow: "visible", ...touchActionStyle }}
+            {...pointerHandlers}
+          >
+            <defs>
+              <linearGradient id="vrEqGradCompact" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--vr-gold)" stopOpacity="0.14" />
+                <stop offset="100%" stopColor="var(--vr-gold)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {baseInRange && (
+              <>
+                <line x1="0" y1={baseY!} x2={W} y2={baseY!} stroke="var(--vr-cream-faint)" strokeDasharray="1 3" strokeWidth="0.8" />
+                <text x={W - 4} y={baseY! - 4} fontSize="8" fill="var(--vr-cream-mute)" textAnchor="end" fontFamily="var(--ff-mono)" letterSpacing="0.15em">
+                  BASE 100K
+                </text>
+              </>
+            )}
+            <path d={fd} fill="url(#vrEqGradCompact)" />
+            <path d={d} stroke="var(--vr-gold)" strokeWidth="2.4" fill="none" strokeLinejoin="round" opacity="0.18" />
+            <path d={d} stroke="var(--vr-gold)" strokeWidth="1.1" fill="none" strokeLinejoin="round" />
+            {hoverIdx != null && hoverIdx >= 0 && hoverIdx < pts.length && (() => {
+              const [x, y] = pts[hoverIdx]
+              return (
+                <g>
+                  <line x1={x} y1={0} x2={x} y2={H} stroke="var(--vr-cream-faint)" strokeWidth="0.6" strokeDasharray="1 3" />
+                  <circle cx={x} cy={y} r="3.5" fill="var(--vr-ink)" stroke="var(--vr-gold)" strokeWidth="1.3" />
+                </g>
+              )
+            })()}
+          </svg>
         </div>
       </div>
+    )
+  }
+
+  return (
+    <div className="vr-card" style={{ padding: 18 }}>
+      {chartHeader}
       {/* Negative-margin wrapper so the chart line stretches edge-to-edge
           across the card instead of stopping inside the 18px padding. */}
       <div style={{ margin: "0 -18px -18px", overflow: "hidden", borderBottomLeftRadius: 6, borderBottomRightRadius: 6 }}>
@@ -582,6 +708,8 @@ export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <HomeHero
           account={data.account}
+          curve={data.equity_curve}
+          baseValue={data.account.base_value}
           onNavigateSleeve={onNavigateSleeve}
           onOpenTalon={talon.open}
         />
@@ -610,10 +738,12 @@ export function ViresTradingHome({ data, operator, onNavigateSleeve }: {
           />
         </div>
 
-        <EquityChart curve={data.equity_curve} baseValue={data.account.base_value} />
+        {/* Standalone EquityChart has moved inside HomeHero (compact mode).
+            Keeping the import alive because sleeve views may still use the
+            non-compact variant. */}
 
-        {/* Market Regime sits directly under the equity curve — regime
-            context is the most-useful pairing with the curve reading. */}
+        {/* Market Regime sits directly under the hero — regime context
+            pairs well with the equity curve reading now living inside it. */}
         <MarketRegime operator={operator ?? null} />
 
         {/* Lower-home sections. All read from operator.* fields
