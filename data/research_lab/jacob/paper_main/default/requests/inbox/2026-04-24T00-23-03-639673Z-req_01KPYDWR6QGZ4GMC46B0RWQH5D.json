@@ -1,0 +1,24 @@
+{
+  "schema_version": "research_lab.campaign_request.v1",
+  "request_id": "req_01KPYDWR6QGZ4GMC46B0RWQH5D",
+  "job_id": "job_01KPYDWR6QATMAA5EQV24T6WKA",
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "idea_id": "phase1a-smoke-2026-04-23",
+  "actor": "claude",
+  "submitted_at": "2026-04-24T00:23:03.639673Z",
+  "submitted_by": "USER_ONDEMAND",
+  "preset_id": "stocks.momentum.stop_target.v1",
+  "param_sweep": {
+    "stop_loss_pct": [
+      5.0
+    ],
+    "target_pct": [
+      15.0
+    ]
+  },
+  "execution_intent": "FULL_CAMPAIGN",
+  "priority": "LOW",
+  "notes": "Phase 1a end-to-end smoke test. First committed request file to verify Codex's inbox reader -> SQLite materialization -> Upstash publish flow. Direct-committed from local clone because Vercel GITHUB_TOKEN is currently returning 401; API submit path will be tested on the next smoke run."
+}
