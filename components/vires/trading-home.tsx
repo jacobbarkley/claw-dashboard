@@ -194,6 +194,10 @@ function HomeHero({ account, curve, baseValue, onOpenTalon, onNavigateSleeve }: 
   onNavigateSleeve?: (sleeve: "stocks" | "crypto" | "options") => void
 }) {
   const [px, setPx] = useState({ x: 0, y: 0 })
+  // When the user hover-scrubs the embedded equity sparkline, the big
+  // Account Equity number at the top of this card swaps in the scrubbed
+  // point's equity. Resets to null on scrub-end → reverts to account.equity.
+  const [hoverEquity, setHoverEquity] = useState<number | null>(null)
   const heroRef = useRef<HTMLDivElement>(null)
   const handleMouse = (e: React.MouseEvent) => {
     const r = heroRef.current?.getBoundingClientRect()
@@ -236,7 +240,7 @@ function HomeHero({ account, curve, baseValue, onOpenTalon, onNavigateSleeve }: 
         Account Equity
       </div>
       <div style={{ position: "relative", zIndex: 2 }}>
-        <EquityDisplay value={account.equity} size={42} />
+        <EquityDisplay value={hoverEquity ?? account.equity} size={42} />
       </div>
       <div style={{ display: "flex", gap: 18, marginTop: 14, alignItems: "baseline", position: "relative", zIndex: 2, flexWrap: "wrap" }}>
         {account.today_pnl_pct != null && <Delta value={account.today_pnl_pct} size="13px" />}
@@ -326,18 +330,21 @@ function HomeHero({ account, curve, baseValue, onOpenTalon, onNavigateSleeve }: 
 
       {/* Equity curve inline — lives inside the hero so the whole surface
           reads as one Account Equity card. Timeframe dropdown + sparkline;
-          value is omitted because the account equity number is already at
-          the top of this card. */}
+          value is omitted because the account equity number at the top
+          takes over the hover-scrubbed value via onHoverEquity. */}
       <div
         style={{
-          marginTop: 20,
-          paddingTop: 16,
-          borderTop: "1px solid var(--vr-line)",
+          marginTop: 24,
           position: "relative",
           zIndex: 2,
         }}
       >
-        <EquityChart curve={curve} baseValue={baseValue} compact />
+        <EquityChart
+          curve={curve}
+          baseValue={baseValue}
+          compact
+          onHoverEquity={setHoverEquity}
+        />
       </div>
     </div>
   )
@@ -468,7 +475,7 @@ function upsampleIntraday(daily: CurvePoint[], stepsPerDay: number): CurvePoint[
   return out
 }
 
-function EquityChart({ curve, baseValue, compact = false }: {
+function EquityChart({ curve, baseValue, compact = false, onHoverEquity }: {
   curve: ViresTradingData["equity_curve"]
   baseValue: number | null
   /** Compact mode: strips the card chrome, eyebrow, and value number —
@@ -476,6 +483,10 @@ function EquityChart({ curve, baseValue, compact = false }: {
    *  enclosing surface already shows equity. Delta + timeframe dropdown
    *  + sparkline are preserved. */
   compact?: boolean
+  /** Called on hover-scrub with the hovered point's equity (or null when
+   *  the scrub ends). Typically wired to an outer card's equity display
+   *  so the big number reflects the scrubbed point. */
+  onHoverEquity?: (value: number | null) => void
 }) {
   const { tf } = useSharedTimeframe()
 
@@ -541,6 +552,13 @@ function EquityChart({ curve, baseValue, compact = false }: {
     length: visible.length,
   })
   const hover = hoverIdx != null && hoverIdx >= 0 && hoverIdx < visible.length ? visible[hoverIdx] : null
+  // Mirror hover-scrubbed equity up to the enclosing card (e.g. home hero)
+  // so the big Account Equity number reflects the scrubbed point. Primitive
+  // dependency avoids re-firing on every render.
+  const hoverEquityValue = hover ? hover.equity : null
+  useEffect(() => {
+    onHoverEquity?.(hoverEquityValue)
+  }, [hoverEquityValue, onHoverEquity])
 
   const chartHeader = (
     <div

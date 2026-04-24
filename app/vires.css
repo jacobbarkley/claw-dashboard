@@ -182,10 +182,17 @@
   pointer-events: none;
 }
 
-/* Trading home hero: mirror the glow to the Celestial Body side (top-right).
-   Everywhere else keeps the default top-left origin. */
+/* Trading home hero: glow emits only from the Celestial Body corner.
+   Flips the base linear-gradient so the left/text side reads as dark
+   ink and the right/celestial side carries the warm light. Tighter
+   radial on ::before for a localized glow — no secondary bloom on
+   the top-left. */
+.vires-hero-home {
+  background:
+    linear-gradient(90deg, rgba(6, 7, 14, 0.85) 0%, rgba(12, 13, 26, 0.78) 50%, rgba(24, 22, 36, 0.65) 100%);
+}
 .vires-hero-home::before {
-  background: radial-gradient(ellipse 560px 360px at 100% 0%, rgba(200, 169, 104, 0.07), transparent 70%);
+  background: radial-gradient(ellipse 380px 260px at 96% 6%, rgba(200, 169, 104, 0.13), transparent 55%);
 }
 
 .vr-inset {
