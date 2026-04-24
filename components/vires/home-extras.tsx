@@ -6,6 +6,7 @@
 // these (the earlier primer flagged regime as a Codex ask; turned out
 // the feed already carries it under operator.regime).
 
+import { useState } from "react"
 import { InfoPop, SectionHeader, SleeveChip, StatusPill } from "./shared"
 
 // ─── Types (narrow, pulled from operator feed observation) ──────────────────
@@ -136,78 +137,161 @@ const SLEEVE_DISPLAY: Array<{ sleeve: "stocks" | "options" | "crypto"; label: st
   { sleeve: "crypto",  label: "Crypto",  emptyCopy: "No crypto strategy promoted yet." },
 ]
 
-function StrategyRow({ chip, title, subtitle, metrics, promotedOn }: {
-  chip: React.ReactNode
-  title: string
-  subtitle?: string
-  metrics: Array<{ label: string; value: string; color?: string; term?: string }>
-  promotedOn?: string | null
-}) {
+function StrategyMetrics({ entry }: { entry: NormalizedElevated }) {
   return (
     <div
-      className="vr-card"
       style={{
-        padding: 16,
-        borderColor: "var(--vr-gold-line)",
-        background: "var(--vr-ink)",
+        display: "grid",
+        gridTemplateColumns: `repeat(${entry.metrics.length}, 1fr) auto`,
+        gap: 12,
+        alignItems: "baseline",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-        {chip}
-      </div>
-      <div className="t-h4" style={{ fontSize: 16, marginTop: 4 }}>{title}</div>
-      {subtitle && (
-        <div className="t-label" style={{ fontSize: 11, marginTop: 3 }}>{subtitle}</div>
-      )}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${metrics.length}, 1fr) auto`,
-          marginTop: 14,
-          paddingTop: 10,
-          borderTop: "1px solid var(--vr-line)",
-          gap: 12,
-          alignItems: "baseline",
-        }}
-      >
-        {metrics.map(m => (
-          <div key={m.label}>
-            <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, display: "flex", alignItems: "center" }}>
-              {m.label}
-              {m.term && <InfoPop term={m.term} size={10} />}
-            </div>
-            <div className="t-num" style={{ fontSize: 14, color: m.color ?? "var(--vr-cream)", fontWeight: 500 }}>
-              {m.value}
-            </div>
+      {entry.metrics.map(m => (
+        <div key={m.label}>
+          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, display: "flex", alignItems: "center" }}>
+            {m.label}
+            {m.term && <InfoPop term={m.term} size={10} />}
           </div>
-        ))}
-        <div style={{ textAlign: "right" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Promoted</div>
-          <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-dim)" }}>
-            {promotedOn ?? "—"}
+          <div className="t-num" style={{ fontSize: 13, color: m.color ?? "var(--vr-cream)", fontWeight: 500 }}>
+            {m.value}
           </div>
+        </div>
+      ))}
+      <div style={{ textAlign: "right" }}>
+        <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3 }}>Promoted</div>
+        <div className="t-num" style={{ fontSize: 11, color: "var(--vr-cream-dim)" }}>
+          {entry.promotedOn ?? "—"}
         </div>
       </div>
     </div>
   )
 }
 
-function SleeveEmptyRow({ chip, copy }: { chip: React.ReactNode; copy: string }) {
+function SleeveRow({
+  sleeve,
+  entries,
+  emptyCopy,
+  isLast,
+}: {
+  sleeve: "stocks" | "options" | "crypto"
+  entries: NormalizedElevated[]
+  emptyCopy: string
+  isLast: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const hasEntries = entries.length > 0
+  const primary = entries[0]
+  const canExpand = hasEntries
+
   return (
-    <div
-      className="vr-card"
-      style={{
-        padding: 16,
-        borderColor: "var(--vr-line)",
-        background: "var(--vr-ink)",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        {chip}
-      </div>
-      <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream-dim)" }}>
-        {copy}
-      </div>
+    <div style={{ borderBottom: isLast ? "none" : "1px solid var(--vr-line)" }}>
+      <button
+        type="button"
+        onClick={canExpand ? () => setExpanded(v => !v) : undefined}
+        disabled={!canExpand}
+        aria-expanded={expanded}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 16px",
+          background: "transparent",
+          border: "none",
+          color: "inherit",
+          font: "inherit",
+          cursor: canExpand ? "pointer" : "default",
+          textAlign: "left",
+        }}
+      >
+        <SleeveChip sleeve={sleeve} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {hasEntries ? (
+            <>
+              <div
+                className="t-h4"
+                style={{
+                  fontSize: 13.5,
+                  color: "var(--vr-cream)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {primary.title}
+              </div>
+              {entries.length > 1 && (
+                <div className="t-label" style={{ fontSize: 10, marginTop: 2, color: "var(--vr-cream-mute)" }}>
+                  +{entries.length - 1} more
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream-dim)" }}>
+              {emptyCopy}
+            </div>
+          )}
+        </div>
+        {canExpand && (
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            style={{
+              color: "var(--vr-cream-mute)",
+              transition: "transform 180ms ease",
+              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              flexShrink: 0,
+            }}
+            aria-hidden
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
+      </button>
+
+      {expanded && hasEntries && (
+        <div style={{ padding: "0 16px 14px" }}>
+          {entries.map((e, idx) => (
+            <div
+              key={e.key}
+              style={{
+                marginTop: idx === 0 ? 2 : 12,
+                paddingTop: idx === 0 ? 0 : 12,
+                borderTop: idx === 0 ? "none" : "1px solid var(--vr-line)",
+              }}
+            >
+              {idx > 0 && (
+                <div
+                  className="t-h4"
+                  style={{
+                    fontSize: 12.5,
+                    color: "var(--vr-cream)",
+                    marginBottom: 4,
+                  }}
+                >
+                  {e.title}
+                </div>
+              )}
+              {e.subtitle && (
+                <div
+                  className="t-label"
+                  style={{
+                    fontSize: 10.5,
+                    marginBottom: 8,
+                    color: "var(--vr-cream-mute)",
+                  }}
+                >
+                  {e.subtitle}
+                </div>
+              )}
+              <StrategyMetrics entry={e} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -243,33 +327,19 @@ export function ElevatedStrategies({ operator }: { operator: OperatorBundle | nu
   return (
     <section>
       <SectionHeader
-        eyebrow="From the Bench"
         title="Elevated Strategies"
         right={<span className="t-label" style={{ fontSize: 10 }}>{totalCount} promoted</span>}
       />
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {SLEEVE_DISPLAY.map(({ sleeve, label, emptyCopy }) => {
-          const entries = grouped[sleeve]
-          return (
-            <div key={sleeve} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <div className="t-eyebrow" style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.18em" }}>
-                {label}
-              </div>
-              {entries.length > 0
-                ? entries.map(e => (
-                    <StrategyRow
-                      key={e.key}
-                      chip={<SleeveChip sleeve={sleeve} />}
-                      title={e.title}
-                      subtitle={e.subtitle}
-                      metrics={e.metrics}
-                      promotedOn={e.promotedOn}
-                    />
-                  ))
-                : <SleeveEmptyRow chip={<SleeveChip sleeve={sleeve} />} copy={emptyCopy} />}
-            </div>
-          )
-        })}
+      <div className="vr-card" style={{ padding: 0, background: "var(--vr-ink)" }}>
+        {SLEEVE_DISPLAY.map(({ sleeve, emptyCopy }, idx) => (
+          <SleeveRow
+            key={sleeve}
+            sleeve={sleeve}
+            entries={grouped[sleeve]}
+            emptyCopy={emptyCopy}
+            isLast={idx === SLEEVE_DISPLAY.length - 1}
+          />
+        ))}
       </div>
     </section>
   )
