@@ -959,25 +959,32 @@ function FamilyGroupView({
   leaderId,
   benchmarkSymbol,
   passportByCandidateId,
-  defaultOpen = false,
+  isLeader = false,
 }: {
   family: FamilyGroupT
   candidates: Candidate[]
   leaderId: string | null
   benchmarkSymbol: string
   passportByCandidateId: Record<string, string>
-  /** First family in a list should start expanded so the leaderboard
-   *  reads alive on page load; the rest collapse behind dropdowns. */
-  defaultOpen?: boolean
+  /** True when this family currently contains the campaign leader. Gets
+   *  a gold accent so it reads as the "winning" family at a glance. */
+  isLeader?: boolean
 }) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [open, setOpen] = useState(false)
   if (!candidates.length) return null
   const ROLE_ORDER: Record<string, number> = { PROMOTED_REFERENCE: 0, LEADER: 1, CHALLENGER: 2 }
   const sorted = [...candidates].sort(
     (a, b) => (ROLE_ORDER[a.role] ?? 3) - (ROLE_ORDER[b.role] ?? 3),
   )
   return (
-    <div className="vr-card" style={{ padding: 0, background: "var(--vr-ink)" }}>
+    <div
+      className="vr-card"
+      style={{
+        padding: 0,
+        background: isLeader ? "rgba(200,169,104,0.04)" : "var(--vr-ink)",
+        borderColor: isLeader ? "var(--vr-gold-line, rgba(200,169,104,0.4))" : undefined,
+      }}
+    >
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
@@ -985,9 +992,8 @@ function FamilyGroupView({
         style={{
           width: "100%",
           padding: "12px 14px",
-          borderBottom: open ? "1px solid var(--vr-line)" : "none",
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "center",
           gap: 10,
           justifyContent: "space-between",
           background: "transparent",
@@ -1001,7 +1007,7 @@ function FamilyGroupView({
           cursor: "pointer",
         }}
       >
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8 }}>
           <div
             className="t-h3"
             style={{
@@ -1010,17 +1016,29 @@ function FamilyGroupView({
               fontFamily: "var(--ff-serif)",
               fontWeight: 500,
               lineHeight: 1.25,
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {family.title}
           </div>
-          {family.summary && (
-            <div
-              className="t-read"
-              style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.5, marginTop: 4 }}
+          {isLeader && (
+            <span
+              className="t-eyebrow"
+              style={{
+                fontSize: 8.5,
+                color: "var(--vr-gold)",
+                border: "1px solid var(--vr-gold)",
+                padding: "1px 6px",
+                borderRadius: 2,
+                letterSpacing: "0.14em",
+                flexShrink: 0,
+              }}
             >
-              {family.summary}
-            </div>
+              Leader
+            </span>
           )}
         </div>
         <div
@@ -1029,7 +1047,6 @@ function FamilyGroupView({
             alignItems: "center",
             gap: 10,
             flexShrink: 0,
-            paddingTop: 2,
           }}
         >
           <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)", whiteSpace: "nowrap" }}>
@@ -1162,36 +1179,16 @@ export function ViresCampaignsDetail({
           <span style={{ flex: 1 }} />
           <StatusPillCampaign status={campaign.status} />
           {pressure && <PressureChip status={pressure.status} />}
+          {pressure?.as_of && (
+            <span
+              className="t-eyebrow"
+              style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}
+            >
+              assessed {relTime(pressure.as_of)}
+            </span>
+          )}
         </div>
         <div className="t-h2" style={{ lineHeight: 1.2 }}>{campaign.title}</div>
-        {pressure?.summary && (
-          <div
-            style={{
-              marginTop: 10,
-              fontSize: 13,
-              fontFamily: "var(--ff-serif)",
-              fontStyle: "italic",
-              color: "var(--vr-cream-dim)",
-              lineHeight: 1.55,
-            }}
-          >
-            {pressure.summary}
-            {pressure.as_of && (
-              <span
-                className="t-eyebrow"
-                style={{
-                  fontSize: 9,
-                  color: "var(--vr-cream-faint)",
-                  marginLeft: 8,
-                  fontStyle: "normal",
-                  fontFamily: "var(--ff-sans)",
-                }}
-              >
-                assessed {relTime(pressure.as_of)}
-              </span>
-            )}
-          </div>
-        )}
         <div
           className="t-read"
           style={{
@@ -1438,17 +1435,34 @@ export function ViresCampaignsDetail({
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {familiesWithCandidates.map((g, idx) => (
-          <FamilyGroupView
-            key={g.family.family_id}
-            family={g.family}
-            candidates={g.candidates}
-            leaderId={leaderId}
-            benchmarkSymbol={campaign.benchmark_symbol}
-            passportByCandidateId={passportByCandidateId}
-            defaultOpen={idx === 0}
-          />
-        ))}
+        {(() => {
+          // Move the family containing the current leader to the top so it
+          // gets the gold-accented "Leader" row; rest keep producer order.
+          const leaderIdx = leaderId
+            ? familiesWithCandidates.findIndex(g =>
+                g.candidates.some(c => c.candidate_id === leaderId),
+              )
+            : -1
+          const ordered =
+            leaderIdx > 0
+              ? [
+                  familiesWithCandidates[leaderIdx],
+                  ...familiesWithCandidates.slice(0, leaderIdx),
+                  ...familiesWithCandidates.slice(leaderIdx + 1),
+                ]
+              : familiesWithCandidates
+          return ordered.map((g, idx) => (
+            <FamilyGroupView
+              key={g.family.family_id}
+              family={g.family}
+              candidates={g.candidates}
+              leaderId={leaderId}
+              benchmarkSymbol={campaign.benchmark_symbol}
+              passportByCandidateId={passportByCandidateId}
+              isLeader={idx === 0 && leaderIdx >= 0}
+            />
+          ))
+        })()}
         {orphans.length > 0 && (
           <FamilyGroupView
             family={{

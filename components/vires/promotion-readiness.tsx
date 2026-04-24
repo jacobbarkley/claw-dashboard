@@ -313,28 +313,10 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
           </span>
         </div>
 
-        {/* Editorial intro — promotion target stays where it is on the scored variant. */}
-        {promotionTarget && (
-          <div style={{ padding: "10px 16px 6px" }}>
-            <div
-              className="t-read"
-              style={{
-                fontSize: 12,
-                fontFamily: "var(--ff-serif)",
-                fontStyle: "italic",
-                color: "var(--vr-cream-dim)",
-                lineHeight: 1.55,
-              }}
-            >
-              {promotionTarget}
-            </div>
-          </div>
-        )}
-
         {/* Honest empty-state explanation — same slot as the freshness row. */}
         <div
           style={{
-            padding: "0 16px 10px",
+            padding: "10px 16px 10px",
           }}
         >
           <span
@@ -430,29 +412,10 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
         <OverallStatusChip status={readiness.overall_status} />
       </div>
 
-      {/* Editorial intro — promotion target. Reframed as "what winning
-          looks like" rather than a standalone callout. */}
-      {promotionTarget && (
-        <div style={{ padding: "10px 16px 6px" }}>
-          <div
-            className="t-read"
-            style={{
-              fontSize: 12,
-              fontFamily: "var(--ff-serif)",
-              fontStyle: "italic",
-              color: "var(--vr-cream-dim)",
-              lineHeight: 1.55,
-            }}
-          >
-            {promotionTarget}
-          </div>
-        </div>
-      )}
-
       {/* Freshness */}
       <div
         style={{
-          padding: "0 16px 10px",
+          padding: "10px 16px 10px",
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -477,106 +440,72 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
         ))}
       </div>
 
-      {/* Blockers + action shell */}
-      <div
-        style={{
-          padding: "12px 16px",
-          borderTop: "1px solid var(--vr-line)",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
-      >
-        {blockers.length > 0 && readiness.overall_status !== "READY_TO_NOMINATE" && (
-          <div
-            className="t-read"
-            style={{
-              fontSize: 11,
-              color: "var(--vr-cream-dim)",
-              fontFamily: "var(--ff-serif)",
-              fontStyle: "italic",
-              lineHeight: 1.5,
-            }}
-          >
-            Blocked by{" "}
-            {blockers.map((b, i) => {
-              const gate = readiness.gates.find(g => g.gate_id === b)
-              const label = gate?.label ?? b.toLowerCase().replace(/_/g, " ")
-              return (
-                <span key={b}>
-                  <span style={{ color: "var(--vr-down)", fontStyle: "normal" }}>
-                    {label}
-                  </span>
-                  {i < blockers.length - 1 ? ", " : ""}
-                </span>
-              )
-            })}
-            . Clear these to unlock promotion.
-          </div>
-        )}
-
-        {/* Nominate button — now wired to the governed passport-workflow
-            request path. The route records a promotion request only when the
-            scorecard is genuinely promotion-ready. */}
-        <button
-          type="button"
-          disabled={!canNominate}
-          aria-disabled={!canNominate}
-          onClick={() => void submitNomination()}
-          title={
-            canNominate
-              ? "Nominate this candidate into the governed passport workflow"
-              : readyToNominate
-                ? "Nomination already requested"
-                : "Gates not yet cleared"
-          }
+      {/* Nominate action — only renders when the candidate is promotion-
+          ready. Blocked / pending states are conveyed by the overall-
+          status chip + the per-gate glyphs; the button + repeated blocker
+          prose added noise without new information. */}
+      {readyToNominate && (
+        <div
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            padding: "9px 14px",
-            border: `1px solid ${
-              canNominate || requestState === "success"
-                ? "var(--vr-up)"
-                : "var(--vr-line-hi, rgba(241,236,224,0.16))"
-            }`,
-            background: canNominate || requestState === "success" ? "rgba(127,194,155,0.08)" : "transparent",
-            color: canNominate || requestState === "success" ? "var(--vr-up)" : "var(--vr-cream-mute)",
-            borderRadius: 3,
-            fontFamily: "var(--ff-sans)",
-            fontWeight: 600,
-            fontSize: 10,
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-            cursor: canNominate ? "pointer" : "default",
-            alignSelf: "flex-start",
+            padding: "12px 16px",
+            borderTop: "1px solid var(--vr-line)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
           }}
         >
-          {isSubmitting
-            ? "Submitting request"
-            : requestState === "success"
-              ? "Nomination requested"
-              : readyToNominate
-                ? "Nominate for promotion"
-                : "Awaiting gates"}
-          <svg width="10" height="10" viewBox="0 0 8 8" fill="none" aria-hidden>
-            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
-          </svg>
-        </button>
-        {requestMessage && (
-          <div
-            className="t-read"
+          <button
+            type="button"
+            disabled={!canNominate}
+            aria-disabled={!canNominate}
+            onClick={() => void submitNomination()}
+            title={
+              canNominate
+                ? "Nominate this candidate into the governed passport workflow"
+                : "Nomination already requested"
+            }
             style={{
-              fontSize: 11,
-              color: requestState === "error" ? "var(--vr-down)" : "var(--vr-cream-dim)",
-              lineHeight: 1.45,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "9px 14px",
+              border: "1px solid var(--vr-up)",
+              background: "rgba(127,194,155,0.08)",
+              color: "var(--vr-up)",
+              borderRadius: 3,
+              fontFamily: "var(--ff-sans)",
+              fontWeight: 600,
+              fontSize: 10,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              cursor: canNominate ? "pointer" : "default",
+              alignSelf: "flex-start",
             }}
           >
-            {requestMessage}
-          </div>
-        )}
-      </div>
+            {isSubmitting
+              ? "Submitting request"
+              : requestState === "success"
+                ? "Nomination requested"
+                : "Nominate for promotion"}
+            <svg width="10" height="10" viewBox="0 0 8 8" fill="none" aria-hidden>
+              <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+            </svg>
+          </button>
+          {requestMessage && (
+            <div
+              className="t-read"
+              style={{
+                fontSize: 11,
+                color: requestState === "error" ? "var(--vr-down)" : "var(--vr-cream-dim)",
+                lineHeight: 1.45,
+              }}
+            >
+              {requestMessage}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
