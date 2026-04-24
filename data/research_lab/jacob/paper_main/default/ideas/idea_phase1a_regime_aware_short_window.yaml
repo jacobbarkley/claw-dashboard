@@ -1,0 +1,26 @@
+schema_version: research_lab.idea.v1
+idea_id: idea_phase1a_regime_aware_short_window
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+title: Short-window regime-aware momentum
+thesis: >
+  Re-open the stop/target neighborhood around the frozen regime-aware
+  momentum winner on the currently-available short-window envelope
+  (train 42 / test 5 / step 2 / holdback 5). Goal: prove the Lab
+  submit→run→result→candidate loop against live April-2026 tape and
+  feed the campaign rollup its first real idea anchor.
+sleeve: STOCKS
+strategy_id: regime_aware_momentum
+strategy_family: REGIME_AWARE_MOMENTUM
+status: READY
+created_at: "2026-04-24T06:00:00Z"
+created_by: jacob
+source: MANUAL
+tags:
+  - phase1a
+  - short-window
+  - rollup-seed
+params:
+  stop_loss_pct: 5.0
+  target_pct: 15.0

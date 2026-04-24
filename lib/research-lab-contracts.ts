@@ -93,6 +93,12 @@ export interface ResearchLabProvenance {
 
 // ─── idea.v1 ────────────────────────────────────────────────────────────────
 
+export interface IdeaPromotionTarget {
+  passport_role_id: string
+  target_action: "NEW_RECORD" | "REPLACE_EXISTING"
+  supersedes_record_id?: string | null
+}
+
 export interface IdeaV1 extends ScopeTriple {
   schema_version: "research_lab.idea.v1"
   idea_id: string
@@ -110,6 +116,12 @@ export interface IdeaV1 extends ScopeTriple {
   strategy_family?: string | null
   tags?: string[] | null
   provenance?: ResearchLabProvenance | null
+  /** §12.3 trigger #1 — flag to force rollup on the first DONE job. */
+  promote_to_campaign?: boolean
+  /** §12.4.a — optional at idea-authoring, operator can fill via the
+   *  campaign detail "Assign promotion slot" action post-hoc. When
+   *  absent, Nominate remains disabled on the spawned campaign. */
+  promotion_target?: IdeaPromotionTarget | null
 }
 
 // ─── preset.v1 ──────────────────────────────────────────────────────────────
