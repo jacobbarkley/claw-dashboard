@@ -1,10 +1,33 @@
 # Spec Amendment — idea → campaign rollup (2026-04-24)
 
-**Status:** Draft for Codex review. Extends
-`SPEC_REVIEW_2026-04-23.md`; nothing here contradicts the Phase 0–1 locks.
+**Status:** Rev 2 — amended after Codex's P1/P2 review (same day).
+Extends `SPEC_REVIEW_2026-04-23.md`; nothing here contradicts the
+Phase 0–1 locks.
 **Trigger:** After Jacob observed that Lab jobs live at
 `/vires/bench/lab/jobs` but never surface inside a campaign card, we
 need to wire the rollup.
+
+**Rev 2 locks (post-Codex review):**
+
+1. **`promote_to_campaign` semantics clarified.** The flag doesn't
+   materialize an empty campaign; it means "force rollup on the first
+   DONE Lab job for this idea, bypassing the evidence/volume
+   thresholds." No pre-job empty-campaign shape is needed. Fixes P1.
+2. **Readiness trigger tightened.** Changed from `!= EMPTY_STATE` (which
+   would include BLOCKED and fire on the first DONE stocks job) to
+   `overall_status ∈ { READY_TO_NOMINATE, MONITORED }` — meaningfully
+   competitive only. Fixes P1. Stocks with BLOCKED gates now falls back
+   to the volume threshold (N=3). Crypto/options continue to fall back
+   to volume since their adapter status keeps readiness at EMPTY_STATE.
+3. **Volume threshold tightened.** N=3 **unique DONE `job_id`s**. FAILED
+   jobs don't count. Retries on the same `job_id` don't double-count.
+4. **Family comparability rule.** Campaign = container; family =
+   comparable leaderboard unit. Each family has its own leader. No
+   cross-family leader claims (no campaign-wide gold "leader family"
+   highlight) unless presets are explicitly marked comparable. Fixes P2.
+5. **Idea → campaign status mapping on lifecycle changes** added to §7.
+6. **Nomination provenance** widened to log
+   `candidate_id + origin_job_id + idea_id`, not just `candidate_id`.
 
 ---
 
@@ -50,19 +73,29 @@ threshold** — not on every Lab submission. This keeps casual
 experiments out of the Campaigns surface while still catching any idea
 that's attracting real research pressure.
 
-**Proposed trigger set — ANY of these flips an idea into a campaign:**
+**Trigger set — ANY of these flips an idea into a campaign:**
 
-1. **Explicit operator flag.** The idea spec grows a
-   `promote_to_campaign: bool` field. Defaults false. When set true,
-   producer creates the campaign immediately.
-2. **Evidence threshold.** A Lab job against this idea reaches `DONE`
-   with `candidate.readiness.overall_status !== "EMPTY_STATE"` — i.e.
-   a real readiness scorecard was computed. One real candidate is
-   enough pressure to deserve a campaign view.
-3. **Volume threshold.** `N` (default 3) DONE Lab jobs accumulate
-   against the idea regardless of readiness. Covers the case where an
-   operator is iterating on a preset that doesn't yet have readiness
-   wiring (e.g. crypto today, options forever-ish).
+1. **Explicit operator flag** (idea.v1 `promote_to_campaign: true`).
+   Doesn't materialize an empty campaign on its own — it means "force
+   rollup on the first DONE Lab job for this idea, bypassing the
+   evidence/volume thresholds." Producer waits for the first DONE
+   job, then creates the campaign on that sync. (Rev 2 correction:
+   the flag was previously described as materializing the campaign
+   immediately, which couldn't work since `benchmark`, `first_job_id`,
+   and `evaluation_window` only exist after a job runs.)
+2. **Evidence threshold — meaningfully competitive candidate.** A Lab
+   job against this idea reaches `DONE` with
+   `candidate.readiness.overall_status ∈ { READY_TO_NOMINATE, MONITORED }`.
+   BLOCKED is intentionally excluded: BLOCKED means "gates scored but
+   some failed" — real information, but not enough signal to claim
+   campaign-worthy research pressure. (Stocks-BLOCKED falls back to
+   the volume threshold. Crypto with EMPTY_STATE readiness, and
+   options where the adapter is NOT_IMPLEMENTED, always fall back to
+   volume.)
+3. **Volume threshold.** N=3 **unique DONE `job_id`s** for this
+   `idea_id`. FAILED jobs don't count. RETRY_QUEUED → DONE on the same
+   `job_id` counts once. Covers iteration on a preset whose adapter
+   doesn't yet produce competitive readiness.
 
 Before the trigger, the idea lives only in Lab. After the trigger, the
 producer maintains the campaign in lockstep with subsequent Lab jobs.
@@ -81,8 +114,11 @@ Small, backwards-compatible. All optional fields.
 promote_to_campaign: true   # optional; defaults false
 ```
 
-When set, the producer creates the campaign on its next sync regardless
-of evidence/volume thresholds.
+When set, the producer creates the campaign on the **first DONE Lab
+job** for this idea, regardless of evidence/volume thresholds. Does
+NOT create an empty campaign on flag-flip alone — the first job still
+needs to materialize so the campaign has a benchmark, an
+evaluation_window, and a first_job_id to carry.
 
 ### 4.2 `campaign_manifest.v2` — add `origin`
 
@@ -225,16 +261,34 @@ New or extended module: `openclaw_core.research_lab.campaign_rollup`
 
 ### 5.1 Family groups under Lab-spawned campaigns
 
-Proposal: **one family per preset_id**. Rationale: a preset defines
-the bounded param surface (strategy family + param_schema). Different
-presets sweep different parts of that surface. Treating each preset as
-a family mirrors the existing "family of competing candidates" shape.
-The preset's `display_name` becomes the family title.
+**One family per preset_id.** A preset defines the bounded param
+surface (strategy family + param_schema + base_experiment envelope).
+Different presets sweep different parts of that surface. Each preset
+becomes a family; the preset's `display_name` becomes the family
+title; a family's candidates are the Lab jobs that ran against that
+preset.
 
-If an operator runs jobs across multiple presets under the same idea,
-each preset adds a new family. The first preset's family is the
-default leader family (gold highlight) until a competing family
-produces a winner.
+**Comparability rule (Rev 2 lock):** campaign = container, family =
+comparable leaderboard unit. **Each family has its own leader.** There
+is **no campaign-wide "leader family" gold highlight** on Lab-spawned
+campaigns by default — different presets can change date-window
+geometry, evidence quality, and cost-model assumptions, which makes
+cross-family winner claims apples-to-oranges.
+
+A cross-family leader claim only renders when presets are explicitly
+marked comparable. Options for how "comparable" is expressed (Codex's
+call):
+
+- `preset.v1.comparable_with: [preset_id_a, preset_id_b]` — symmetric
+  explicit pairing. Presets that share evaluation window + cost model
+  + universe can declare mutual comparability.
+- Or: a `comparability_group: "string"` key on each preset; presets
+  sharing a group are comparable.
+
+Until comparability is declared, the UI treats each family as its own
+leaderboard. The bench-authored campaigns Codex curates directly
+(Aggressive AI Wall Street, etc.) are unaffected — their comparability
+is implicit in how the author structured them.
 
 ---
 
@@ -261,42 +315,52 @@ Small and deterministic once contracts land.
 
 ---
 
-## 7. Open questions for alignment
+## 7. Open questions — resolved in Rev 2 (post-Codex review)
 
-1. **Volume threshold value.** Proposed N = 3 DONE jobs. Low enough to
-   catch genuine research activity, high enough to skip one-off pokes.
-   Reasonable or tune?
-2. **Readiness threshold.** Proposed: any DONE job with
-   `candidate.readiness.overall_status !== "EMPTY_STATE"`. That means
-   crypto today (adapter wired but EMPTY_STATE when no gates score) and
-   options always (NOT_IMPLEMENTED) will NEVER satisfy this trigger,
-   falling back to volume-threshold (N=3). Correct behavior?
-3. **Cross-idea campaigns.** What if two ideas produce candidates that
-   belong in the same campaign (e.g. ETF Replacement Momentum has
-   multiple ideas converging on one research question)? Out of scope
-   for this amendment — handled by the existing bench manual-authoring
-   path. Lab-spawned campaigns are 1:1 with ideas.
-4. **Campaign → idea demotion.** Deliberately excluded. A campaign
-   created from a Lab idea persists even if the idea is SHELVED or
-   RETIRED. The campaign's status reflects that (eg. PROMOTED_MONITORED
-   or DECOMMISSIONED), not the idea's lifecycle.
-5. **Nomination from a Lab-spawned campaign.** The existing nomination
-   flow (PromotionReadinessCard → CONFIRM_PROMOTION → strategy bank)
-   should just work because the campaign carries the same
-   `promotion_readiness` block. The only new requirement: when the
-   nomination event is logged to `strategy_promotion_events.jsonl`,
-   `origin` should read `"research_lab"` (per SPEC_REVIEW §2.6
-   promotion events log) and carry the originating `candidate_id`.
-6. **Deferred promotion-slot assignment.** §4.4(c) proposes the
-   operator commits to a `passport_role_id` / `target_action` at idea
-   authoring. Two follow-on UX paths if they don't:
-   - Nominate button disabled with "Pick a promotion slot to enable
-     nomination" copy until a slot is chosen.
-   - An "Assign promotion slot" action on the campaign detail page
-     that lets the operator fill in the same three fields post-hoc.
-     Writes back to the idea spec so subsequent rollups preserve it.
+1. **Volume threshold value.** LOCKED at N=3 **unique DONE `job_id`s**.
+   FAILED jobs don't count. Retries on the same `job_id` don't
+   double-count. (Codex: "N = 3 is fine if it means 3 unique DONE
+   job_ids.")
+2. **Readiness threshold.** LOCKED at **meaningfully competitive only**
+   — `overall_status ∈ { READY_TO_NOMINATE, MONITORED }`. BLOCKED is
+   intentionally excluded so "first DONE stocks job" doesn't auto-
+   create a campaign. Falls back to the N=3 volume threshold for
+   BLOCKED / EMPTY_STATE / NOT_IMPLEMENTED cases. (Codex: "first
+   meaningfully competitive candidate creates campaign.")
+3. **Cross-idea campaigns.** Out of scope for this amendment. Lab-
+   spawned campaigns are 1:1 with ideas. Bench-authored campaigns
+   continue to be the escape hatch for research questions that span
+   multiple ideas.
+4. **Campaign status mapping on idea lifecycle transitions.** No
+   campaign auto-demotion; campaigns persist independently. But when
+   the idea's `status` changes to SHELVED or RETIRED, the campaign
+   gets a corresponding status annotation so the UI reads honestly:
+   - idea.status `SHELVED` → campaign.status `MONITORED` (no active
+     research; prior candidates preserved for reference)
+   - idea.status `RETIRED` → campaign.status `DECOMMISSIONED`
+     (campaign is a historical record)
+   - idea.status `ACTIVE / READY / QUEUED` → campaign.status driven
+     by the normal producer rules (EXPLORING / CONVERGING / …)
 
-   Reasonable, or should we require the slot at idea-authoring time?
+   Producer emits a ChangeLogEvent when the mapping fires so the
+   campaign's change log shows when and why its status shifted.
+5. **Nomination provenance.** LOCKED — when a Lab-spawned candidate is
+   nominated via the existing CONFIRM_PROMOTION flow, the promotion
+   event logged to `state/rebuild_history/strategy_promotion_events.jsonl`
+   carries `origin: "research_lab"` AND the full triple of origin
+   identifiers: `candidate_id + origin_job_id + idea_id`. Lets any
+   future audit trace a bank record back through the full Lab chain.
+6. **Deferred promotion-slot assignment.** Still open. §4.4(c)
+   proposes optional `promotion_target` on idea.v1. Two UX paths when
+   it's absent:
+   - (a) Nominate button disabled with "Pick a promotion slot to
+     enable nomination" copy until assigned
+   - (b) An "Assign promotion slot" action on the campaign detail
+     page that lets the operator fill in the three fields post-hoc
+     and writes them back to the idea spec
+
+   I vote (b) — operators often don't know the slot at idea-authoring
+   time; deferring to campaign-time is natural. Codex to confirm.
 
 ---
 
