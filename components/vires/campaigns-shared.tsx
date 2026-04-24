@@ -18,6 +18,87 @@ import type {
 } from "@/lib/vires-campaigns"
 import { InfoPop } from "./shared"
 
+// ─── Sleeve filter bar ──────────────────────────────────────────────────────
+// Shared by campaigns-index AND bench-view so both surfaces get the same
+// "All · Stocks · Options · Crypto" tab strip above their per-sleeve lists.
+
+export type SleeveFilter = "ALL" | "STOCKS" | "OPTIONS" | "CRYPTO"
+
+export const SLEEVE_FILTERS: Array<{ k: SleeveFilter; l: string }> = [
+  { k: "ALL",     l: "All" },
+  { k: "STOCKS",  l: "Stocks" },
+  { k: "OPTIONS", l: "Options" },
+  { k: "CRYPTO",  l: "Crypto" },
+]
+
+export function SleeveFilterBar({
+  value,
+  onChange,
+  counts,
+  ariaLabel = "Sleeve filter",
+}: {
+  value: SleeveFilter
+  onChange: (v: SleeveFilter) => void
+  counts: Record<string, number> & { ALL: number }
+  ariaLabel?: string
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 2,
+        padding: 2,
+        background: "rgba(241,236,224,0.02)",
+        border: "1px solid var(--vr-line)",
+        borderRadius: 3,
+        alignSelf: "flex-start",
+      }}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
+      {SLEEVE_FILTERS.map(f => {
+        const active = value === f.k
+        const n = counts[f.k] ?? 0
+        return (
+          <button
+            key={f.k}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(f.k)}
+            className="t-eyebrow"
+            style={{
+              padding: "5px 11px",
+              borderRadius: 2,
+              border: "none",
+              background: active ? "var(--vr-gold)" : "transparent",
+              color: active ? "var(--vr-ink)" : "var(--vr-cream-mute)",
+              fontWeight: 600,
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            {f.l}
+            <span
+              style={{
+                fontSize: 9,
+                opacity: active ? 0.75 : 0.6,
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {n}
+            </span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Time formatting ────────────────────────────────────────────────────────
 
 export function relTime(iso: string | null | undefined): string {

@@ -11,6 +11,7 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { AnimatedNumber, InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
+import { SLEEVE_FILTERS, SleeveFilterBar, type SleeveFilter } from "./campaigns-shared"
 
 // ─── Types — narrow on purpose ──────────────────────────────────────────────
 
@@ -289,6 +290,31 @@ export function ViresBenchView({
 }) {
   const [liveBenchData, setLiveBenchData] = useState<BenchData | null>(initialBench)
   const [liveOperator, setLiveOperator] = useState<OperatorBundle | null>(initialOperator)
+  // Sleeve filter for the In-production list. Mirrors the campaigns-index
+  // filter pattern; persisted separately so the two surfaces don't fight.
+  const [sleeveFilter, setSleeveFilter] = useState<SleeveFilter>("ALL")
+  const [filterHydrated, setFilterHydrated] = useState(false)
+
+  useEffect(() => {
+    try {
+      const v = typeof window !== "undefined" ? window.localStorage.getItem("vr-bench-sleeve") : null
+      if (v && (SLEEVE_FILTERS.map(f => f.k) as string[]).includes(v)) {
+        setSleeveFilter(v as SleeveFilter)
+      }
+    } catch {
+      // localStorage unavailable (SSR, private mode, etc.) — stick with ALL.
+    }
+    setFilterHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!filterHydrated) return
+    try {
+      window.localStorage.setItem("vr-bench-sleeve", sleeveFilter)
+    } catch {
+      // noop
+    }
+  }, [sleeveFilter, filterHydrated])
 
   // Keep local state in sync with server-rendered initial props.
   useEffect(() => {
@@ -374,6 +400,18 @@ export function ViresBenchView({
     { sleeve: "crypto",  label: "Crypto",  emptyCopy: "No crypto strategy in production yet." },
   ]
 
+  const filterCounts: Record<string, number> & { ALL: number } = {
+    ALL: promotedCount,
+    STOCKS: promotedBySleeve.stocks.length,
+    OPTIONS: promotedBySleeve.options.length,
+    CRYPTO: promotedBySleeve.crypto.length,
+  }
+
+  const visibleGroup =
+    sleeveFilter === "ALL"
+      ? SLEEVE_GROUP
+      : SLEEVE_GROUP.filter(g => g.sleeve.toUpperCase() === sleeveFilter)
+
   return (
     <div className="vr-screen vires-screen-pad" style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}>
       <BenchHero
@@ -388,8 +426,14 @@ export function ViresBenchView({
         title="In production"
         right={<span className="t-label" style={{ fontSize: 10 }}>{promotedCount} promoted</span>}
       />
+      <SleeveFilterBar
+        value={sleeveFilter}
+        onChange={setSleeveFilter}
+        counts={filterCounts}
+        ariaLabel="Promoted sleeve filter"
+      />
       <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        {SLEEVE_GROUP.map(({ sleeve, label, emptyCopy }) => {
+        {visibleGroup.map(({ sleeve, label, emptyCopy }) => {
           const entries = promotedBySleeve[sleeve]
           const passportHref = passportBySleeve[sleeve]
           return (

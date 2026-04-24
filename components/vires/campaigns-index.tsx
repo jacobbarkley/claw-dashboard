@@ -16,8 +16,11 @@ import type {
 } from "@/lib/vires-campaigns"
 import { countsBySleeve, statusCounts } from "@/lib/vires-campaigns"
 import {
+  SLEEVE_FILTERS,
+  SleeveFilterBar,
   StatusPillCampaign,
   relTime,
+  type SleeveFilter,
 } from "./campaigns-shared"
 import { InfoPop, SleeveChip, fmtNum, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 
@@ -104,80 +107,7 @@ function CampaignsMasthead({
   )
 }
 
-// ─── Sleeve filter ──────────────────────────────────────────────────────────
-
-const SLEEVE_FILTERS: Array<{ k: "ALL" | "STOCKS" | "OPTIONS" | "CRYPTO"; l: string }> = [
-  { k: "ALL",     l: "All" },
-  { k: "STOCKS",  l: "Stocks" },
-  { k: "OPTIONS", l: "Options" },
-  { k: "CRYPTO",  l: "Crypto" },
-]
-
-function SleeveFilterBar({
-  value,
-  onChange,
-  counts,
-}: {
-  value: string
-  onChange: (v: "ALL" | "STOCKS" | "OPTIONS" | "CRYPTO") => void
-  counts: Record<string, number> & { ALL: number }
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 2,
-        padding: 2,
-        background: "rgba(241,236,224,0.02)",
-        border: "1px solid var(--vr-line)",
-        borderRadius: 3,
-        alignSelf: "flex-start",
-      }}
-      role="tablist"
-      aria-label="Sleeve filter"
-    >
-      {SLEEVE_FILTERS.map(f => {
-        const active = value === f.k
-        const n = counts[f.k] ?? 0
-        return (
-          <button
-            key={f.k}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(f.k)}
-            className="t-eyebrow"
-            style={{
-              padding: "5px 11px",
-              borderRadius: 2,
-              border: "none",
-              background: active ? "var(--vr-gold)" : "transparent",
-              color: active ? "var(--vr-ink)" : "var(--vr-cream-mute)",
-              fontWeight: 600,
-              fontSize: 10,
-              letterSpacing: "0.14em",
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            {f.l}
-            <span
-              style={{
-                fontSize: 9,
-                opacity: active ? 0.75 : 0.6,
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {n}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+// SleeveFilterBar extracted to campaigns-shared so bench-view can reuse it.
 
 // ─── Lever cell (index-card — NOT a button; detail page uses LeverShell) ───
 // Supports two flavors: activity signals (leader stability, last run) and
@@ -344,7 +274,6 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
 // ─── Index page ─────────────────────────────────────────────────────────────
 
 const LS_KEY = "vr-campaigns-sleeve"
-type SleeveFilter = "ALL" | "STOCKS" | "OPTIONS" | "CRYPTO"
 const VALID_FILTERS: ReadonlyArray<SleeveFilter> = ["ALL", "STOCKS", "OPTIONS", "CRYPTO"]
 
 export function ViresCampaignsIndex({ data }: { data: CampaignsIndexData | null }) {
