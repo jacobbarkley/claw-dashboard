@@ -113,6 +113,86 @@ Already carries `idea_id` and `result_id`. Add:
 Lets the campaign's candidate leaderboard deep-link each row back to
 its Lab job detail view. Optional; non-Lab campaigns leave it null.
 
+### 4.4 Close the Lab-output ↔ Campaign-input data gaps
+
+Framing: **Lab and Campaigns are stages of one system, not two systems
+that need a translator.** A Lab-produced `result.v1` / `candidate.v1`
+should carry every field the existing Campaigns UI already renders, so
+the rollup producer can assemble a full-shape campaign manifest with no
+derivation, inference, or "—" placeholders.
+
+Current gaps between what Lab emits and what Campaigns render:
+
+**a) Benchmark performance is thin.** `result.v1.benchmark` today
+carries `{ symbol, total_return_pct, sharpe_ratio }`. Campaigns'
+`baseline_performance` block renders Calmar, Sortino, Max DD, and a
+per-era pass/fail strip. Without those, a Lab-spawned campaign's
+baseline table renders mostly "—" and the era stripe is absent.
+
+Grow `result.v1.benchmark` to match:
+
+```jsonc
+"benchmark": {
+  "symbol": "SPY",
+  "total_return_pct": 80.45,
+  "sharpe_ratio": 1.12,
+  "sortino_ratio": 1.54,
+  "calmar_ratio": 1.34,
+  "max_drawdown_pct": -13.40,
+  "eras": [
+    { "label": "2023 H1", "sharpe": 0.94, "ret": 12.1, "pass": true },
+    { "label": "2023 H2", "sharpe": 1.18, "ret": 18.6, "pass": true },
+    ...
+  ],
+  "eras_passed": 5,
+  "eras_total": 6
+}
+```
+
+Same shape the existing bench producer emits for benchmark rows on
+curated campaigns — so Campaigns' render code needs zero changes.
+
+**b) Evaluation window is implicit.** Campaigns show "Period Oct 2025
+– Apr 2026 · 142 days" prominently. The bundle's `base_experiment`
+knows this, but `result.v1` doesn't explicitly echo it. Add:
+
+```jsonc
+"evaluation_window": {
+  "from": "2025-10-07",
+  "to": "2026-04-22",
+  "days": 142
+}
+```
+
+Top-level on `result.v1`. Populated by the executor from the bench run.
+
+**c) Promotion-target identity is missing from Lab artifacts.**
+Campaigns' `promotion_readiness` block carries `passport_role_id`,
+`target_action` (`CREATE_NEW` / `REPLACE_EXISTING`), and
+`supersedes_record_id`. These wire the Nominate button to the correct
+strategy-bank slot. If Lab skips them, a Lab-spawned campaign renders
+the readiness scorecard fine but the Nominate button either disables
+or picks the wrong slot.
+
+**Proposed home: optional `promotion_target` block on `idea.v1`.** The
+operator commits at idea-authoring time to the slot this idea's
+eventual winner should occupy:
+
+```yaml
+promotion_target:
+  passport_role_id: "STOCKS_BROAD_MOMENTUM"
+  target_action: "REPLACE_EXISTING"        # or CREATE_NEW
+  supersedes_record_id: "regime_aware_momentum::stop_5_target_15"  # only with REPLACE_EXISTING
+```
+
+When present, the rollup producer copies these onto the campaign's
+`promotion_readiness` block verbatim. When absent, the campaign
+renders readiness without the nomination wire — Nominate button stays
+disabled with copy like "Pick a promotion slot to enable nomination"
+(new honest-empty-state). A follow-on "assign slot" action on the
+campaign detail page lets the operator fill it in later; see §7 Q6
+for sequencing.
+
 ---
 
 ## 5. Producer work (Codex)
@@ -207,6 +287,16 @@ Small and deterministic once contracts land.
    nomination event is logged to `strategy_promotion_events.jsonl`,
    `origin` should read `"research_lab"` (per SPEC_REVIEW §2.6
    promotion events log) and carry the originating `candidate_id`.
+6. **Deferred promotion-slot assignment.** §4.4(c) proposes the
+   operator commits to a `passport_role_id` / `target_action` at idea
+   authoring. Two follow-on UX paths if they don't:
+   - Nominate button disabled with "Pick a promotion slot to enable
+     nomination" copy until a slot is chosen.
+   - An "Assign promotion slot" action on the campaign detail page
+     that lets the operator fill in the same three fields post-hoc.
+     Writes back to the idea spec so subsequent rollups preserve it.
+
+   Reasonable, or should we require the slot at idea-authoring time?
 
 ---
 
