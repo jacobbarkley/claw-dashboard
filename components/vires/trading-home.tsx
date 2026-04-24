@@ -236,10 +236,11 @@ function HomeHero({ account, curve, baseValue, onOpenTalon, onNavigateSleeve }: 
       <OrbitRing size={170} offsetX={-40} offsetY={-50} />
       <Celestial parallax={px} onOpenTalon={onOpenTalon} />
 
-      <div className="t-eyebrow" style={{ marginBottom: 10, position: "relative", zIndex: 2 }}>
-        Account Equity
-      </div>
-      <div style={{ position: "relative", zIndex: 2 }}>
+      {/* Account equity number — "Account Equity" eyebrow dropped; the
+          sphere + context alone carry the meaning. Top padding lifts the
+          number to roughly mid-height of the Celestial body so the
+          composition reads balanced instead of crown-heavy. */}
+      <div style={{ position: "relative", zIndex: 2, paddingTop: 18 }}>
         <EquityDisplay value={hoverEquity ?? account.equity} size={42} />
       </div>
       <div style={{ display: "flex", gap: 18, marginTop: 14, alignItems: "baseline", position: "relative", zIndex: 2, flexWrap: "wrap" }}>
@@ -560,44 +561,45 @@ function EquityChart({ curve, baseValue, compact = false, onHoverEquity }: {
     onHoverEquity?.(hoverEquityValue)
   }, [hoverEquityValue, onHoverEquity])
 
-  const chartHeader = (
+  const chartHeader = compact ? (
+    // Compact header: one horizontal row, delta on the left, dropdown on
+    // the right. No eyebrow, no subheader — the dropdown shows the
+    // selected timeframe and the sparkline carries everything else.
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 10,
+        gap: 10,
+      }}
+    >
+      <Delta value={periodPct} />
+      <TimeframeDropdown />
+    </div>
+  ) : (
     <div
       style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-start",
-        marginBottom: compact ? 10 : 14,
+        marginBottom: 14,
         gap: 10,
       }}
     >
-      {compact ? (
-        <div>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 3, color: "var(--vr-cream-mute)" }}>
-            Equity Curve
-          </div>
-          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-faint)" }}>
-            {hover
-              ? `${hover.date}${hover.hour ? ` · ${hover.hour}` : ""} · ${fmtCurrency(hover.equity)}`
-              : tfMeta.intradaySteps > 0
-                ? `${tfMeta.label} · modeled intraday`
-                : tfMeta.label}
-          </div>
+      <div>
+        <div className="t-eyebrow" style={{ marginBottom: 4 }}>Equity Curve</div>
+        <div className="t-num" style={{ fontSize: 16, color: "var(--vr-cream)", fontWeight: 500 }}>
+          {fmtCurrency(hover ? hover.equity : last.equity)}
         </div>
-      ) : (
-        <div>
-          <div className="t-eyebrow" style={{ marginBottom: 4 }}>Equity Curve</div>
-          <div className="t-num" style={{ fontSize: 16, color: "var(--vr-cream)", fontWeight: 500 }}>
-            {fmtCurrency(hover ? hover.equity : last.equity)}
-          </div>
-          <div className="t-label" style={{ fontSize: 10, marginTop: 3 }}>
-            {hover
-              ? `${hover.date}${hover.hour ? ` · ${hover.hour}` : ""}`
-              : tfMeta.intradaySteps > 0
-                ? `${tfMeta.label} · modeled intraday`
-                : tfMeta.label}
-          </div>
+        <div className="t-label" style={{ fontSize: 10, marginTop: 3 }}>
+          {hover
+            ? `${hover.date}${hover.hour ? ` · ${hover.hour}` : ""}`
+            : tfMeta.intradaySteps > 0
+              ? `${tfMeta.label} · modeled intraday`
+              : tfMeta.label}
         </div>
-      )}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
         <Delta value={periodPct} />
         <TimeframeDropdown />
