@@ -24,6 +24,7 @@ import type {
   Submitter,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import { loadCandidateById } from "@/lib/research-lab-cold.server"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
@@ -138,21 +139,46 @@ export async function POST(req: NextRequest) {
   }
 
   const candidateId = typeof body.candidate_id === "string" ? body.candidate_id.trim() : ""
-  const resultId = typeof body.result_id === "string" ? body.result_id.trim() : ""
-  const ideaId = typeof body.idea_id === "string" ? body.idea_id.trim() : ""
-  const strategyId = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
+  if (!candidateId) return NextResponse.json({ error: "candidate_id required" }, { status: 400 })
+
+  const scope = normalizeScope(body)
+
+  // Derive result_id / idea_id / sleeve / strategy_id from the candidate
+  // artifact when the caller omits them. The campaign-detail nominate
+  // button only has candidate_id in hand; the Lab job-detail flow already
+  // passes the full payload and works unchanged.
+  let resultId = typeof body.result_id === "string" ? body.result_id.trim() : ""
+  let ideaId = typeof body.idea_id === "string" ? body.idea_id.trim() : ""
+  let strategyId = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
   const sleeveIn = typeof body.sleeve === "string" ? body.sleeve.trim().toUpperCase() : ""
-  const sleeve = VALID_SLEEVES.includes(sleeveIn as ResearchSleeve)
+  let sleeve: ResearchSleeve | null = VALID_SLEEVES.includes(sleeveIn as ResearchSleeve)
     ? (sleeveIn as ResearchSleeve)
     : null
 
-  if (!candidateId) return NextResponse.json({ error: "candidate_id required" }, { status: 400 })
+  if (!resultId || !ideaId || !strategyId || !sleeve) {
+    const candidate = await loadCandidateById(candidateId, scope)
+    if (!candidate) {
+      return NextResponse.json(
+        {
+          error: `Candidate ${candidateId} not found in scope; pass result_id/idea_id/sleeve/strategy_id explicitly.`,
+        },
+        { status: 404 },
+      )
+    }
+    resultId = resultId || candidate.result_id
+    ideaId = ideaId || candidate.idea_id
+    strategyId = strategyId || candidate.strategy_id
+    if (!sleeve) {
+      sleeve = VALID_SLEEVES.includes(candidate.sleeve as ResearchSleeve)
+        ? (candidate.sleeve as ResearchSleeve)
+        : null
+    }
+  }
+
   if (!resultId) return NextResponse.json({ error: "result_id required" }, { status: 400 })
   if (!ideaId) return NextResponse.json({ error: "idea_id required" }, { status: 400 })
   if (!strategyId) return NextResponse.json({ error: "strategy_id required" }, { status: 400 })
   if (!sleeve) return NextResponse.json({ error: "sleeve must be STOCKS | CRYPTO | OPTIONS" }, { status: 400 })
-
-  const scope = normalizeScope(body)
   const actor = typeof body.actor === "string" && body.actor.trim() ? body.actor.trim() : "jacob"
   const submittedBy: Submitter = VALID_SUBMITTERS.includes(body.submitted_by as Submitter)
     ? (body.submitted_by as Submitter)

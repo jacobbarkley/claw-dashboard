@@ -347,33 +347,47 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
 
   const readyToNominate = readiness.overall_status === "READY_TO_NOMINATE"
   const blockers = readiness.blockers ?? []
-  const canNominate = readyToNominate && requestState !== "success" && !isSubmitting
+  const candidateId = campaign.promotion_readiness?.origin_candidate_id ?? null
+  const canNominate =
+    readyToNominate && !!candidateId && requestState !== "success" && !isSubmitting
 
   const submitNomination = async () => {
+    if (!candidateId) {
+      setRequestState("error")
+      setRequestMessage("Campaign is missing origin_candidate_id — cannot resolve nomination target.")
+      return
+    }
     setRequestMessage(null)
     setRequestState("idle")
     setIsSubmitting(true)
     try {
-      const response = await fetch("/api/passport/workflow", {
+      // Research Lab nomination path — the route resolves
+      // result_id/idea_id/sleeve/strategy_id from the candidate artifact
+      // on disk when not passed explicitly. Worker's nomination adapter
+      // picks the request up on next sync and applies it into the bank.
+      const response = await fetch("/api/research/nominations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "CONFIRM_PROMOTION",
-          actor: "operator",
-          campaign_id: campaign.campaign_id,
+          candidate_id: candidateId,
+          actor: "jacob",
+          submitted_by: "USER_ONDEMAND",
         }),
       })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(payload?.error ?? "Unable to record the promotion request.")
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+        commit_sha?: string | null
+        mode?: string
+      }
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload?.error ?? `Request failed: ${response.status}`)
       }
       setRequestState("success")
       setRequestMessage(
-        payload?.mode === "direct"
-          ? "Promotion confirmed in the local strategy bank."
-          : payload?.mode === "github"
-            ? "Nomination request recorded for the live workflow."
-            : "Nomination request recorded locally for the next backend sync.",
+        payload.mode === "github"
+          ? `Nomination committed (${(payload.commit_sha ?? "").slice(0, 8)}). Adapter will apply it on the next worker sync.`
+          : "Nomination recorded locally. Adapter will apply it on the next worker sync.",
       )
     } catch (error) {
       setRequestState("error")
