@@ -38,6 +38,7 @@ import {
 } from "./campaigns-shared"
 import { InfoPop, SleeveChip, type Sleeve } from "./shared"
 import { PromotionReadinessCard } from "./promotion-readiness"
+import { AssignPromotionSlot } from "./campaigns/assign-promotion-slot"
 
 // ─── Lever shell — action-shaped button (disabled in v1) ────────────────────
 // CRITICAL: element IS <button>, NOT div/span. disabled + aria-disabled true.
@@ -1422,6 +1423,16 @@ export function ViresCampaignsDetail({
           when promotion_readiness.readiness is present; falls back to a
           promotion_target-only callout when the backend hasn't landed yet. */}
       <PromotionReadinessCard campaign={campaign} />
+
+      {/* §12.4.a — Lab-spawned campaigns can roll up before a promotion
+          slot is assigned on the idea. Give the operator an inline action
+          to assign one here; it writes back to the idea YAML and the
+          rollup producer picks it up on its next pass. */}
+      {campaign.origin?.kind === "LAB_IDEA" &&
+        campaign.origin.idea_id &&
+        !campaign.promotion_target && (
+          <AssignPromotionSlot ideaId={campaign.origin.idea_id} />
+        )}
 
       {/* Leader card — role-tagged, with lever strip, baseline performance */}
       {featuredCandidate && (
