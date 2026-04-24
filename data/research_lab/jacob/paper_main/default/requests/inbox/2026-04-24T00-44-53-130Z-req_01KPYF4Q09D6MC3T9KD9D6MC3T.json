@@ -1,0 +1,24 @@
+{
+  "schema_version": "research_lab.campaign_request.v1",
+  "request_id": "req_01KPYF4Q09D6MC3T9KD9D6MC3T",
+  "job_id": "job_01KPYF4Q0A5WB0AMZ5Z55WB0AM",
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "idea_id": "phase1a-token-verify-2026-04-23",
+  "actor": "claude",
+  "submitted_at": "2026-04-24T00:44:53.130Z",
+  "submitted_by": "USER_ONDEMAND",
+  "preset_id": "stocks.momentum.stop_target.v1",
+  "param_sweep": {
+    "stop_loss_pct": [
+      4.75
+    ],
+    "target_pct": [
+      15
+    ]
+  },
+  "execution_intent": "FULL_CAMPAIGN",
+  "priority": "LOW",
+  "notes": "Verify new Vercel GITHUB_TOKEN after rotation + redeploy."
+}
