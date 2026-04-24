@@ -1,0 +1,47 @@
+{
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "schema_version": "research_lab.result.v1",
+  "result_id": "result_job_01KPYP29304VTTVMN40A4VTTVM",
+  "job_id": "job_01KPYP29304VTTVMN40A4VTTVM",
+  "idea_id": "phase1a-short-window-smoke-2026-04-23-rerun",
+  "sleeve": "STOCKS",
+  "completed_at": "2026-04-23T22:46:19.383591-04:00",
+  "variants": [
+    {
+      "variant_id": "stop_5_target_15",
+      "params": {
+        "lookback_days": 20,
+        "min_symbol_return_pct": 8.0,
+        "max_symbol_volatility_pct": 45.0,
+        "benchmark_trend_days": 50,
+        "benchmark_min_return_pct": 0.0,
+        "benchmark_max_volatility_pct": 25.0,
+        "stop_loss_pct": 5.0,
+        "target_pct": 15.0
+      },
+      "metrics": {
+        "total_return_pct": 0.0,
+        "sharpe_ratio": null,
+        "sortino_ratio": null,
+        "calmar_ratio": null,
+        "max_drawdown_pct": null,
+        "win_rate_pct": null,
+        "profit_factor": null,
+        "trades": 0
+      },
+      "era_scores": null,
+      "rank": 1,
+      "winner": true
+    }
+  ],
+  "plateau_analysis": "INSUFFICIENT_EVIDENCE",
+  "plateau_spread": null,
+  "benchmark": {
+    "symbol": "SPY",
+    "total_return_pct": 8.2794,
+    "sharpe_ratio": null
+  },
+  "interpretation_summary": null
+}
