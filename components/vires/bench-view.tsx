@@ -449,56 +449,7 @@ export function ViresBenchView({
         </span>
       </Link>
 
-      {/* Research Lab pointer row — new surface (Phase 0 scaffolding). Idea
-          bank → submit campaign → live status → promote, all from the app.
-          See _design_handoff/_reference/research_lab/SPEC_REVIEW_2026-04-23.md. */}
-      <Link
-        href="/vires/lab"
-        className="vr-card"
-        style={{
-          padding: "14px 16px",
-          marginTop: 8,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          background: "rgba(241,236,224,0.015)",
-          textDecoration: "none",
-          color: "inherit",
-          borderLeft: "2px solid var(--vr-gold)",
-        }}
-      >
-        <div>
-          <div
-            className="t-eyebrow"
-            style={{ fontSize: 9, color: "var(--vr-gold)", marginBottom: 4, letterSpacing: "0.14em" }}
-          >
-            Research Lab · Phase 0 contracts locked · 1a worker next
-          </div>
-          <div className="t-h4" style={{ fontSize: 14, color: "var(--vr-cream)" }}>
-            Run campaigns from the app — idea to promotion, without leaving here
-          </div>
-          <div
-            style={{
-              marginTop: 4,
-              fontSize: 11,
-              color: "var(--vr-cream-mute)",
-              lineHeight: 1.5,
-            }}
-          >
-            Shell is live and typed against the locked contracts; real submit + live status light up once Phase 1a lands.
-          </div>
-        </div>
-        <span
-          className="t-eyebrow"
-          style={{ fontSize: 10, color: "var(--vr-gold)", display: "inline-flex", gap: 6, alignItems: "center" }}
-        >
-          Open Lab
-          <svg width="10" height="10" viewBox="0 0 8 8" fill="none">
-            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
-          </svg>
-        </span>
-      </Link>
+      {/* Research Lab lives on the top nav now, not on bench home. */}
 
       {/* Suppress unused-var noise — fmtPct will be used once leaderboard lands. */}
       {(false as boolean) && <span>{fmtPct(0)}</span>}

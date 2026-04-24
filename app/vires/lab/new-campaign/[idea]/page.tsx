@@ -2,7 +2,7 @@ import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabSubmitForm } from "@/components/vires/lab/submit-form"
 
 export const metadata = {
-  title: "Vires Capital — Research Lab · New campaign",
+  title: "Vires Capital — Lab · New campaign",
 }
 
 export default async function ViresLabNewCampaignPage({
@@ -19,7 +19,7 @@ export default async function ViresLabNewCampaignPage({
           className="t-eyebrow"
           style={{ fontSize: 10, color: "var(--vr-gold)", marginBottom: 10, letterSpacing: "0.14em" }}
         >
-          Research Lab · New campaign
+          New campaign
         </div>
         <h1
           className="t-display"
@@ -31,7 +31,7 @@ export default async function ViresLabNewCampaignPage({
             fontWeight: 400,
           }}
         >
-          Submit a bounded parameter sweep
+          Set up a run
         </h1>
         <p
           style={{
@@ -41,11 +41,7 @@ export default async function ViresLabNewCampaignPage({
             color: "var(--vr-cream-mute)",
           }}
         >
-          Pick a preset, dial the sweep inside its bounds, add a thesis note,
-          and submit. The dashboard commits a governed request file to the
-          repo and returns the preallocated <span className="t-mono">job_id</span>{" "}
-          immediately — live progress lights up when the worker picks up the
-          request.
+          Pick a preset, dial the parameter sweep, add a quick note, submit.
         </p>
       </div>
       <LabSubmitForm ideaId={decodeURIComponent(idea)} />

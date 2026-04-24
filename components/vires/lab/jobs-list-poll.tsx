@@ -152,7 +152,7 @@ function JobRow({ job }: { job: JobV1 }) {
   )
 }
 
-function EmptyStoreCard({ scope, polledAt }: { scope: string; polledAt: string }) {
+function EmptyStoreCard() {
   return (
     <div
       className="vr-card"
@@ -166,23 +166,10 @@ function EmptyStoreCard({ scope, polledAt }: { scope: string; polledAt: string }
         className="t-eyebrow"
         style={{ fontSize: 9, color: "var(--vr-gold)", marginBottom: 6, letterSpacing: "0.14em" }}
       >
-        Live queue · empty
+        No runs yet
       </div>
       <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-        No jobs in the store right now. Submit a campaign from the Lab, or
-        wait for a job the worker is about to materialize. Live data starts
-        flowing as soon as Codex's worker picks up a governed request file
-        and publishes its first <span className="t-mono">job.v1</span> snapshot.
-      </div>
-      <div
-        style={{
-          marginTop: 10,
-          fontSize: 10.5,
-          color: "var(--vr-cream-mute)",
-          fontFamily: "var(--vr-font-mono), monospace",
-        }}
-      >
-        scope: {scope} · last_poll: {polledAt}
+        Start a campaign from an idea and it will show up here.
       </div>
     </div>
   )
@@ -202,20 +189,16 @@ function UnconfiguredCard() {
         className="t-eyebrow"
         style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
       >
-        Live store · not configured
+        Live view unavailable
       </div>
       <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-        <span className="t-mono">UPSTASH_REDIS_REST_URL</span> /{" "}
-        <span className="t-mono">UPSTASH_REDIS_REST_TOKEN</span> aren't set on
-        this deployment. Live job listing is disabled until they land. Jobs
-        continue running on the worker regardless; cold artifacts will appear
-        here once committed.
+        The live view needs configuration. Runs still happen in the background.
       </div>
     </div>
   )
 }
 
-function OutageCard({ error }: { error: string }) {
+function OutageCard() {
   return (
     <div
       className="vr-card"
@@ -229,21 +212,10 @@ function OutageCard({ error }: { error: string }) {
         className="t-eyebrow"
         style={{ fontSize: 9, color: "var(--vr-down)", marginBottom: 6, letterSpacing: "0.14em" }}
       >
-        Live store · unavailable
+        Live view paused
       </div>
       <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-        Live queue can't be read right now. Jobs continue running; terminal
-        results will land in the cold tree.
-      </div>
-      <div
-        style={{
-          marginTop: 8,
-          fontSize: 10.5,
-          color: "var(--vr-cream-mute)",
-          fontFamily: "var(--vr-font-mono), monospace",
-        }}
-      >
-        error: {error}
+        Can't read the queue right now. Runs continue; results appear on completion.
       </div>
     </div>
   )
@@ -282,17 +254,15 @@ export function JobsListPoll() {
         className="vr-card"
         style={{ padding: "16px 18px", color: "var(--vr-cream-mute)", fontSize: 12 }}
       >
-        Connecting to the managed state store…
+        Loading…
       </div>
     )
   }
 
-  const scopeStr = `${data.scope.user_id} / ${data.scope.account_id} / ${data.scope.strategy_group_id}`
-
   let body: React.ReactNode
   if (data.source === "unconfigured") body = <UnconfiguredCard />
-  else if (data.source === "outage") body = <OutageCard error={data.error} />
-  else if (data.jobs.length === 0) body = <EmptyStoreCard scope={scopeStr} polledAt={data.polled_at} />
+  else if (data.source === "outage") body = <OutageCard />
+  else if (data.jobs.length === 0) body = <EmptyStoreCard />
   else {
     body = (
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -306,21 +276,6 @@ export function JobsListPoll() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {body}
-      {data.cold_terminal_count > 0 ? (
-        <div
-          style={{
-            padding: "10px 14px",
-            fontSize: 10.5,
-            color: "var(--vr-cream-mute)",
-            textAlign: "center",
-            fontFamily: "var(--ff-serif)",
-            fontStyle: "italic",
-          }}
-        >
-          {data.cold_terminal_count} terminal job{data.cold_terminal_count === 1 ? "" : "s"}{" "}
-          in the cold tree · historical list coming once the reader lands
-        </div>
-      ) : null}
     </div>
   )
 }

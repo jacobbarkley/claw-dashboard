@@ -144,9 +144,9 @@ export function JobsLiveSummary() {
 
   if (!data) {
     return (
-      <SlotWrap eyebrow="Live queue · connecting" eyebrowColor="var(--vr-cream-mute)">
+      <SlotWrap eyebrow="Running now" eyebrowColor="var(--vr-cream-mute)">
         <div style={{ fontSize: 12.5, color: "var(--vr-cream-mute)", lineHeight: 1.55 }}>
-          Reading the managed state store…
+          Loading…
         </div>
       </SlotWrap>
     )
@@ -155,13 +155,12 @@ export function JobsLiveSummary() {
   if (data.source === "unconfigured") {
     return (
       <SlotWrap
-        eyebrow="Live queue · store not configured"
+        eyebrow="Running now"
         eyebrowColor="var(--vr-cream-mute)"
         accent="var(--vr-cream-mute)"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          Upstash env vars aren't set on this deployment. Jobs continue on
-          the worker regardless; live queue lights up when they land.
+          Live view needs configuration. Runs still happen in the background.
         </div>
       </SlotWrap>
     )
@@ -170,13 +169,12 @@ export function JobsLiveSummary() {
   if (data.source === "outage") {
     return (
       <SlotWrap
-        eyebrow="Live queue · unavailable"
+        eyebrow="Running now"
         eyebrowColor="var(--vr-down)"
         accent="var(--vr-down)"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          Live store can't be read right now. Jobs keep running; results
-          land on completion.
+          Live view paused. Runs continue; results land on completion.
         </div>
       </SlotWrap>
     )
@@ -185,14 +183,13 @@ export function JobsLiveSummary() {
   if (data.jobs.length === 0) {
     return (
       <SlotWrap
-        eyebrow="Live queue · empty"
+        eyebrow="Running now"
         eyebrowColor="var(--vr-gold)"
         accent="var(--vr-gold)"
         href="/vires/lab/jobs"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          No jobs in the store yet. Submit a campaign from an idea to kick
-          off the loop.
+          Nothing running right now. Start a campaign from an idea.
         </div>
       </SlotWrap>
     )
@@ -207,7 +204,7 @@ export function JobsLiveSummary() {
 
   return (
     <SlotWrap
-      eyebrow="Live queue"
+      eyebrow={inFlight > 0 ? "Running now" : "Recent runs"}
       eyebrowColor={STATE_COLOR[most.state] ?? "var(--vr-gold)"}
       accent={STATE_COLOR[most.state] ?? "var(--vr-gold)"}
       href="/vires/lab/jobs"
@@ -220,9 +217,9 @@ export function JobsLiveSummary() {
           marginBottom: 8,
         }}
       >
-        {jobs.length} job{jobs.length === 1 ? "" : "s"}
+        {jobs.length} run{jobs.length === 1 ? "" : "s"}
         {inFlight > 0 ? ` · ${inFlight} in flight` : ""}
-        {done > 0 ? ` · ${done} done` : ""}
+        {done > 0 ? ` · ${done} completed` : ""}
         {failed > 0 ? ` · ${failed} failed` : ""}
       </div>
       <div

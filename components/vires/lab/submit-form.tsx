@@ -20,7 +20,6 @@ import type { JobPendingV1 } from "@/lib/research-lab-contracts"
 const PRESET_ID = "stocks.momentum.stop_target.v1"
 const PRESET_DISPLAY = "Stocks · Momentum · Stop/Target sweep"
 const PRESET_STRATEGY = "regime_aware_momentum"
-const PRESET_FAMILY = "REGIME_AWARE_MOMENTUM"
 
 const STOP_LOSS_OPTIONS = [4.75, 5.0, 5.25] as const
 const TARGET_OPTIONS = [14.0, 15.0, 16.0] as const
@@ -242,7 +241,7 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
             className="t-eyebrow"
             style={{ fontSize: 9, color: "var(--vr-gold)", marginBottom: 5, letterSpacing: "0.14em" }}
           >
-            Preset · Phase 1a
+            Preset
           </div>
           <div className="t-h4" style={{ fontSize: 14, color: "var(--vr-cream)", marginBottom: 2 }}>
             {PRESET_DISPLAY}
@@ -251,7 +250,7 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
             className="t-mono"
             style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.05em" }}
           >
-            {PRESET_ID} · strategy_id={PRESET_STRATEGY} · family={PRESET_FAMILY}
+            {PRESET_STRATEGY}
           </div>
         </div>
 
@@ -261,7 +260,7 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
             className="t-eyebrow"
             style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 5, letterSpacing: "0.14em" }}
           >
-            Submitting under idea
+            Idea
           </div>
           <div
             className="t-mono"
@@ -392,23 +391,6 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
         ) : null}
       </div>
 
-      {/* Honest limits */}
-      <div
-        style={{
-          marginTop: 12,
-          padding: "10px 12px",
-          fontSize: 10.5,
-          color: "var(--vr-cream-mute)",
-          lineHeight: 1.55,
-          fontStyle: "italic",
-          fontFamily: "var(--ff-serif)",
-        }}
-      >
-        Submit writes a governed request file to the dashboard repo and returns a
-        job_pending.v1 receipt. The worker on the trading-bot host picks it up via
-        git-fetch poll (~15-30s) and materializes the SQLite row. Live progress polling
-        from the managed store lights up once Upstash Redis is wired.
-      </div>
     </form>
   )
 }

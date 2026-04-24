@@ -8,15 +8,9 @@ import {
 } from "@/lib/research-lab-cold.server"
 
 export const metadata = {
-  title: "Vires Capital — Research Lab · Job",
+  title: "Vires Capital — Lab · Run",
 }
 
-// The hot job.v1 from Upstash is read client-side via JobStatusPoll; the
-// cold artifacts (result.v1 + candidate.v1) are read server-side on each
-// page render. When a job transitions to DONE on the worker, the next
-// page navigation picks up the freshly-committed artifacts. (JobStatusPoll
-// could call router.refresh() on terminal transition to auto-reveal; for
-// Phase 1a the manual navigate is acceptable.)
 async function loadCold(jobId: string): Promise<{
   result: Awaited<ReturnType<typeof loadResultById>>
   candidate: Awaited<ReturnType<typeof loadCandidateByJobId>>
@@ -43,7 +37,7 @@ export default async function ViresLabJobDetailPage({
           className="t-eyebrow"
           style={{ fontSize: 10, color: "var(--vr-gold)", marginBottom: 10, letterSpacing: "0.14em" }}
         >
-          Research Lab · Job
+          Run
         </div>
         <h1
           className="t-display"
@@ -55,7 +49,7 @@ export default async function ViresLabJobDetailPage({
             fontWeight: 400,
           }}
         >
-          Live campaign status
+          Campaign status
         </h1>
         <div
           className="t-mono"
@@ -64,24 +58,10 @@ export default async function ViresLabJobDetailPage({
             fontSize: 11,
             color: "var(--vr-cream-mute)",
             letterSpacing: "0.05em",
-            textTransform: "uppercase",
           }}
         >
-          job_id · {jobId}
+          {jobId}
         </div>
-        <p
-          style={{
-            marginTop: 12,
-            fontSize: 12.5,
-            lineHeight: 1.55,
-            color: "var(--vr-cream-mute)",
-          }}
-        >
-          Live state polls the managed store every ~15s. Terminal artifacts
-          (leaderboard, candidate readiness) render below once the job reaches
-          DONE and the worker writes <span className="t-mono">result.v1</span>{" "}
-          and <span className="t-mono">candidate.v1</span> to the cold tree.
-        </p>
       </div>
 
       <div
@@ -104,39 +84,6 @@ export default async function ViresLabJobDetailPage({
 
         {candidate ? (
           <CandidateScorecard candidate={candidate} />
-        ) : null}
-
-        {!result && !candidate ? (
-          <div
-            style={{
-              padding: "14px 16px",
-              border: "1px dashed rgba(241,236,224,0.14)",
-              borderRadius: 3,
-              background: "rgba(10,11,20,0.35)",
-              fontSize: 12,
-              color: "var(--vr-cream-mute)",
-              lineHeight: 1.55,
-            }}
-          >
-            <div
-              className="t-eyebrow"
-              style={{
-                fontSize: 9,
-                color: "var(--vr-cream-mute)",
-                marginBottom: 6,
-                letterSpacing: "0.14em",
-              }}
-            >
-              Terminal artifacts · not yet in cold tree
-            </div>
-            Leaderboard + candidate scorecard render here once the job
-            transitions to DONE and the worker writes{" "}
-            <span className="t-mono">result.v1</span> and{" "}
-            <span className="t-mono">candidate.v1</span> into{" "}
-            <span className="t-mono">data/research_lab/…/results/</span> and{" "}
-            <span className="t-mono">candidates/</span>. Refresh this page
-            after the live state chip flips to DONE.
-          </div>
         ) : null}
       </div>
     </>

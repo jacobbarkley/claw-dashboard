@@ -2,7 +2,7 @@ import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
 
 export const metadata = {
-  title: "Vires Capital — Research Lab · Idea detail",
+  title: "Vires Capital — Lab · Idea",
 }
 
 export default async function ViresLabIdeaDetailPage({
@@ -15,18 +15,18 @@ export default async function ViresLabIdeaDetailPage({
     <>
       <LabSubNav />
       <LabPhaseZeroShell
-        eyebrow="Research Lab · Idea"
-        title="Single idea view"
-        subsection={`id · ${id}`}
-        pitch="Thesis, sleeve, registered strategy family, param schema bounds, tags, lifecycle history, and the list of every campaign run this idea has produced. Links straight into 'New campaign' with the idea pre-selected."
+        eyebrow="Idea"
+        title="Thesis and variations"
+        subsection={id}
+        pitch="Thesis, tags, strategy family, and the running list of campaigns this idea has produced."
       >
         <LabPhaseZeroSlot
-          label="Idea spec"
-          note="YAML spec rendered read-only. Fields match research_lab.idea.v1 (SPEC_REVIEW_2026-04-23.md §2.1) — shared header + per-sleeve params body."
+          label="Spec"
+          note="The idea's stored fields render here — thesis, sleeve, registered strategy family, tags, lifecycle."
         />
         <LabPhaseZeroSlot
           label="Run history"
-          note="Every campaign this idea has produced, with winner, plateau verdict, and readiness status at time of run. One row per job."
+          note="Every campaign this idea has produced, with winner, plateau verdict, and readiness at time of run."
         />
       </LabPhaseZeroShell>
     </>

@@ -4,19 +4,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 // Sub-navigation inside /vires/lab. Mirrors the Bench sub-nav pattern so
-// the visual rhythm stays consistent. Every entry below is scaffolded —
-// real destinations light up per the Phase 1a / 1b / 1c build order.
+// the visual rhythm stays consistent.
 
-const TABS: Array<{ href: string; label: string; phase: string }> = [
-  { href: "/vires/lab",              label: "home",    phase: "P0" },
-  { href: "/vires/lab/ideas",        label: "ideas",   phase: "P2" },
-  { href: "/vires/lab/jobs",         label: "jobs",    phase: "P1a" },
-  { href: "/vires/lab/reports",      label: "reports", phase: "P3" },
+const TABS: Array<{ href: string; label: string }> = [
+  { href: "/vires/lab",         label: "home"    },
+  { href: "/vires/lab/ideas",   label: "ideas"   },
+  { href: "/vires/lab/jobs",    label: "jobs"    },
+  { href: "/vires/lab/reports", label: "reports" },
 ]
 
 export function LabSubNav() {
   const pathname = usePathname() ?? "/vires/lab"
-  // Exact /vires/lab = home; anything deeper matches by the second path segment.
   const activeHref =
     pathname === "/vires/lab"
       ? "/vires/lab"
@@ -46,7 +44,7 @@ export function LabSubNav() {
             style={{
               flex: 1,
               textAlign: "center",
-              padding: "6px 10px",
+              padding: "7px 10px",
               fontSize: 10,
               letterSpacing: "0.12em",
               textDecoration: "none",
@@ -54,22 +52,9 @@ export function LabSubNav() {
               borderRadius: 2,
               background: active ? "rgba(241,236,224,0.06)" : "transparent",
               color: active ? "var(--vr-cream)" : "var(--vr-cream-mute)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
             }}
           >
-            <span>{t.label}</span>
-            <span
-              style={{
-                fontSize: 8,
-                color: active ? "var(--vr-gold)" : "var(--vr-cream-mute)",
-                opacity: 0.6,
-              }}
-            >
-              {t.phase}
-            </span>
+            {t.label}
           </Link>
         )
       })}

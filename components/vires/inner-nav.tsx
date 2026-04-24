@@ -19,22 +19,23 @@ import { useViresTheme } from "./frame"
 // Era Robustness glossary InfoPops on readiness scorecards. The standalone
 // /vires/plateau route still resolves for direct links, but no longer has a
 // nav surface. See PASSPORT_V2_SPEC_2026-04-21.md §9 for the inlining plan.
-const TABS: Array<{ href: string; key: "trading" | "bench"; label: string; italic?: boolean }> = [
+const TABS: Array<{ href: string; key: "trading" | "bench" | "lab"; label: string; italic?: boolean }> = [
   { href: "/vires",          key: "trading",  label: "trading"  },
   { href: "/vires/bench",    key: "bench",    label: "bench"    },
+  { href: "/vires/lab",      key: "lab",      label: "lab"      },
 ]
 
 export function ViresInnerNav({ mode = "PAPER" }: { mode?: "PAPER" | "LIVE" }) {
   const pathname = usePathname() ?? "/vires"
   const { theme, toggle } = useViresTheme()
   // Map pathname → active tab key. /vires (exact) is trading; /vires/bench
-  // highlights the bench tab; anything else (including the archived
-  // /vires/plateau direct link) falls back to trading — no nav surface
-  // to light up for the plateau primer since it's been inlined on the
-  // passport pages.
-  const activeKey: "trading" | "bench" =
+  // highlights the bench tab; /vires/lab highlights the lab tab; anything
+  // else (including the archived /vires/plateau direct link) falls back
+  // to trading.
+  const activeKey: "trading" | "bench" | "lab" =
     pathname === "/vires" ? "trading"
     : pathname.startsWith("/vires/bench") ? "bench"
+    : pathname.startsWith("/vires/lab") ? "lab"
     : "trading"
   const isPaper = mode === "PAPER"
 

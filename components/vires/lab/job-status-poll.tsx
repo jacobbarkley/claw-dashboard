@@ -40,6 +40,43 @@ const STATE_COLOR: Record<JobState, string> = {
   CANCELLED:       "var(--vr-cream-mute)",
 }
 
+// Human-readable timestamp formatter. Produces "Apr 23, 10:36 PM · 2h ago".
+// Returns null if the input isn't a parseable ISO string.
+function fmtTs(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  const human = d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+  const diffSec = Math.max(0, Math.round((Date.now() - d.getTime()) / 1000))
+  let rel: string
+  if (diffSec < 60) rel = `${diffSec}s ago`
+  else if (diffSec < 3600) rel = `${Math.floor(diffSec / 60)}m ago`
+  else if (diffSec < 86400) rel = `${Math.floor(diffSec / 3600)}h ago`
+  else rel = `${Math.floor(diffSec / 86400)}d ago`
+  return `${human} · ${rel}`
+}
+
+function fmtDuration(startedAt: string | null | undefined, finishedAt: string | null | undefined): string | null {
+  if (!startedAt || !finishedAt) return null
+  const start = Date.parse(startedAt)
+  const end = Date.parse(finishedAt)
+  if (Number.isNaN(start) || Number.isNaN(end)) return null
+  const ms = Math.max(0, end - start)
+  if (ms < 1000) return `${ms}ms`
+  const sec = ms / 1000
+  if (sec < 60) return `${sec.toFixed(1)}s`
+  const min = sec / 60
+  if (min < 60) return `${min.toFixed(1)}m`
+  const hr = min / 60
+  return `${hr.toFixed(1)}h`
+}
+
 function StateChip({ state }: { state: JobState }) {
   const color = STATE_COLOR[state] ?? "var(--vr-cream-mute)"
   return (
@@ -157,28 +194,24 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
   // Pre-first-poll placeholder
   if (!firstPollDone || !data) {
     return (
-      <SectionCard eyebrow="Live state · polling" eyebrowColor="var(--vr-cream-mute)">
+      <SectionCard eyebrow="Live state" eyebrowColor="var(--vr-cream-mute)">
         <div style={{ fontSize: 12, color: "var(--vr-cream-mute)", lineHeight: 1.55 }}>
-          Connecting to the managed state store…
+          Loading…
         </div>
       </SectionCard>
     )
   }
 
-  // Live store unavailable
   if (data.source === "unconfigured") {
     return (
       <SectionCard
-        eyebrow="Live state · store not configured"
+        eyebrow="Live updates unavailable"
         eyebrowColor="var(--vr-cream-mute)"
         accent="var(--vr-cream-mute)"
       >
-        <div style={{ fontSize: 12, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          The managed state store env vars (
-          <span className="t-mono">UPSTASH_REDIS_REST_URL</span> /{" "}
-          <span className="t-mono">UPSTASH_REDIS_REST_TOKEN</span>) aren't set on
-          this deployment. Live progress polling is disabled until they land.
-          Jobs continue running on the worker side regardless.
+        <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
+          The live view needs configuration. Runs continue on the backend;
+          results appear once complete.
         </div>
       </SectionCard>
     )
@@ -187,23 +220,13 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
   if (data.source === "outage") {
     return (
       <SectionCard
-        eyebrow="Live state · unavailable"
+        eyebrow="Live updates paused"
         eyebrowColor="var(--vr-down)"
         accent="var(--vr-down)"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          Live progress unavailable — the job is still running; results will
+          Can't read the live view right now. The run continues — results will
           appear on completion.
-        </div>
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 10.5,
-            color: "var(--vr-cream-mute)",
-            fontFamily: "var(--vr-font-mono), monospace",
-          }}
-        >
-          error: {data.error}
         </div>
       </SectionCard>
     )
@@ -213,34 +236,13 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
   if (data.job === null) {
     return (
       <SectionCard
-        eyebrow="Job pending · awaiting enqueue"
+        eyebrow="Just submitted"
         eyebrowColor="var(--vr-gold)"
         accent="var(--vr-gold)"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-          The governed request file committed to the dashboard repo. The worker
-          on the trading-bot host picks it up on its next git-fetch poll
-          (~15-30s) and materializes a real <span className="t-mono">job.v1</span>{" "}
-          row in SQLite. Live progress will start flowing as soon as it does.
-        </div>
-        <div
-          style={{
-            marginTop: 10,
-            display: "grid",
-            gridTemplateColumns: "auto 1fr",
-            rowGap: 3,
-            columnGap: 10,
-            fontSize: 11,
-            fontFamily: "var(--vr-font-mono), monospace",
-            color: "var(--vr-cream-dim)",
-          }}
-        >
-          <span>job_id</span>
-          <span style={{ color: "var(--vr-cream)" }}>{data.job_id}</span>
-          <span>state</span>
-          <span style={{ color: "var(--vr-gold)" }}>PENDING_ENQUEUE</span>
-          <span>last_poll</span>
-          <span style={{ color: "var(--vr-cream-mute)" }}>{data.polled_at}</span>
+          Picked up by the queue. The run starts in the next few seconds —
+          live progress will light up here once it does.
         </div>
       </SectionCard>
     )
@@ -249,10 +251,15 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
   // Materialized — real job.v1
   const job = data.job
   const progress = job.progress
-  const progressPct =
-    progress && progress.variants_total > 0
-      ? Math.round((progress.variants_complete / progress.variants_total) * 100)
-      : null
+  // Only show progress if real work happened. A 0/0 payload on a FAILED
+  // job is just a stale default from the state machine's terminal phase
+  // and reads as misleading ("it was summarizing when it failed").
+  const showProgress = progress != null && progress.variants_total > 0
+  const progressPct = showProgress
+    ? Math.round((progress.variants_complete / progress.variants_total) * 100)
+    : null
+
+  const duration = fmtDuration(job.started_at, job.finished_at)
 
   return (
     <SectionCard
@@ -276,7 +283,7 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
         <StateChip state={job.state} />
       </div>
 
-      {progress && (
+      {showProgress && progress && (
         <div style={{ marginBottom: 12 }}>
           <div
             style={{
@@ -286,11 +293,10 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
               fontSize: 11,
               color: "var(--vr-cream-mute)",
               marginBottom: 4,
-              fontFamily: "var(--vr-font-mono), monospace",
             }}
           >
-            <span>{progress.phase}</span>
-            <span>
+            <span style={{ textTransform: "capitalize" }}>{progress.phase.replace(/_/g, " ")}</span>
+            <span style={{ fontFamily: "var(--vr-font-mono), monospace" }}>
               {progress.variants_complete} / {progress.variants_total}
               {progressPct != null ? ` · ${progressPct}%` : ""}
             </span>
@@ -319,48 +325,42 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
         style={{
           display: "grid",
           gridTemplateColumns: "auto 1fr",
-          rowGap: 3,
-          columnGap: 10,
-          fontSize: 11,
-          fontFamily: "var(--vr-font-mono), monospace",
+          rowGap: 5,
+          columnGap: 12,
+          fontSize: 12,
           color: "var(--vr-cream-dim)",
         }}
       >
-        <span>created</span>
-        <span style={{ color: "var(--vr-cream)" }}>{job.created_at}</span>
+        <span>Created</span>
+        <span style={{ color: "var(--vr-cream)" }} title={job.created_at}>
+          {fmtTs(job.created_at) ?? job.created_at}
+        </span>
         {job.started_at ? (
           <>
-            <span>started</span>
-            <span style={{ color: "var(--vr-cream)" }}>{job.started_at}</span>
+            <span>Started</span>
+            <span style={{ color: "var(--vr-cream)" }} title={job.started_at}>
+              {fmtTs(job.started_at)}
+            </span>
           </>
         ) : null}
         {job.finished_at ? (
           <>
-            <span>finished</span>
-            <span style={{ color: "var(--vr-cream)" }}>{job.finished_at}</span>
-          </>
-        ) : null}
-        {job.heartbeat_at ? (
-          <>
-            <span>heartbeat</span>
-            <span style={{ color: "var(--vr-cream)" }}>{job.heartbeat_at}</span>
-          </>
-        ) : null}
-        {job.executor_id ? (
-          <>
-            <span>executor</span>
-            <span style={{ color: "var(--vr-cream)" }}>{job.executor_id}</span>
+            <span>Finished</span>
+            <span style={{ color: "var(--vr-cream)" }} title={job.finished_at}>
+              {fmtTs(job.finished_at)}
+              {duration ? <span style={{ color: "var(--vr-cream-mute)" }}> · ran {duration}</span> : null}
+            </span>
           </>
         ) : null}
         {job.retry_count != null && job.retry_count > 0 ? (
           <>
-            <span>retry_count</span>
+            <span>Retries</span>
             <span style={{ color: "var(--vr-gold)" }}>{job.retry_count}</span>
           </>
         ) : null}
         {job.error_code ? (
           <>
-            <span>error_code</span>
+            <span>Error</span>
             <span style={{ color: "var(--vr-down)" }}>{job.error_code}</span>
           </>
         ) : null}
