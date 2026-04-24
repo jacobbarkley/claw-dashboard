@@ -1,0 +1,21 @@
+{
+  "schema_version": "research_lab.nomination.v1",
+  "nomination_id": "nom_01KQ0PGH00EMAJSVEKG0EMAJSV",
+  "request_id": "req_01KQ0PGH00VSMYYN4ZVWVSMYYN",
+  "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM",
+  "result_id": "result_job_01KPYP29304VTTVMN40A4VTTVM",
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "actor": "jacob",
+  "submitted_at": "2026-04-24T21:32:09.088Z",
+  "submitted_by": "USER_ONDEMAND",
+  "state": "PENDING",
+  "identity_resolution": {
+    "mode": "NEW_RECORD",
+    "replaces_record_id": null,
+    "resolution_rule": "adapter_decides"
+  },
+  "materialized_bank_record": {},
+  "promotion_event_id": null
+}
