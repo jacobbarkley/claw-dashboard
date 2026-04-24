@@ -253,7 +253,9 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         background: "var(--vr-ink)",
       }}
     >
-      {/* Header: sleeve · benchmark · status (status is the primary card-state cue) */}
+      {/* Header: sleeve · status on the left, Open action on the right.
+          Benchmark pill removed (visible on the detail page); the status
+          pill takes its spot next to the sleeve chip. */}
       <div
         style={{
           padding: "14px 16px 10px",
@@ -263,12 +265,25 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         }}
       >
         {sleeveIsValid && <SleeveChip sleeve={sleeveKey as Sleeve} />}
-        <span style={{ color: "var(--vr-cream-faint)" }}>·</span>
-        <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
-          vs {campaign.benchmark_symbol}
-        </span>
-        <span style={{ flex: 1 }} />
         <StatusPillCampaign status={campaign.status} />
+        <span style={{ flex: 1 }} />
+        <span
+          className="t-eyebrow"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            color: "var(--vr-gold)",
+            fontSize: 10,
+            letterSpacing: "0.16em",
+            fontWeight: 600,
+          }}
+        >
+          Open campaign
+          <svg width="10" height="10" viewBox="0 0 8 8" fill="none" aria-hidden>
+            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </span>
       </div>
 
       {/* Title + summary (campaign_pressure sentence lives on the detail page only) */}
@@ -379,54 +394,9 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         </div>
       </div>
 
-      {/* Footer meta + Open affordance — meta is a small sub-line, the
-          Open-campaign action gets a prominent tap target of its own. The
-          whole card is still a Link; this CTA just makes the affordance
-          legible on mobile instead of hiding as tiny gold text. */}
-      <div
-        style={{
-          padding: "8px 14px 6px",
-          borderTop: "1px solid var(--vr-line)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}>
-          Updated {relTime(campaign.updated_at)}
-          {campaign.updated_by ? ` · by ${campaign.updated_by}` : ""}
-        </div>
-      </div>
-      <div
-        style={{
-          padding: "10px 14px 14px",
-          display: "flex",
-          justifyContent: "flex-end",
-        }}
-      >
-        <span
-          className="t-eyebrow"
-          style={{
-            padding: "10px 14px",
-            background: "rgba(200,169,104,0.10)",
-            border: "1px solid var(--vr-gold-line, rgba(200,169,104,0.4))",
-            color: "var(--vr-gold)",
-            borderRadius: 3,
-            display: "inline-flex",
-            gap: 8,
-            alignItems: "center",
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.16em",
-          }}
-        >
-          Open campaign
-          <svg width="12" height="12" viewBox="0 0 8 8" fill="none" aria-hidden>
-            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.6" />
-          </svg>
-        </span>
-      </div>
+      {/* Footer removed — "Updated X ago · by Codex" + standalone
+          Open-campaign button both dropped. The Open action moved to
+          the header top-right; updated-by moves to the detail page. */}
     </Link>
   )
 }
