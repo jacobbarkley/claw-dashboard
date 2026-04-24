@@ -121,6 +121,7 @@ export interface Passport {
   name?: string | null
   variant?: string | null
   sleeve?: string | null
+  strategy_family?: string | null
   benchmark?: string | null
   summary?: string | null
   manifest?: PassportManifest | null
@@ -186,6 +187,16 @@ function gateTone(status: string | null | undefined): "up" | "down" | "gold" | "
   if (s === "INCONCLUSIVE") return "warn"
   if (s === "PENDING" || s === "WARN" || s === "BLOCKED") return "warn"
   return "neutral"
+}
+
+function humanizeFamily(family: string): string {
+  // REGIME_AWARE_MOMENTUM → Regime Aware Momentum
+  // GRADUATED_CORE_PLUS_OVERLAY → Graduated Core Plus Overlay
+  return family
+    .split("_")
+    .filter(w => w.length > 0)
+    .map(w => w[0].toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ")
 }
 
 function fmtNum(v: number | null | undefined, digits = 2): string {
@@ -1544,22 +1555,21 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
         touchAction: "pan-y",
       }}
     >
-      {/* Identity */}
+      {/* Identity — strategy family as the eyebrow ("Regime-Aware Momentum"),
+          no "Strategy Passport" label, no variant subtitle. Sleeve chip +
+          family gives enough context; the title carries the rest. */}
       <div style={{ padding: "4px 2px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
           <SleeveChip sleeve={sleeve} />
-          <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)" }}>
-            · Strategy Passport
-          </span>
+          {passport.strategy_family && (
+            <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", letterSpacing: "0.14em" }}>
+              {humanizeFamily(passport.strategy_family)}
+            </span>
+          )}
         </div>
         <div className="t-h1" style={{ fontSize: 30, lineHeight: 1.1, letterSpacing: "-0.01em" }}>
           {passport.name ?? "Strategy"}
         </div>
-        {passport.variant && (
-          <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream-mute)", marginTop: 6, letterSpacing: "0.06em" }}>
-            {passport.variant}
-          </div>
-        )}
         {passport.summary && (
           <div className="t-read" style={{ fontSize: 13, color: "var(--vr-cream-dim)", marginTop: 10, lineHeight: 1.55 }}>
             {passport.summary}

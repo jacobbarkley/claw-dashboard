@@ -583,11 +583,16 @@ function ChangeLogTimeline({
   events: ChangeLogEvent[]
   candidatesById: Record<string, Candidate>
 }) {
+  const [open, setOpen] = useState(false)
   const sorted = useMemo(
     () => [...events].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)),
     [events],
   )
   if (!sorted.length) return null
+
+  // Collapsed: only the most-recent event. Expanded: full history.
+  const visible = open ? sorted : sorted.slice(0, 1)
+  const hiddenCount = sorted.length - visible.length
 
   return (
     <div style={{ position: "relative" }}>
@@ -603,13 +608,13 @@ function ChangeLogTimeline({
           background: "var(--vr-line)",
         }}
       />
-      {sorted.map((event, idx) => {
+      {visible.map((event, idx) => {
         const meta = changeMeta(event.kind)
         const refCandidate =
           event.candidate_id && candidatesById[event.candidate_id]
             ? candidatesById[event.candidate_id]
             : null
-        const isLast = idx === sorted.length - 1
+        const isLast = idx === visible.length - 1
         return (
           <div
             key={idx}
@@ -707,6 +712,71 @@ function ChangeLogTimeline({
           </div>
         )
       })}
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="t-eyebrow"
+          style={{
+            marginLeft: 32,
+            marginTop: 6,
+            padding: "6px 10px",
+            background: "transparent",
+            border: "1px solid var(--vr-line)",
+            borderRadius: 3,
+            color: "var(--vr-cream-mute)",
+            font: "inherit",
+            fontSize: 10,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          Show {hiddenCount} older
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
+      {open && sorted.length > 1 && (
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="t-eyebrow"
+          style={{
+            marginLeft: 32,
+            marginTop: 6,
+            padding: "6px 10px",
+            background: "transparent",
+            border: "1px solid var(--vr-line)",
+            borderRadius: 3,
+            color: "var(--vr-cream-mute)",
+            font: "inherit",
+            fontSize: 10,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          Show less
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            aria-hidden
+            style={{ transform: "rotate(180deg)" }}
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

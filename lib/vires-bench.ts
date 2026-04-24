@@ -653,6 +653,7 @@ function buildStockPassport(
     name: str(manifest.title) ?? str(spec?.title) ?? "Strategy Passport",
     variant: str(manifest.deployment_config_id) ?? str(runtimeActiveStrategy?.record?.variant_id) ?? "selected",
     sleeve: "STOCKS",
+    strategy_family: str(manifest.strategy_family),
     benchmark: str(manifest.benchmark_symbol) ?? str(spec?.dataset?.benchmark_symbol) ?? "SPY",
     summary:
       str(strategyRecord?.description) ??
@@ -809,6 +810,7 @@ function buildCryptoManagedPassport(
     name: str(manifest.title) ?? str(spec?.title) ?? "Crypto Managed Exposure",
     variant: selectedId ?? "selected",
     sleeve: "CRYPTO",
+    strategy_family: str(manifest.strategy_family),
     benchmark: str(manifest.benchmark_symbol) ?? "BTC/USD",
     summary:
       str(strategyRecord?.description) ??

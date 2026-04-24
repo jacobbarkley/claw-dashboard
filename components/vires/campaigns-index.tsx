@@ -14,9 +14,8 @@ import type {
   CampaignRegistry,
   CampaignsIndexData,
 } from "@/lib/vires-campaigns"
-import { countsBySleeve, getBaseline, statusCounts } from "@/lib/vires-campaigns"
+import { countsBySleeve, statusCounts } from "@/lib/vires-campaigns"
 import {
-  RoleTag,
   StatusPillCampaign,
   relTime,
 } from "./campaigns-shared"
@@ -224,16 +223,6 @@ function LeverCell({
 // ─── Campaign Card ──────────────────────────────────────────────────────────
 
 function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
-  const leader = campaign.candidates.find(
-    c => c.candidate_id === campaign.current_leader_candidate_id,
-  )
-  const baseline = getBaseline(campaign)
-  const baselineCandidate =
-    baseline?.candidate_id != null
-      ? campaign.candidates.find(c => c.candidate_id === baseline.candidate_id)
-      : null
-  const featuredCandidate = leader ?? baselineCandidate ?? null
-
   const rs = campaign.recency_signals
   const perf = campaign.baseline_performance
   const excessPct = perf?.excess_return_pct ?? null
@@ -268,21 +257,19 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         <StatusPillCampaign status={campaign.status} />
         <span style={{ flex: 1 }} />
         <span
+          aria-hidden
           className="t-eyebrow"
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            color: "var(--vr-gold)",
             fontSize: 10,
-            letterSpacing: "0.16em",
-            fontWeight: 600,
+            color: "var(--vr-gold)",
+            padding: "6px 12px",
+            border: "1px solid var(--vr-gold-line)",
+            borderRadius: 3,
+            background: "var(--vr-gold-soft)",
+            letterSpacing: "0.14em",
           }}
         >
-          Open campaign
-          <svg width="10" height="10" viewBox="0 0 8 8" fill="none" aria-hidden>
-            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
+          Open Campaign
         </span>
       </div>
 
@@ -299,56 +286,9 @@ function CampaignCard({ campaign }: { campaign: CampaignManifest }) {
         </div>
       </div>
 
-      {/* Featured candidate row: current leader OR baseline when no leader yet */}
-      {featuredCandidate && (
-        <div
-          style={{
-            padding: "10px 14px",
-            background:
-              featuredCandidate.role === "PROMOTED_REFERENCE"
-                ? "rgba(200,169,104,0.04)"
-                : "rgba(241,236,224,0.02)",
-            borderTop: "1px solid var(--vr-line)",
-            borderBottom: "1px solid var(--vr-line)",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: 10,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4, color: "var(--vr-cream-mute)" }}>
-              {featuredCandidate.role === "PROMOTED_REFERENCE" ? "Baseline to beat" : "Current leader"}
-            </div>
-            <div
-              className="t-h4"
-              style={{
-                fontSize: 14,
-                color: "var(--vr-cream)",
-                lineHeight: 1.25,
-                fontFamily: "var(--ff-serif)",
-                fontWeight: 500,
-              }}
-            >
-              {featuredCandidate.title}
-            </div>
-            <div
-              className="t-ticker"
-              style={{
-                fontSize: 9,
-                marginTop: 3,
-                color: "var(--vr-cream-faint)",
-                textTransform: "none",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {featuredCandidate.candidate_id}
-            </div>
-          </div>
-          <RoleTag role={featuredCandidate.role} />
-        </div>
-      )}
+      {/* Featured candidate row removed — "Current leader" / "Baseline
+          to beat" labels are visible on the campaign detail page when the
+          user opens the card. Keeps the index card tight. */}
 
       {/* 2x2 hybrid grid — two performance metrics + two activity signals */}
       <div
