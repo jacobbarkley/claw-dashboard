@@ -12,7 +12,7 @@
 // Leader-vs-Baseline block is omitted.
 
 import Link from "next/link"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import type {
   BaselinePerformance,
   BaselinePerformanceState,
@@ -959,13 +959,18 @@ function FamilyGroupView({
   leaderId,
   benchmarkSymbol,
   passportByCandidateId,
+  defaultOpen = false,
 }: {
   family: FamilyGroupT
   candidates: Candidate[]
   leaderId: string | null
   benchmarkSymbol: string
   passportByCandidateId: Record<string, string>
+  /** First family in a list should start expanded so the leaderboard
+   *  reads alive on page load; the rest collapse behind dropdowns. */
+  defaultOpen?: boolean
 }) {
+  const [open, setOpen] = useState(defaultOpen)
   if (!candidates.length) return null
   const ROLE_ORDER: Record<string, number> = { PROMOTED_REFERENCE: 0, LEADER: 1, CHALLENGER: 2 }
   const sorted = [...candidates].sort(
@@ -973,24 +978,34 @@ function FamilyGroupView({
   )
   return (
     <div className="vr-card" style={{ padding: 0, background: "var(--vr-ink)" }}>
-      <div
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
         style={{
+          width: "100%",
           padding: "12px 14px",
-          borderBottom: "1px solid var(--vr-line)",
+          borderBottom: open ? "1px solid var(--vr-line)" : "none",
           display: "flex",
           alignItems: "flex-start",
           gap: 10,
           justifyContent: "space-between",
+          background: "transparent",
+          border: "none",
+          borderBottomWidth: open ? 1 : 0,
+          borderBottomStyle: "solid",
+          borderBottomColor: "var(--vr-line)",
+          color: "inherit",
+          font: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, marginBottom: 4, color: "var(--vr-cream-mute)" }}>
-            Family
-          </div>
           <div
             className="t-h3"
             style={{
-              fontSize: 16,
+              fontSize: 15,
               color: "var(--vr-cream)",
               fontFamily: "var(--ff-serif)",
               fontWeight: 500,
@@ -1008,11 +1023,35 @@ function FamilyGroupView({
             </div>
           )}
         </div>
-        <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)", whiteSpace: "nowrap" }}>
-          {sorted.length} {sorted.length === 1 ? "candidate" : "candidates"}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexShrink: 0,
+            paddingTop: 2,
+          }}
+        >
+          <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-faint)", whiteSpace: "nowrap" }}>
+            {sorted.length} {sorted.length === 1 ? "candidate" : "candidates"}
+          </span>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            aria-hidden
+            style={{
+              color: "var(--vr-cream-mute)",
+              transition: "transform 180ms ease",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
-      </div>
-      {sorted.map((c, i) => {
+      </button>
+      {open && sorted.map((c, i) => {
         const passportId = passportByCandidateId[c.candidate_id]
         return (
           <CampaignCandidateRow
@@ -1088,23 +1127,28 @@ export function ViresCampaignsDetail({
 
   return (
     <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Back nav */}
+      {/* Back nav — icon-forward so it reads as an action, not a label. */}
       <Link
         href="/vires/bench/campaigns"
-        className="t-eyebrow"
+        aria-label="Back to Campaigns"
         style={{
           display: "inline-flex",
           alignItems: "center",
-          gap: 6,
+          justifyContent: "center",
+          width: 32,
+          height: 32,
+          borderRadius: 3,
+          border: "1px solid var(--vr-line)",
           color: "var(--vr-cream-mute)",
-          alignSelf: "flex-start",
           textDecoration: "none",
+          alignSelf: "flex-start",
+          background: "transparent",
+          transition: "color 120ms ease, border-color 120ms ease",
         }}
       >
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-          <path d="M6 1L2 4L6 7" stroke="currentColor" strokeWidth="1.2" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M8 2L4 6L8 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Campaigns
       </Link>
 
       {/* Header */}
@@ -1119,7 +1163,6 @@ export function ViresCampaignsDetail({
           <StatusPillCampaign status={campaign.status} />
           {pressure && <PressureChip status={pressure.status} />}
         </div>
-        <div className="t-eyebrow" style={{ marginBottom: 4 }}>Campaign</div>
         <div className="t-h2" style={{ lineHeight: 1.2 }}>{campaign.title}</div>
         {pressure?.summary && (
           <div
@@ -1395,7 +1438,7 @@ export function ViresCampaignsDetail({
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {familiesWithCandidates.map(g => (
+        {familiesWithCandidates.map((g, idx) => (
           <FamilyGroupView
             key={g.family.family_id}
             family={g.family}
@@ -1403,6 +1446,7 @@ export function ViresCampaignsDetail({
             leaderId={leaderId}
             benchmarkSymbol={campaign.benchmark_symbol}
             passportByCandidateId={passportByCandidateId}
+            defaultOpen={idx === 0}
           />
         ))}
         {orphans.length > 0 && (
