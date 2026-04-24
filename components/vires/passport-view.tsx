@@ -7,10 +7,12 @@
 // gates + assumptions + lifecycle timeline.
 
 import Link from "next/link"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useCallback, useRef, useState } from "react"
 import { InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 import { ParameterHeatmap, type PlateauPayload } from "./plateau-view"
 import { TradeHistoryCarousel } from "./trade-history-carousel"
+import { useSwipeNavigation } from "./use-swipe-navigation"
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 // Matches the shape lib/vires-bench.ts returns for a passport entry.
@@ -501,6 +503,8 @@ function humanizeVerdictReason(reason: string | null | undefined): string | null
 // ─── Gates list ────────────────────────────────────────────────────────────
 
 function GatesList({ gates }: { gates: PassportGate[] }) {
+  const [open, setOpen] = useState(false)
+
   if (!gates.length) {
     return (
       <section>
@@ -522,45 +526,123 @@ function GatesList({ gates }: { gates: PassportGate[] }) {
       </section>
     )
   }
+
+  // Summary counts — pass / fail / everything-else-in-flight.
+  const passed = gates.filter(g => (g.status ?? "").toUpperCase() === "PASS").length
+  const failed = gates.filter(g => {
+    const s = (g.status ?? "").toUpperCase()
+    return s === "FAIL" || s === "BLOCKED"
+  }).length
+  const total = gates.length
+  const inFlight = total - passed - failed
+
+  // Overall tone driven by failures first, then pass-rate.
+  const summaryTone: "up" | "down" | "flat" =
+    failed > 0 ? "down" : passed === total ? "up" : "flat"
+
   return (
     <section>
       <SectionHeader eyebrow="Governance" title="Promotion gates" />
-      <div className="vr-card">
-        <div className="vr-divide">
-          {gates.map((g, i) => (
-            <div
-              key={i}
+      <div className="vr-card" style={{ padding: 0 }}>
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "space-between",
+            background: "transparent",
+            border: "none",
+            borderBottomWidth: open ? 1 : 0,
+            borderBottomStyle: "solid",
+            borderBottomColor: "var(--vr-line)",
+            color: "inherit",
+            font: "inherit",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+            <span
               style={{
-                display: "grid",
-                gridTemplateColumns: "8px 1fr auto",
-                gap: 12,
-                alignItems: "start",
-                padding: "12px 16px",
+                width: 7,
+                height: 7,
+                borderRadius: "50%",
+                background: toneColor(summaryTone),
+                flexShrink: 0,
               }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: toneColor(gateTone(g.status) === "up" ? "up" : gateTone(g.status) === "down" ? "down" : "flat"),
-                  marginTop: 6,
-                }}
-              />
-              <div>
-                <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", marginBottom: 3 }}>
-                  {g.label ?? "gate"}
-                </div>
-                {g.detail && (
-                  <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-mute)", lineHeight: 1.45 }}>
-                    {g.detail}
-                  </div>
-                )}
+            />
+            <div style={{ minWidth: 0 }}>
+              <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
+                {passed} of {total} passed
               </div>
-              <StatusPill tone={gateTone(g.status)}>{g.status ?? "—"}</StatusPill>
+              <div className="t-label" style={{ fontSize: 10.5, color: "var(--vr-cream-mute)", marginTop: 2 }}>
+                {failed > 0
+                  ? `${failed} ${failed === 1 ? "gate" : "gates"} blocking`
+                  : inFlight > 0
+                    ? `${inFlight} ${inFlight === 1 ? "gate" : "gates"} still checking`
+                    : "All gates cleared"}
+              </div>
             </div>
-          ))}
-        </div>
+          </div>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            aria-hidden
+            style={{
+              color: "var(--vr-cream-mute)",
+              transition: "transform 180ms ease",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              flexShrink: 0,
+            }}
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {open && (
+          <div className="vr-divide">
+            {gates.map((g, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "8px 1fr auto",
+                  gap: 12,
+                  alignItems: "start",
+                  padding: "12px 16px",
+                }}
+              >
+                <span
+                  style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "50%",
+                    background: toneColor(gateTone(g.status) === "up" ? "up" : gateTone(g.status) === "down" ? "down" : "flat"),
+                    marginTop: 6,
+                  }}
+                />
+                <div>
+                  <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", marginBottom: 3 }}>
+                    {g.label ?? "gate"}
+                  </div>
+                  {g.detail && (
+                    <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-mute)", lineHeight: 1.45 }}>
+                      {g.detail}
+                    </div>
+                  )}
+                </div>
+                <StatusPill tone={gateTone(g.status)}>{g.status ?? "—"}</StatusPill>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -647,6 +729,7 @@ function ParameterStabilityCard({ plateau }: { plateau: PlateauPayload | null | 
 // ─── Assumptions ───────────────────────────────────────────────────────────
 
 function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"] }) {
+  const [open, setOpen] = useState(false)
   const a = assumptions ?? {}
   const rows: Array<{ label: string; value: string }> = [
     { label: "Commission", value: a.commissionBps != null ? `${a.commissionBps.toFixed(1)} bps round trip` : "—" },
@@ -657,12 +740,13 @@ function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"]
     { label: "Venue", value: a.venue ?? "—" },
     { label: "Timeframe", value: a.timeframe ?? "—" },
   ]
+  const visibleRows = open ? rows : rows.slice(0, 3)
   return (
     <section>
       <SectionHeader eyebrow="Assumptions" title="Cost + fill model" />
       <div className="vr-card">
         <div className="vr-divide">
-          {rows.map(r => (
+          {visibleRows.map(r => (
             <div
               key={r.label}
               style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: 12, padding: "10px 16px" }}
@@ -672,6 +756,48 @@ function AssumptionsCard({ assumptions }: { assumptions: Passport["assumptions"]
             </div>
           ))}
         </div>
+        {rows.length > 3 && (
+          <button
+            type="button"
+            onClick={() => setOpen(v => !v)}
+            aria-expanded={open}
+            className="t-eyebrow"
+            style={{
+              width: "100%",
+              borderTop: "1px solid var(--vr-line)",
+              padding: "10px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              background: "transparent",
+              border: "none",
+              borderTopWidth: 1,
+              borderTopStyle: "solid",
+              borderTopColor: "var(--vr-line)",
+              color: "var(--vr-cream-mute)",
+              font: "inherit",
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+            }}
+          >
+            <span>{open ? "Show less" : `Show all ${rows.length}`}</span>
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 10 10"
+              fill="none"
+              aria-hidden
+              style={{
+                transition: "transform 180ms ease",
+                transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        )}
       </div>
     </section>
   )
@@ -692,6 +818,9 @@ function PaperMonitoringCard({
 }) {
   const [requestState, setRequestState] = useState<"idle" | "submitting" | "success" | "error">("idle")
   const [requestMessage, setRequestMessage] = useState<string | null>(null)
+  // Collapse state for the monitoring section. Default closed — header
+  // shows status + short health blurb; expand for the full row grid.
+  const [monitoringOpen, setMonitoringOpen] = useState(false)
 
   const submitDemotion = async () => {
     if (!recordId) {
@@ -796,6 +925,23 @@ function PaperMonitoringCard({
     : status === "AT_RISK" ? "var(--vr-gold)"
     : "var(--vr-cream)"
 
+  // Short health blurb for the collapsed-card header.
+  const healthBlurb =
+    status === "COMPLETED"
+      ? "Window closed"
+      : status === "DEMOTION_RECOMMENDED"
+        ? "Demotion recommended"
+        : status === "AT_RISK"
+          ? "Approaching threshold"
+          : monitoring.tracking?.tracking_deviation_pct != null
+            ? "Performing within band"
+            : "Awaiting first read"
+
+  const elapsedSummary =
+    monitoring.window?.elapsed_days != null && monitoring.window?.target_days != null
+      ? `Day ${monitoring.window.elapsed_days} of ${monitoring.window.target_days}`
+      : null
+
   const rows: Array<{ label: string; value: string }> = [
     { label: "Window start", value: fmtDate(monitoring.window?.start) },
     {
@@ -837,32 +983,96 @@ function PaperMonitoringCard({
   return (
     <section>
       <SectionHeader eyebrow="Monitoring" title="Paper confirmation window" />
-      <div className="vr-card">
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--vr-line)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div className="t-eyebrow" style={{ fontSize: 9, color: tone }}>
-            {status || "ACTIVE"}
+      <div className="vr-card" style={{ padding: 0 }}>
+        <button
+          type="button"
+          onClick={() => setMonitoringOpen(v => !v)}
+          aria-expanded={monitoringOpen}
+          style={{
+            width: "100%",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "space-between",
+            background: "transparent",
+            border: "none",
+            borderBottomWidth: monitoringOpen ? 1 : 0,
+            borderBottomStyle: "solid",
+            borderBottomColor: "var(--vr-line)",
+            color: "inherit",
+            font: "inherit",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+            <span
+              className="t-eyebrow"
+              style={{
+                fontSize: 9,
+                color: tone,
+                padding: "3px 8px",
+                border: `1px solid ${tone}`,
+                borderRadius: 2,
+                letterSpacing: "0.14em",
+                flexShrink: 0,
+              }}
+            >
+              {status || "ACTIVE"}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div className="t-num" style={{ fontSize: 13, color: "var(--vr-cream)", fontWeight: 500 }}>
+                {healthBlurb}
+              </div>
+              {elapsedSummary && (
+                <div className="t-label" style={{ fontSize: 10.5, color: "var(--vr-cream-mute)", marginTop: 2 }}>
+                  {elapsedSummary}
+                </div>
+              )}
+            </div>
           </div>
-          {monitoring.recommendation?.reason && (
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            aria-hidden
+            style={{
+              color: "var(--vr-cream-mute)",
+              transition: "transform 180ms ease",
+              transform: monitoringOpen ? "rotate(180deg)" : "rotate(0deg)",
+              flexShrink: 0,
+            }}
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {monitoringOpen && monitoring.recommendation?.reason && (
+          <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--vr-line)" }}>
             <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.45 }}>
               {monitoring.recommendation.reason}
             </div>
-          )}
-        </div>
-        <div className="vr-divide">
-          {rows.map(row => (
-            <div key={row.label} style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, padding: "10px 16px" }}>
-              <div className="t-eyebrow" style={{ fontSize: 9 }}>{row.label}</div>
-              <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", textAlign: "right" }}>{row.value}</div>
-            </div>
-          ))}
-        </div>
+          </div>
+        )}
+        {monitoringOpen && (
+          <div className="vr-divide">
+            {rows.map(row => (
+              <div key={row.label} style={{ display: "grid", gridTemplateColumns: "160px 1fr", gap: 12, padding: "10px 16px" }}>
+                <div className="t-eyebrow" style={{ fontSize: 9 }}>{row.label}</div>
+                <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", textAlign: "right" }}>{row.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Action footer — demote-confirm appears when the monitoring
             recommendation has flipped to DEMOTION_RECOMMENDED; the return-
             to-campaign deep-link appears whenever the origin carries a
             campaign_id so operators can reopen the campaign and re-shuffle
-            candidates. Either or both may be present. */}
-        {((monitoring.recommendation?.status ?? "").toUpperCase() === "DEMOTION_RECOMMENDED" || campaignId) && (
+            candidates. Either or both may be present. Also gated behind the
+            expand toggle so the collapsed card stays terse. */}
+        {monitoringOpen && ((monitoring.recommendation?.status ?? "").toUpperCase() === "DEMOTION_RECOMMENDED" || campaignId) && (
           <div
             style={{
               padding: "12px 16px",
@@ -1100,6 +1310,7 @@ function TradeHistoryCard({ tradeHistory }: { tradeHistory: Passport["trade_hist
 const STAGE_ORDER = ["IDEATED", "SPEC", "BENCHED", "CONFIRMED", "PROMOTED", "PAPER", "LIVE_ELIGIBLE", "LIVE"]
 
 function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) {
+  const [open, setOpen] = useState(false)
   const events = lifecycle?.events ?? []
   if (!events.length) {
     return (
@@ -1127,43 +1338,101 @@ function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) 
     const ib = STAGE_ORDER.indexOf((b.stage ?? "").toUpperCase())
     return ia - ib
   })
+
+  const renderEvent = (ev: (typeof sorted)[number], i: number) => {
+    const status = (ev.status ?? "").toUpperCase()
+    const color =
+      status === "ACTIVE" ? "var(--vr-gold)"
+      : status === "DONE" ? "var(--vr-up)"
+      : status === "BLOCKED" ? "var(--vr-down)"
+      : "var(--vr-cream-faint)"
+    return (
+      <div key={i} style={{ padding: "12px 16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
+          <div className="t-eyebrow" style={{ fontSize: 9, color, letterSpacing: "0.12em" }}>
+            {ev.stage ?? "stage"}
+          </div>
+          <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", marginLeft: "auto" }}>
+            {fmtDate(ev.at)}
+          </div>
+        </div>
+        {ev.title && (
+          <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", marginTop: 6, marginLeft: 17 }}>
+            {ev.title}
+          </div>
+        )}
+        {ev.detail && (
+          <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-mute)", marginTop: 4, marginLeft: 17, lineHeight: 1.45 }}>
+            {ev.detail}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // The "current" event — first ACTIVE if present, else the latest DONE,
+  // else the first event. Collapsed view surfaces only this one so the
+  // card reads "where we are right now" at a glance.
+  const activeIdx = sorted.findIndex(ev => (ev.status ?? "").toUpperCase() === "ACTIVE")
+  const currentIdx =
+    activeIdx >= 0
+      ? activeIdx
+      : (() => {
+          const lastDone = [...sorted].reverse().findIndex(ev => (ev.status ?? "").toUpperCase() === "DONE")
+          return lastDone >= 0 ? sorted.length - 1 - lastDone : 0
+        })()
+  const current = sorted[currentIdx]
+
   return (
     <section>
       <SectionHeader eyebrow="Lifecycle" title="Stage timeline" />
-      <div className="vr-card" style={{ padding: "8px 0" }}>
-        <div className="vr-divide">
-          {sorted.map((ev, i) => {
-            const status = (ev.status ?? "").toUpperCase()
-            const color =
-              status === "ACTIVE" ? "var(--vr-gold)"
-              : status === "DONE" ? "var(--vr-up)"
-              : status === "BLOCKED" ? "var(--vr-down)"
-              : "var(--vr-cream-faint)"
-            return (
-              <div key={i} style={{ padding: "12px 16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: color, flexShrink: 0 }} />
-                  <div className="t-eyebrow" style={{ fontSize: 9, color, letterSpacing: "0.12em" }}>
-                    {ev.stage ?? "stage"}
-                  </div>
-                  <div className="t-label" style={{ fontSize: 10, color: "var(--vr-cream-mute)", marginLeft: "auto" }}>
-                    {fmtDate(ev.at)}
-                  </div>
-                </div>
-                {ev.title && (
-                  <div className="t-label" style={{ fontSize: 12, color: "var(--vr-cream)", marginTop: 6, marginLeft: 17 }}>
-                    {ev.title}
-                  </div>
-                )}
-                {ev.detail && (
-                  <div className="t-read" style={{ fontSize: 11, color: "var(--vr-cream-mute)", marginTop: 4, marginLeft: 17, lineHeight: 1.45 }}>
-                    {ev.detail}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+      <div className="vr-card" style={{ padding: 0 }}>
+        <button
+          type="button"
+          onClick={() => setOpen(v => !v)}
+          aria-expanded={open}
+          style={{
+            width: "100%",
+            padding: "6px 16px 6px 4px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            justifyContent: "space-between",
+            background: "transparent",
+            border: "none",
+            borderBottomWidth: open ? 1 : 0,
+            borderBottomStyle: "solid",
+            borderBottomColor: "var(--vr-line)",
+            color: "inherit",
+            font: "inherit",
+            textAlign: "left",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>{renderEvent(current, currentIdx)}</div>
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 10 10"
+            fill="none"
+            aria-hidden
+            style={{
+              color: "var(--vr-cream-mute)",
+              transition: "transform 180ms ease",
+              transform: open ? "rotate(180deg)" : "rotate(0deg)",
+              flexShrink: 0,
+              marginRight: 4,
+            }}
+          >
+            <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {open && (
+          <div className="vr-divide">
+            {sorted.map((ev, i) => (i === currentIdx ? null : renderEvent(ev, i)))}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -1172,12 +1441,26 @@ function LifecycleTimeline({ lifecycle }: { lifecycle: Passport["lifecycle"] }) 
 // ─── Page ──────────────────────────────────────────────────────────────────
 
 export function ViresPassportView({ passport }: { passport: Passport | null }) {
+  // Drill-up gesture — swipe-right anywhere on the passport returns to
+  // the bench home. Mirrors the campaign-detail back swipe; the bench
+  // tab-cycle swipe is already disabled on /vires/bench/passport/* so
+  // this local gesture has the floor.
+  const swipeRef = useRef<HTMLDivElement | null>(null)
+  const router = useRouter()
+  const goBack = useCallback(() => router.push("/vires/bench"), [router])
+  useSwipeNavigation({
+    containerRef: swipeRef,
+    onPrev: goBack,
+    onEdgeSwipeFromLeft: goBack,
+  })
+
   if (!passport) {
     return (
-      <div className="vr-screen vires-screen-pad" style={{ maxWidth: 860, margin: "0 auto" }}>
-        <Link href="/vires/bench" className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)", textDecoration: "none" }}>
-          ← Back to Bench
-        </Link>
+      <div
+        ref={swipeRef}
+        className="vr-screen vires-screen-pad"
+        style={{ maxWidth: 860, margin: "0 auto", touchAction: "pan-y" }}
+      >
         <div className="vr-card" style={{ padding: 24, marginTop: 14 }}>
           <div className="t-eyebrow" style={{ marginBottom: 6 }}>Passport not found</div>
           <div className="t-label">
@@ -1250,25 +1533,17 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
 
   return (
     <div
+      ref={swipeRef}
       className="vr-screen vires-screen-pad"
-      style={{ maxWidth: 860, margin: "0 auto", display: "flex", flexDirection: "column", gap: 14 }}
+      style={{
+        maxWidth: 860,
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        touchAction: "pan-y",
+      }}
     >
-      <Link
-        href="/vires/bench"
-        className="t-eyebrow"
-        style={{
-          fontSize: 9,
-          color: "var(--vr-cream-mute)",
-          textDecoration: "none",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          alignSelf: "flex-start",
-        }}
-      >
-        ← Back to Bench
-      </Link>
-
       {/* Identity */}
       <div style={{ padding: "4px 2px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -1374,10 +1649,8 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
           honest empty state when the passport is a frozen reference. */}
       <ParameterStabilityCard plateau={passport.plateau_primer} />
 
-      {/* Assumptions */}
-      <AssumptionsCard assumptions={passport.assumptions} />
-
-      {/* Paper monitoring */}
+      {/* Paper monitoring — collapsed by default; header surfaces status
+          + short health blurb, expand for the full row grid + actions. */}
       <PaperMonitoringCard
         monitoring={passport.paper_monitoring}
         recordId={passport.record_id ?? null}
@@ -1389,8 +1662,13 @@ export function ViresPassportView({ passport }: { passport: Passport | null }) {
       {/* Raw trade ledger */}
       <TradeHistoryCard tradeHistory={passport.trade_history} />
 
-      {/* Lifecycle */}
+      {/* Lifecycle — collapsed by default to the currently-active stage;
+          expand for the full stage sequence including past + future. */}
       <LifecycleTimeline lifecycle={passport.lifecycle} />
+
+      {/* Assumptions moved to the bottom — reference material, not a
+          headline. Three rows visible by default; expand for the rest. */}
+      <AssumptionsCard assumptions={passport.assumptions} />
 
       {/* Suppress unused-import warning until fmtPct is used downstream. */}
       {(false as boolean) && <span>{fmtPct(0)}</span>}
