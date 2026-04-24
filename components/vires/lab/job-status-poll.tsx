@@ -385,7 +385,7 @@ export function JobStatusPoll({ jobId }: { jobId: string }) {
       {job.result_id && (
         <div style={{ marginTop: 12 }}>
           <Link
-            href={`/vires/lab/jobs/${encodeURIComponent(job.job_id)}#result`}
+            href={`/vires/bench/lab/jobs/${encodeURIComponent(job.job_id)}#result`}
             className="t-eyebrow"
             style={{
               fontSize: 10,

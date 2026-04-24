@@ -103,7 +103,7 @@ function JobRow({ job }: { job: JobV1 }) {
 
   return (
     <Link
-      href={`/vires/lab/jobs/${encodeURIComponent(job.job_id)}`}
+      href={`/vires/bench/lab/jobs/${encodeURIComponent(job.job_id)}`}
       className="vr-card"
       style={{
         display: "flex",

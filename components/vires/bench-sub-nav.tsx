@@ -1,8 +1,9 @@
 "use client"
 
-// Bench sub-nav — `Home` · `Campaigns`. Home is production-only (what IS
-// in production right now). Campaigns is research-only (what is competing
-// to deserve capital next). Zero-overlap invariant per the v3 design handoff.
+// Bench sub-nav — `Home` · `Campaigns` · `Lab`. Home is production-only
+// (what IS in production right now). Campaigns is tracked research (what
+// is competing to deserve capital next). Lab is the operator's authoring
+// surface (ideas, runs, reports).
 //
 // Sub-nav hides in nested views (passport, run) so the back affordance on
 // those pages doesn't compete with a tab bar.
@@ -13,14 +14,16 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-type TabKey = "home" | "campaigns"
+type TabKey = "home" | "campaigns" | "lab"
 
 const TABS: Array<{ href: string; key: TabKey; label: string }> = [
   { href: "/vires/bench",           key: "home",      label: "Home"      },
   { href: "/vires/bench/campaigns", key: "campaigns", label: "Campaigns" },
+  { href: "/vires/bench/lab",       key: "lab",       label: "Lab"       },
 ]
 
 function resolveActive(pathname: string): TabKey | null {
+  if (pathname.startsWith("/vires/bench/lab")) return "lab"
   if (pathname.startsWith("/vires/bench/campaigns")) return "campaigns"
   if (
     pathname.startsWith("/vires/bench/passport") ||

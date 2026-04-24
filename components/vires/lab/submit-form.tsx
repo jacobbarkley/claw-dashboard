@@ -190,7 +190,7 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
           </div>
           <div style={{ marginTop: 14, display: "flex", gap: 10 }}>
             <Link
-              href={`/vires/lab/jobs/${encodeURIComponent(p.job_id)}`}
+              href={`/vires/bench/lab/jobs/${encodeURIComponent(p.job_id)}`}
               className="t-eyebrow"
               style={{
                 padding: "7px 14px",

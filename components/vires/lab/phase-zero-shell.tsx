@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 
-// Shared hero scaffold for /vires/lab/* pages. Copy should read as the
+// Shared hero scaffold for /vires/bench/lab/* pages. Copy should read as the
 // product itself, not as a meta-description of the build phase. Honest
 // empty states happen via LabPhaseZeroSlot (below), never as screen-wide
 // "awaiting backend" banners.

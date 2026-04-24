@@ -3,22 +3,22 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-// Sub-navigation inside /vires/lab. Mirrors the Bench sub-nav pattern so
+// Sub-navigation inside /vires/bench/lab. Mirrors the Bench sub-nav pattern so
 // the visual rhythm stays consistent.
 
 const TABS: Array<{ href: string; label: string }> = [
-  { href: "/vires/lab",         label: "home"    },
-  { href: "/vires/lab/ideas",   label: "ideas"   },
-  { href: "/vires/lab/jobs",    label: "jobs"    },
-  { href: "/vires/lab/reports", label: "reports" },
+  { href: "/vires/bench/lab",         label: "home"    },
+  { href: "/vires/bench/lab/ideas",   label: "ideas"   },
+  { href: "/vires/bench/lab/jobs",    label: "jobs"    },
+  { href: "/vires/bench/lab/reports", label: "reports" },
 ]
 
 export function LabSubNav() {
-  const pathname = usePathname() ?? "/vires/lab"
+  const pathname = usePathname() ?? "/vires/bench/lab"
   const activeHref =
-    pathname === "/vires/lab"
-      ? "/vires/lab"
-      : TABS.find(t => t.href !== "/vires/lab" && pathname.startsWith(t.href))?.href ?? "/vires/lab"
+    pathname === "/vires/bench/lab"
+      ? "/vires/bench/lab"
+      : TABS.find(t => t.href !== "/vires/bench/lab" && pathname.startsWith(t.href))?.href ?? "/vires/bench/lab"
 
   return (
     <div

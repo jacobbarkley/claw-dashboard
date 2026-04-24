@@ -5,7 +5,7 @@
 // JobsListPoll: populated / empty / unconfigured / outage.
 //
 // Intentionally small — this is the home surface, not the full list.
-// Deep-links to /vires/lab/jobs for the real view.
+// Deep-links to /vires/bench/lab/jobs for the real view.
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
@@ -186,7 +186,7 @@ export function JobsLiveSummary() {
         eyebrow="Running now"
         eyebrowColor="var(--vr-gold)"
         accent="var(--vr-gold)"
-        href="/vires/lab/jobs"
+        href="/vires/bench/lab/jobs"
       >
         <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
           Nothing running right now. Start a campaign from an idea.
@@ -207,7 +207,7 @@ export function JobsLiveSummary() {
       eyebrow={inFlight > 0 ? "Running now" : "Recent runs"}
       eyebrowColor={STATE_COLOR[most.state] ?? "var(--vr-gold)"}
       accent={STATE_COLOR[most.state] ?? "var(--vr-gold)"}
-      href="/vires/lab/jobs"
+      href="/vires/bench/lab/jobs"
     >
       <div
         style={{
