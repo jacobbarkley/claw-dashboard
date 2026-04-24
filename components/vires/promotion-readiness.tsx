@@ -255,6 +255,28 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
   const [requestMessage, setRequestMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // §12 post-apply back-propagation — campaign manifest now carries a
+  // real production_links block and promotion_events[] once a nomination
+  // applies. Most recent CONFIRMED event is the "promoted" anchor we
+  // render in the banner.
+  const activeRecordId = campaign.production_links?.active_record_id ?? null
+  const confirmedEvents = (campaign.promotion_events ?? []).filter(
+    e => e.event_type === "PROMOTION_CONFIRMED",
+  )
+  const latestConfirmedEvent = confirmedEvents.length
+    ? confirmedEvents.reduce((acc, cur) => (cur.at > acc.at ? cur : acc))
+    : null
+  const isPromoted = !!activeRecordId && !!latestConfirmedEvent
+
+  // Pending / rejected nomination state — a candidate has a nomination on
+  // disk that hasn't applied yet (or was rejected by the adapter).
+  const pendingNomination = (campaign.candidates ?? []).find(
+    c => c.artifact_refs?.nomination_state === "PENDING",
+  )
+  const rejectedNomination = (campaign.candidates ?? []).find(
+    c => c.artifact_refs?.nomination_state === "REJECTED",
+  )
+
   // No-readiness case — render the full scorecard shape with each gate
   // in PENDING. Preserves section layout across every campaign so the
   // template converges even when the producer hasn't scored gates yet.
@@ -423,8 +445,115 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
           </span>
           <InfoPop term="PromotionReadiness" size={11} />
         </div>
-        <OverallStatusChip status={readiness.overall_status} />
+        {isPromoted ? (
+          <span
+            className="t-eyebrow"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "3px 8px 2px",
+              color: "var(--vr-gold)",
+              border: "1px solid var(--vr-gold-line)",
+              background: "var(--vr-gold-soft)",
+              borderRadius: 2,
+              letterSpacing: "0.14em",
+              fontSize: 9,
+            }}
+          >
+            Promoted
+          </span>
+        ) : (
+          <OverallStatusChip status={readiness.overall_status} />
+        )}
       </div>
+
+      {/* Promoted banner — durable state from manifest back-propagation.
+          Shows the bank record this campaign now owns + when it applied. */}
+      {isPromoted && latestConfirmedEvent && activeRecordId && (
+        <div
+          style={{
+            padding: "10px 16px 10px",
+            borderBottom: "1px solid var(--vr-line)",
+            background: "rgba(200,169,104,0.03)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
+          >
+            → {activeRecordId}
+          </div>
+          <div
+            className="t-read"
+            style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
+          >
+            Promoted {relTime(latestConfirmedEvent.at)}
+            {latestConfirmedEvent.passport_role_id ? ` into ${latestConfirmedEvent.passport_role_id}` : ""}
+            {latestConfirmedEvent.supersedes_record_id
+              ? ` · superseded ${latestConfirmedEvent.supersedes_record_id}`
+              : ""}
+          </div>
+        </div>
+      )}
+
+      {/* In-flight nomination — transient PENDING state, adapter hasn't
+          applied yet. Kept honest so operators know their click landed. */}
+      {!isPromoted && pendingNomination && (
+        <div
+          style={{
+            padding: "10px 16px 10px",
+            borderBottom: "1px solid var(--vr-line)",
+            background: "rgba(200,169,104,0.03)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
+          >
+            Nomination pending
+          </div>
+          <div
+            className="t-read"
+            style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
+          >
+            {pendingNomination.title} — adapter will apply on the next worker sync.
+          </div>
+        </div>
+      )}
+
+      {/* Rejected nomination — applied with an error. Keeps the failure
+          visible rather than silently disappearing the in-flight chip. */}
+      {!isPromoted && !pendingNomination && rejectedNomination && (
+        <div
+          style={{
+            padding: "10px 16px 10px",
+            borderBottom: "1px solid var(--vr-line)",
+            background: "rgba(212,80,80,0.04)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-down)", letterSpacing: "0.14em" }}
+          >
+            Nomination rejected
+          </div>
+          <div
+            className="t-read"
+            style={{ fontSize: 11, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
+          >
+            {rejectedNomination.title} — adapter rejected the request. Check the nomination artifact for the reason.
+          </div>
+        </div>
+      )}
 
       {/* Freshness */}
       <div
@@ -455,10 +584,11 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
       </div>
 
       {/* Nominate action — only renders when the candidate is promotion-
-          ready. Blocked / pending states are conveyed by the overall-
-          status chip + the per-gate glyphs; the button + repeated blocker
-          prose added noise without new information. */}
-      {readyToNominate && (
+          ready AND the role isn't already filled / in-flight. Blocked and
+          pending-gate states are conveyed by the overall-status chip + the
+          per-gate glyphs; the durable promoted / pending / rejected banners
+          above handle the post-submit states. */}
+      {readyToNominate && !isPromoted && !pendingNomination && (
         <div
           style={{
             padding: "12px 16px",

@@ -55,11 +55,19 @@ export interface LatestRun {
   run_stats_status?: RunStatsStatus
 }
 
+export type NominationState = "PENDING" | "APPLIED" | "REJECTED"
+
 export interface CandidateArtifactRefs {
   result_path?: string | null
   candidate_path?: string | null
   job_id?: string | null
   origin_job_id?: string | null
+  // Populated by the rollup producer when a nomination exists for this
+  // candidate (§12 back-propagation slice).
+  nomination_id?: string | null
+  nomination_path?: string | null
+  nomination_state?: NominationState | null
+  promotion_event_id?: string | null
   [extra: string]: string | null | undefined
 }
 
@@ -183,7 +191,10 @@ export interface Readiness {
   as_of: string
 }
 
-export type PromotionTargetAction = "CREATE_NEW" | "REPLACE_EXISTING"
+// Matches research-lab idea.v1.promotion_target.target_action. The legacy
+// /api/passport/workflow used "CREATE_NEW" — that route is bypassed now
+// and not worth keeping in the union.
+export type PromotionTargetAction = "NEW_RECORD" | "REPLACE_EXISTING"
 
 export interface PromotionReadiness {
   schema_version?: string
@@ -214,6 +225,7 @@ export interface PromotionEvent {
   actor: Actor
   campaign_id?: string | null
   candidate_id?: string | null
+  origin_job_id?: string | null
   passport_role_id?: string | null
   target_action?: PromotionTargetAction | null
   supersedes_record_id?: string | null

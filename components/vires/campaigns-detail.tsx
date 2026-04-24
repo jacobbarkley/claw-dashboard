@@ -40,6 +40,33 @@ import { InfoPop, SleeveChip, type Sleeve } from "./shared"
 import { PromotionReadinessCard } from "./promotion-readiness"
 import { AssignPromotionSlot } from "./campaigns/assign-promotion-slot"
 
+// §12 back-propagation — candidates carry nomination_state on their
+// artifact_refs once the rollup runs after an apply/reject. APPLIED is
+// already encoded in role=PROMOTED_REFERENCE and styled at the row level;
+// this chip covers the transient PENDING and terminal REJECTED states.
+function NominationStateChip({ state }: { state: "PENDING" | "REJECTED" }) {
+  const color = state === "PENDING" ? "var(--vr-gold)" : "var(--vr-down)"
+  const label = state === "PENDING" ? "Pending" : "Rejected"
+  return (
+    <span
+      className="t-eyebrow"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        fontSize: 8.5,
+        letterSpacing: "0.14em",
+        padding: "2px 6px 1px",
+        color,
+        border: `1px solid ${color}55`,
+        background: `${color}11`,
+        borderRadius: 2,
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
 // ─── Lever shell — action-shaped button (disabled in v1) ────────────────────
 // CRITICAL: element IS <button>, NOT div/span. disabled + aria-disabled true.
 // When v2 action wiring lands, swap `disabled` off and add onClick. No
@@ -812,6 +839,7 @@ function CampaignCandidateRow({
     ? { href: passportHref, style: { textDecoration: "none", color: "inherit", display: "block" } }
     : {}
   const originJobId = candidate.artifact_refs?.origin_job_id ?? null
+  const nominationState = candidate.artifact_refs?.nomination_state ?? null
 
   return (
     <Outer
@@ -853,6 +881,8 @@ function CampaignCandidateRow({
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {nominationState === "PENDING" && <NominationStateChip state="PENDING" />}
+          {nominationState === "REJECTED" && <NominationStateChip state="REJECTED" />}
           <RoleTag role={candidate.role} />
           {clickable && (
             <span
