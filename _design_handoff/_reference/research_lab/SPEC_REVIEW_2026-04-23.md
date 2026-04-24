@@ -1,7 +1,9 @@
 # Research Lab — Spec Review (2026-04-23)
 
-**Status:** Rev 3 — amended after Codex's Rev-2 P2 review (same day).
-No remaining P1 blockers. Ready for implementation.
+**Status:** Rev 4 — Lab ↔ Campaign rollup locked after two rounds with
+Codex (2026-04-24). §12 is the new authoritative content; the
+standalone amendment file has been preserved for history and points
+here. No remaining P1 blockers. Ready for implementation.
 **Scope:** App-driven strategy research. From idea → bench campaign →
 results → promotion candidate, with nightly autopilot and AI-assisted
 reporting as later phases.
@@ -1381,3 +1383,245 @@ path. Codex's five original asks plus one on idempotent enqueue.
   cold artifacts, no duplicate store entries.
 
 Running all six as part of the Phase 1a CI smoke is the bar.
+
+---
+
+## 12. Lab ↔ Campaign rollup
+
+Locked 2026-04-24 after two Codex review rounds. Merged from the
+standalone amendment at
+`_reference/research_lab/SPEC_AMENDMENT_idea_to_campaign_rollup_2026-04-24.md`.
+
+### 12.1 The gap this closes
+
+Lab and Campaigns must be **stages of one system, not two**. A Lab
+job's result + candidate should BE a campaign input, not translated
+into one. Today they're parallel surfaces: submit ten Lab jobs for the
+same idea and they all render at `/vires/bench/lab/jobs` but none roll
+up into the existing Campaigns UI (leaderboard, 9-gate readiness
+scorecard, change log, promotion events) — which is the exact view an
+operator wants once they're actually testing an idea.
+
+### 12.2 Rollup concept
+
+**An idea is the natural campaign container.** `idea_id` already
+propagates through
+`campaign_request.v1 → bench_bundle.v1 → job.v1 → result.v1 → candidate.v1`.
+The producer uses it as the grouping key. Same data, two lenses:
+
+- **Lab** is authoring-first: "I ran this, what happened."
+- **Campaigns** is research-pressure-first: "which candidates are
+  competing for promotion, how close are they to the gates."
+
+### 12.3 Rollup triggers (threshold, not always-on)
+
+A campaign spins up only once an idea crosses one of three triggers.
+Before the trigger, the idea lives only in Lab. After, the producer
+maintains the campaign in lockstep with subsequent Lab jobs. Promotion
+is one-directional — no auto-demotion back to Lab-only.
+
+1. **Explicit operator flag** (`idea.v1.promote_to_campaign: true`).
+   Doesn't materialize an empty campaign on flag-flip — it means
+   "force rollup on the **first DONE Lab job** for this idea,
+   bypassing the evidence/volume thresholds." The first job still
+   needs to materialize so the campaign has a benchmark, an
+   evaluation_window, and a first_job_id to carry.
+2. **Evidence threshold — meaningfully competitive candidate.** A
+   DONE Lab job whose candidate's
+   `readiness.overall_status ∈ { READY_TO_NOMINATE, MONITORED }`.
+   BLOCKED is intentionally excluded: a first scored-but-failing
+   stocks run is real data but not campaign-worthy research pressure.
+3. **Volume threshold.** `N=3` **unique DONE `job_id`s** against the
+   idea. FAILED jobs don't count. `RETRY_QUEUED → DONE` on the same
+   `job_id` counts once. Covers presets whose adapter doesn't produce
+   competitive readiness (crypto today, options always).
+
+### 12.4 Contract additions
+
+Small, backwards-compatible. All optional fields. Bench-authored
+campaigns (AI Wall Street, ETF Replacement Momentum) omit the new
+blocks and render unchanged.
+
+#### 12.4.a `idea.v1` — new optional fields
+
+```yaml
+promote_to_campaign: true                # flag-flip rollup (§12.3 #1)
+promotion_target:                        # OPTIONAL at idea-authoring
+  passport_role_id: "STOCKS_BROAD_MOMENTUM"
+  target_action: "REPLACE_EXISTING"      # CREATE_NEW | REPLACE_EXISTING
+  supersedes_record_id: "regime_aware_momentum::stop_5_target_15"
+```
+
+`promotion_target` can be filled in at idea-authoring OR later via
+the campaign detail page's "Assign promotion slot" action (§12.7
+locked option b). When set, producer copies it verbatim onto the
+campaign's `promotion_readiness` block.
+
+#### 12.4.b `campaign_manifest.v2` — new `origin` block
+
+```jsonc
+"origin": {
+  "kind": "LAB_IDEA",              // LAB_IDEA | BENCH_MANUAL
+  "idea_id": "idea_01H...",
+  "first_job_id": "job_01H...",    // the job that crossed the threshold
+  "created_at": "2026-04-24T..."
+}
+```
+
+Lets the UI (and future governance checks) distinguish Lab-spawned
+campaigns from bench-authored ones.
+
+#### 12.4.c `candidate.v1` — `origin_job_id`
+
+```jsonc
+"origin_job_id": "job_01H..."
+```
+
+Lets the campaign leaderboard deep-link each row back to its Lab job.
+
+#### 12.4.d `result.v1.benchmark` — full parity with bench producer
+
+Today the Lab emits only `{ symbol, total_return_pct, sharpe_ratio }`.
+Campaigns' `baseline_performance` block wants Calmar, Sortino, Max DD,
+and a per-era pass/fail strip. Grow to match so the campaign renders
+a full baseline without derivation:
+
+```jsonc
+"benchmark": {
+  "symbol": "SPY",
+  "total_return_pct": 80.45,
+  "sharpe_ratio": 1.12,
+  "sortino_ratio": 1.54,
+  "calmar_ratio": 1.34,
+  "max_drawdown_pct": -13.40,
+  "eras": [{ "label": "2023 H1", "sharpe": 0.94, "ret": 12.1, "pass": true }, ...],
+  "eras_passed": 5,
+  "eras_total": 6
+}
+```
+
+#### 12.4.e `result.v1` — explicit `evaluation_window`
+
+```jsonc
+"evaluation_window": {
+  "from": "2025-10-07",
+  "to": "2026-04-22",
+  "days": 142
+}
+```
+
+Populated by the executor from the bench run. Campaigns render
+"Period Oct 2025 – Apr 2026 · 142 days" directly from this.
+
+### 12.5 Producer responsibilities (Codex)
+
+New or extended module (naming Codex's call).
+
+1. **Trigger evaluation.** On each DONE job or idea-flag flip,
+   evaluate §12.3 triggers for that job's `idea_id`. If any fires and
+   no campaign exists for the idea yet, create one.
+2. **Campaign creation.** Materialize a `campaign_manifest.v2` with:
+   - `campaign_id`: derived (e.g. `lab_{idea_id_slug}`)
+   - `title` ← idea.title · `objective` ← idea.thesis · `sleeve` ←
+     idea.sleeve · `benchmark_symbol` ← result.benchmark.symbol
+   - `origin.kind: "LAB_IDEA"` + `idea_id` + `first_job_id` +
+     `created_at`
+   - `promotion_readiness.passport_role_id`/`target_action`/
+     `supersedes_record_id` ← idea.promotion_target when present,
+     null otherwise (Nominate stays disabled — §12.7)
+3. **Sync on every DONE.** Append the candidate to the correct family
+   (§12.6), recompute leaderboard + baseline_performance +
+   promotion_readiness. Emit a `ChangeLogEvent` per sync so the
+   history reflects Lab origin honestly.
+4. **Nomination provenance.** When a Lab-spawned candidate is
+   nominated, the event logged to
+   `state/rebuild_history/strategy_promotion_events.jsonl` carries
+   `origin: "research_lab"` AND the full triple:
+   `candidate_id + origin_job_id + idea_id`. Lets any future audit
+   trace a bank record back through the full Lab chain.
+
+### 12.6 Family comparability rule
+
+**Campaign = container. Family = comparable leaderboard unit.** Each
+family has its own leader. **No campaign-wide "leader family" gold
+highlight** on Lab-spawned campaigns by default — different presets
+can change date-window geometry, evidence quality, and cost-model
+assumptions, so cross-family winner claims are apples-to-oranges
+until declared otherwise.
+
+**Family-per-preset:** for Lab-spawned campaigns, one family per
+`preset_id`. Preset's `display_name` becomes the family title;
+candidates are the Lab jobs that ran against that preset. Multiple
+presets under the same idea → multiple families under the same
+campaign.
+
+A cross-family leader claim renders ONLY when presets are explicitly
+declared comparable. Specific mechanism is Codex's call:
+
+- `preset.v1.comparable_with: [preset_id_a, ...]` — symmetric pairing
+- Or: `preset.v1.comparability_group: "string"` — shared group key
+
+Bench-authored campaigns are unaffected — comparability is implicit
+in how the author structured them.
+
+### 12.7 Idea lifecycle → campaign status mapping
+
+No auto-demotion. Campaigns persist independently. But when the idea's
+`status` transitions, the producer emits a corresponding
+`campaign.status` annotation + a `ChangeLogEvent` so the campaign
+reads honestly:
+
+- `idea.SHELVED` → `campaign.MONITORED` (no active research; prior
+  candidates preserved for reference)
+- `idea.RETIRED` → `campaign.DECOMMISSIONED` (historical record only)
+- `idea.ACTIVE/READY/QUEUED` → campaign.status driven by the normal
+  producer rules (EXPLORING / CONVERGING / …)
+
+### 12.8 Deferred promotion-slot assignment (locked: option b)
+
+`idea.v1.promotion_target` stays optional at idea-authoring. When it's
+absent, an **"Assign promotion slot"** action on the campaign detail
+page lets the operator fill in `passport_role_id` / `target_action` /
+`supersedes_record_id` post-hoc. The UI writes the values back to the
+idea spec so subsequent rollups preserve the assignment.
+
+**Hard rule:** no nomination fires until `promotion_target` is set.
+The Nominate button renders disabled with honest copy ("Assign a
+promotion slot to enable nomination") in the meantime. Prevents a
+Lab-spawned campaign from silently nominating into the wrong slot.
+
+### 12.9 Build order
+
+Locked with Codex:
+
+1. **Upstream Lab contract additions** in `models.py` — §12.4.a–e
+2. **Rollup producer** — §12.5 + §12.6 + §12.7
+3. **Nomination provenance wiring** — §12.5.4 (log triple, not just
+   candidate_id)
+4. **Dashboard UI pass** — Claude wires:
+   - "Lab origin" chip on campaign detail when `origin.kind === "LAB_IDEA"`
+   - "View campaign" deep-link on idea detail + job detail pages once
+     the rollup exists
+   - Per-candidate "View job" chevron when `origin_job_id` is present
+   - "Assign promotion slot" action on campaign detail for
+     Lab-spawned campaigns without `promotion_target`
+   - "Promote to campaign immediately" checkbox on the Lab submit
+     form (maps to `promote_to_campaign` on idea.v1)
+
+### 12.10 Definition of done
+
+- An idea submits jobs → crosses threshold → campaign auto-created.
+- Campaign carries `origin.kind = LAB_IDEA` and the `idea_id`.
+- Candidate leaderboard shows each Lab job with `origin_job_id` wired
+  to a "View job" link.
+- Idea detail and Lab job detail both carry "View campaign" once the
+  rollup exists.
+- Submit form's "Promote to campaign immediately" flag shortcuts the
+  trigger (first DONE → campaign).
+- Nomination from a Lab-spawned campaign requires `promotion_target`
+  set; disabled with honest copy otherwise.
+- Nomination event logged with `origin_job_id + idea_id + candidate_id`.
+- `idea.SHELVED/RETIRED` transitions emit campaign-status annotations
+  + change-log entries.
+- No regressions: Aggressive AI Wall Street + ETF Replacement Momentum
+  render identically (their manifests have no `origin` block).

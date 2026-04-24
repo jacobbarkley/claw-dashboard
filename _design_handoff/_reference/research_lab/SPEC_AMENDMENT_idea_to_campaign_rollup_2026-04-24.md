@@ -1,8 +1,11 @@
 # Spec Amendment — idea → campaign rollup (2026-04-24)
 
-**Status:** Rev 2 — amended after Codex's P1/P2 review (same day).
-Extends `SPEC_REVIEW_2026-04-23.md`; nothing here contradicts the
-Phase 0–1 locks.
+**Status:** LOCKED — Codex signed off, merged into `SPEC_REVIEW_2026-04-23.md` §12.
+This file is preserved for commit-history context; the authoritative
+version now lives in the main spec.
+
+Rev 2 adopted all of Codex's P1/P2 findings. Q6 resolved with option (b)
+plus the "no nomination until promotion_target exists" rule.
 **Trigger:** After Jacob observed that Lab jobs live at
 `/vires/bench/lab/jobs` but never surface inside a campaign card, we
 need to wire the rollup.
@@ -350,17 +353,19 @@ Small and deterministic once contracts land.
    carries `origin: "research_lab"` AND the full triple of origin
    identifiers: `candidate_id + origin_job_id + idea_id`. Lets any
    future audit trace a bank record back through the full Lab chain.
-6. **Deferred promotion-slot assignment.** Still open. §4.4(c)
-   proposes optional `promotion_target` on idea.v1. Two UX paths when
-   it's absent:
-   - (a) Nominate button disabled with "Pick a promotion slot to
-     enable nomination" copy until assigned
-   - (b) An "Assign promotion slot" action on the campaign detail
-     page that lets the operator fill in the three fields post-hoc
-     and writes them back to the idea spec
+6. **Deferred promotion-slot assignment.** LOCKED as option (b).
+   §4.4(c) keeps `promotion_target` as an OPTIONAL block on idea.v1.
+   When it's absent at idea-authoring time, an "Assign promotion slot"
+   action on the campaign detail page lets the operator fill in the
+   three fields post-hoc and writes them back to the idea spec.
+   Subsequent rollups preserve the assignment.
 
-   I vote (b) — operators often don't know the slot at idea-authoring
-   time; deferring to campaign-time is natural. Codex to confirm.
+   **Hard rule:** no nomination fires until `promotion_target` is
+   set — either at idea authoring OR via the campaign's "Assign
+   promotion slot" action. Nominate button renders disabled with
+   honest copy ("Assign a promotion slot to enable nomination") in
+   the meantime. Prevents a Lab-spawned campaign from silently
+   nominating into the wrong strategy-bank slot.
 
 ---
 
