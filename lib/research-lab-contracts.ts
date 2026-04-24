@@ -236,6 +236,9 @@ export interface JobV1 extends ScopeTriple {
   state: JobState
   created_at: string
   updated_at: string
+  /** Echoed from campaign_request.v1 — optional per spec, present in real runs. */
+  idea_id?: string | null
+  preset_id?: string | null
   bundle_id?: string | null
   executor_id?: string | null
   started_at?: string | null

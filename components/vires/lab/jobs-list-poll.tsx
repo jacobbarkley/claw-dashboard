@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 
 import type { JobState, JobV1 } from "@/lib/research-lab-contracts"
+import { useLabSleeveFilter } from "./use-lab-sleeve-filter"
 
 type ListResponse =
   | {
@@ -221,9 +222,20 @@ function OutageCard() {
   )
 }
 
+// Map a SleeveFilter value to the lowercase sleeve prefix used in
+// research-lab preset ids (e.g. "stocks.momentum.stop_target.v1"). ALL
+// returns null — skip filtering.
+function sleevePrefix(filter: string): string | null {
+  if (filter === "STOCKS") return "stocks."
+  if (filter === "OPTIONS") return "options."
+  if (filter === "CRYPTO") return "crypto."
+  return null
+}
+
 export function JobsListPoll() {
   const [data, setData] = useState<ListResponse | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [sleeveFilter] = useLabSleeveFilter()
 
   useEffect(() => {
     let cancelled = false
@@ -259,14 +271,26 @@ export function JobsListPoll() {
     )
   }
 
+  // Apply the Lab sleeve filter to the populated-state jobs list. Match
+  // is preset_id prefix (e.g. "stocks." / "crypto." / "options."). Jobs
+  // without a preset_id fall through to ALL only. When Codex's job.v1
+  // grows an explicit sleeve field, switch to that.
+  const prefix = sleevePrefix(sleeveFilter)
+  const filteredJobs =
+    data.source === "store" && prefix
+      ? data.jobs.filter(j => typeof j.preset_id === "string" && j.preset_id.toLowerCase().startsWith(prefix))
+      : data.source === "store"
+        ? data.jobs
+        : []
+
   let body: React.ReactNode
   if (data.source === "unconfigured") body = <UnconfiguredCard />
   else if (data.source === "outage") body = <OutageCard />
-  else if (data.jobs.length === 0) body = <EmptyStoreCard />
+  else if (filteredJobs.length === 0) body = <EmptyStoreCard />
   else {
     body = (
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {data.jobs.map(job => (
+        {filteredJobs.map(job => (
           <JobRow key={job.job_id} job={job} />
         ))}
       </div>

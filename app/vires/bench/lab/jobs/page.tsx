@@ -1,5 +1,6 @@
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { JobsListPoll } from "@/components/vires/lab/jobs-list-poll"
+import { LabSleeveFilter } from "@/components/vires/lab/lab-sleeve-filter"
 
 export const metadata = {
   title: "Vires Capital — Lab · Jobs",
@@ -38,6 +39,7 @@ export default function ViresLabJobsPage() {
         >
           What's running now, what ran recently. Click into any row for details.
         </p>
+        <LabSleeveFilter />
       </div>
       <div style={{ padding: "0 20px 120px", maxWidth: 720, margin: "0 auto" }}>
         <JobsListPoll />
