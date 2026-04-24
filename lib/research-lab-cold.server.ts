@@ -42,13 +42,22 @@ async function readJsonIfPresent<T>(absPath: string): Promise<T | null> {
   }
 }
 
+// Codex's paths.py unconditionally prepends "result_" / "candidate_" to
+// the id, and the id itself already carries that prefix
+// (result_id = "result_<job_id>", candidate_id = "candidate_<job_id>").
+// That's why the files on disk have the double-prefix shape:
+//   result_result_<job_id>.json
+//   candidate_candidate_<job_id>.json
+// We mirror the helper's behavior exactly — always prefix, never branch.
+
 export async function loadResultById(
   resultId: string,
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<ResultV1 | null> {
   if (!resultId || !/^[A-Za-z0-9_.:-]+$/.test(resultId)) return null
-  const filename = resultId.startsWith("result_") ? `${resultId}.json` : `result_${resultId}.json`
-  return readJsonIfPresent<ResultV1>(path.join(scopeRoot(scope), "results", filename))
+  return readJsonIfPresent<ResultV1>(
+    path.join(scopeRoot(scope), "results", `result_${resultId}.json`),
+  )
 }
 
 export async function loadCandidateByJobId(
@@ -56,21 +65,17 @@ export async function loadCandidateByJobId(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<CandidateV1 | null> {
   if (!jobId || !/^[A-Za-z0-9_.:-]+$/.test(jobId)) return null
-  // Codex's executor names the candidate deterministically as
-  // candidate_<job_id>. See build_candidate_projection in executor.py.
   return readJsonIfPresent<CandidateV1>(
     path.join(scopeRoot(scope), "candidates", `candidate_candidate_${jobId}.json`),
   )
 }
 
-// Also expose a direct-by-id lookup for when we have the candidate_id.
 export async function loadCandidateById(
   candidateId: string,
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<CandidateV1 | null> {
   if (!candidateId || !/^[A-Za-z0-9_.:-]+$/.test(candidateId)) return null
-  const filename = candidateId.startsWith("candidate_")
-    ? `${candidateId}.json`
-    : `candidate_${candidateId}.json`
-  return readJsonIfPresent<CandidateV1>(path.join(scopeRoot(scope), "candidates", filename))
+  return readJsonIfPresent<CandidateV1>(
+    path.join(scopeRoot(scope), "candidates", `candidate_${candidateId}.json`),
+  )
 }
