@@ -3,6 +3,7 @@ import Link from "next/link"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
 
 export const metadata = {
   title: "Vires Capital — Lab · Idea",
@@ -39,6 +40,7 @@ export default async function ViresLabIdeaDetailPage({
   const { id } = await params
   const decoded = decodeURIComponent(id)
   const idea = await loadIdeaById(decoded)
+  const labCampaignExists = idea ? await hasLabCampaignForIdea(idea.idea_id) : false
 
   if (!idea) {
     return (
@@ -145,6 +147,55 @@ export default async function ViresLabIdeaDetailPage({
           gap: 16,
         }}
       >
+        {labCampaignExists && (
+          <Link
+            href={`/vires/bench/campaigns/${encodeURIComponent(`lab_${idea.idea_id}`)}`}
+            className="vr-card"
+            style={{
+              padding: "14px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              textDecoration: "none",
+              color: "inherit",
+              borderLeft: "2px solid var(--vr-gold)",
+              background: "rgba(200,169,104,0.04)",
+            }}
+          >
+            <div>
+              <div
+                className="t-eyebrow"
+                style={{
+                  fontSize: 9,
+                  color: "var(--vr-gold)",
+                  marginBottom: 3,
+                  letterSpacing: "0.14em",
+                }}
+              >
+                Rolled up
+              </div>
+              <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
+                View campaign for this idea
+              </div>
+            </div>
+            <span
+              className="t-eyebrow"
+              style={{
+                fontSize: 10,
+                color: "var(--vr-gold)",
+                padding: "6px 12px",
+                border: "1px solid var(--vr-gold-line)",
+                borderRadius: 3,
+                background: "var(--vr-gold-soft)",
+                letterSpacing: "0.14em",
+              }}
+            >
+              Open Campaign
+            </span>
+          </Link>
+        )}
+
         {/* Primary CTA — submit a campaign from this idea */}
         <Link
           href={`/vires/bench/lab/new-campaign/${encodeURIComponent(idea.idea_id)}`}
@@ -157,8 +208,8 @@ export default async function ViresLabIdeaDetailPage({
             gap: 10,
             textDecoration: "none",
             color: "inherit",
-            borderLeft: "2px solid var(--vr-gold)",
-            background: "rgba(200,169,104,0.04)",
+            borderLeft: labCampaignExists ? "2px solid var(--vr-line)" : "2px solid var(--vr-gold)",
+            background: labCampaignExists ? "transparent" : "rgba(200,169,104,0.04)",
           }}
         >
           <div>
@@ -166,26 +217,26 @@ export default async function ViresLabIdeaDetailPage({
               className="t-eyebrow"
               style={{
                 fontSize: 9,
-                color: "var(--vr-gold)",
+                color: labCampaignExists ? "var(--vr-cream-mute)" : "var(--vr-gold)",
                 marginBottom: 3,
                 letterSpacing: "0.14em",
               }}
             >
-              Test this idea
+              {labCampaignExists ? "Run again" : "Test this idea"}
             </div>
             <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
-              Submit a campaign from this idea
+              {labCampaignExists ? "Submit another campaign run" : "Submit a campaign from this idea"}
             </div>
           </div>
           <span
             className="t-eyebrow"
             style={{
               fontSize: 10,
-              color: "var(--vr-gold)",
+              color: labCampaignExists ? "var(--vr-cream-mute)" : "var(--vr-gold)",
               padding: "6px 12px",
-              border: "1px solid var(--vr-gold-line)",
+              border: labCampaignExists ? "1px solid var(--vr-line)" : "1px solid var(--vr-gold-line)",
               borderRadius: 3,
-              background: "var(--vr-gold-soft)",
+              background: labCampaignExists ? "transparent" : "var(--vr-gold-soft)",
               letterSpacing: "0.14em",
             }}
           >

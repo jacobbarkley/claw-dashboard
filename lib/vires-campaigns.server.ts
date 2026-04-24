@@ -60,3 +60,13 @@ export async function loadCampaignById(campaignId: string): Promise<CampaignMani
   if (!index) return null
   return index.campaigns.find(c => c.campaign_id === campaignId) ?? null
 }
+
+// §12 rollup — look up the Lab-spawned campaign for a given idea_id.
+// Rollup producer names these `lab_{idea_id}`, so this is a direct check
+// against the registry without loading every manifest.
+export async function hasLabCampaignForIdea(ideaId: string): Promise<boolean> {
+  const registry = await readJson<CampaignRegistry>(REGISTRY_PATH)
+  if (!registry) return false
+  const target = `lab_${ideaId}`
+  return registry.campaigns.some(c => c.campaign_id === target)
+}

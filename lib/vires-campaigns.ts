@@ -55,13 +55,21 @@ export interface LatestRun {
   run_stats_status?: RunStatsStatus
 }
 
+export interface CandidateArtifactRefs {
+  result_path?: string | null
+  candidate_path?: string | null
+  job_id?: string | null
+  origin_job_id?: string | null
+  [extra: string]: string | null | undefined
+}
+
 export interface Candidate {
   candidate_id: string
   title: string
   family_id: string
   role: CandidateRole
   artifact_kind?: string | null
-  artifact_refs?: Record<string, string | null> | null
+  artifact_refs?: CandidateArtifactRefs | null
   latest_run: LatestRun
   notes?: string[] | null
 }
@@ -243,6 +251,21 @@ export interface CampaignManifest {
   promotion_readiness?: PromotionReadiness | null
   production_links?: ProductionLinks | null
   promotion_events?: PromotionEvent[] | null
+
+  // §12 Lab → Campaign rollup (optional; only set on Lab-spawned campaigns)
+  origin?: CampaignOrigin | null
+}
+
+// §12 — Lab → Campaign rollup provenance. BENCH_MANUAL is reserved for legacy
+// campaigns that existed before the rollup producer landed. LAB_IDEA is the
+// only kind the rollup producer emits today.
+export type CampaignOriginKind = "LAB_IDEA" | "BENCH_MANUAL" | string
+
+export interface CampaignOrigin {
+  kind: CampaignOriginKind
+  idea_id?: string | null
+  first_job_id?: string | null
+  created_at?: string | null
 }
 
 export interface CampaignRegistryEntry {

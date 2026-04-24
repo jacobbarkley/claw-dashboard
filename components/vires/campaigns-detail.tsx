@@ -796,6 +796,7 @@ function CampaignCandidateRow({
   benchmarkSymbol: string
   passportHref?: string
 }) {
+  const router = useRouter()
   const stats =
     candidate.latest_run?.run_stats_status === "INDEXED" ? candidate.latest_run.run_stats ?? null : null
   const tint =
@@ -809,6 +810,7 @@ function CampaignCandidateRow({
   const outerProps: Record<string, unknown> = clickable
     ? { href: passportHref, style: { textDecoration: "none", color: "inherit", display: "block" } }
     : {}
+  const originJobId = candidate.artifact_refs?.origin_job_id ?? null
 
   return (
     <Outer
@@ -1024,6 +1026,42 @@ function CampaignCandidateRow({
             <li key={i}>{n}</li>
           ))}
         </ul>
+      )}
+
+      {originJobId && (
+        <div
+          role="link"
+          tabIndex={0}
+          onClick={e => {
+            e.preventDefault()
+            e.stopPropagation()
+            router.push(`/vires/bench/lab/jobs/${encodeURIComponent(originJobId)}`)
+          }}
+          onKeyDown={e => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              e.stopPropagation()
+              router.push(`/vires/bench/lab/jobs/${encodeURIComponent(originJobId)}`)
+            }
+          }}
+          className="t-eyebrow"
+          style={{
+            marginTop: 8,
+            fontSize: 9,
+            letterSpacing: "0.14em",
+            color: "var(--vr-cream-mute)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            cursor: "pointer",
+            width: "fit-content",
+          }}
+        >
+          View job
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none" aria-hidden>
+            <path d="M2 1L6 4L2 7" stroke="currentColor" strokeWidth="1.4" />
+          </svg>
+        </div>
       )}
 
       {/* Honest footnote for candidates that don't have a passport yet. */}
@@ -1286,6 +1324,31 @@ export function ViresCampaignsDetail({
         >
           {campaign.objective}
         </div>
+        {campaign.origin?.kind === "LAB_IDEA" && campaign.origin.idea_id && (
+          <Link
+            href={`/vires/bench/lab/ideas/${encodeURIComponent(campaign.origin.idea_id)}`}
+            className="t-eyebrow"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              marginTop: 10,
+              padding: "4px 9px",
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              color: "var(--vr-gold)",
+              border: "1px solid var(--vr-gold-line)",
+              background: "var(--vr-gold-soft)",
+              borderRadius: 2,
+              textDecoration: "none",
+              alignSelf: "flex-start",
+              width: "fit-content",
+            }}
+          >
+            From Lab · {campaign.origin.idea_id}
+            <span aria-hidden style={{ fontSize: 11 }}>›</span>
+          </Link>
+        )}
       </div>
 
       {/* Target-passport deep-link — shown when this campaign's promotion
