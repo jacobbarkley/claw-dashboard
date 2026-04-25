@@ -19,13 +19,20 @@ import type {
 import { InfoPop } from "./shared"
 import { relTime } from "./campaigns-shared"
 
-// Canonical stocks 9-gate set. Used as the shape for the null-readiness
-// empty state so every campaign renders the same section layout
-// regardless of whether the producer has scored it yet. Mirrors the
-// "passport convergence" fix — every section preserves its shape; only
-// contents change. Source of truth for real scoring is the producer;
-// this list is UI scaffolding only.
-const STOCKS_GATE_SHAPE: Array<{ gate_id: string; label: string }> = [
+// Sleeve-keyed gate shapes for the null-readiness empty state.
+//
+// Every campaign renders the same section layout regardless of whether
+// the producer has scored gates yet — the placeholder mirrors the real
+// gate set when one is known. Source of truth for actual scoring is
+// always the producer; these lists are UI scaffolding only.
+//
+// Stocks adapter is WIRED in Phase 1a, so the 9-gate shape is real and
+// stable. Crypto + options adapters ship with Phase 1b — until then we
+// don't fake a gate set we don't know yet. Their empty state collapses
+// to a single honest "adapter pending" row instead of inventing gates.
+type GateShapeEntry = { gate_id: string; label: string }
+
+const STOCKS_GATE_SHAPE: GateShapeEntry[] = [
   { gate_id: "TRADE_COUNT",        label: "Minimum trade count" },
   { gate_id: "PROFIT_FACTOR",      label: "Profit factor" },
   { gate_id: "EXPECTANCY",         label: "Expectancy per trade" },
@@ -36,6 +43,15 @@ const STOCKS_GATE_SHAPE: Array<{ gate_id: string; label: string }> = [
   { gate_id: "HOLDBACK",           label: "Held-out window" },
   { gate_id: "ERA_ROBUSTNESS",     label: "Era sweep" },
 ]
+
+const GATE_SHAPE_BY_SLEEVE: Record<string, GateShapeEntry[]> = {
+  STOCKS: STOCKS_GATE_SHAPE,
+}
+
+function gateShapeForSleeve(sleeve: string | undefined | null): GateShapeEntry[] | null {
+  if (!sleeve) return null
+  return GATE_SHAPE_BY_SLEEVE[sleeve.toUpperCase()] ?? null
+}
 
 // ─── Status visuals ────────────────────────────────────────────────────────
 
@@ -285,7 +301,8 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
   // data maturity.)
   if (!readiness) {
     const statusLabel = campaign.status ?? null
-    const placeholderGates: ReadinessGate[] = STOCKS_GATE_SHAPE.map(g => ({
+    const sleeveShape = gateShapeForSleeve(campaign.sleeve)
+    const placeholderGates: ReadinessGate[] = (sleeveShape ?? []).map(g => ({
       gate_id: g.gate_id,
       label: g.label,
       status: "PENDING",
@@ -294,6 +311,7 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
       threshold: null,
       summary: null,
     }))
+    const sleeveLabel = (campaign.sleeve ?? "").toString().toLowerCase()
     return (
       <div
         className="vr-card"
@@ -351,18 +369,26 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
               lineHeight: 1.55,
             }}
           >
-            {statusLabel
-              ? `Gates score once the campaign has converged — currently ${statusLabel}, waiting for sufficient runs.`
-              : "Gates score once the campaign has converged. Shape below is the canonical 9-gate layout; each will fill in as evidence lands."}
+            {sleeveShape
+              ? statusLabel
+                ? `Gates score once the campaign has converged — currently ${statusLabel}, waiting for sufficient runs.`
+                : "Gates score once the campaign has converged. Shape below is the canonical layout; each will fill in as evidence lands."
+              : sleeveLabel
+                ? `Readiness gates for ${sleeveLabel} sleeve land with the Phase 1b adapter. Until then the producer can't auto-score this campaign — promotion requires manual review.`
+                : "Readiness gates land with the sleeve's adapter. Until then promotion requires manual review."}
           </span>
         </div>
 
-        {/* Gate list — same shape as scored, all PENDING. */}
-        <div>
-          {placeholderGates.map((g, idx) => (
-            <GateRow key={g.gate_id} gate={g} isLast={idx === placeholderGates.length - 1} />
-          ))}
-        </div>
+        {/* Gate list — only render when we actually know the shape. For
+            crypto/options before Phase 1b, skip the row block entirely
+            rather than fake gates we don't have ids for. */}
+        {sleeveShape && (
+          <div>
+            {placeholderGates.map((g, idx) => (
+              <GateRow key={g.gate_id} gate={g} isLast={idx === placeholderGates.length - 1} />
+            ))}
+          </div>
+        )}
       </div>
     )
   }

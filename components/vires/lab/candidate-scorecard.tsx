@@ -188,18 +188,59 @@ export function CandidateScorecard({ candidate }: { candidate: CandidateV1 }) {
           evaluated {candidate.evaluated_at}
         </span>
       </div>
-      <div
-        style={{
-          padding: "6px 16px 0",
-          fontSize: 11.5,
-          fontFamily: "var(--ff-serif)",
-          fontStyle: "italic",
-          color: "var(--vr-cream-dim)",
-          lineHeight: 1.55,
-        }}
-      >
-        {adapter.note}
-      </div>
+      {/* Italic note only for WIRED — for unwired/not-implemented the
+          banner above the gates carries the explanation more visibly. */}
+      {candidate.adapter_status === "WIRED" && (
+        <div
+          style={{
+            padding: "6px 16px 0",
+            fontSize: 11.5,
+            fontFamily: "var(--ff-serif)",
+            fontStyle: "italic",
+            color: "var(--vr-cream-dim)",
+            lineHeight: 1.55,
+          }}
+        >
+          {adapter.note}
+        </div>
+      )}
+
+      {/* Adapter warning banner — only when the adapter isn't WIRED.
+          Lifts the existing italic note into a load-bearing surface so
+          operators don't have to read the small chip to understand why
+          the gates below may be sparse and the Promote button hidden. */}
+      {candidate.adapter_status !== "WIRED" && (
+        <div
+          style={{
+            margin: "12px 16px 0",
+            padding: "10px 12px",
+            border: `1px solid ${adapter.color}55`,
+            borderLeft: `2px solid ${adapter.color}`,
+            background: `${adapter.color}0d`,
+            borderRadius: 3,
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: adapter.color, letterSpacing: "0.14em" }}
+          >
+            {candidate.adapter_status === "CODE_COMPLETE_UNWIRED"
+              ? "Adapter not wired"
+              : "Adapter not implemented"}
+          </div>
+          <div
+            className="t-read"
+            style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
+          >
+            {candidate.adapter_status === "CODE_COMPLETE_UNWIRED"
+              ? "The readiness checker exists but the producer doesn't call it yet for this sleeve. The lab can still gather evidence; promotion requires manual review until the adapter ships."
+              : "No readiness checker for this sleeve yet. The lab can still gather evidence; promotion requires manual review until the adapter ships."}
+          </div>
+        </div>
+      )}
 
       {/* Gates */}
       <div style={{ padding: "12px 0 4px" }}>
