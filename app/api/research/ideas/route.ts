@@ -68,7 +68,15 @@ interface SubmitBody {
   promotion_target?: unknown
   scope?: unknown
   actor?: unknown
+  code_pending?: unknown
 }
+
+// Sentinel strategy_id used when an operator captures an idea before any
+// executable strategy exists. The IdeaV1 contract requires strategy_id to
+// be a string, so we use a recognizable token rather than null. The worker
+// is expected to skip ideas with this sentinel; the dashboard always pairs
+// it with code_pending: true so it's unambiguous either way.
+const CODE_PENDING_STRATEGY_ID = "code_pending"
 
 const VALID_SLEEVES: ResearchSleeve[] = ["STOCKS", "CRYPTO", "OPTIONS"]
 const VALID_STATUSES: IdeaStatus[] = ["DRAFT", "READY", "QUEUED", "ACTIVE", "SHELVED", "RETIRED"]
@@ -187,34 +195,45 @@ export async function POST(req: NextRequest) {
   const title = typeof body.title === "string" ? body.title.trim() : ""
   const thesis = typeof body.thesis === "string" ? body.thesis.trim() : ""
   const sleeveRaw = typeof body.sleeve === "string" ? body.sleeve.trim().toUpperCase() : ""
-  const strategyId = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
+  const codePending = body.code_pending === true
+  const strategyIdInput = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
+  const strategyId = codePending ? CODE_PENDING_STRATEGY_ID : strategyIdInput
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 })
   if (!thesis) return NextResponse.json({ error: "thesis required" }, { status: 400 })
   if (!VALID_SLEEVES.includes(sleeveRaw as ResearchSleeve)) {
     return NextResponse.json({ error: "sleeve must be STOCKS | CRYPTO | OPTIONS" }, { status: 400 })
   }
-  if (!strategyId) return NextResponse.json({ error: "strategy_id required" }, { status: 400 })
+  if (!codePending && !strategyId) {
+    return NextResponse.json({ error: "strategy_id required" }, { status: 400 })
+  }
 
   // Validate strategy_id against the preset index — guardrail: no
-  // hand-authored unsupported strategies.
-  const registered = await loadRegisteredStrategies()
-  if (registered.size > 0 && !registered.has(strategyId)) {
-    return NextResponse.json(
-      {
-        error: `strategy_id "${strategyId}" is not registered. Valid options: ${[...registered].join(", ")}`,
-      },
-      { status: 400 },
-    )
+  // hand-authored unsupported strategies. Skipped for code-pending ideas
+  // since their sentinel intentionally isn't registered.
+  if (!codePending) {
+    const registered = await loadRegisteredStrategies()
+    if (registered.size > 0 && !registered.has(strategyId)) {
+      return NextResponse.json(
+        {
+          error: `strategy_id "${strategyId}" is not registered. Valid options: ${[...registered].join(", ")}`,
+        },
+        { status: 400 },
+      )
+    }
   }
 
   // Optional fields
   const scope = normalizeScope(body.scope)
   const actor = typeof body.actor === "string" && body.actor.trim() ? body.actor.trim() : "jacob"
   const statusIn = typeof body.status === "string" ? body.status.trim().toUpperCase() : "DRAFT"
-  const status: IdeaStatus = VALID_STATUSES.includes(statusIn as IdeaStatus)
-    ? (statusIn as IdeaStatus)
-    : "DRAFT"
+  // Code-pending ideas must stay DRAFT — there's no executable strategy
+  // to mark READY/QUEUED/ACTIVE against yet.
+  const status: IdeaStatus = codePending
+    ? "DRAFT"
+    : VALID_STATUSES.includes(statusIn as IdeaStatus)
+      ? (statusIn as IdeaStatus)
+      : "DRAFT"
   const sourceIn = typeof body.source === "string" ? body.source.trim().toUpperCase() : "MANUAL"
   const source: IdeaSource = VALID_SOURCES.includes(sourceIn as IdeaSource)
     ? (sourceIn as IdeaSource)
@@ -266,8 +285,11 @@ export async function POST(req: NextRequest) {
     params,
     ...(strategyFamily && { strategy_family: strategyFamily }),
     ...(tags && { tags }),
-    ...(promoteToCampaign && { promote_to_campaign: true }),
-    ...(promotionTarget && { promotion_target: promotionTarget }),
+    // Promotion fields are meaningless on code-pending ideas — drop them
+    // even if the caller sent them.
+    ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
+    ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
+    ...(codePending && { code_pending: true }),
   }
 
   const relpath = ideaRelpath(scope, ideaId)

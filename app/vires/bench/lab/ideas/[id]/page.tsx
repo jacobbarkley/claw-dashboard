@@ -109,6 +109,22 @@ export default async function ViresLabIdeaDetailPage({
           >
             {idea.status}
           </span>
+          {idea.code_pending && (
+            <span
+              className="t-eyebrow"
+              style={{
+                fontSize: 9,
+                color: "var(--vr-gold)",
+                border: "1px solid var(--vr-gold-line)",
+                background: "var(--vr-gold-soft)",
+                padding: "2px 7px",
+                borderRadius: 2,
+                letterSpacing: "0.14em",
+              }}
+            >
+              Code pending
+            </span>
+          )}
           <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
             {idea.sleeve}
           </span>
@@ -196,7 +212,41 @@ export default async function ViresLabIdeaDetailPage({
           </Link>
         )}
 
-        {/* Primary CTA — submit a campaign from this idea */}
+        {/* Code-pending honest state — replaces the submit CTA when no
+            executable strategy exists yet. Operator captured the thesis;
+            Codex / Talon V1 picks it up from this surface to implement. */}
+        {idea.code_pending ? (
+          <div
+            className="vr-card"
+            style={{
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              borderLeft: "2px solid var(--vr-gold)",
+              background: "rgba(200,169,104,0.04)",
+            }}
+          >
+            <div
+              className="t-eyebrow"
+              style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
+            >
+              Awaiting implementation
+            </div>
+            <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
+              No executable strategy for this idea yet
+            </div>
+            <div
+              className="t-read"
+              style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--vr-cream-dim)" }}
+            >
+              This idea was captured before any code was written. It can&apos;t be submitted to
+              the lab until Codex (or Talon V1) implements the strategy and registers it under
+              a real <span className="t-mono">strategy_id</span>. Once that lands, the
+              &quot;Test this idea&quot; CTA will re-enable here.
+            </div>
+          </div>
+        ) : (
         <Link
           href={`/vires/bench/lab/new-campaign/${encodeURIComponent(idea.idea_id)}`}
           className="vr-card"
@@ -243,6 +293,7 @@ export default async function ViresLabIdeaDetailPage({
             New Campaign
           </span>
         </Link>
+        )}
 
         {/* Thesis */}
         <section>
@@ -268,7 +319,10 @@ export default async function ViresLabIdeaDetailPage({
 
         {/* Spec fields */}
         <div className="vr-card" style={{ padding: 0 }}>
-          <SpecRow label="Strategy" value={idea.strategy_id} />
+          <SpecRow
+            label="Strategy"
+            value={idea.code_pending ? "—" : idea.strategy_id}
+          />
           {idea.strategy_family && <SpecRow label="Family" value={idea.strategy_family} />}
           <SpecRow label="Sleeve" value={idea.sleeve} />
           <SpecRow label="Source" value={idea.source} />

@@ -122,6 +122,13 @@ export interface IdeaV1 extends ScopeTriple {
    *  campaign detail "Assign promotion slot" action post-hoc. When
    *  absent, Nominate remains disabled on the spawned campaign. */
   promotion_target?: IdeaPromotionTarget | null
+  /** Dashboard-side capture surface — operator authored an idea before
+   *  any strategy code exists. strategy_id holds a sentinel value;
+   *  submit-to-lab is blocked. Forms the inbox for Talon V1 (or manual
+   *  Codex implementation). When the strategy lands, the idea's
+   *  strategy_id is updated to the registered name and code_pending is
+   *  cleared. */
+  code_pending?: boolean
 }
 
 // ─── preset.v1 ──────────────────────────────────────────────────────────────

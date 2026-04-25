@@ -120,20 +120,37 @@ export default async function ViresLabIdeasPage() {
                     >
                       {idea.title}
                     </div>
-                    <span
-                      className="t-eyebrow"
-                      style={{
-                        fontSize: 9,
-                        color: statusColor,
-                        border: `1px solid ${statusColor}`,
-                        padding: "2px 7px",
-                        borderRadius: 2,
-                        letterSpacing: "0.14em",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {idea.status}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      {idea.code_pending && (
+                        <span
+                          className="t-eyebrow"
+                          style={{
+                            fontSize: 9,
+                            color: "var(--vr-gold)",
+                            border: "1px solid var(--vr-gold-line)",
+                            background: "var(--vr-gold-soft)",
+                            padding: "2px 7px",
+                            borderRadius: 2,
+                            letterSpacing: "0.14em",
+                          }}
+                        >
+                          Code pending
+                        </span>
+                      )}
+                      <span
+                        className="t-eyebrow"
+                        style={{
+                          fontSize: 9,
+                          color: statusColor,
+                          border: `1px solid ${statusColor}`,
+                          padding: "2px 7px",
+                          borderRadius: 2,
+                          letterSpacing: "0.14em",
+                        }}
+                      >
+                        {idea.status}
+                      </span>
+                    </div>
                   </div>
                   <div
                     style={{
@@ -162,7 +179,7 @@ export default async function ViresLabIdeasPage() {
                   >
                     <span>{idea.sleeve}</span>
                     <span>·</span>
-                    <span>{idea.strategy_id}</span>
+                    <span>{idea.code_pending ? "—" : idea.strategy_id}</span>
                     {idea.created_at && (
                       <>
                         <span>·</span>

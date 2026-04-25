@@ -34,6 +34,11 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
   const [strategyId, setStrategyId] = useState<string>(
     strategyOptions.find(s => s.sleeve === "STOCKS")?.strategy_id ?? "",
   )
+  // codePending == true means "I have a thesis but no executable strategy
+  // exists yet" — Codex (or eventually Talon V1) implements the strategy
+  // and updates strategy_id later. Submit-to-lab is blocked on the detail
+  // page until that happens.
+  const [codePending, setCodePending] = useState(false)
   const [tags, setTags] = useState("")
   const [status, setStatus] = useState<IdeaStatus>("DRAFT")
   const [promoteToCampaign, setPromoteToCampaign] = useState(false)
@@ -55,7 +60,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
   const canSubmit =
     title.trim().length > 0 &&
     thesis.trim().length > 0 &&
-    strategyId.length > 0 &&
+    (codePending || strategyId.length > 0) &&
     submitState !== "submitting"
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,13 +77,17 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         title: title.trim(),
         thesis: thesis.trim(),
         sleeve,
-        strategy_id: strategyId,
-        status,
+        // Route honors code_pending and ignores strategy_id when set;
+        // we still include it so the audit shape is unambiguous.
+        strategy_id: codePending ? "" : strategyId,
+        status: codePending ? "DRAFT" : status,
         source: "MANUAL",
-        ...(selectedStrategy?.strategy_family && { strategy_family: selectedStrategy.strategy_family }),
+        ...(codePending && { code_pending: true }),
+        ...(!codePending &&
+          selectedStrategy?.strategy_family && { strategy_family: selectedStrategy.strategy_family }),
         ...(parsedTags.length > 0 && { tags: parsedTags }),
-        ...(promoteToCampaign && { promote_to_campaign: true }),
-        ...(promotionTarget && { promotion_target: promotionTarget }),
+        ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
+        ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
       }
       const res = await fetch("/api/research/ideas", {
         method: "POST",
@@ -194,32 +203,75 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
           )}
         </FormRow>
 
-        <FormRow label="Strategy">
-          <select
-            value={strategyId}
-            onChange={e => setStrategyId(e.target.value)}
-            style={inputStyle}
-            disabled={strategiesForSleeve.length === 0}
-          >
-            {strategiesForSleeve.length === 0 && <option value="">None available</option>}
-            {strategiesForSleeve.map(s => (
-              <option key={s.strategy_id} value={s.strategy_id}>
-                {s.display_name} · {s.strategy_id}
-              </option>
-            ))}
-          </select>
-          <div
-            style={{
-              marginTop: 5,
-              fontSize: 10.5,
-              color: "var(--vr-cream-faint)",
-              fontStyle: "italic",
-              fontFamily: "var(--ff-serif)",
-            }}
-          >
-            Strategies come from the bench preset registry. Registered families only.
+        <FormRow label="Strategy mode">
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            <ChipToggle
+              label="Use registered strategy"
+              active={!codePending}
+              onClick={() => setCodePending(false)}
+            />
+            <ChipToggle
+              label="+ New strategy (code pending)"
+              active={codePending}
+              onClick={() => setCodePending(true)}
+            />
           </div>
         </FormRow>
+
+        {codePending ? (
+          <FormRow label="Code-pending capture">
+            <div
+              style={{
+                padding: "10px 12px",
+                border: "1px solid var(--vr-gold-line)",
+                borderLeft: "2px solid var(--vr-gold)",
+                background: "rgba(200,169,104,0.06)",
+                borderRadius: 3,
+                fontSize: 11.5,
+                lineHeight: 1.55,
+                color: "var(--vr-cream-dim)",
+              }}
+            >
+              <div
+                className="t-eyebrow"
+                style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em", marginBottom: 4 }}
+              >
+                Awaiting implementation
+              </div>
+              This idea will be saved as a code-pending capture: thesis only, no executable
+              strategy yet. It can&apos;t be submitted to the lab until Codex (or Talon V1)
+              implements the strategy and registers it. Status stays DRAFT and promotion
+              fields are hidden.
+            </div>
+          </FormRow>
+        ) : (
+          <FormRow label="Strategy">
+            <select
+              value={strategyId}
+              onChange={e => setStrategyId(e.target.value)}
+              style={inputStyle}
+              disabled={strategiesForSleeve.length === 0}
+            >
+              {strategiesForSleeve.length === 0 && <option value="">None available</option>}
+              {strategiesForSleeve.map(s => (
+                <option key={s.strategy_id} value={s.strategy_id}>
+                  {s.display_name} · {s.strategy_id}
+                </option>
+              ))}
+            </select>
+            <div
+              style={{
+                marginTop: 5,
+                fontSize: 10.5,
+                color: "var(--vr-cream-faint)",
+                fontStyle: "italic",
+                fontFamily: "var(--ff-serif)",
+              }}
+            >
+              Strategies come from the bench preset registry. Registered families only.
+            </div>
+          </FormRow>
+        )}
 
         <FormRow label="Tags (comma-separated, optional)">
           <input
@@ -230,6 +282,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
           />
         </FormRow>
 
+        {!codePending && (
         <FormRow label="Status">
           <div style={{ display: "flex", gap: 6 }}>
             {(["DRAFT", "READY"] as IdeaStatus[]).map(s => (
@@ -253,7 +306,9 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             DRAFT stays quiet. READY makes the idea eligible for autopilot pickup.
           </div>
         </FormRow>
+        )}
 
+        {!codePending && (
         <FormRow label="Campaign on first run">
           <label
             style={{
@@ -274,7 +329,9 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             <span>Force campaign rollup on the first DONE job (bypasses thresholds)</span>
           </label>
         </FormRow>
+        )}
 
+        {!codePending && (
         <FormRow label="Promotion slot (optional)">
           {promotionTarget ? (
             <PromotionTargetDisplay
@@ -321,6 +378,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             Optional at authoring time. Without it, Nominate stays disabled on any spawned campaign until you assign a slot there.
           </div>
         </FormRow>
+        )}
 
         <button
           type="submit"
