@@ -357,21 +357,8 @@ export function LabSubmitForm({
           ) : null}
         </div>
 
-        {/* Idea id (read-only) */}
-        <div style={{ marginBottom: 16 }}>
-          <div
-            className="t-eyebrow"
-            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 5, letterSpacing: "0.14em" }}
-          >
-            Idea
-          </div>
-          <div
-            className="t-mono"
-            style={{ fontSize: 12, color: "var(--vr-cream)", overflowWrap: "anywhere" }}
-          >
-            {ideaId}
-          </div>
-        </div>
+        {/* Idea identity is shown by the page header above the form, so
+            we no longer duplicate the idea_id block here. */}
 
         {/* Dynamic param sweep — one block per param_schema entry */}
         {Object.entries(preset.param_schema).map(([key, entry]) => {
