@@ -1,0 +1,151 @@
+{
+  "schema_version": "bench_campaign_manifest.v2",
+  "campaign_id": "lab_phase1a-short-window-smoke-2026-04-23-rerun",
+  "title": "Phase 1a short-window smoke (rerun anchor)",
+  "sleeve": "STOCKS",
+  "objective": "Synthetic anchor for the Phase 1a smoke job that already exists on disk. Created retroactively so the \u00a712 rollup has a governed idea.v1 to join against.",
+  "benchmark_symbol": "SPY",
+  "status": "EXPLORING",
+  "summary": "Phase 1a short-window smoke (rerun anchor) has a scored Lab leader, but it remains blocked on readiness gates.",
+  "updated_at": "2026-04-24T22:55:35.238571-04:00",
+  "updated_by": "codex",
+  "current_leader_candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM",
+  "last_run_at": "2026-04-23T22:46:19.605716-04:00",
+  "last_meaningful_change_at": "2026-04-23T22:46:19.605716-04:00",
+  "last_meaningful_change": "Stocks \u00b7 Momentum \u00b7 Short-window executable sweep completed as blocked with winner stop_5_target_15 returning 0.00%.",
+  "promotion_target": null,
+  "baseline": {
+    "kind": "NONE",
+    "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM",
+    "strategy_name": "REGIME_AWARE_MOMENTUM",
+    "strategy_id": "regime_aware_momentum",
+    "variant": "stop_5_target_15",
+    "why": "Current Lab leader used as the campaign baseline until a production reference exists."
+  },
+  "baseline_performance": {
+    "evaluation_window": null,
+    "eras": [],
+    "eras_passed": null,
+    "eras_total": null,
+    "total_return_pct": 0.0,
+    "benchmark_return_pct": 8.2794,
+    "excess_return_pct": -8.2794,
+    "max_drawdown_pct": null,
+    "benchmark_max_drawdown_pct": null,
+    "sharpe": null,
+    "benchmark_sharpe": null,
+    "sortino": null,
+    "calmar": null,
+    "profit_factor": null,
+    "win_rate_pct": null,
+    "trades": 0,
+    "source": {
+      "kind": "RESULT_BUNDLE",
+      "passport_id": null,
+      "bundle_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KPYP29304VTTVMN40A4VTTVM.json",
+      "generated_at": "2026-04-23T22:46:19.383591-04:00"
+    }
+  },
+  "leader_comparison_to_baseline": null,
+  "campaign_pressure": {
+    "status": "LEADER_NOT_YET_QUALITY_GATED",
+    "summary": "The current Lab leader is scored but still blocked on readiness gates.",
+    "as_of": "2026-04-23T22:46:19.383591-04:00"
+  },
+  "promotion_readiness": null,
+  "production_links": {
+    "active_record_id": null,
+    "passport_role_id": null,
+    "history": []
+  },
+  "promotion_events": [],
+  "recency_signals": {
+    "last_leader_change_at": "2026-04-23T22:46:19.605716-04:00",
+    "leader_stability_sessions": 1,
+    "runner_up_candidate_id": null,
+    "runner_up_gap": null,
+    "last_param_sweep_at": "2026-04-23T22:46:19.605716-04:00",
+    "days_since_param_sweep": 1
+  },
+  "family_groups": [
+    {
+      "family_id": "stocks.momentum.stop_target.short_window.v1",
+      "title": "Stocks \u00b7 Momentum \u00b7 Short-window executable sweep",
+      "summary": "Short-window Research Lab preset for the frozen regime-aware momentum winner. Keeps the same six-name lineage and stop/target sweep surface, but compresses the walk-forward envelope enough to run honestly against the currently available post-2026-03-31 tape."
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM",
+      "title": "stop_5_target_15",
+      "family_id": "stocks.momentum.stop_target.short_window.v1",
+      "role": "LEADER",
+      "artifact_kind": "RESEARCH_LAB_RESULT",
+      "artifact_refs": {
+        "result_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KPYP29304VTTVMN40A4VTTVM.json",
+        "candidate_path": "data/research_lab/jacob/paper_main/default/candidates/candidate_candidate_job_01KPYP29304VTTVMN40A4VTTVM.json",
+        "job_id": "job_01KPYP29304VTTVMN40A4VTTVM",
+        "origin_job_id": null,
+        "nomination_id": "nom_01KQ0ZSATFC8TX0CXF56C8TX0C",
+        "nomination_path": "data/research_lab/jacob/paper_main/default/nominations/nomination_nom_01KQ0ZSATFC8TX0CXF56C8TX0C.json",
+        "nomination_state": "REJECTED",
+        "promotion_event_id": null
+      },
+      "latest_run": {
+        "run_id": "job_01KPYP29304VTTVMN40A4VTTVM",
+        "completed_at": "2026-04-23T22:46:19.605716-04:00",
+        "summary": "Stocks \u00b7 Momentum \u00b7 Short-window executable sweep completed as blocked with winner stop_5_target_15 returning 0.00%.",
+        "result_summary_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KPYP29304VTTVMN40A4VTTVM.json",
+        "run_stats_status": "INDEXED",
+        "run_stats": {
+          "period": null,
+          "eras": [],
+          "eras_passed": null,
+          "eras_total": null,
+          "total_return_pct": 0.0,
+          "benchmark_return_pct": 8.2794,
+          "excess_return_pct": -8.2794,
+          "max_drawdown_pct": null,
+          "benchmark_max_drawdown_pct": null,
+          "sharpe": null,
+          "benchmark_sharpe": null,
+          "sortino": null,
+          "calmar": null,
+          "profit_factor": null,
+          "win_rate_pct": null,
+          "trades": 0
+        }
+      },
+      "notes": [
+        "Origin job: job_01KPYP29304VTTVMN40A4VTTVM",
+        "Plateau analysis: INSUFFICIENT_EVIDENCE",
+        "Latest nomination: REJECTED",
+        "Nomination detail: Candidate 'candidate_job_01KPYP29304VTTVMN40A4VTTVM' is 'BLOCKED', not READY_TO_NOMINATE."
+      ]
+    }
+  ],
+  "change_log": [
+    {
+      "at": "2026-04-23T22:46:19.605716-04:00",
+      "kind": "CANDIDATE_ADDED",
+      "title": "Stocks \u00b7 Momentum \u00b7 Short-window executable sweep run landed in the campaign",
+      "detail": "Stocks \u00b7 Momentum \u00b7 Short-window executable sweep completed as blocked with winner stop_5_target_15 returning 0.00%.",
+      "actor": "codex",
+      "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM"
+    },
+    {
+      "at": "2026-04-25T00:14:14.863000+00:00",
+      "kind": "NOMINATION_REJECTED",
+      "title": "Nomination rejected",
+      "detail": "Candidate 'candidate_job_01KPYP29304VTTVMN40A4VTTVM' is 'BLOCKED', not READY_TO_NOMINATE.",
+      "actor": "jacob",
+      "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM"
+    }
+  ],
+  "origin": {
+    "kind": "LAB_IDEA",
+    "idea_id": "phase1a-short-window-smoke-2026-04-23-rerun",
+    "first_job_id": "job_01KPYP29304VTTVMN40A4VTTVM",
+    "created_at": "2026-04-23T22:46:19.605716-04:00"
+  }
+}

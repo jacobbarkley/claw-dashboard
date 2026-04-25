@@ -1,7 +1,14 @@
 {
   "schema_version": "bench_campaign_registry.v1",
-  "generated_at": "2026-04-21T21:06:56.6718844-04:00",
+  "generated_at": "2026-04-24T22:55:35.238571-04:00",
   "campaigns": [
+    {
+      "campaign_id": "lab_phase1a-short-window-smoke-2026-04-23-rerun",
+      "title": "Phase 1a short-window smoke (rerun anchor)",
+      "sleeve": "STOCKS",
+      "status": "EXPLORING",
+      "manifest_path": "backtest/bench/campaigns/lab_phase1a-short-window-smoke-2026-04-23-rerun.campaign_manifest.json"
+    },
     {
       "campaign_id": "stocks_ai_wall_street_aggressive",
       "title": "Aggressive AI Wall Street",
