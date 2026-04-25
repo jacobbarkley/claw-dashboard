@@ -30,7 +30,7 @@
     },
     {
       "preset_id": "crypto.managed_exposure.risk_adjusted_overlay.v1",
-      "display_name": "Crypto · BTC managed exposure overlay neighborhood",
+      "display_name": "Crypto · BTC risk-adjusted overlay",
       "phase": "1b",
       "sleeve": "CRYPTO",
       "strategy_id": "btc_managed_exposure_v1",
@@ -39,7 +39,7 @@
     },
     {
       "preset_id": "crypto.managed_exposure.persistent_floor_overlay.v1",
-      "display_name": "Crypto · BTC managed exposure persistent-floor overlay",
+      "display_name": "Crypto · BTC persistent-floor overlay",
       "phase": "1b",
       "sleeve": "CRYPTO",
       "strategy_id": "btc_managed_exposure_v1",
