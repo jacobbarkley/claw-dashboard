@@ -838,7 +838,12 @@ function CampaignCandidateRow({
   const outerProps: Record<string, unknown> = clickable
     ? { href: passportHref, style: { textDecoration: "none", color: "inherit", display: "block" } }
     : {}
-  const originJobId = candidate.artifact_refs?.origin_job_id ?? null
+  // Prefer origin_job_id (the job that authored this candidate), fall back
+  // to job_id (the latest run feeding the candidate). For single-DONE-job
+  // campaigns these are the same; the producer emits null on origin_job_id
+  // for some Phase 1a artifacts and we don't want to swallow the chevron.
+  const originJobId =
+    candidate.artifact_refs?.origin_job_id ?? candidate.artifact_refs?.job_id ?? null
   const nominationState = candidate.artifact_refs?.nomination_state ?? null
 
   return (
