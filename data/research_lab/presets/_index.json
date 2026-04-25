@@ -1,0 +1,41 @@
+{
+  "schema_version": "research_lab.preset_index.v1",
+  "presets": [
+    {
+      "preset_id": "stocks.momentum.stop_target.v1",
+      "display_name": "Stocks · Momentum · Stop/Target sweep",
+      "phase": "1a",
+      "sleeve": "STOCKS",
+      "strategy_id": "regime_aware_momentum",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "path": "data/research_lab/presets/stocks.momentum.stop_target.v1.yaml"
+    },
+    {
+      "preset_id": "stocks.momentum.stop_target.short_window.v1",
+      "display_name": "Stocks · Momentum · Short-window executable sweep",
+      "phase": "1a",
+      "sleeve": "STOCKS",
+      "strategy_id": "regime_aware_momentum",
+      "strategy_family": "REGIME_AWARE_MOMENTUM",
+      "path": "data/research_lab/presets/stocks.momentum.stop_target.short_window.v1.yaml"
+    },
+    {
+      "preset_id": "crypto.tsmom_4h.v1",
+      "display_name": "Crypto · BTC 4H TSMOM bounded sweep",
+      "phase": "1b",
+      "sleeve": "CRYPTO",
+      "strategy_id": "btc_4h_tsmom_v1",
+      "strategy_family": "TIME_SERIES_MOMENTUM",
+      "path": "data/research_lab/presets/crypto.tsmom_4h.v1.yaml"
+    },
+    {
+      "preset_id": "crypto.managed_exposure.risk_adjusted_overlay.v1",
+      "display_name": "Crypto · BTC managed exposure overlay neighborhood",
+      "phase": "1b",
+      "sleeve": "CRYPTO",
+      "strategy_id": "btc_managed_exposure_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "path": "data/research_lab/presets/crypto.managed_exposure.risk_adjusted_overlay.v1.yaml"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+schema_version: research_lab.preset.v1
+preset_id: stocks.momentum.stop_target.v1
+display_name: Stocks · Momentum · Stop/Target sweep
+phase: 1a
+sleeve: STOCKS
+strategy_id: regime_aware_momentum
+strategy_family: REGIME_AWARE_MOMENTUM
+description: >
+  Phase 1a beachhead preset for the frozen regime-aware momentum winner.
+  Re-open only the stop/target neighborhood around the current frozen
+  reference while keeping the rest of the confirmation envelope stable.
+source_registry_preset_id: frozen_confirmation
+base_experiment:
+  asset_class: EQUITY
+  benchmark_symbol: SPY
+  benchmark_comparison_mode: both
+  symbols:
+    - AAPL
+    - AVGO
+    - COST
+    - LLY
+    - META
+    - NVDA
+  train_window_days: 126
+  test_window_days: 21
+  step_size_days: 21
+  max_positions: 4
+  risk_pct_per_trade: 1.0
+  max_hold_days: 10
+  initial_capital_usd: 50000.0
+  slippage_bps: 5.0
+  fee_per_trade_usd: 0.0
+  minimum_trade_count: 30
+  minimum_profitable_fold_pct: 50.0
+  pass_max_drawdown_pct: 20.0
+  minimum_expectancy_decay_folds: 4
+  max_expectancy_decay_pct: 50.0
+  final_holdback_days: 42
+  inconclusive_follow_up_window_days: 14
+  strategy_params:
+    lookback_days: 20
+    min_symbol_return_pct: 8.0
+    max_symbol_volatility_pct: 45.0
+    benchmark_trend_days: 50
+    benchmark_min_return_pct: 0.0
+    benchmark_max_volatility_pct: 25.0
+param_schema:
+  stop_loss_pct:
+    type: enum_decimal
+    units: pct
+    default: 5.0
+    options:
+      - 4.75
+      - 5.0
+      - 5.25
+  target_pct:
+    type: enum_decimal
+    units: pct
+    default: 15.0
+    options:
+      - 14.0
+      - 15.0
+      - 16.0
+bounds:
+  max_sweep_size: 9
+  max_era_windows: 6
+  max_wallclock_minutes: 30
+notes:
+  - Mirrors the current frozen confirmation envelope instead of inventing a new strategy shape.
+  - Compiler must supply a fresh date window; the placeholder 2099 confirmation dates from the registry are not bench-valid here.
+  - Join key is strategy_id=regime_aware_momentum against backtest/bench/strategy_registry.json.

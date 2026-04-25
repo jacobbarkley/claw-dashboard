@@ -1,0 +1,45 @@
+schema_version: research_lab.preset.v1
+preset_id: crypto.managed_exposure.risk_adjusted_overlay.v1
+display_name: Crypto · BTC managed-exposure overlay neighborhood
+phase: 1b
+sleeve: CRYPTO
+strategy_id: btc_managed_exposure_v1
+strategy_family: GRADUATED_CORE_PLUS_OVERLAY
+source_kind: BENCH_SPEC
+source_bench_spec_path: backtest/bench/specs/q090c_btc_managed_exposure_risk_adjusted.bench_spec.json
+description: >
+  Phase 1b managed-exposure crypto preset that uses the q090c risk-adjusted
+  finalist as its canonical base and runs one fixed-comparison report for the
+  chosen tactical-overlay parameters without changing the daily graduated core.
+base_experiment: {}
+param_schema:
+  fast_ema_bars:
+    type: enum_int
+    default: 20
+    options:
+      - 16
+      - 20
+      - 24
+  slow_ema_bars:
+    type: enum_int
+    default: 60
+    options:
+      - 48
+      - 60
+      - 75
+  chandelier_multiplier:
+    type: enum_decimal
+    default: 3.0
+    options:
+      - 2.5
+      - 3.0
+      - 3.5
+bounds:
+  max_sweep_size: 27
+  max_era_windows: 6
+  max_wallclock_minutes: 30
+notes:
+  - Uses the checked-in q090c risk-adjusted managed-exposure finalist as the canonical source until the bench registry becomes multi-sleeve.
+  - The graduated BTC core remains fixed; this preset applies one chosen tactical-overlay parameter set to the finalist package and emits a fixed comparison report.
+  - Candidate projection stays EMPTY_STATE with adapter_status CODE_COMPLETE_UNWIRED until the crypto readiness adapter is wired into the Research Lab producer path.
+  - This is a real result surface for managed-exposure crypto, not yet an auto-promotable sleeve.
