@@ -45,6 +45,15 @@
       "strategy_id": "btc_managed_exposure_v1",
       "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
       "path": "data/research_lab/presets/crypto.managed_exposure.persistent_floor_overlay.v1.yaml"
+    },
+    {
+      "preset_id": "crypto.managed_exposure.upside_capture_overlay.v1",
+      "display_name": "Crypto · BTC upside-capture overlay",
+      "phase": "1b",
+      "sleeve": "CRYPTO",
+      "strategy_id": "btc_managed_exposure_v1",
+      "strategy_family": "GRADUATED_CORE_PLUS_OVERLAY",
+      "path": "data/research_lab/presets/crypto.managed_exposure.upside_capture_overlay.v1.yaml"
     }
   ]
 }
