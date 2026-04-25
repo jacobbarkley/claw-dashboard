@@ -1,31 +1,23 @@
 "use client"
 
-// Phase 1a submit form — bounded picker over the Phase 1a stocks preset.
+// Lab submit form — preset-aware bounded sweep picker.
 //
-// The preset options are mirrored locally from
-// trading-bot/data/research_lab/presets/stocks.momentum.stop_target.v1.yaml.
-// When Codex's pull-research-lab.py mirror script lands, this component
-// switches to reading `data/research_lab/presets/stocks.momentum.stop_target.v1.yaml`
-// from the dashboard repo. Until then, the preset is literal here — keep
-// the options in lockstep with the YAML if the preset updates.
+// Page server-loads the idea + presets matching its strategy_id, then
+// passes them down here. The form picks the preset (auto when one,
+// picker when many) and renders chip toggles dynamically based on the
+// preset's param_schema. Bounds come from preset.bounds.max_sweep_size,
+// so every preset enforces its own ceiling without dashboard-side hard-
+// coding.
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
-import type { JobPendingV1 } from "@/lib/research-lab-contracts"
-
-// ─── Phase 1a preset (mirrored from YAML) ───────────────────────────────
-
-const PRESET_ID = "stocks.momentum.stop_target.v1"
-const PRESET_DISPLAY = "Stocks · Momentum · Stop/Target sweep"
-const PRESET_STRATEGY = "regime_aware_momentum"
-
-const STOP_LOSS_OPTIONS = [4.75, 5.0, 5.25] as const
-const TARGET_OPTIONS = [14.0, 15.0, 16.0] as const
-const STOP_LOSS_DEFAULT = [5.0]
-const TARGET_DEFAULT = [15.0]
-const MAX_SWEEP_SIZE = 9 // from preset.bounds.max_sweep_size
+import type {
+  JobPendingV1,
+  PresetParamSchemaEntry,
+  PresetV1,
+} from "@/lib/research-lab-contracts"
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -39,7 +31,47 @@ type SubmitResponse = {
   error?: string
 }
 
-// ─── Small UI helpers ───────────────────────────────────────────────────
+type ParamSelection = Record<string, unknown[]>
+
+// ─── Param formatting ───────────────────────────────────────────────────
+
+function formatOptionLabel(entry: PresetParamSchemaEntry, value: unknown): string {
+  if (entry.type === "enum_int") {
+    return typeof value === "number" ? `${Math.round(value)}` : String(value)
+  }
+  if (entry.type === "enum_decimal") {
+    if (typeof value !== "number") return String(value)
+    // Pick precision based on whether the option needs decimals at all.
+    const hasFraction = !Number.isInteger(value)
+    return hasFraction ? value.toFixed(2) : value.toFixed(1)
+  }
+  return String(value)
+}
+
+function defaultSelection(schema: Record<string, PresetParamSchemaEntry>): ParamSelection {
+  const out: ParamSelection = {}
+  for (const [key, entry] of Object.entries(schema)) {
+    if (entry.default !== undefined && entry.default !== null) {
+      out[key] = [entry.default]
+    } else if (entry.options && entry.options.length > 0) {
+      out[key] = [entry.options[0]]
+    } else {
+      out[key] = []
+    }
+  }
+  return out
+}
+
+function sweepSizeOf(selection: ParamSelection): number {
+  let n = 1
+  for (const values of Object.values(selection)) {
+    if (values.length === 0) return 0
+    n *= values.length
+  }
+  return n
+}
+
+// ─── UI helpers ─────────────────────────────────────────────────────────
 
 function ChipToggle({
   label,
@@ -74,21 +106,71 @@ function ChipToggle({
 
 // ─── Form ───────────────────────────────────────────────────────────────
 
-export function LabSubmitForm({ ideaId }: { ideaId: string }) {
+export function LabSubmitForm({
+  ideaId,
+  presets,
+}: {
+  ideaId: string
+  presets: PresetV1[]
+}) {
   const router = useRouter()
-  const [stopLoss, setStopLoss] = useState<number[]>(STOP_LOSS_DEFAULT)
-  const [target, setTarget] = useState<number[]>(TARGET_DEFAULT)
+
+  // Empty-presets case — render an honest empty state, no form.
+  if (presets.length === 0) {
+    return (
+      <div style={{ padding: "20px 18px", maxWidth: 640, margin: "0 auto" }}>
+        <div
+          className="vr-card"
+          style={{
+            padding: "16px 18px",
+            borderLeft: "2px solid var(--vr-cream-mute)",
+            background: "transparent",
+          }}
+        >
+          <div
+            className="t-eyebrow"
+            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 5, letterSpacing: "0.14em" }}
+          >
+            No presets registered
+          </div>
+          <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--vr-cream-dim)" }}>
+            No preset is registered for this idea&apos;s strategy yet. Codex authors presets
+            on the trading-bot side; once one lands for this strategy_id it&apos;ll be picked
+            up automatically.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const [presetIdx, setPresetIdx] = useState(0)
+  const preset = presets[presetIdx]
+  const [selection, setSelection] = useState<ParamSelection>(() =>
+    defaultSelection(preset.param_schema),
+  )
   const [notes, setNotes] = useState("")
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "ok" | "error">("idle")
   const [response, setResponse] = useState<SubmitResponse | null>(null)
 
-  const sweepSize = stopLoss.length * target.length
-  const overBounds = sweepSize > MAX_SWEEP_SIZE
+  const sweepSize = useMemo(() => sweepSizeOf(selection), [selection])
+  const maxSweep = preset.bounds.max_sweep_size
+  const overBounds = sweepSize > maxSweep
   const canSubmit =
-    !overBounds && stopLoss.length > 0 && target.length > 0 && submitState !== "submitting"
+    !overBounds && sweepSize > 0 && submitState !== "submitting"
 
-  const toggle = (val: number, list: number[], set: (v: number[]) => void) => {
-    set(list.includes(val) ? list.filter(x => x !== val) : [...list, val].sort((a, b) => a - b))
+  const onPickPreset = (next: number) => {
+    setPresetIdx(next)
+    setSelection(defaultSelection(presets[next].param_schema))
+    setSubmitState("idle")
+    setResponse(null)
+  }
+
+  const toggleParam = (key: string, value: unknown) => {
+    setSelection(prev => {
+      const cur = prev[key] ?? []
+      const nextValues = cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value]
+      return { ...prev, [key]: nextValues }
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,11 +184,8 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea_id: ideaId,
-          preset_id: PRESET_ID,
-          param_sweep: {
-            stop_loss_pct: stopLoss,
-            target_pct: target,
-          },
+          preset_id: preset.preset_id,
+          param_sweep: selection,
           actor: "jacob",
           submitted_by: "USER_ONDEMAND",
           execution_intent: "FULL_CAMPAIGN",
@@ -235,7 +314,7 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
   return (
     <form onSubmit={handleSubmit} style={{ padding: "20px 18px", maxWidth: 640, margin: "0 auto" }}>
       <div className="vr-card" style={{ padding: "18px 18px 20px" }}>
-        {/* Preset summary */}
+        {/* Preset summary + picker (when multiple) */}
         <div style={{ marginBottom: 16 }}>
           <div
             className="t-eyebrow"
@@ -243,15 +322,39 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
           >
             Preset
           </div>
+          {presets.length > 1 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {presets.map((p, i) => (
+                <ChipToggle
+                  key={p.preset_id}
+                  label={p.display_name}
+                  active={i === presetIdx}
+                  onClick={() => onPickPreset(i)}
+                />
+              ))}
+            </div>
+          )}
           <div className="t-h4" style={{ fontSize: 14, color: "var(--vr-cream)", marginBottom: 2 }}>
-            {PRESET_DISPLAY}
+            {preset.display_name}
           </div>
           <div
             className="t-mono"
             style={{ fontSize: 10, color: "var(--vr-cream-mute)", letterSpacing: "0.05em" }}
           >
-            {PRESET_STRATEGY}
+            {preset.strategy_id} · {preset.sleeve} · phase {preset.phase}
           </div>
+          {preset.description ? (
+            <div
+              style={{
+                marginTop: 6,
+                fontSize: 11.5,
+                lineHeight: 1.55,
+                color: "var(--vr-cream-dim)",
+              }}
+            >
+              {preset.description}
+            </div>
+          ) : null}
         </div>
 
         {/* Idea id (read-only) */}
@@ -270,45 +373,59 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
           </div>
         </div>
 
-        {/* Stop loss sweep */}
-        <div style={{ marginBottom: 14 }}>
-          <div
-            className="t-eyebrow"
-            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
-          >
-            stop_loss_pct
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {STOP_LOSS_OPTIONS.map(v => (
-              <ChipToggle
-                key={v}
-                label={`${v.toFixed(2)}%`}
-                active={stopLoss.includes(v)}
-                onClick={() => toggle(v, stopLoss, setStopLoss)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Target sweep */}
-        <div style={{ marginBottom: 14 }}>
-          <div
-            className="t-eyebrow"
-            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
-          >
-            target_pct
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {TARGET_OPTIONS.map(v => (
-              <ChipToggle
-                key={v}
-                label={`${v.toFixed(1)}%`}
-                active={target.includes(v)}
-                onClick={() => toggle(v, target, setTarget)}
-              />
-            ))}
-          </div>
-        </div>
+        {/* Dynamic param sweep — one block per param_schema entry */}
+        {Object.entries(preset.param_schema).map(([key, entry]) => {
+          const opts = entry.options ?? []
+          const supported =
+            entry.type === "enum_int" ||
+            entry.type === "enum_decimal" ||
+            entry.type === "enum_string"
+          if (!supported) {
+            return (
+              <div key={key} style={{ marginBottom: 14 }}>
+                <div
+                  className="t-eyebrow"
+                  style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
+                >
+                  {key}
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--vr-cream-faint)",
+                    fontStyle: "italic",
+                    fontFamily: "var(--ff-serif)",
+                  }}
+                >
+                  {entry.type} param shape isn&apos;t supported in this form yet — preset
+                  default applies.
+                </div>
+              </div>
+            )
+          }
+          const selected = selection[key] ?? []
+          return (
+            <div key={key} style={{ marginBottom: 14 }}>
+              <div
+                className="t-eyebrow"
+                style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
+              >
+                {key}
+                {entry.units ? ` (${entry.units})` : ""}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {opts.map((v, i) => (
+                  <ChipToggle
+                    key={`${key}-${i}`}
+                    label={formatOptionLabel(entry, v)}
+                    active={selected.includes(v)}
+                    onClick={() => toggleParam(key, v)}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })}
 
         {/* Sweep size summary */}
         <div
@@ -323,7 +440,9 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
           }}
         >
           sweep_size = {sweepSize} variant{sweepSize === 1 ? "" : "s"}
-          {overBounds ? ` · exceeds preset bound (max ${MAX_SWEEP_SIZE})` : ` · within bound ≤ ${MAX_SWEEP_SIZE}`}
+          {overBounds
+            ? ` · exceeds preset bound (max ${maxSweep})`
+            : ` · within bound ≤ ${maxSweep}`}
         </div>
 
         {/* Notes */}
@@ -390,7 +509,6 @@ export function LabSubmitForm({ ideaId }: { ideaId: string }) {
           </div>
         ) : null}
       </div>
-
     </form>
   )
 }

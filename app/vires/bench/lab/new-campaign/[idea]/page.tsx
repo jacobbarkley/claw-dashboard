@@ -1,5 +1,7 @@
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabSubmitForm } from "@/components/vires/lab/submit-form"
+import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { loadPresetsForStrategy } from "@/lib/research-lab-presets.server"
 
 export const metadata = {
   title: "Vires Capital — Lab · New campaign",
@@ -11,6 +13,12 @@ export default async function ViresLabNewCampaignPage({
   params: Promise<{ idea: string }>
 }) {
   const { idea } = await params
+  const ideaId = decodeURIComponent(idea)
+  const ideaArtifact = await loadIdeaById(ideaId)
+  const presets = ideaArtifact
+    ? await loadPresetsForStrategy(ideaArtifact.strategy_id, ideaArtifact.sleeve)
+    : []
+
   return (
     <>
       <LabSubNav />
@@ -41,10 +49,12 @@ export default async function ViresLabNewCampaignPage({
             color: "var(--vr-cream-mute)",
           }}
         >
-          Pick a preset, dial the parameter sweep, add a quick note, submit.
+          {ideaArtifact
+            ? `Pick a preset, dial the parameter sweep, add a quick note, submit. Idea: ${ideaArtifact.title}.`
+            : "Pick a preset, dial the parameter sweep, add a quick note, submit."}
         </p>
       </div>
-      <LabSubmitForm ideaId={decodeURIComponent(idea)} />
+      <LabSubmitForm ideaId={ideaId} presets={presets} />
     </>
   )
 }
