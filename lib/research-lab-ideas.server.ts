@@ -9,6 +9,17 @@
 // committed here — only the finished idea.v1 artifact + (eventually) a
 // compact provenance summary. Per Codex's guardrail, draft state lives
 // in scratch/runtime, not git.
+//
+// Vercel deploy race
+// ──────────────────
+// Vercel serverless functions read from a build-time filesystem snapshot.
+// When the operator authors a new idea, the POST commits a YAML to GitHub
+// and the form navigates to the detail page — but the detail page may
+// route into the *previous* deployment's bundle for ~60s until the auto-
+// deploy completes. To make the loader robust to that window, after a
+// local FS miss we fall back to a raw GitHub fetch. Once Vercel rebuilds,
+// the local hit returns first (faster path) and the GitHub fetch is only
+// used for the post-create window.
 
 import { promises as fs } from "fs"
 import path from "path"
@@ -16,6 +27,8 @@ import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
 import type { IdeaV1, ScopeTriple } from "./research-lab-contracts"
+
+const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
 
 function ideasDir(scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE): string {
   return path.join(
@@ -46,12 +59,39 @@ async function readYamlIfPresent(absPath: string): Promise<IdeaV1 | null> {
   }
 }
 
+function ideaRepoRelpath(ideaId: string, scope: ScopeTriple): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
+}
+
+async function fetchYamlFromGithub(
+  ideaId: string,
+  scope: ScopeTriple,
+): Promise<IdeaV1 | null> {
+  const url = `${GITHUB_RAW}/${ideaRepoRelpath(ideaId, scope)}`
+  try {
+    const res = await fetch(url, { cache: "no-store" })
+    if (!res.ok) return null
+    const text = await res.text()
+    const parsed = yaml.load(text)
+    if (parsed && typeof parsed === "object") return parsed as IdeaV1
+    return null
+  } catch (err) {
+    console.error(`[research-lab-ideas] github fallback failed for ${ideaId}:`, err)
+    return null
+  }
+}
+
 export async function loadIdeaById(
   ideaId: string,
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<IdeaV1 | null> {
   if (!ideaId || !/^[A-Za-z0-9_.:-]+$/.test(ideaId)) return null
-  return readYamlIfPresent(ideaPath(ideaId, scope))
+  const local = await readYamlIfPresent(ideaPath(ideaId, scope))
+  if (local) return local
+  // Local FS miss — could be a brand-new idea whose Vercel deploy hasn't
+  // landed yet. Try the raw GitHub blob on main as a deterministic
+  // fallback so post-create navigation always resolves.
+  return fetchYamlFromGithub(ideaId, scope)
 }
 
 export async function loadIdeas(
