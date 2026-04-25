@@ -44,13 +44,52 @@ const STOCKS_GATE_SHAPE: GateShapeEntry[] = [
   { gate_id: "ERA_ROBUSTNESS",     label: "Era sweep" },
 ]
 
+// Crypto gate ids canonical from research_lab.executor._empty_state_readiness_snapshot.
+// Adapter is CODE_COMPLETE_UNWIRED — gates emit as PENDING until producer wires.
+const CRYPTO_GATE_SHAPE: GateShapeEntry[] = [
+  { gate_id: "TRADE_COUNT",     label: "Minimum trade count" },
+  { gate_id: "BENCHMARK",       label: "Beats benchmark" },
+  { gate_id: "SHARPE_DELTA",    label: "Sharpe vs benchmark" },
+  { gate_id: "CALMAR_DELTA",    label: "Calmar vs benchmark" },
+  { gate_id: "DRAWDOWN",        label: "Drawdown improvement" },
+  { gate_id: "ERA_ROBUSTNESS",  label: "Era sweep" },
+]
+
+// Options gate ids canonical from the same source. Adapter is NOT_IMPLEMENTED.
+// Shape is fixed so the empty-state placeholder converges with real scoring
+// when the options sleeve eventually wires.
+const OPTIONS_GATE_SHAPE: GateShapeEntry[] = [
+  { gate_id: "TRADE_COUNT",      label: "Minimum trade count" },
+  { gate_id: "BENCHMARK",        label: "Beats benchmark" },
+  { gate_id: "RISK_PROFILE",     label: "Risk profile" },
+  { gate_id: "EXPIRY_BEHAVIOR",  label: "Expiry behavior" },
+  { gate_id: "ERA_ROBUSTNESS",   label: "Era sweep" },
+]
+
 const GATE_SHAPE_BY_SLEEVE: Record<string, GateShapeEntry[]> = {
   STOCKS: STOCKS_GATE_SHAPE,
+  CRYPTO: CRYPTO_GATE_SHAPE,
+  OPTIONS: OPTIONS_GATE_SHAPE,
+}
+
+// Adapter status is per-candidate, not per-campaign. For empty-state copy
+// where we don't have a candidate in hand yet, we infer from sleeve. Keep
+// this in sync with the producer-side adapter wiring.
+type SleeveAdapterStatus = "WIRED" | "CODE_COMPLETE_UNWIRED" | "NOT_IMPLEMENTED"
+const SLEEVE_ADAPTER_STATUS: Record<string, SleeveAdapterStatus> = {
+  STOCKS: "WIRED",
+  CRYPTO: "CODE_COMPLETE_UNWIRED",
+  OPTIONS: "NOT_IMPLEMENTED",
 }
 
 function gateShapeForSleeve(sleeve: string | undefined | null): GateShapeEntry[] | null {
   if (!sleeve) return null
   return GATE_SHAPE_BY_SLEEVE[sleeve.toUpperCase()] ?? null
+}
+
+function sleeveAdapterStatus(sleeve: string | undefined | null): SleeveAdapterStatus | null {
+  if (!sleeve) return null
+  return SLEEVE_ADAPTER_STATUS[sleeve.toUpperCase()] ?? null
 }
 
 // ─── Status visuals ────────────────────────────────────────────────────────
@@ -60,12 +99,14 @@ const GATE_STATUS_META: Record<GateStatus, { label: string; color: string; glyph
   FAIL:          { label: "Fail",         color: "var(--vr-down)",        glyph: "✗" },
   PENDING:       { label: "Pending",      color: "var(--vr-cream-mute)",  glyph: "○" },
   INCONCLUSIVE:  { label: "Inconclusive", color: "var(--vr-gold)",        glyph: "◐" },
+  BLOCKED:       { label: "Blocked",      color: "var(--vr-down)",        glyph: "✗" },
 }
 
 const OVERALL_STATUS_META: Record<OverallReadinessStatus, { label: string; color: string }> = {
   READY_TO_NOMINATE: { label: "Ready to nominate", color: "var(--vr-up)" },
+  MONITORED:         { label: "Monitored",         color: "var(--vr-gold)" },
   BLOCKED:           { label: "Blocked",           color: "var(--vr-down)" },
-  PARTIAL:           { label: "Partial",           color: "var(--vr-gold)" },
+  EMPTY_STATE:       { label: "Awaiting adapter",  color: "var(--vr-cream-mute)" },
 }
 
 // Gate id → glossary term. Scoped to stocks gates per spec §4.1; crypto
@@ -302,11 +343,12 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
   if (!readiness) {
     const statusLabel = campaign.status ?? null
     const sleeveShape = gateShapeForSleeve(campaign.sleeve)
+    const adapterStatus = sleeveAdapterStatus(campaign.sleeve)
     const placeholderGates: ReadinessGate[] = (sleeveShape ?? []).map(g => ({
       gate_id: g.gate_id,
       label: g.label,
       status: "PENDING",
-      source_kind: "VALIDATION_GATE",
+      source_kind: adapterStatus === "WIRED" ? "VALIDATION_GATE" : "BENCH_AGGREGATE",
       value: null,
       threshold: null,
       summary: null,
@@ -369,13 +411,22 @@ export function PromotionReadinessCard({ campaign }: { campaign: CampaignManifes
               lineHeight: 1.55,
             }}
           >
-            {sleeveShape
-              ? statusLabel
-                ? `Gates score once the campaign has converged — currently ${statusLabel}, waiting for sufficient runs.`
-                : "Gates score once the campaign has converged. Shape below is the canonical layout; each will fill in as evidence lands."
-              : sleeveLabel
-                ? `Readiness gates for ${sleeveLabel} sleeve land with the Phase 1b adapter. Until then the producer can't auto-score this campaign — promotion requires manual review.`
-                : "Readiness gates land with the sleeve's adapter. Until then promotion requires manual review."}
+            {(() => {
+              if (adapterStatus === "WIRED") {
+                return statusLabel
+                  ? `Gates score once the campaign has converged — currently ${statusLabel}, waiting for sufficient runs.`
+                  : "Gates score once the campaign has converged. Shape below is the canonical layout; each will fill in as evidence lands."
+              }
+              if (adapterStatus === "CODE_COMPLETE_UNWIRED") {
+                return `${sleeveLabel || "This sleeve"}'s readiness adapter is code-complete but not yet wired into the producer. Gates below are the canonical shape; auto-scoring lands when the wire ships. Promotion requires manual review until then.`
+              }
+              if (adapterStatus === "NOT_IMPLEMENTED") {
+                return `${sleeveLabel || "This sleeve"} has no readiness adapter yet. The shape below is the canonical layout the adapter will populate. Promotion requires manual review until then.`
+              }
+              return sleeveLabel
+                ? `Readiness gates for ${sleeveLabel} sleeve land with the sleeve's adapter. Promotion requires manual review until then.`
+                : "Readiness gates land with the sleeve's adapter. Promotion requires manual review until then."
+            })()}
           </span>
         </div>
 

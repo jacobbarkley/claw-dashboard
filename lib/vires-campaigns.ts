@@ -169,7 +169,12 @@ export interface CampaignPressure {
 // campaign refresh / run completion. Frontend renders a live scorecard;
 // promote button lights only when overall_status is READY_TO_NOMINATE.
 
-export type GateStatus = "PASS" | "FAIL" | "PENDING" | "INCONCLUSIVE"
+// Mirrors research-lab-contracts.ReadinessGateStatus. Campaign manifests
+// embed candidate readiness verbatim, so the campaign-side type must accept
+// every status the producer can emit. BLOCKED ships with the crypto adapter
+// path (Phase 1b empty-state snapshot) — without it, GATE_STATUS_META keyed
+// lookups crash at runtime.
+export type GateStatus = "PASS" | "FAIL" | "PENDING" | "INCONCLUSIVE" | "BLOCKED"
 export type GateSourceKind = "VALIDATION_GATE" | "BENCH_AGGREGATE"
 
 export interface ReadinessGate {
@@ -182,7 +187,15 @@ export interface ReadinessGate {
   summary?: string | null
 }
 
-export type OverallReadinessStatus = "READY_TO_NOMINATE" | "BLOCKED" | "PARTIAL"
+// Mirrors research-lab-contracts.ReadinessOverallStatus. PARTIAL was an
+// earlier dashboard-only label that the producer never emits; replaced by
+// MONITORED + EMPTY_STATE which the producer does emit (Phase 1b crypto
+// candidates ship with EMPTY_STATE pending the wired adapter).
+export type OverallReadinessStatus =
+  | "READY_TO_NOMINATE"
+  | "MONITORED"
+  | "BLOCKED"
+  | "EMPTY_STATE"
 
 export interface Readiness {
   gates: ReadinessGate[]
