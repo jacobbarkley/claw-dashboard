@@ -1,0 +1,23 @@
+{
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "schema_version": "research_lab.nomination.v1",
+  "nomination_id": "nom_01KQ0ZSATFC8TX0CXF56C8TX0C",
+  "request_id": "req_01KQ0ZSATE2AWTF950PM2AWTF9",
+  "candidate_id": "candidate_job_01KPYP29304VTTVMN40A4VTTVM",
+  "result_id": "result_job_01KPYP29304VTTVMN40A4VTTVM",
+  "actor": "jacob",
+  "submitted_at": "2026-04-25T00:14:14.863000Z",
+  "submitted_by": "USER_ONDEMAND",
+  "state": "REJECTED",
+  "identity_resolution": {
+    "mode": "NEW_RECORD",
+    "replaces_record_id": null,
+    "resolution_rule": "adapter_decides"
+  },
+  "materialized_bank_record": {},
+  "campaign_state_on_promotion": null,
+  "promotion_event_id": null,
+  "error_text": "Candidate 'candidate_job_01KPYP29304VTTVMN40A4VTTVM' is 'BLOCKED', not READY_TO_NOMINATE."
+}
