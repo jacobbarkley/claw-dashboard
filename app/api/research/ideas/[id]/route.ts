@@ -26,6 +26,7 @@ const GITHUB_API = "https://api.github.com"
 
 interface PatchBody {
   promotion_target?: unknown
+  promote_to_campaign?: unknown
   scope?: unknown
 }
 
@@ -156,8 +157,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Body must be JSON" }, { status: 400 })
   }
 
-  if (!("promotion_target" in body)) {
-    return NextResponse.json({ error: "promotion_target required" }, { status: 400 })
+  const hasPromotionTarget = "promotion_target" in body
+  const hasPromoteToCampaign = "promote_to_campaign" in body
+  if (!hasPromotionTarget && !hasPromoteToCampaign) {
+    return NextResponse.json(
+      { error: "promotion_target or promote_to_campaign required" },
+      { status: 400 },
+    )
   }
 
   const scope = normalizeScope(body.scope)
@@ -169,18 +175,38 @@ export async function PATCH(
     )
   }
 
-  const parsed = parsePromotionTarget(body.promotion_target)
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 })
+  // Apply promotion_target update if present.
+  let promotionTargetValue: IdeaPromotionTarget | null = existing.promotion_target ?? null
+  if (hasPromotionTarget) {
+    const parsed = parsePromotionTarget(body.promotion_target)
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
+    }
+    promotionTargetValue = parsed.value
   }
 
-  // Rewrite idea with (only) promotion_target updated. Preserve all other
-  // fields exactly. When parsed.value is null, drop the key entirely rather
-  // than emitting `promotion_target: null` — matches the POST route shape.
-  const { promotion_target: _dropped, ...rest } = existing
-  const updated: IdeaV1 = parsed.value
-    ? { ...rest, promotion_target: parsed.value }
-    : (rest as IdeaV1)
+  // Apply promote_to_campaign update if present. Per §12, true forces
+  // rollup on the first DONE job. Setting to false drops the override.
+  let promoteToCampaignValue: boolean | undefined = existing.promote_to_campaign
+  if (hasPromoteToCampaign) {
+    if (typeof body.promote_to_campaign !== "boolean") {
+      return NextResponse.json(
+        { error: "promote_to_campaign must be a boolean" },
+        { status: 400 },
+      )
+    }
+    promoteToCampaignValue = body.promote_to_campaign
+  }
+
+  // Rebuild idea preserving all other fields. Drop the keys when their
+  // resolved value is falsy/null — matches the POST route's serialization
+  // shape (it only emits these keys when truthy).
+  const { promotion_target: _pt, promote_to_campaign: _pc, ...rest } = existing
+  const updated: IdeaV1 = {
+    ...rest,
+    ...(promotionTargetValue && { promotion_target: promotionTargetValue }),
+    ...(promoteToCampaignValue && { promote_to_campaign: true }),
+  }
 
   let persisted:
     | Awaited<ReturnType<typeof persistLocal>>
