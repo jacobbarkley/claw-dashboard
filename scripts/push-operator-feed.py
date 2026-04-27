@@ -56,6 +56,7 @@ OUTPUT = Path(__file__).parent.parent / 'data/operator-feed.json'
 ET = ZoneInfo('America/New_York')
 ALPACA_REQUIRED_KEYS = ('ALPACA_API_KEY_ID', 'ALPACA_API_SECRET_KEY')
 ALPACA_DATA_BASE_URL = 'https://data.alpaca.markets'
+ALPACA_STOCK_DATA_FEED = (os.environ.get('OPENCLAW_ALPACA_STOCK_DATA_FEED') or 'iex').strip() or None
 ORDER_BLOTTER_RETENTION_DAYS = 60
 ORDER_BLOTTER_MAX_ROWS = 60
 ALPACA_FETCH_RETRY_DELAYS_SECONDS = (1.0, 2.0)
@@ -223,18 +224,47 @@ def alpaca_data_request(creds: dict, path: str, *, params: Optional[dict] = None
         return None
 
 
+def alpaca_stock_data_params(params: dict) -> dict:
+    out = dict(params)
+    if ALPACA_STOCK_DATA_FEED:
+        out.setdefault('feed', ALPACA_STOCK_DATA_FEED)
+    return out
+
+
+def normalize_stock_snapshots(payload: dict, symbols: list[str]) -> dict[str, dict]:
+    snapshots = payload.get('snapshots')
+    if isinstance(snapshots, dict):
+        return {
+            str(symbol).strip().upper(): snapshot
+            for symbol, snapshot in snapshots.items()
+            if symbol and isinstance(snapshot, dict)
+        }
+
+    requested_symbols = {str(symbol).strip().upper() for symbol in symbols if str(symbol).strip()}
+    direct_snapshots: dict[str, dict] = {}
+    for symbol, snapshot in payload.items():
+        normalized_symbol = str(symbol).strip().upper()
+        if normalized_symbol in requested_symbols and isinstance(snapshot, dict):
+            direct_snapshots[normalized_symbol] = snapshot
+    if direct_snapshots:
+        return direct_snapshots
+
+    raise AlpacaFetchError('Alpaca /v2/stocks/snapshots payload missing snapshots map')
+
+
 def fetch_stock_snapshots(symbols: list[str], creds: Optional[dict]) -> dict[str, dict]:
     if creds is None or not symbols:
         return {}
-    payload = alpaca_data_request(creds, '/v2/stocks/snapshots', params={'symbols': ','.join(symbols)})
+    payload = alpaca_data_request(
+        creds,
+        '/v2/stocks/snapshots',
+        params=alpaca_stock_data_params({'symbols': ','.join(symbols)}),
+    )
     if payload is None:
         raise AlpacaFetchError('Alpaca /v2/stocks/snapshots fetch failed')
     if not isinstance(payload, dict):
         raise AlpacaFetchError(f"Alpaca /v2/stocks/snapshots returned unexpected shape: {type(payload).__name__}")
-    snapshots = payload.get('snapshots')
-    if isinstance(snapshots, dict):
-        return snapshots
-    raise AlpacaFetchError('Alpaca /v2/stocks/snapshots payload missing snapshots map')
+    return normalize_stock_snapshots(payload, symbols)
 
 
 def alpaca_trading_request(creds: dict, path: str, *, params: Optional[dict] = None):
@@ -297,7 +327,7 @@ def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dic
     payload = alpaca_data_request(
         creds,
         '/v2/stocks/bars',
-        params={
+        params=alpaca_stock_data_params({
             'symbols': ','.join(symbols),
             'timeframe': '1Day',
             'start': start.isoformat().replace('+00:00', 'Z'),
@@ -305,7 +335,7 @@ def fetch_stock_return_20d_map(symbols: list[str], creds: Optional[dict]) -> dic
             'limit': 30,
             'adjustment': 'raw',
             'sort': 'asc',
-        },
+        }),
     )
     if payload is None:
         raise AlpacaFetchError('Alpaca /v2/stocks/bars fetch failed')
