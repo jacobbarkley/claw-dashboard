@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-04-28T15:45:08.079656+00:00",
+  "generated_at": "2026-04-28T15:50:01.800019+00:00",
   "as_of_date": "2026-04-28",
   "source_context": {
     "mode": "canonical",
@@ -10,20 +10,20 @@
     "note": "Feed generated from canonical rebuild artifacts."
   },
   "account": {
-    "equity": 85660.88,
+    "equity": 85633.17,
     "cash": 26114.96,
-    "buying_power": 110916.4,
+    "buying_power": 110890.47,
     "base_value": 100000.0,
-    "total_pnl": -14339.12,
-    "total_pnl_pct": -14.3391,
-    "today_pnl": -167.11,
-    "today_pnl_pct": -0.1947,
-    "positions_value": 59612.08,
-    "equity_deployed": 58753.29,
-    "crypto_deployed": 858.79,
+    "total_pnl": -14366.83,
+    "total_pnl_pct": -14.3668,
+    "today_pnl": -194.82,
+    "today_pnl_pct": -0.227,
+    "positions_value": 59518.21,
+    "equity_deployed": 58660.55,
+    "crypto_deployed": 857.66,
     "options_deployed": 0,
-    "unrealized_pnl": 285.04,
-    "unrealized_pnl_pct": 0.48
+    "unrealized_pnl": 191.17,
+    "unrealized_pnl_pct": 0.32
   },
   "positions": [
     {
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 272.294,
-      "current_price": 269.83,
-      "market_value": 1349.15,
-      "unrealized_pnl": -12.32,
-      "unrealized_pct": -0.91,
-      "change_today_pct": 0.83,
+      "current_price": 269.96,
+      "market_value": 1349.8,
+      "unrealized_pnl": -11.67,
+      "unrealized_pct": -0.86,
+      "change_today_pct": 0.88,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 404.7,
-      "market_value": 1214.1,
-      "unrealized_pnl": 9.099999,
-      "unrealized_pct": 0.76,
-      "change_today_pct": -3.23,
+      "current_price": 396.31,
+      "market_value": 1188.93,
+      "unrealized_pnl": -16.070001,
+      "unrealized_pct": -1.33,
+      "change_today_pct": -5.23,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 76126.74,
-      "market_value": 858.79329,
-      "unrealized_pnl": -1.683773,
-      "unrealized_pct": -0.2,
-      "change_today_pct": -1.33,
+      "current_price": 76026.659,
+      "market_value": 857.664267,
+      "unrealized_pnl": -2.812796,
+      "unrealized_pct": -0.33,
+      "change_today_pct": -1.46,
       "asset_type": "CRYPTO"
     },
     {
@@ -67,11 +67,11 @@
       "qty": 2.0,
       "side": "long",
       "entry_price": 673.515,
-      "current_price": 674.5,
-      "market_value": 1349.0,
-      "unrealized_pnl": 1.97,
-      "unrealized_pct": 0.15,
-      "change_today_pct": -0.61,
+      "current_price": 669.315,
+      "market_value": 1338.63,
+      "unrealized_pnl": -8.4,
+      "unrealized_pct": -0.62,
+      "change_today_pct": -1.37,
       "asset_type": "EQUITY"
     },
     {
@@ -79,11 +79,11 @@
       "qty": 16.0,
       "side": "long",
       "entry_price": 198.876875,
-      "current_price": 212.88,
-      "market_value": 3406.08,
-      "unrealized_pnl": 224.05,
-      "unrealized_pct": 7.04,
-      "change_today_pct": -1.72,
+      "current_price": 209.4399,
+      "market_value": 3351.0384,
+      "unrealized_pnl": 169.0084,
+      "unrealized_pct": 5.31,
+      "change_today_pct": -3.31,
       "asset_type": "EQUITY"
     },
     {
@@ -91,9 +91,9 @@
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530411,
-      "current_price": 100.6555,
-      "market_value": 51434.9605,
-      "unrealized_pnl": 63.920479,
+      "current_price": 100.65,
+      "market_value": 51432.15,
+      "unrealized_pnl": 61.109979,
       "unrealized_pct": 0.12,
       "change_today_pct": 0.01,
       "asset_type": "EQUITY"
@@ -101,16 +101,16 @@
   ],
   "pipeline_status": {
     "trading_date": "2026-04-28",
-    "run_id": "2026-04-28-shadow-premarket-01",
+    "run_id": "2026-04-28-shadow-midday-01",
     "circuit_breaker": "OPEN",
     "verdict": "WARN",
     "critical_issues": 0,
-    "high_issues": 3,
-    "medium_issues": 2,
+    "high_issues": 2,
+    "medium_issues": 3,
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-04-28T15:45:08.079755+00:00"
+    "audit_written_at": "2026-04-28T15:50:01.800069+00:00"
   },
   "kpis": {
     "total_trades": 62,
@@ -923,7 +923,7 @@
         },
         {
           "date": "2026-04-28",
-          "market_value": 58753.29
+          "market_value": 58660.55
         }
       ]
     },
@@ -980,7 +980,7 @@
         },
         {
           "date": "2026-04-28",
-          "market_value": 858.79
+          "market_value": 857.66
         }
       ]
     },
@@ -1043,15 +1043,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-04-28T15:45:05.598373896Z",
+    "as_of": "2026-04-28T15:50:01.001994723Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 269.93,
+        "current_price": 269.77,
         "prior_close": 267.55,
-        "change_usd": 2.38,
-        "change_pct": 0.8896,
+        "change_usd": 2.22,
+        "change_pct": 0.8298,
         "return_20d_pct": 7.5794,
         "in_position": true,
         "strategy_member": true,
@@ -1059,10 +1059,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 396.37,
+        "current_price": 395.51,
         "prior_close": 418.23,
-        "change_usd": -21.86,
-        "change_pct": -5.2268,
+        "change_usd": -22.72,
+        "change_pct": -5.4324,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1070,10 +1070,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 996.89,
+        "current_price": 997.21,
         "prior_close": 997.91,
-        "change_usd": -1.02,
-        "change_pct": -0.1022,
+        "change_usd": -0.7,
+        "change_pct": -0.0701,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1081,10 +1081,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 871.125,
+        "current_price": 871.6,
         "prior_close": 868.24,
-        "change_usd": 2.885,
-        "change_pct": 0.3323,
+        "change_usd": 3.36,
+        "change_pct": 0.387,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1092,10 +1092,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 669.04,
+        "current_price": 668.695,
         "prior_close": 678.505,
-        "change_usd": -9.465,
-        "change_pct": -1.395,
+        "change_usd": -9.81,
+        "change_pct": -1.4458,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1103,10 +1103,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 209.45,
+        "current_price": 209.09,
         "prior_close": 216.54,
-        "change_usd": -7.09,
-        "change_pct": -3.2742,
+        "change_usd": -7.45,
+        "change_pct": -3.4405,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1129,7 +1129,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-28T15:45:06.079689+00:00",
+        "as_of": "2026-04-28T15:50:01.673267+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1139,7 +1139,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-28T15:45:08.079322+00:00",
+        "as_of": "2026-04-28T15:50:01.799889+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1148,7 +1148,35 @@
     }
   },
   "watchlist": {
-    "items": [],
+    "items": [
+      {
+        "symbol": "AVGO",
+        "trigger": "GENERAL",
+        "stop": "397.29",
+        "target": "480.93",
+        "modifier": "MEDIUM",
+        "note": "AVGO regime-aware momentum long: 20-day return 39.08% with realized vol 39.74%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74.",
+        "in_position": true
+      },
+      {
+        "symbol": "META",
+        "trigger": "GENERAL",
+        "stop": "644.69",
+        "target": "780.41",
+        "modifier": "MEDIUM",
+        "note": "META regime-aware momentum long: 20-day return 29.08% with realized vol 37.22%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74.",
+        "in_position": true
+      },
+      {
+        "symbol": "NVDA",
+        "trigger": "GENERAL",
+        "stop": "205.78",
+        "target": "249.10",
+        "modifier": "MEDIUM",
+        "note": "NVDA regime-aware momentum long: 20-day return 29.30% with realized vol 30.02%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74.",
+        "in_position": true
+      }
+    ],
     "as_of": "2026-04-28",
     "source": "rebuild_pregate_intent"
   },
@@ -1164,7 +1192,7 @@
     "consecutive_loss_limit": null,
     "consecutive_loss_size_modifier": null,
     "reduce_only_size_cap": "FULL_SIZE",
-    "updated_at": "2026-04-28T08:00:06.602108-04:00"
+    "updated_at": "2026-04-28T11:45:11.089484-04:00"
   },
   "options": null,
   "hedges": null,
@@ -1191,15 +1219,16 @@
         "checkpoint05_passed": false,
         "live_capital_enabled": false,
         "blocking_incidents": [
-          "shadow.trade_plan_empty",
-          "strategy.thesis_set_empty"
+          "steward.open_action_deferred_existing_position:AVGO",
+          "steward.open_action_deferred_existing_position:META",
+          "steward.open_action_deferred_existing_position:NVDA"
         ]
       },
       "note": "Governed Autonomous Paper mode is active; paper execution may run without approval."
     },
     "session": {
-      "run_id": "2026-04-28-shadow-premarket-01",
-      "phase": "PREMARKET",
+      "run_id": "2026-04-28-shadow-midday-01",
+      "phase": "INTRADAY",
       "entry_mode": "OPEN",
       "policy_version": "0.1.0"
     },
@@ -1212,23 +1241,30 @@
       "one_sided_days": 6,
       "trivial_days": 7,
       "avg_substantive_match": 0.1429,
-      "latest_suppression_cause": "NO_SIGNAL",
+      "latest_suppression_cause": "NOT_SUPPRESSED",
       "blocking_notes": [
         "Only 1 substantive post-gate day(s); need at least 10.",
-        "6 one-sided post-gate day(s) remain in the current window.",
-        "Latest live shadow day is still suppressed post-gate (NO_SIGNAL)."
+        "6 one-sided post-gate day(s) remain in the current window."
       ]
     },
     "plan": {
-      "pre_gate_status": "NO_CANDIDATES",
-      "pre_gate_candidate_count": 0,
-      "pre_gate_symbols": [],
-      "trade_plan_status": "NO_TRADES",
-      "trade_plan_count": 0,
-      "trade_plan_symbols": [],
+      "pre_gate_status": "HAS_CANDIDATES",
+      "pre_gate_candidate_count": 3,
+      "pre_gate_symbols": [
+        "AVGO",
+        "META",
+        "NVDA"
+      ],
+      "trade_plan_status": "READY",
+      "trade_plan_count": 3,
+      "trade_plan_symbols": [
+        "AVGO",
+        "META",
+        "NVDA"
+      ],
       "blocked_reasons": [],
-      "suppression_cause": "NO_SIGNAL",
-      "narrative": "No candidates surfaced in the current rebuild slice."
+      "suppression_cause": "NOT_SUPPRESSED",
+      "narrative": "3 trade(s) are ready to express today: AVGO, META, NVDA."
     },
     "research": {
       "tradable_symbol_count": 6,
@@ -1240,19 +1276,47 @@
         "META"
       ],
       "research_item_count": 6,
-      "thesis_item_count": 0,
-      "long_bias_count": 0,
+      "thesis_item_count": 3,
+      "long_bias_count": 3,
       "short_bias_count": 0,
       "neutral_count": 0,
-      "top_theses": [],
-      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). No lead thesis is populated yet."
+      "top_theses": [
+        {
+          "symbol": "AVGO",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 75,
+          "bear_prob": 25,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "AVGO regime-aware momentum long: 20-day return 39.08% with realized vol 39.74%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74."
+        },
+        {
+          "symbol": "META",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 75,
+          "bear_prob": 25,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "META regime-aware momentum long: 20-day return 29.08% with realized vol 37.22%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74."
+        },
+        {
+          "symbol": "NVDA",
+          "side_bias": "LONG",
+          "confidence": "MEDIUM",
+          "bull_prob": 75,
+          "bear_prob": 25,
+          "catalyst_label": "GENERAL",
+          "thesis_summary": "NVDA regime-aware momentum long: 20-day return 29.30% with realized vol 30.02%. Benchmark regime supportive: 50-day SPY return 4.98% with realized vol 15.33% and close 715.17 above trend average 677.74."
+        }
+      ],
+      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). Current thesis mix is 3 long / 0 short. Lead idea is AVGO Long on a General setup."
     },
     "regime": {
-      "vix_level": 18.95,
+      "vix_level": 18.57,
       "vix_regime": "MEDIUM",
       "hmm_regime": "CALM",
       "vol_persistence_regime": "RANDOM_WALK",
-      "vol_persistence_hurst": 0.5506,
+      "vol_persistence_hurst": 0.5118,
       "suppress_mean_reversion": false,
       "jump_variation_pctile": 100.0,
       "jump_variation_regime": "JUMP_DOMINATED",
@@ -1261,13 +1325,13 @@
         "native_regime_enrichment_active"
       ],
       "populated": true,
-      "narrative": "VIX is 18.95 in a Medium regime. HMM reads Calm. jump stress is elevated."
+      "narrative": "VIX is 18.57 in a Medium regime. HMM reads Calm. jump stress is elevated."
     },
     "report_paths": {
       "local_only": true,
       "checkpoint05_status": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json",
-      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-28-premarket-01.json",
-      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-28-premarket-01.json"
+      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-04-28-midday-01.json",
+      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-04-28-midday-01.json"
     },
     "approval": null,
     "strategy_bank": {
@@ -1904,7 +1968,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 858.79329,
+          "market_value": 857.664267,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -1949,14 +2013,14 @@
           {
             "date": "2026-04-28",
             "weights": {
-              "SGOV": 87.54,
-              "NVDA": 5.8,
+              "SGOV": 87.68,
+              "NVDA": 5.71,
               "AAPL": 2.3,
-              "META": 2.3,
-              "AVGO": 2.07
+              "META": 2.28,
+              "AVGO": 2.03
             },
             "cash": 0.0,
-            "total": 58753.29
+            "total": 58660.55
           }
         ]
       },
@@ -2000,7 +2064,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 858.79
+            "total": 857.66
           }
         ]
       },
@@ -2193,8 +2257,9 @@
       "note": "Showing the latest governed mode-control events from rebuild history."
     },
     "incident_flags": [
-      "shadow.trade_plan_empty",
-      "strategy.thesis_set_empty"
+      "steward.open_action_deferred_existing_position:AVGO",
+      "steward.open_action_deferred_existing_position:META",
+      "steward.open_action_deferred_existing_position:NVDA"
     ],
     "notes": [
       "shadow_slice_read_only",
@@ -2205,7 +2270,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-04-28T15:45:02.600652+00:00",
+        "as_of": "2026-04-28T15:50:01.429265+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2215,7 +2280,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-28T15:45:06.079689+00:00",
+        "as_of": "2026-04-28T15:50:01.673267+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2225,7 +2290,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-04-28T15:45:08.079322+00:00",
+        "as_of": "2026-04-28T15:50:01.799889+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
