@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-28T20:30:13.826309+00:00",
+  "generated_at": "2026-04-28T20:41:11.170293+00:00",
   "as_of_date": "2026-04-28",
   "account": {
     "equity": 85643.32,
@@ -1704,19 +1704,37 @@
         "selected": false
       },
       {
-        "symbol": "SMCI",
-        "price": 25.26,
+        "symbol": "OMC",
+        "price": 74.77,
+        "sector": "Communication Services",
+        "expiry": "2026-05-15",
+        "dte": 17,
+        "short_strike": 80.0,
+        "long_strike": 75.0,
+        "spread_width": 5.0,
+        "net_credit": 1.45,
+        "credit_width_ratio": 0.29,
+        "annualized_yield_pct": 504.0,
+        "max_loss_per_contract": 355.0,
+        "iv_rank_proxy": 0.094,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "FSLR",
+        "price": 203.47,
         "sector": "Technology",
         "expiry": "2026-05-22",
         "dte": 24,
-        "short_strike": 26.0,
-        "long_strike": 21.0,
+        "short_strike": 190.0,
+        "long_strike": 185.0,
         "spread_width": 5.0,
-        "net_credit": 1.4,
-        "credit_width_ratio": 0.28,
-        "annualized_yield_pct": 486.7,
-        "max_loss_per_contract": 360.0,
-        "iv_rank_proxy": 0.0,
+        "net_credit": 1.35,
+        "credit_width_ratio": 0.27,
+        "annualized_yield_pct": 469.3,
+        "max_loss_per_contract": 365.0,
+        "iv_rank_proxy": 0.047,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1725,7 +1743,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 4,
+    "approved": 5,
     "universe_watch": [
       {
         "symbol": "BKNG",
