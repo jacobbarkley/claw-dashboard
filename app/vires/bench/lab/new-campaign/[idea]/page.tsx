@@ -82,31 +82,22 @@ export default async function ViresLabNewCampaignPage({
       <LabSubNav />
       <div style={{ padding: "24px 20px 8px", maxWidth: 640, margin: "0 auto" }}>
         {/* Eyebrow row — action context + sleeve at a glance */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 10,
-            flexWrap: "wrap",
-          }}
-        >
+        {sleeveValid && (
           <div
-            className="t-eyebrow"
-            style={{ fontSize: 10, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 10,
+              flexWrap: "wrap",
+            }}
           >
-            New campaign
+            <SleeveChip sleeve={sleeveKey} />
           </div>
-          {sleeveValid && (
-            <>
-              <span style={{ color: "var(--vr-cream-faint)" }}>·</span>
-              <SleeveChip sleeve={sleeveKey} />
-            </>
-          )}
-        </div>
+        )}
         <h1
           className="t-display"
-          style={{ margin: 0, fontSize: 26, lineHeight: 1.15, color: "var(--vr-cream)", fontWeight: 400 }}
+          style={{ margin: 0, fontSize: 28, lineHeight: 1.15, color: "var(--vr-cream)", fontWeight: 400, fontStyle: "italic" }}
         >
           Set up a run
         </h1>
@@ -146,12 +137,6 @@ export default async function ViresLabNewCampaignPage({
               flexWrap: "wrap",
             }}
           >
-            <div
-              className="t-eyebrow"
-              style={{ fontSize: 9, color: "var(--vr-cream-mute)", letterSpacing: "0.14em" }}
-            >
-              Configuring
-            </div>
             <span
               className="t-eyebrow"
               style={{

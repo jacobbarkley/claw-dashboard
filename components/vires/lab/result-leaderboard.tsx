@@ -81,14 +81,28 @@ export function ResultLeaderboard({ result }: { result: ResultV1 }) {
         }}
       >
         <div>
-          <div className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em" }}>
-            Result · leaderboard
-          </div>
-          <div
-            className="t-mono"
-            style={{ marginTop: 3, fontSize: 10.5, color: "var(--vr-cream-mute)" }}
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: "var(--ff-serif)",
+              fontStyle: "italic",
+              fontSize: 18,
+              fontWeight: 400,
+              color: "var(--vr-cream)",
+              lineHeight: 1.15,
+            }}
           >
-            {result.result_id} · {variants.length} variant{variants.length === 1 ? "" : "s"} · completed{" "}
+            Leaderboard
+          </h2>
+          <div
+            style={{
+              marginTop: 4,
+              fontFamily: "var(--ff-mono)",
+              fontSize: 10.5,
+              color: "var(--vr-cream-mute)",
+            }}
+          >
+            {variants.length} variant{variants.length === 1 ? "" : "s"} · completed{" "}
             {result.completed_at}
           </div>
         </div>
@@ -129,7 +143,7 @@ export function ResultLeaderboard({ result }: { result: ResultV1 }) {
             padding: "10px 16px 0",
             fontSize: 11,
             color: "var(--vr-cream-mute)",
-            fontFamily: "var(--vr-font-mono), monospace",
+            fontFamily: "var(--ff-mono)",
           }}
         >
           benchmark · {result.benchmark.symbol} ·{" "}
@@ -219,7 +233,7 @@ export function ResultLeaderboard({ result }: { result: ResultV1 }) {
                   gap: 8,
                   rowGap: 4,
                   fontSize: 11,
-                  fontFamily: "var(--vr-font-mono), monospace",
+                  fontFamily: "var(--ff-mono)",
                 }}
               >
                 <Cell label="return" value={fmtPct(m.total_return_pct)} tone="main" />
@@ -248,7 +262,7 @@ export function ResultLeaderboard({ result }: { result: ResultV1 }) {
                     gap: 4,
                     alignItems: "center",
                     flexWrap: "wrap",
-                    fontFamily: "var(--vr-font-mono), monospace",
+                    fontFamily: "var(--ff-mono)",
                     fontSize: 10,
                     color: "var(--vr-cream-mute)",
                   }}

@@ -41,6 +41,13 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
   const [codePending, setCodePending] = useState(false)
   const [tags, setTags] = useState("")
   const [status, setStatus] = useState<IdeaStatus>("DRAFT")
+  // Optional structured spec fields. Persisted into params.spec on submit
+  // so the backend contract stays open-ended (params is a free-form record)
+  // while we capture enough structure for downstream Talon / Codex pickup.
+  const [specOpen, setSpecOpen] = useState(false)
+  const [dataSources, setDataSources] = useState("")
+  const [signalFilters, setSignalFilters] = useState("")
+  const [exitRules, setExitRules] = useState("")
   const [promoteToCampaign, setPromoteToCampaign] = useState(false)
   const [promotionTarget, setPromotionTarget] = useState<IdeaPromotionTarget | null>(null)
   const [assignSlotOpen, setAssignSlotOpen] = useState(false)
@@ -73,6 +80,10 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         .split(",")
         .map(t => t.trim())
         .filter(t => t.length > 0)
+      const spec: Record<string, string> = {}
+      if (dataSources.trim())   spec.data_sources   = dataSources.trim()
+      if (signalFilters.trim()) spec.signal_filters = signalFilters.trim()
+      if (exitRules.trim())     spec.exit_rules     = exitRules.trim()
       const payload: Record<string, unknown> = {
         title: title.trim(),
         thesis: thesis.trim(),
@@ -86,6 +97,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         ...(!codePending &&
           selectedStrategy?.strategy_family && { strategy_family: selectedStrategy.strategy_family }),
         ...(parsedTags.length > 0 && { tags: parsedTags }),
+        ...(Object.keys(spec).length > 0 && { params: { spec } }),
         ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
         ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
       }
@@ -123,13 +135,18 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
       >
         <div style={{ minWidth: 0 }}>
           <div
-            className="t-eyebrow"
-            style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 3, letterSpacing: "0.14em" }}
+            style={{
+              fontFamily: "var(--ff-serif)",
+              fontStyle: "italic",
+              fontSize: 14,
+              color: "var(--vr-cream)",
+              lineHeight: 1.2,
+            }}
           >
-            Talon · research partner
+            Draft with Talon
           </div>
-          <div style={{ fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}>
-            Conversational idea drafting ships in V1 — Talon asks clarifying questions and proposes a spec for you to review.
+          <div style={{ marginTop: 4, fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}>
+            A conversation that turns a half-formed thesis into a real spec. Coming in V1.
           </div>
         </div>
         <button
@@ -233,10 +250,15 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               }}
             >
               <div
-                className="t-eyebrow"
-                style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em", marginBottom: 4 }}
+                style={{
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 13,
+                  color: "var(--vr-gold)",
+                  marginBottom: 6,
+                }}
               >
-                Awaiting implementation
+                Held until the strategy is written
               </div>
               This idea will be saved as a code-pending capture: thesis only, no executable
               strategy yet. It can&apos;t be submitted to the lab until Codex (or Talon V1)
@@ -266,9 +288,30 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
                 color: "var(--vr-cream-faint)",
                 fontStyle: "italic",
                 fontFamily: "var(--ff-serif)",
+                lineHeight: 1.5,
               }}
             >
-              Strategies come from the bench preset registry. Registered families only.
+              Registered families only. If none of these fit the thesis you wrote above,
+              switch to{" "}
+              <button
+                type="button"
+                onClick={() => setCodePending(true)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  color: "var(--vr-gold)",
+                  fontStyle: "italic",
+                  fontFamily: "var(--ff-serif)",
+                  fontSize: "inherit",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                + New strategy (code pending)
+              </button>
+              {" "}rather than forcing a fit — the lab will hold the idea until the
+              strategy is implemented.
             </div>
           </FormRow>
         )}
@@ -281,6 +324,96 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             style={inputStyle}
           />
         </FormRow>
+
+        {/* Strategy spec — optional structured capture. Lite version on
+            purpose: three open-ended textareas. Talon V1 will turn this
+            into a guided conversation. */}
+        <div style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            onClick={() => setSpecOpen(o => !o)}
+            aria-expanded={specOpen}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              background: "transparent",
+              border: "1px solid var(--vr-line)",
+              borderRadius: 3,
+              color: "var(--vr-cream)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontFamily: "inherit",
+              textAlign: "left",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                fontSize: 14,
+                color: "var(--vr-cream)",
+              }}
+            >
+              Strategy spec
+            </span>
+            <span style={{ fontSize: 11, color: "var(--vr-cream-mute)", display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontStyle: "italic", fontFamily: "var(--ff-serif)" }}>optional</span>
+              <span style={{ fontFamily: "var(--ff-mono)", fontSize: 13, color: "var(--vr-cream-dim)" }}>
+                {specOpen ? "−" : "+"}
+              </span>
+            </span>
+          </button>
+          {specOpen && (
+            <div style={{ marginTop: 12 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--vr-cream-mute)",
+                  fontStyle: "italic",
+                  fontFamily: "var(--ff-serif)",
+                  marginBottom: 10,
+                  lineHeight: 1.5,
+                }}
+              >
+                Sketch what's in your head. None of these are required.
+                The more you fill in, the easier it is for Talon or Codex
+                to turn the thesis into real strategy code later.
+              </div>
+              <FormRow label="Data sources">
+                <textarea
+                  value={dataSources}
+                  onChange={e => setDataSources(e.target.value)}
+                  placeholder="Where do the inputs come from? e.g. apewisdom top-100 sweep, Reddit r/wallstreetbets velocity, X trending tickers, OHLCV bars."
+                  rows={3}
+                  style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                  maxLength={1500}
+                />
+              </FormRow>
+              <FormRow label="Signal & filters">
+                <textarea
+                  value={signalFilters}
+                  onChange={e => setSignalFilters(e.target.value)}
+                  placeholder="How do you pick the trade? e.g. likes/mentions ratio above X, current volume within 1σ of 30d mean, RSI < 70, above 50d MA."
+                  rows={3}
+                  style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                  maxLength={1500}
+                />
+              </FormRow>
+              <FormRow label="Exit rules">
+                <textarea
+                  value={exitRules}
+                  onChange={e => setExitRules(e.target.value)}
+                  placeholder="When do you sell? e.g. take-profit at +15%, stop-loss at −5%, trailing stop after first 5% gain, max-hold 10 days."
+                  rows={3}
+                  style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                  maxLength={1500}
+                />
+              </FormRow>
+            </div>
+          )}
+        </div>
 
         {!codePending && (
         <FormRow label="Status">

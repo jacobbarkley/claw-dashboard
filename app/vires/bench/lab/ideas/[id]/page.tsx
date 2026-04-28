@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { IdeaStatusControl } from "@/components/vires/lab/idea-status-control"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
@@ -90,12 +91,6 @@ export default async function ViresLabIdeaDetailPage({
             flexWrap: "wrap",
           }}
         >
-          <div
-            className="t-eyebrow"
-            style={{ fontSize: 10, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
-          >
-            Idea
-          </div>
           <span
             className="t-eyebrow"
             style={{
@@ -109,6 +104,11 @@ export default async function ViresLabIdeaDetailPage({
           >
             {idea.status}
           </span>
+          <IdeaStatusControl
+            ideaId={idea.idea_id}
+            currentStatus={idea.status}
+            codePending={idea.code_pending === true}
+          />
           {idea.code_pending && (
             <span
               className="t-eyebrow"
@@ -181,33 +181,33 @@ export default async function ViresLabIdeaDetailPage({
           >
             <div>
               <div
-                className="t-eyebrow"
                 style={{
-                  fontSize: 9,
-                  color: "var(--vr-gold)",
-                  marginBottom: 3,
-                  letterSpacing: "0.14em",
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 15,
+                  color: "var(--vr-cream)",
+                  lineHeight: 1.2,
                 }}
               >
-                Rolled up
-              </div>
-              <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
                 View campaign for this idea
+              </div>
+              <div style={{ marginTop: 3, fontSize: 11, color: "var(--vr-cream-mute)" }}>
+                Already rolled up from a completed run.
               </div>
             </div>
             <span
-              className="t-eyebrow"
               style={{
-                fontSize: 10,
+                fontFamily: "var(--ff-mono)",
+                fontSize: 11,
                 color: "var(--vr-gold)",
-                padding: "6px 12px",
+                padding: "7px 14px",
                 border: "1px solid var(--vr-gold-line)",
                 borderRadius: 3,
                 background: "var(--vr-gold-soft)",
-                letterSpacing: "0.14em",
+                whiteSpace: "nowrap",
               }}
             >
-              Open Campaign
+              Open →
             </span>
           </Link>
         )}
@@ -228,12 +228,14 @@ export default async function ViresLabIdeaDetailPage({
             }}
           >
             <div
-              className="t-eyebrow"
-              style={{ fontSize: 9, color: "var(--vr-gold)", letterSpacing: "0.14em" }}
+              style={{
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                fontSize: 15,
+                color: "var(--vr-cream)",
+                lineHeight: 1.2,
+              }}
             >
-              Awaiting implementation
-            </div>
-            <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
               No executable strategy for this idea yet
             </div>
             <div
@@ -241,9 +243,9 @@ export default async function ViresLabIdeaDetailPage({
               style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--vr-cream-dim)" }}
             >
               This idea was captured before any code was written. It can&apos;t be submitted to
-              the lab until Codex (or Talon V1) implements the strategy and registers it under
-              a real <span className="t-mono">strategy_id</span>. Once that lands, the
-              &quot;Test this idea&quot; CTA will re-enable here.
+              the lab until the strategy is implemented and registered under a real{" "}
+              <span className="t-mono">strategy_id</span>. Once that lands, the
+              &quot;Test this idea&quot; action will re-enable here.
             </div>
           </div>
         ) : (
@@ -264,33 +266,35 @@ export default async function ViresLabIdeaDetailPage({
         >
           <div>
             <div
-              className="t-eyebrow"
               style={{
-                fontSize: 9,
-                color: labCampaignExists ? "var(--vr-cream-mute)" : "var(--vr-gold)",
-                marginBottom: 3,
-                letterSpacing: "0.14em",
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                fontSize: 15,
+                color: "var(--vr-cream)",
+                lineHeight: 1.2,
               }}
             >
-              {labCampaignExists ? "Run again" : "Test this idea"}
-            </div>
-            <div className="t-h4" style={{ fontSize: 13.5, color: "var(--vr-cream)" }}>
               {labCampaignExists ? "Submit another campaign run" : "Submit a campaign from this idea"}
+            </div>
+            <div style={{ marginTop: 3, fontSize: 11, color: "var(--vr-cream-mute)" }}>
+              {labCampaignExists
+                ? "Re-run with adjusted parameters or a fresh tape."
+                : "Spin up the first lab run against this thesis."}
             </div>
           </div>
           <span
-            className="t-eyebrow"
             style={{
-              fontSize: 10,
+              fontFamily: "var(--ff-mono)",
+              fontSize: 11,
               color: labCampaignExists ? "var(--vr-cream-mute)" : "var(--vr-gold)",
-              padding: "6px 12px",
+              padding: "7px 14px",
               border: labCampaignExists ? "1px solid var(--vr-line)" : "1px solid var(--vr-gold-line)",
               borderRadius: 3,
               background: labCampaignExists ? "transparent" : "var(--vr-gold-soft)",
-              letterSpacing: "0.14em",
+              whiteSpace: "nowrap",
             }}
           >
-            New Campaign
+            {labCampaignExists ? "Run again →" : "New campaign →"}
           </span>
         </Link>
         )}
@@ -316,6 +320,11 @@ export default async function ViresLabIdeaDetailPage({
             {idea.thesis}
           </div>
         </section>
+
+        {/* Strategy spec — only when the operator captured at least one
+            field at create time. Renders as a card with three labeled
+            blocks; missing fields are skipped. */}
+        <IdeaStrategySpec params={idea.params} />
 
         {/* Spec fields */}
         <div className="vr-card" style={{ padding: 0 }}>
@@ -409,6 +418,65 @@ export default async function ViresLabIdeaDetailPage({
         />
       </div>
     </>
+  )
+}
+
+function IdeaStrategySpec({ params }: { params: Record<string, unknown> }) {
+  const spec = params.spec
+  if (!spec || typeof spec !== "object") return null
+  const s = spec as Record<string, unknown>
+  const blocks = [
+    { key: "data_sources",   label: "Data sources" },
+    { key: "signal_filters", label: "Signal & filters" },
+    { key: "exit_rules",     label: "Exit rules" },
+  ].filter(b => typeof s[b.key] === "string" && (s[b.key] as string).trim().length > 0)
+  if (blocks.length === 0) return null
+
+  return (
+    <section>
+      <div
+        className="t-eyebrow"
+        style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
+      >
+        Strategy spec
+      </div>
+      <div
+        className="vr-card"
+        style={{ padding: 0, display: "flex", flexDirection: "column" }}
+      >
+        {blocks.map((b, i) => (
+          <div
+            key={b.key}
+            style={{
+              padding: "12px 16px",
+              borderBottom: i < blocks.length - 1 ? "1px solid var(--vr-line)" : "none",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                color: "var(--vr-cream-dim)",
+                marginBottom: 6,
+              }}
+            >
+              {b.label}
+            </div>
+            <div
+              style={{
+                fontSize: 12.5,
+                color: "var(--vr-cream)",
+                lineHeight: 1.6,
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {s[b.key] as string}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 

@@ -28,6 +28,10 @@
   --vr-up-soft:     rgba(124, 185, 143, 0.10);
   --vr-down-soft:   rgba(201, 122, 122, 0.10);
 
+  /* Benchmark — neutral comparison line, distinct from sleeves */
+  --vr-benchmark:      #8a96b8;
+  --vr-benchmark-soft: rgba(138, 150, 184, 0.10);
+
   /* Sleeves — reserved for inside their own screens */
   --vr-sleeve-stocks:  #7cb98f;
   --vr-sleeve-options: #c8a968;
@@ -77,6 +81,10 @@
 
   --vr-line:        rgba(232, 236, 243, 0.06);
   --vr-line-hi:     rgba(232, 236, 243, 0.12);
+
+  /* Benchmark shifts cooler under obsidian theme */
+  --vr-benchmark:      #95a3c4;
+  --vr-benchmark-soft: rgba(149, 163, 196, 0.10);
 }
 
 /* Italicize gold accents a touch harder in Obsidian so the wordmark
@@ -426,4 +434,11 @@ button:focus-visible, a:focus-visible { outline: 1px solid var(--vr-gold); outli
   .vr-tab-slide-back {
     animation: none;
   }
+}
+
+/* ─── Trade Atlas — trade row hover ─────────────────────────────── */
+.ta-trade-row:hover,
+.ta-trade-row:focus-visible {
+  background: var(--vr-line);
+  outline: none;
 }
