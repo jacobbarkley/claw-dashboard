@@ -20,9 +20,10 @@ thesis: >-
   further and then perform market research on the remainders. Also sets reasonable sell limits to
   enjoy healthy gain without getting greedy.
 sleeve: STOCKS
-strategy_id: regime_aware_momentum
+strategy_id: ''
 status: DRAFT
 params: {}
 strategy_family: REGIME_AWARE_MOMENTUM
 tags:
   - Trendy
+code_pending: true
