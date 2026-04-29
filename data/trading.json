@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-29T17:00:12.180285+00:00",
+  "generated_at": "2026-04-29T17:15:11.843161+00:00",
   "as_of_date": "2026-04-29",
   "account": {
     "equity": 85665.65,
@@ -1680,6 +1680,24 @@
         "selected": false
       },
       {
+        "symbol": "BKNG",
+        "price": 173.46,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-22",
+        "dte": 23,
+        "short_strike": 180.0,
+        "long_strike": 174.8,
+        "spread_width": 5.199999999999989,
+        "net_credit": 2.1,
+        "credit_width_ratio": 0.404,
+        "annualized_yield_pct": 701.9,
+        "max_loss_per_contract": 310.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "OMC",
         "price": 74.77,
         "sector": "Communication Services",
@@ -1752,24 +1770,6 @@
         "selected": false
       },
       {
-        "symbol": "BKNG",
-        "price": 173.46,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-22",
-        "dte": 23,
-        "short_strike": 180.0,
-        "long_strike": 174.8,
-        "spread_width": 5.199999999999989,
-        "net_credit": 1.6,
-        "credit_width_ratio": 0.308,
-        "annualized_yield_pct": 534.8,
-        "max_loss_per_contract": 360.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "PRU",
         "price": 96.9,
         "sector": "Financial Services",
@@ -1796,10 +1796,10 @@
         "short_strike": 116.0,
         "long_strike": 111.0,
         "spread_width": 5.0,
-        "net_credit": 1.34,
-        "credit_width_ratio": 0.268,
-        "annualized_yield_pct": 465.8,
-        "max_loss_per_contract": 366.0,
+        "net_credit": 1.4,
+        "credit_width_ratio": 0.28,
+        "annualized_yield_pct": 486.7,
+        "max_loss_per_contract": 360.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
