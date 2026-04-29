@@ -94,14 +94,13 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
         thesis: thesis.trim(),
         sleeve,
         code_pending: codePending,
-        // Backend clears strategy_id when code_pending is true, but we
-        // include it explicitly for clarity.
+        // Backend clears strategy_id and strategy_family when code_pending
+        // is true; we send them explicitly so a stale family from the
+        // previous registered strategy doesn't survive the toggle.
         strategy_id: codePending ? "" : strategyId,
+        strategy_family: codePending ? "" : (selectedStrategy?.strategy_family ?? ""),
         tags: parsedTags,
         params: Object.keys(spec).length > 0 ? { spec } : {},
-      }
-      if (!codePending && selectedStrategy?.strategy_family) {
-        payload.strategy_family = selectedStrategy.strategy_family
       }
 
       const res = await fetch(`/api/research/ideas/${encodeURIComponent(idea.idea_id)}`, {

@@ -434,6 +434,18 @@ export async function PATCH(
       strategyFamilyValue = v || undefined
       draftFieldsTouched.push("strategy_family")
     }
+    // Toggling on code_pending always clears strategy_family — same
+    // rationale as the strategy_id auto-clear above. Without this, the
+    // detail page keeps showing a stale strategy family (e.g.
+    // "regime aware momentum") even after the operator switches the idea
+    // back to code-pending. Runs after the explicit setter so an operator
+    // can't accidentally pin a family on a code-pending idea.
+    if (codePendingValue && strategyFamilyValue !== undefined) {
+      strategyFamilyValue = undefined
+      if (!draftFieldsTouched.includes("strategy_family")) {
+        draftFieldsTouched.push("strategy_family (cleared)")
+      }
+    }
     if ("tags" in body) {
       tagsValue = normalizeTags(body.tags)
       draftFieldsTouched.push("tags")
