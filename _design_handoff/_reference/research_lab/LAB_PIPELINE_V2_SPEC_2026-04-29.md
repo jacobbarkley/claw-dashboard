@@ -137,6 +137,7 @@ params: {}                  # operator-authored hints, no longer carries spec
 strategy_ref:
   kind: NONE | SPEC_PENDING | REGISTERED
   active_spec_id: spec_01K... | null     # set when kind is SPEC_PENDING or REGISTERED
+  pending_spec_id: spec_01K... | null    # set during a re-spec — see Addendum A1
   strategy_id: regime_aware_momentum | null   # set when kind is REGISTERED
   preset_id: preset_01K... | null        # optional default executable preset
 
@@ -339,11 +340,10 @@ answered as Phases A–F land.
 - **OQ-3.** Codex implementation queue artifact shape: file-per-job
   in a queue dir, or a single rolling YAML? Same question as the
   research lab worker queue; defer to Codex.
-- **OQ-4.** Re-spec semantics on registered strategies: when an idea
-  re-specs, does the old `registered_strategy_id` keep getting
-  jobs/campaigns until the new one is registered, or do we freeze the
-  idea? Probably keep running — answer in Phase E when the queue
-  exists.
+- **OQ-4.** **RESOLVED 2026-04-29** — see Addendum A1. When a
+  REGISTERED idea is re-specced, the idea stays REGISTERED and the
+  existing runnable strategy stays active. The new spec is tracked via
+  `strategy_ref.pending_spec_id` until it registers and swaps in.
 - **OQ-5.** Sleeve transitions: can an operator change sleeve on an
   idea after a spec is drafted? Probably no — a sleeve change should
   fork into a new idea. Confirm in Phase B.
@@ -365,10 +365,106 @@ answered as Phases A–F land.
 
 ## 11. Sign-off checklist (before Phase A starts)
 
-- [ ] Jacob reviews and accepts LD-1 through LD-5 as locked.
-- [ ] Codex confirms the migration table (LD-4) covers every
-      existing idea YAML on disk (run a dry-run audit).
-- [ ] Open questions OQ-1 through OQ-5 acknowledged as deferred, not
-      blocking.
-- [ ] Claude confirms the dashboard read adapter for v1↔v2 idea YAML
-      will land in the same PR as Phase A's API split.
+- [x] Jacob accepted LD-1 through LD-5 as locked (2026-04-29).
+- [x] Codex ran the LD-4 dry-run audit (2026-04-29) — every existing
+      idea YAML maps mechanically, zero unknown `strategy_id` cases.
+- [x] OQ-4 resolved — see Addendum A1. OQ-1, OQ-2, OQ-3, OQ-5 remain
+      deferred and non-blocking.
+- [x] Phase A ownership decided — see Addendum A2. Codex leads.
+      Claude supports with focused review, dashboard consumer audit,
+      and Phase D UX prep only.
+
+---
+
+## Addendum A1 — OQ-4 lock: re-spec on REGISTERED ideas
+
+**Locked:** 2026-04-29
+
+When a REGISTERED idea is re-specced, the idea remains REGISTERED and
+keeps its current runnable strategy active. The new spec is tracked as
+`pending_spec_id`. The idea does **not** flip back to SPEC_PENDING —
+that would break READY/QUEUED/ACTIVE status gates and cut operator
+continuity for jobs and campaigns already in flight.
+
+### Shape during re-spec
+
+```yaml
+strategy_ref:
+  kind: REGISTERED
+  active_spec_id: spec_old
+  pending_spec_id: spec_new | null
+  strategy_id: existing_strategy
+  preset_id: existing_preset
+```
+
+### Spec lineage is bidirectional
+
+- New spec carries `parent_spec_id: spec_old`.
+- Idea carries `pending_spec_id: spec_new`.
+- Old jobs and campaigns keep referencing `spec_old`.
+- Current strategy remains runnable while v2 is being implemented.
+
+### Swap on successful registration of `spec_new`
+
+- `spec_old.state` → `SUPERSEDED`
+- `spec_new.state` → `REGISTERED`
+- `idea.strategy_ref.active_spec_id` → `spec_new`
+- `idea.strategy_ref.pending_spec_id` → `null`
+- `idea.strategy_ref.strategy_id` → registered strategy id of `spec_new`
+- `idea.strategy_ref.preset_id` → registered preset id of `spec_new`
+
+The swap is atomic from the operator's perspective: a single PATCH
+from Codex's implementation completion path. Until that PATCH lands,
+`spec_old` is the runnable spec.
+
+### Invariants
+
+- `strategy_ref.kind === REGISTERED` is preserved across the entire
+  re-spec lifecycle.
+- `pending_spec_id` is only meaningful when `kind === REGISTERED`. On
+  `kind === SPEC_PENDING` the in-progress spec lives in
+  `active_spec_id` directly; there is no "pending" alongside it.
+- An idea has at most one `pending_spec_id` at a time. A second
+  re-spec attempt while one is in flight either replaces the pending
+  spec (operator-confirmed) or 409s — Codex chooses in Phase E.
+
+---
+
+## Addendum A2 — Phase A ownership
+
+**Decided:** 2026-04-29
+
+Phase A spans the TypeScript contract in this repo, the Python
+readers/writers in trading-bot, the migration / read adapter pair, and
+the future producer path (lab worker, spec implementation queue). The
+data model has to land in lockstep on both sides.
+
+### Ownership split
+
+- **Codex leads Phase A.** Owns the canonical Idea v2 + StrategySpec
+  v1 schema across TS and Python, the API endpoint decomposition, the
+  v1↔v2 read adapter, and the Phase B migration script.
+- **Claude supports.** Available for focused review when Codex spawns
+  it (type-level review, dashboard consumer audit, UX consumer impact
+  check), and works Phase D UX prep in parallel — operator-authored
+  spec form mockups and copy — since that's pure UX with no Phase A
+  schema dependency.
+
+### Why this split
+
+A single producer/consumer mismatch in the foundational schema would
+re-create the exact class of bug this rewrite exists to fix
+(`strategy_id` / `strategy_family` desync). Codex sitting on both
+sides during Phase A makes that mismatch impossible. Claude reviewing
+diffs in narrow passes catches structural problems earlier than Claude
+authoring the same code single-threaded — today's session was the
+proof point.
+
+### Hand-off discipline
+
+- Codex tags Claude into review with a diff + a question, not the
+  whole repo.
+- Claude does not author Phase A code without an explicit Codex
+  request.
+- Phase D UX work Claude does in parallel ships behind a feature flag
+  until Phase C's spec contract lands.
