@@ -3,7 +3,9 @@ import Link from "next/link"
 import { IdeaStatusControl } from "@/components/vires/lab/idea-status-control"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
+import type { StrategySpecV1 } from "@/lib/research-lab-contracts"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { loadStrategySpecsForIdea } from "@/lib/research-lab-specs.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
 
 export const metadata = {
@@ -42,6 +44,7 @@ export default async function ViresLabIdeaDetailPage({
   const decoded = decodeURIComponent(id)
   const idea = await loadIdeaById(decoded)
   const labCampaignExists = idea ? await hasLabCampaignForIdea(idea.idea_id) : false
+  const strategySpecs = idea ? await loadStrategySpecsForIdea(idea.idea_id) : []
 
   if (!idea) {
     return (
@@ -340,7 +343,9 @@ export default async function ViresLabIdeaDetailPage({
           </div>
         </section>
 
-        {/* Strategy spec — only when the operator captured at least one
+        <IdeaStrategySpecsPanel specs={strategySpecs} />
+
+        {/* Legacy spec seed — only when the operator captured at least one
             field at create time. Renders as a card with three labeled
             blocks; missing fields are skipped. */}
         <IdeaStrategySpec params={idea.params} />
@@ -440,6 +445,112 @@ export default async function ViresLabIdeaDetailPage({
   )
 }
 
+function IdeaStrategySpecsPanel({ specs }: { specs: StrategySpecV1[] }) {
+  return (
+    <section>
+      <div
+        className="t-eyebrow"
+        style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
+      >
+        StrategySpec
+      </div>
+      {specs.length === 0 ? (
+        <LabPhaseZeroSlot
+          label="Awaiting strategy spec"
+          note="This idea has no durable strategy_spec.v1 artifact yet. Phase D adds the operator-authored spec form and Talon draft action that create this bridge from thesis to implementation."
+        />
+      ) : (
+        <div className="vr-card" style={{ padding: 0, display: "flex", flexDirection: "column" }}>
+          {specs.map((spec, index) => (
+            <div
+              key={spec.spec_id}
+              style={{
+                padding: "14px 16px",
+                borderBottom: index < specs.length - 1 ? "1px solid var(--vr-line)" : "none",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  className="t-eyebrow"
+                  style={{
+                    fontSize: 9,
+                    color: spec.state === "REGISTERED" ? "var(--vr-up)" : "var(--vr-gold)",
+                    border:
+                      spec.state === "REGISTERED"
+                        ? "1px solid rgba(104, 200, 142, 0.42)"
+                        : "1px solid var(--vr-gold-line)",
+                    padding: "2px 7px",
+                    borderRadius: 2,
+                  }}
+                >
+                  {spec.state}
+                </span>
+                <span className="t-mono" style={{ fontSize: 10.5, color: "var(--vr-cream-mute)" }}>
+                  {spec.spec_id} · v{spec.spec_version}
+                </span>
+                <span className="t-mono" style={{ marginLeft: "auto", fontSize: 10.5, color: "var(--vr-cream-mute)" }}>
+                  {fmtDate(spec.created_at)}
+                </span>
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 14,
+                  color: "var(--vr-cream)",
+                  lineHeight: 1.35,
+                }}
+              >
+                {spec.signal_logic}
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                  marginTop: 10,
+                }}
+              >
+                <MiniSpecBlock label="Entry" value={spec.entry_rules} />
+                <MiniSpecBlock label="Exit" value={spec.exit_rules} />
+              </div>
+              {spec.implementation_notes && (
+                <div
+                  className="t-read"
+                  style={{ marginTop: 10, fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.55 }}
+                >
+                  {spec.implementation_notes}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function MiniSpecBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="t-eyebrow" style={{ fontSize: 8.5, color: "var(--vr-cream-mute)", marginBottom: 3 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.45 }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
 function IdeaStrategySpec({ params }: { params: Record<string, unknown> }) {
   const spec = params.spec
   if (!spec || typeof spec !== "object") return null
@@ -457,7 +568,7 @@ function IdeaStrategySpec({ params }: { params: Record<string, unknown> }) {
         className="t-eyebrow"
         style={{ fontSize: 9, color: "var(--vr-cream-mute)", marginBottom: 6, letterSpacing: "0.14em" }}
       >
-        Strategy spec
+        Legacy spec seed
       </div>
       <div
         className="vr-card"
