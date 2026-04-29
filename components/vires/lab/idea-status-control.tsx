@@ -12,7 +12,7 @@
 // Code-pending ideas can't move to READY — that target is rendered
 // disabled with a note so the operator understands why.
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import type { IdeaStatus } from "@/lib/research-lab-contracts"
@@ -52,7 +52,38 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<IdeaStatus | "DELETE" | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleted, setDeleted] = useState(false)
+  const [pendingChange, setPendingChange] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const rootRef = useRef<HTMLSpanElement | null>(null)
+
+  // Click outside / Escape closes the popover. Ignored while busy so a
+  // stray tap during a network call doesn't drop the in-flight state.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (busy != null) return
+      const target = e.target as Node | null
+      if (target && rootRef.current && !rootRef.current.contains(target)) {
+        setOpen(false)
+        setConfirmDelete(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && busy == null) {
+        setOpen(false)
+        setConfirmDelete(false)
+      }
+    }
+    document.addEventListener("mousedown", onDown)
+    document.addEventListener("touchstart", onDown)
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("mousedown", onDown)
+      document.removeEventListener("touchstart", onDown)
+      document.removeEventListener("keydown", onKey)
+    }
+  }, [open, busy])
 
   const allowed = OPERATOR_ALLOWED_TRANSITIONS[currentStatus] ?? []
   const deletable = DELETABLE_FROM.includes(currentStatus)
@@ -73,9 +104,13 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
         setBusy(null)
         return
       }
-      setOpen(false)
       setBusy(null)
-      router.refresh()
+      // Show a "saved" beat that explains the deploy-lag truth before
+      // refreshing. router.refresh() re-reads the server component but
+      // production reads from the deployed bundle, which won't reflect
+      // the change until Vercel rebuilds (~2 min). Same goes for the
+      // ideas list page.
+      setPendingChange(`Marked ${next.toLowerCase()}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error")
       setBusy(null)
@@ -95,9 +130,8 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
         setBusy(null)
         return
       }
-      // Idea is gone — bounce back to the ideas list. router.refresh()
-      // would 404 on the current detail page.
-      router.push("/vires/bench/lab/ideas")
+      setBusy(null)
+      setDeleted(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error")
       setBusy(null)
@@ -105,7 +139,10 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
   }
 
   return (
-    <span style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+    <span
+      ref={rootRef}
+      style={{ position: "relative", display: "inline-flex", alignItems: "center" }}
+    >
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
@@ -136,7 +173,7 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
             top: "100%",
             left: 0,
             marginTop: 6,
-            minWidth: 240,
+            minWidth: 260,
             padding: 6,
             background: "var(--vr-ink-raised)",
             border: "1px solid var(--vr-line-hi)",
@@ -148,7 +185,66 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
             gap: 2,
           }}
         >
-          {allowed.map(target => {
+          {/* Post-action confirmation states. Once a change lands in
+              GitHub, the live Vercel bundle still serves the OLD copy
+              until the rebuild finishes, so we explain the lag instead
+              of bouncing the operator into a stale list. */}
+          {deleted && (
+            <div style={{ padding: "10px 12px" }}>
+              <div
+                style={{
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 14,
+                  color: "var(--vr-cream)",
+                  marginBottom: 4,
+                }}
+              >
+                Deleted ✓
+              </div>
+              <div style={{ fontSize: 11, color: "var(--vr-cream-mute)", lineHeight: 1.5, marginBottom: 10 }}>
+                Removed from the repo. The ideas list takes ~2 minutes
+                to catch up while Vercel redeploys.
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/vires/bench/lab/ideas")}
+                style={{
+                  width: "100%",
+                  padding: "7px 10px",
+                  background: "var(--vr-gold-soft)",
+                  border: "1px solid var(--vr-gold-line)",
+                  borderRadius: "var(--r-inset)",
+                  color: "var(--vr-gold)",
+                  fontSize: 11,
+                  fontFamily: "var(--ff-mono)",
+                  cursor: "pointer",
+                }}
+              >
+                Back to ideas →
+              </button>
+            </div>
+          )}
+          {!deleted && pendingChange && (
+            <div style={{ padding: "10px 12px" }}>
+              <div
+                style={{
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 14,
+                  color: "var(--vr-cream)",
+                  marginBottom: 4,
+                }}
+              >
+                {pendingChange} ✓
+              </div>
+              <div style={{ fontSize: 11, color: "var(--vr-cream-mute)", lineHeight: 1.5 }}>
+                Saved to the repo. The status chip on this page updates
+                in ~2 minutes after Vercel redeploys.
+              </div>
+            </div>
+          )}
+          {!deleted && !pendingChange && allowed.map(target => {
             const blockedByCodePending = codePending && target === "READY"
             const disabled = blockedByCodePending || busy != null
             const meta = TRANSITION_COPY[target]
@@ -197,7 +293,7 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
               </button>
             )
           })}
-          {deletable && (
+          {!deleted && !pendingChange && deletable && (
             <>
               <div
                 style={{
