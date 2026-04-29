@@ -178,13 +178,20 @@ PR with these touchpoints:
    state. Render `<IdeaThreadStepper>` at the top, pass `idea` and
    `currentStep`. Body content swaps based on step.
 2. **Awaiting-spec actions**: Wire the "Author spec yourself" button
-   to `POST /api/research/ideas/[id]/draft-spec` with
-   `{ authoring_mode: "OPERATOR_DRAFTED" }`. Server creates a spec
-   in DRAFTING state, redirects to the spec edit surface.
+   to `POST /api/research/specs` (live since Phase C, commit
+   `183139c`) with `{ idea_id, authoring_mode: "OPERATOR_DRAFTED" }`.
+   Server creates a spec in DRAFTING state and returns the spec_id;
+   client redirects to the spec edit surface. A future ergonomic
+   wrapper `POST /api/research/ideas/[id]/draft-spec` is optional —
+   the bare POST works.
 3. **Spec edit surface**: New route
    `/vires/bench/lab/ideas/[id]/spec/edit`. Hosts the form built in
-   §3, wired to `POST /api/research/specs/[id]` for body edits and
-   `POST /api/research/specs/[id]/approve` for submission.
+   §3, wired to `PATCH /api/research/specs/[id]` for body edits
+   (live since Phase C). Submission to AWAITING_APPROVAL goes through
+   the same PATCH with `state: "AWAITING_APPROVAL"` in the body. The
+   approve / send-back actions on the awaiting-approval surface need
+   a dedicated `POST /api/research/specs/[id]/approve` endpoint —
+   pending, see §6.
 4. **Talon-drafted path**: Hidden until Talon is unblocked. When
    Talon flag is on, the "Draft with Talon" button hits a Talon
    endpoint that returns a draft spec, then redirects to the same
@@ -197,8 +204,11 @@ operator-feed or a build-time env var (TBD with Codex).
 
 ## §6 — What's out of scope for Phase D-prep
 
-- Live API endpoints (`/draft-spec`, `/specs/[id]`, `/approve`) —
-  Codex's Phase E work.
+- Live API endpoints `/api/research/ideas/[id]/draft-spec` (optional
+  ergonomic wrapper) and `/api/research/specs/[id]/approve` — still
+  pending. The CRUD surface for `/api/research/specs` and
+  `/api/research/specs/[id]` (GET/PATCH/DELETE) **landed in Phase C**
+  on commit `183139c` and is no longer Codex pending work.
 - Talon integration — deferred until Talon is unblocked.
 - Sweep parameter structured editing (we do textarea now, structured
   later if operator demand emerges).

@@ -269,6 +269,22 @@ function SpecDraftedPanel({
   onAuthoringModeChange: (mode: SpecAuthoringMode) => void
   onSubmit: () => void
 }) {
+  // Local two-substate flip inside the spec-drafted step:
+  //   DRAFTING → form with save / submit-for-approval
+  //   AWAITING_APPROVAL → read-only summary with approve / send-back
+  // Faithful to §2 of PHASE_D_UX_PREP — submitting does NOT skip the
+  // approval beat in the preview.
+  const [awaitingApproval, setAwaitingApproval] = useState(false)
+
+  if (awaitingApproval) {
+    return (
+      <AwaitingApprovalPanel
+        onApprove={onSubmit}
+        onSendBack={() => setAwaitingApproval(false)}
+      />
+    )
+  }
+
   return (
     <StrategySpecForm
       ideaTitle={MOCK_IDEA.title}
@@ -280,10 +296,103 @@ function SpecDraftedPanel({
       }}
       onSubmitForApproval={values => {
         onAuthoringModeChange(values.authoring_mode)
-        onSubmit()
+        setAwaitingApproval(true)
       }}
       onCancel={() => {}}
     />
+  )
+}
+
+function AwaitingApprovalPanel({
+  onApprove,
+  onSendBack,
+}: {
+  onApprove: () => void
+  onSendBack: () => void
+}) {
+  return (
+    <div className="vr-card" style={{ padding: "16px 16px 18px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginBottom: 8,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--ff-serif)",
+            fontStyle: "italic",
+            fontSize: 18,
+            color: "var(--vr-cream)",
+          }}
+        >
+          Spec submitted — awaiting approval
+        </div>
+        <span
+          style={{
+            padding: "3px 8px",
+            fontSize: 9,
+            fontFamily: "var(--ff-mono)",
+            letterSpacing: "0.08em",
+            borderRadius: 2,
+            border: "1px solid var(--vr-gold-line)",
+            color: "var(--vr-gold)",
+            background: "var(--vr-gold-soft)",
+          }}
+        >
+          AWAITING_APPROVAL
+        </span>
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          color: "var(--vr-cream-dim)",
+          lineHeight: 1.55,
+          marginBottom: 14,
+        }}
+      >
+        Re-read the rules end to end. Approve to send the spec to Codex
+        for implementation, or send it back if anything still needs to
+        be tightened.
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={onApprove}
+          style={{
+            padding: "8px 14px",
+            fontSize: 11.5,
+            fontFamily: "var(--ff-mono)",
+            background: "var(--vr-up-soft)",
+            border: "1px solid var(--vr-up)",
+            color: "var(--vr-up)",
+            borderRadius: 3,
+            cursor: "pointer",
+          }}
+        >
+          Mock: approve spec →
+        </button>
+        <button
+          type="button"
+          onClick={onSendBack}
+          style={{
+            padding: "8px 14px",
+            fontSize: 11.5,
+            fontFamily: "var(--ff-mono)",
+            background: "transparent",
+            border: "1px solid var(--vr-line)",
+            color: "var(--vr-cream-mute)",
+            borderRadius: 3,
+            cursor: "pointer",
+          }}
+        >
+          Send back for revision
+        </button>
+      </div>
+    </div>
   )
 }
 
