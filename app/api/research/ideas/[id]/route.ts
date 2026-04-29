@@ -1,16 +1,13 @@
 // PATCH /api/research/ideas/[id]
 //
-// Operator-side mutations for an existing idea.v1:
-//   - promotion_target: assign / clear the passport role this idea targets
-//   - promote_to_campaign: force first-job rollup
-//   - status: transition between operator-allowed states (DRAFT, READY,
-//     SHELVED, RETIRED). System-driven transitions (READY → QUEUED →
-//     ACTIVE) are NOT permitted here; those are written by the lab
-//     pipeline. Code-pending ideas are locked out of READY.
-//   - draft fields (title, thesis, sleeve, strategy_id, code_pending,
-//     strategy_family, tags, params): editable while the idea is in
-//     DRAFT and no Lab campaign references it. Once the idea is
-//     "released" (READY) or anything has run against it, these lock.
+// Phase A split for Lab Pipeline v2:
+//   - this route handles draft body edits only
+//   - lifecycle status moves live at /transitions
+//   - promotion intent lives at /promotion
+//
+// The route still accepts the current dashboard draft-edit shape
+// (including legacy strategy_id/code_pending toggles) and persists clean
+// idea.v2 YAML so existing shells keep working during the migration.
 //
 // Persistence mirrors the POST route: GitHub Contents API when
 // GITHUB_TOKEN is set, local FS otherwise (dev path).
@@ -24,9 +21,10 @@ import yaml from "js-yaml"
 import type {
   IdeaPromotionTarget,
   IdeaStatus,
-  IdeaV1,
+  IdeaArtifact,
   ResearchSleeve,
   ScopeTriple,
+  StrategyRefV2,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 import { ideaPath, loadIdeaById } from "@/lib/research-lab-ideas.server"
@@ -37,6 +35,7 @@ const CODE_PENDING_STRATEGY_ID = "__code_pending__"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
 
 interface PatchBody {
   promotion_target?: unknown
@@ -104,13 +103,35 @@ function normalizeScope(input: unknown): ScopeTriple {
   if (!input || typeof input !== "object") return { ...PHASE_1_DEFAULT_SCOPE }
   const s = input as Partial<Record<keyof ScopeTriple, unknown>>
   return {
-    user_id: typeof s.user_id === "string" ? s.user_id : PHASE_1_DEFAULT_SCOPE.user_id,
-    account_id: typeof s.account_id === "string" ? s.account_id : PHASE_1_DEFAULT_SCOPE.account_id,
+    user_id: safePathSegment(
+      typeof s.user_id === "string" ? s.user_id : PHASE_1_DEFAULT_SCOPE.user_id,
+      "scope.user_id",
+    ),
+    account_id: safePathSegment(
+      typeof s.account_id === "string" ? s.account_id : PHASE_1_DEFAULT_SCOPE.account_id,
+      "scope.account_id",
+    ),
     strategy_group_id:
-      typeof s.strategy_group_id === "string"
-        ? s.strategy_group_id
-        : PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+      safePathSegment(
+        typeof s.strategy_group_id === "string"
+          ? s.strategy_group_id
+          : PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+        "scope.strategy_group_id",
+      ),
   }
+}
+
+function safePathSegment(value: string, label: string): string {
+  const trimmed = value.trim()
+  if (
+    !trimmed ||
+    trimmed === "." ||
+    trimmed === ".." ||
+    !SAFE_PATH_SEGMENT.test(trimmed)
+  ) {
+    throw new Error(`${label} must be a safe path segment`)
+  }
+  return trimmed
 }
 
 // Returns:
@@ -139,12 +160,18 @@ function parsePromotionTarget(
       error: "supersedes_record_id required when target_action is REPLACE_EXISTING",
     }
   }
+  if (targetAction === "NEW_RECORD" && supersedesRaw) {
+    return {
+      ok: false,
+      error: "supersedes_record_id must be omitted when target_action is NEW_RECORD",
+    }
+  }
   return {
     ok: true,
     value: {
       passport_role_id: roleId,
       target_action: targetAction as "NEW_RECORD" | "REPLACE_EXISTING",
-      supersedes_record_id: supersedesRaw || null,
+      supersedes_record_id: targetAction === "REPLACE_EXISTING" ? supersedesRaw : null,
     },
   }
 }
@@ -154,17 +181,17 @@ function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
 }
 
 async function persistLocal(
-  idea: IdeaV1,
+  idea: IdeaArtifact,
   scope: ScopeTriple,
 ): Promise<{ mode: "local"; file: string; commit_sha: null }> {
   const absolutePath = ideaPath(idea.idea_id, scope)
   await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(idea, { noRefs: true, lineWidth: 100 }))
+  await fs.writeFile(absolutePath, yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 }))
   return { mode: "local", file: ideaRelpath(scope, idea.idea_id), commit_sha: null }
 }
 
 async function persistGithub(
-  idea: IdeaV1,
+  idea: IdeaArtifact,
   scope: ScopeTriple,
   token: string,
   commitMessage: string,
@@ -187,7 +214,7 @@ async function persistGithub(
     throw new Error("GitHub response missing file sha")
   }
 
-  const yamlText = yaml.dump(idea, { noRefs: true, lineWidth: 100 })
+  const yamlText = yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 })
   const content = Buffer.from(yamlText, "utf-8").toString("base64")
   const putResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
     method: "PUT",
@@ -214,12 +241,37 @@ async function persistGithub(
   return { mode: "github", file: relpath, commit_sha }
 }
 
+function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
+  const spec = params.spec
+  if (typeof spec === "string") return spec.trim().length > 0
+  return spec != null
+}
+
+function stripViewFields(idea: IdeaArtifact): Record<string, unknown> {
+  const {
+    schema: _schema,
+    strategy_id: _strategyId,
+    strategy_family: _strategyFamily,
+    code_pending: _codePending,
+    ...persisted
+  } = idea as IdeaArtifact & { schema?: unknown }
+  return persisted
+}
+
 export async function PATCH(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params
-  const ideaId = decodeURIComponent(id)
+  let ideaId: string
+  try {
+    ideaId = safePathSegment(decodeURIComponent(id), "idea_id")
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid idea_id" },
+      { status: 400 },
+    )
+  }
 
   let body: PatchBody
   try {
@@ -238,19 +290,45 @@ export async function PATCH(
     "strategy_family", "tags", "params",
   ] as const
   const hasDraftEdits = DRAFT_FIELDS.some(k => k in body)
+  if (hasStatus) {
+    return NextResponse.json(
+      {
+        error:
+          "Idea status changes moved to POST /api/research/ideas/[id]/transitions in Lab Pipeline v2.",
+      },
+      { status: 410 },
+    )
+  }
+  if (hasPromotionTarget || hasPromoteToCampaign) {
+    return NextResponse.json(
+      {
+        error:
+          "Idea promotion intent moved to POST /api/research/ideas/[id]/promotion in Lab Pipeline v2.",
+      },
+      { status: 410 },
+    )
+  }
   if (!hasPromotionTarget && !hasPromoteToCampaign && !hasStatus && !hasDraftEdits) {
     return NextResponse.json(
       {
         error:
-          "At least one mutable field required: " +
-          "promotion_target, promote_to_campaign, status, or any draft field " +
-          `(${DRAFT_FIELDS.join(", ")}).`,
+          "At least one draft field required: " +
+          `${DRAFT_FIELDS.join(", ")}. ` +
+          "Use /transitions for status changes and /promotion for promotion intent.",
       },
       { status: 400 },
     )
   }
 
-  const scope = normalizeScope(body.scope)
+  let scope: ScopeTriple
+  try {
+    scope = normalizeScope(body.scope)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid scope" },
+      { status: 400 },
+    )
+  }
   const existing = await loadIdeaById(ideaId, scope)
   if (!existing) {
     return NextResponse.json(
@@ -310,7 +388,7 @@ export async function PATCH(
       // Code-pending ideas can never go to READY (or QUEUED/ACTIVE, but
       // those are already blocked by the operator map). They're stuck at
       // DRAFT until the strategy is implemented; SHELVED/RETIRED are fine.
-      if (existing.code_pending && next === "READY") {
+      if (existing.strategy_ref.kind !== "REGISTERED" && next === "READY") {
         return NextResponse.json(
           {
             error:
@@ -332,8 +410,8 @@ export async function PATCH(
   let titleValue       = existing.title
   let thesisValue      = existing.thesis
   let sleeveValue      = existing.sleeve
-  let strategyIdValue  = existing.strategy_id
-  let codePendingValue = existing.code_pending === true
+  let strategyIdValue  = existing.strategy_ref.strategy_id ?? ""
+  let codePendingValue = existing.strategy_ref.kind !== "REGISTERED"
   let strategyFamilyValue: string | undefined = existing.strategy_family ?? undefined
   let tagsValue: string[] | undefined = existing.tags ?? undefined
   let paramsValue      = existing.params
@@ -460,6 +538,47 @@ export async function PATCH(
   // Rebuild idea preserving all other fields. Drop the keys when their
   // resolved value is falsy/null — matches the POST route's serialization
   // shape (it only emits these keys when truthy).
+  if (!codePendingValue && !strategyIdValue) {
+    return NextResponse.json(
+      { error: "strategy_id required unless code_pending is true" },
+      { status: 400 },
+    )
+  }
+
+  const strategyRefValue: StrategyRefV2 = codePendingValue
+    ? hasMeaningfulSpecSeed(paramsValue)
+      ? {
+          kind: "SPEC_PENDING",
+          active_spec_id: null,
+          pending_spec_id: null,
+          strategy_id: null,
+          preset_id: null,
+        }
+      : {
+          kind: "NONE",
+          active_spec_id: null,
+          pending_spec_id: null,
+          strategy_id: null,
+          preset_id: null,
+        }
+    : {
+        kind: "REGISTERED",
+        active_spec_id:
+          existing.strategy_ref.kind === "REGISTERED"
+            ? existing.strategy_ref.active_spec_id ?? null
+            : null,
+        pending_spec_id:
+          existing.strategy_ref.kind === "REGISTERED"
+            ? existing.strategy_ref.pending_spec_id ?? null
+            : null,
+        strategy_id: strategyIdValue,
+        preset_id:
+          existing.strategy_ref.kind === "REGISTERED" &&
+          existing.strategy_ref.strategy_id === strategyIdValue
+            ? existing.strategy_ref.preset_id ?? null
+            : null,
+      }
+
   const {
     promotion_target: _pt,
     promote_to_campaign: _pc,
@@ -470,24 +589,29 @@ export async function PATCH(
     strategy_id: _sid,
     code_pending: _cp,
     strategy_family: _sf,
+    strategy_ref: _sr,
+    needs_spec: _ns,
     tags: _tg,
     params: _pa,
     ...rest
   } = existing
-  const updated: IdeaV1 = {
+  const updated: IdeaArtifact = {
     ...rest,
+    schema_version: "research_lab.idea.v2",
     title: titleValue,
     thesis: thesisValue,
     sleeve: sleeveValue,
-    strategy_id: strategyIdValue,
-    status: statusValue,
+    tags: tagsValue ?? [],
     params: paramsValue,
-    ...(strategyFamilyValue && { strategy_family: strategyFamilyValue }),
-    ...(tagsValue && tagsValue.length > 0 && { tags: tagsValue }),
-    ...(codePendingValue && { code_pending: true }),
+    strategy_ref: strategyRefValue,
+    status: statusValue,
+    needs_spec: strategyRefValue.kind === "NONE",
+    strategy_id: strategyRefValue.strategy_id ?? "",
+    strategy_family: strategyRefValue.strategy_id ? strategyFamilyValue ?? null : null,
+    code_pending: strategyRefValue.kind !== "REGISTERED",
     // Promotion fields are meaningless on code-pending — drop them.
-    ...(!codePendingValue && promotionTargetValue && { promotion_target: promotionTargetValue }),
-    ...(!codePendingValue && promoteToCampaignValue && { promote_to_campaign: true }),
+    ...(strategyRefValue.kind === "REGISTERED" && promotionTargetValue && { promotion_target: promotionTargetValue }),
+    ...(strategyRefValue.kind === "REGISTERED" && promoteToCampaignValue && { promote_to_campaign: true }),
   }
 
   // Compose a concise commit message that reflects what actually changed.
@@ -600,15 +724,39 @@ export async function DELETE(
   ctx: { params: Promise<{ id: string }> },
 ) {
   const { id } = await ctx.params
-  const ideaId = decodeURIComponent(id)
+  let ideaId: string
+  try {
+    ideaId = safePathSegment(decodeURIComponent(id), "idea_id")
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid idea_id" },
+      { status: 400 },
+    )
+  }
 
   // Scope can come via query string for the DELETE method; default to phase-1.
   const url = new URL(req.url)
-  const scope: ScopeTriple = {
-    user_id: url.searchParams.get("user_id") ?? PHASE_1_DEFAULT_SCOPE.user_id,
-    account_id: url.searchParams.get("account_id") ?? PHASE_1_DEFAULT_SCOPE.account_id,
-    strategy_group_id:
-      url.searchParams.get("strategy_group_id") ?? PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+  let scope: ScopeTriple
+  try {
+    scope = {
+      user_id: safePathSegment(
+        url.searchParams.get("user_id") ?? PHASE_1_DEFAULT_SCOPE.user_id,
+        "scope.user_id",
+      ),
+      account_id: safePathSegment(
+        url.searchParams.get("account_id") ?? PHASE_1_DEFAULT_SCOPE.account_id,
+        "scope.account_id",
+      ),
+      strategy_group_id: safePathSegment(
+        url.searchParams.get("strategy_group_id") ?? PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+        "scope.strategy_group_id",
+      ),
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid scope" },
+      { status: 400 },
+    )
   }
 
   const existing = await loadIdeaById(ideaId, scope)

@@ -8,12 +8,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-import type { IdeaV1, ResearchSleeve } from "@/lib/research-lab-contracts"
+import type { IdeaArtifact, ResearchSleeve } from "@/lib/research-lab-contracts"
 
 import type { StrategyOption } from "./idea-form"
 
 interface Props {
-  idea: IdeaV1
+  idea: IdeaArtifact
   strategyOptions: StrategyOption[]
 }
 

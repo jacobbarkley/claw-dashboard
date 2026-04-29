@@ -4,7 +4,7 @@
 //
 // Shown on Lab-spawned campaigns (origin.kind === "LAB_IDEA") that rolled
 // up without a promotion target. Writes back to the idea YAML via
-// PATCH /api/research/ideas/[id]; Codex's rollup producer picks up the
+// POST /api/research/ideas/[id]/promotion; Codex's rollup producer picks up the
 // change on its next pass and re-emits the manifest with a populated
 // promotion_readiness block.
 //
@@ -54,8 +54,8 @@ export function AssignPromotionSlot({ ideaId }: { ideaId: string }) {
       return
     }
     try {
-      const res = await fetch(`/api/research/ideas/${encodeURIComponent(ideaId)}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/research/ideas/${encodeURIComponent(ideaId)}/promotion`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           promotion_target: {

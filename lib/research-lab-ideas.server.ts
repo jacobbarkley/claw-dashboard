@@ -1,4 +1,4 @@
-// Server-side loader for research-lab ideas (idea.v1).
+// Server-side loader for research-lab ideas (idea.v1 + idea.v2).
 //
 // Ideas are dashboard-authored, git-tracked, stored as YAML at:
 //   data/research_lab/<user>/<account>/<group>/ideas/<idea_id>.yaml
@@ -26,9 +26,11 @@ import path from "path"
 import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
-import type { IdeaV1, ScopeTriple } from "./research-lab-contracts"
+import type { IdeaArtifact, IdeaV1, IdeaV2, ScopeTriple, StrategyRefV2 } from "./research-lab-contracts"
 
 const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
+const PRESET_INDEX_PATH = path.join(process.cwd(), "data", "research_lab", "presets", "_index.json")
+const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
 
 function ideasDir(scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE): string {
   return path.join(
@@ -46,12 +48,102 @@ export function ideaPath(ideaId: string, scope: ScopeTriple = PHASE_1_DEFAULT_SC
   return path.join(ideasDir(scope), `${ideaId}.yaml`)
 }
 
-async function readYamlIfPresent(absPath: string): Promise<IdeaV1 | null> {
+async function strategyFamilyById(): Promise<Map<string, string>> {
+  try {
+    const raw = await fs.readFile(PRESET_INDEX_PATH, "utf-8")
+    const parsed = JSON.parse(raw) as { presets?: { strategy_id?: string; strategy_family?: string }[] }
+    const map = new Map<string, string>()
+    for (const preset of parsed.presets ?? []) {
+      if (preset.strategy_id && preset.strategy_family && !map.has(preset.strategy_id)) {
+        map.set(preset.strategy_id, preset.strategy_family)
+      }
+    }
+    return map
+  } catch {
+    return new Map()
+  }
+}
+
+function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
+  const spec = params.spec
+  if (typeof spec === "string") return spec.trim().length > 0
+  return spec != null
+}
+
+function normalizeIdeaArtifact(
+  parsed: unknown,
+  familyByStrategy: Map<string, string>,
+): IdeaArtifact | null {
+  if (!parsed || typeof parsed !== "object") return null
+  const raw = parsed as Record<string, unknown>
+  const schemaVersion = raw.schema_version ?? raw.schema
+  if (schemaVersion === "research_lab.idea.v2") {
+    const { schema: _schema, ...canonicalRaw } = raw
+    const idea = canonicalRaw as unknown as IdeaV2
+    const strategyId = idea.strategy_ref?.strategy_id ?? ""
+    const strategyFamily = strategyId ? familyByStrategy.get(strategyId) ?? null : null
+    return {
+      ...idea,
+      schema_version: "research_lab.idea.v2",
+      tags: idea.tags ?? [],
+      params: idea.params ?? {},
+      needs_spec: idea.needs_spec === true,
+      strategy_id: strategyId,
+      strategy_family: strategyFamily,
+      code_pending: idea.strategy_ref?.kind !== "REGISTERED",
+    }
+  }
+
+  const v1 = raw as unknown as IdeaV1
+  const params = v1.params ?? {}
+  const codePending = v1.code_pending === true
+  const strategyId = typeof v1.strategy_id === "string" ? v1.strategy_id.trim() : ""
+  let strategyRef: StrategyRefV2
+  let needsSpec = false
+  if (codePending && hasMeaningfulSpecSeed(params)) {
+    strategyRef = { kind: "SPEC_PENDING", active_spec_id: null, pending_spec_id: null, strategy_id: null, preset_id: null }
+  } else if (codePending) {
+    strategyRef = { kind: "NONE", active_spec_id: null, pending_spec_id: null, strategy_id: null, preset_id: null }
+    needsSpec = true
+  } else if (strategyId) {
+    strategyRef = { kind: "REGISTERED", active_spec_id: null, pending_spec_id: null, strategy_id: strategyId, preset_id: null }
+  } else {
+    strategyRef = { kind: "NONE", active_spec_id: null, pending_spec_id: null, strategy_id: null, preset_id: null }
+    needsSpec = true
+  }
+  const derivedStrategyId = strategyRef.strategy_id ?? ""
+  return {
+    schema_version: "research_lab.idea.v2",
+    idea_id: v1.idea_id,
+    user_id: v1.user_id,
+    account_id: v1.account_id,
+    strategy_group_id: v1.strategy_group_id,
+    title: v1.title,
+    thesis: v1.thesis,
+    sleeve: v1.sleeve,
+    tags: v1.tags ?? [],
+    params,
+    strategy_ref: strategyRef,
+    status: v1.status,
+    needs_spec: needsSpec,
+    created_at: v1.created_at,
+    created_by: v1.created_by,
+    source: v1.source,
+    provenance: v1.provenance ?? null,
+    promote_to_campaign: v1.promote_to_campaign === true,
+    promotion_target: v1.promotion_target ?? null,
+    strategy_id: derivedStrategyId,
+    strategy_family:
+      derivedStrategyId ? familyByStrategy.get(derivedStrategyId) ?? v1.strategy_family ?? null : null,
+    code_pending: strategyRef.kind !== "REGISTERED",
+  }
+}
+
+async function readYamlIfPresent(absPath: string): Promise<IdeaArtifact | null> {
   try {
     const raw = await fs.readFile(absPath, "utf-8")
     const parsed = yaml.load(raw)
-    if (parsed && typeof parsed === "object") return parsed as IdeaV1
-    return null
+    return normalizeIdeaArtifact(parsed, await strategyFamilyById())
   } catch (err) {
     if ((err as NodeJS.ErrnoException)?.code === "ENOENT") return null
     console.error(`[research-lab-ideas] failed to read ${absPath}:`, err)
@@ -66,15 +158,14 @@ function ideaRepoRelpath(ideaId: string, scope: ScopeTriple): string {
 async function fetchYamlFromGithub(
   ideaId: string,
   scope: ScopeTriple,
-): Promise<IdeaV1 | null> {
+): Promise<IdeaArtifact | null> {
   const url = `${GITHUB_RAW}/${ideaRepoRelpath(ideaId, scope)}`
   try {
     const res = await fetch(url, { cache: "no-store" })
     if (!res.ok) return null
     const text = await res.text()
     const parsed = yaml.load(text)
-    if (parsed && typeof parsed === "object") return parsed as IdeaV1
-    return null
+    return normalizeIdeaArtifact(parsed, await strategyFamilyById())
   } catch (err) {
     console.error(`[research-lab-ideas] github fallback failed for ${ideaId}:`, err)
     return null
@@ -84,8 +175,8 @@ async function fetchYamlFromGithub(
 export async function loadIdeaById(
   ideaId: string,
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
-): Promise<IdeaV1 | null> {
-  if (!ideaId || !/^[A-Za-z0-9_.:-]+$/.test(ideaId)) return null
+): Promise<IdeaArtifact | null> {
+  if (!ideaId || !SAFE_ID.test(ideaId)) return null
   const local = await readYamlIfPresent(ideaPath(ideaId, scope))
   if (local) return local
   // Local FS miss — could be a brand-new idea whose Vercel deploy hasn't
@@ -96,7 +187,7 @@ export async function loadIdeaById(
 
 export async function loadIdeas(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
-): Promise<IdeaV1[]> {
+): Promise<IdeaArtifact[]> {
   const dir = ideasDir(scope)
   let entries: string[]
   try {
@@ -110,5 +201,5 @@ export async function loadIdeas(
   const ideas = await Promise.all(
     yamlFiles.map(f => readYamlIfPresent(path.join(dir, f))),
   )
-  return ideas.filter((i): i is IdeaV1 => i != null)
+  return ideas.filter((i): i is IdeaArtifact => i != null)
 }

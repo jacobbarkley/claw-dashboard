@@ -1,12 +1,12 @@
 // POST /api/research/ideas
 //
-// Create a new idea.v1. Commits the YAML file to the dashboard repo under
+// Create a new idea.v2. Commits the YAML file to the dashboard repo under
 // data/research_lab/<scope>/ideas/<idea_id>.yaml so the trading-bot
 // worker can read it via git history on its rollup-producer sync.
 //
 // Guardrails (per spec §12 + Codex's idea-factory notes):
-//   - strategy_id must already exist — validated against the preset index
-//     so operators can't hand-author unsupported strategies.
+//   - registered strategy refs must already exist — validated against the
+//     preset index so operators can't hand-author unsupported strategies.
 //   - promotion_target is optional here; the campaign detail page's
 //     "Assign promotion slot" action is the alternative assignment path.
 //   - The route only persists the artifact. No auto-submit of jobs.
@@ -23,14 +23,16 @@ import yaml from "js-yaml"
 import type {
   IdeaSource,
   IdeaStatus,
-  IdeaV1,
+  IdeaArtifact,
   ResearchSleeve,
   ScopeTriple,
+  StrategyRefV2,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
 
 // ─── ULID-ish id generator (same shape as campaign-request route) ──────
 
@@ -71,13 +73,6 @@ interface SubmitBody {
   code_pending?: unknown
 }
 
-// Sentinel strategy_id used when an operator captures an idea before any
-// executable strategy exists. The IdeaV1 contract requires strategy_id to
-// be a string, so we use a recognizable token rather than null. The worker
-// is expected to skip ideas with this sentinel; the dashboard always pairs
-// it with code_pending: true so it's unambiguous either way.
-const CODE_PENDING_STRATEGY_ID = "code_pending"
-
 const VALID_SLEEVES: ResearchSleeve[] = ["STOCKS", "CRYPTO", "OPTIONS"]
 const VALID_STATUSES: IdeaStatus[] = ["DRAFT", "READY", "QUEUED", "ACTIVE", "SHELVED", "RETIRED"]
 const VALID_SOURCES: IdeaSource[] = ["CONVERSATION", "MANUAL", "IMPORTED"]
@@ -86,13 +81,35 @@ function normalizeScope(input: unknown): ScopeTriple {
   if (!input || typeof input !== "object") return { ...PHASE_1_DEFAULT_SCOPE }
   const s = input as Partial<Record<keyof ScopeTriple, unknown>>
   return {
-    user_id: typeof s.user_id === "string" ? s.user_id : PHASE_1_DEFAULT_SCOPE.user_id,
-    account_id: typeof s.account_id === "string" ? s.account_id : PHASE_1_DEFAULT_SCOPE.account_id,
+    user_id: safePathSegment(
+      typeof s.user_id === "string" ? s.user_id : PHASE_1_DEFAULT_SCOPE.user_id,
+      "scope.user_id",
+    ),
+    account_id: safePathSegment(
+      typeof s.account_id === "string" ? s.account_id : PHASE_1_DEFAULT_SCOPE.account_id,
+      "scope.account_id",
+    ),
     strategy_group_id:
-      typeof s.strategy_group_id === "string"
-        ? s.strategy_group_id
-        : PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+      safePathSegment(
+        typeof s.strategy_group_id === "string"
+          ? s.strategy_group_id
+          : PHASE_1_DEFAULT_SCOPE.strategy_group_id,
+        "scope.strategy_group_id",
+      ),
   }
+}
+
+function safePathSegment(value: string, label: string): string {
+  const trimmed = value.trim()
+  if (
+    !trimmed ||
+    trimmed === "." ||
+    trimmed === ".." ||
+    !SAFE_PATH_SEGMENT.test(trimmed)
+  ) {
+    throw new Error(`${label} must be a safe path segment`)
+  }
+  return trimmed
 }
 
 function normalizeTags(input: unknown): string[] | undefined {
@@ -141,21 +158,21 @@ function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
 }
 
 async function persistLocal(
-  idea: IdeaV1,
+  idea: IdeaArtifact,
   relpath: string,
 ): Promise<{ mode: "local"; file: string; commit_sha: null }> {
   const absolutePath = path.join(process.cwd(), relpath)
   await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(idea, { noRefs: true, lineWidth: 100 }))
+  await fs.writeFile(absolutePath, yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 }))
   return { mode: "local", file: relpath, commit_sha: null }
 }
 
 async function persistGithub(
-  idea: IdeaV1,
+  idea: IdeaArtifact,
   relpath: string,
   token: string,
 ): Promise<{ mode: "github"; file: string; commit_sha: string }> {
-  const yamlText = yaml.dump(idea, { noRefs: true, lineWidth: 100 })
+  const yamlText = yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 })
   const content = Buffer.from(yamlText, "utf-8").toString("base64")
   const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
     method: "PUT",
@@ -181,6 +198,23 @@ async function persistGithub(
   return { mode: "github", file: relpath, commit_sha }
 }
 
+function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
+  const spec = params.spec
+  if (typeof spec === "string") return spec.trim().length > 0
+  return spec != null
+}
+
+function stripViewFields(idea: IdeaArtifact): Record<string, unknown> {
+  const {
+    schema: _schema,
+    strategy_id: _strategyId,
+    strategy_family: _strategyFamily,
+    code_pending: _codePending,
+    ...persisted
+  } = idea as IdeaArtifact & { schema?: unknown }
+  return persisted
+}
+
 // ─── Handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -197,7 +231,7 @@ export async function POST(req: NextRequest) {
   const sleeveRaw = typeof body.sleeve === "string" ? body.sleeve.trim().toUpperCase() : ""
   const codePending = body.code_pending === true
   const strategyIdInput = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
-  const strategyId = codePending ? CODE_PENDING_STRATEGY_ID : strategyIdInput
+  const strategyId = codePending ? "" : strategyIdInput
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 })
   if (!thesis) return NextResponse.json({ error: "thesis required" }, { status: 400 })
@@ -224,7 +258,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Optional fields
-  const scope = normalizeScope(body.scope)
+  let scope: ScopeTriple
+  try {
+    scope = normalizeScope(body.scope)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid scope" },
+      { status: 400 },
+    )
+  }
   const actor = typeof body.actor === "string" && body.actor.trim() ? body.actor.trim() : "jacob"
   const statusIn = typeof body.status === "string" ? body.status.trim().toUpperCase() : "DRAFT"
   // Code-pending ideas must stay DRAFT — there's no executable strategy
@@ -248,48 +290,106 @@ export async function POST(req: NextRequest) {
 
   // promotion_target is optional — if present, shape-validate. (Per spec,
   // these stay advisory suggestions until operator confirms at submit.)
-  let promotionTarget: IdeaV1["promotion_target"] = null
-  if (body.promotion_target && typeof body.promotion_target === "object") {
+  let promotionTarget: IdeaArtifact["promotion_target"] = null
+  if (body.promotion_target != null) {
+    if (typeof body.promotion_target !== "object") {
+      return NextResponse.json(
+        { error: "promotion_target must be an object or null" },
+        { status: 400 },
+      )
+    }
     const pt = body.promotion_target as Record<string, unknown>
     const roleId = typeof pt.passport_role_id === "string" ? pt.passport_role_id.trim() : ""
     const targetAction =
       typeof pt.target_action === "string" ? pt.target_action.trim().toUpperCase() : ""
-    if (roleId && (targetAction === "NEW_RECORD" || targetAction === "REPLACE_EXISTING")) {
-      promotionTarget = {
-        passport_role_id: roleId,
-        target_action: targetAction as "NEW_RECORD" | "REPLACE_EXISTING",
-        supersedes_record_id:
-          typeof pt.supersedes_record_id === "string" && pt.supersedes_record_id.trim()
-            ? pt.supersedes_record_id.trim()
-            : null,
-      }
+    if (!roleId) return NextResponse.json({ error: "passport_role_id required" }, { status: 400 })
+    if (targetAction !== "NEW_RECORD" && targetAction !== "REPLACE_EXISTING") {
+      return NextResponse.json(
+        { error: "target_action must be NEW_RECORD or REPLACE_EXISTING" },
+        { status: 400 },
+      )
+    }
+    const supersedesRaw =
+      typeof pt.supersedes_record_id === "string" ? pt.supersedes_record_id.trim() : ""
+    if (targetAction === "REPLACE_EXISTING" && !supersedesRaw) {
+      return NextResponse.json(
+        { error: "supersedes_record_id required when target_action is REPLACE_EXISTING" },
+        { status: 400 },
+      )
+    }
+    if (targetAction === "NEW_RECORD" && supersedesRaw) {
+      return NextResponse.json(
+        { error: "supersedes_record_id must be omitted when target_action is NEW_RECORD" },
+        { status: 400 },
+      )
+    }
+    promotionTarget = {
+      passport_role_id: roleId,
+      target_action: targetAction as "NEW_RECORD" | "REPLACE_EXISTING",
+      supersedes_record_id: targetAction === "REPLACE_EXISTING" ? supersedesRaw : null,
     }
   }
 
   const ideaId =
     typeof body.idea_id === "string" && body.idea_id.trim() ? body.idea_id.trim() : `idea_${ulid()}`
+  try {
+    safePathSegment(ideaId, "idea_id")
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid idea_id" },
+      { status: 400 },
+    )
+  }
   const createdAt = new Date().toISOString()
 
-  const idea: IdeaV1 = {
-    schema_version: "research_lab.idea.v1",
+  const strategyRef: StrategyRefV2 = codePending
+    ? hasMeaningfulSpecSeed(params)
+      ? {
+          kind: "SPEC_PENDING",
+          active_spec_id: null,
+          pending_spec_id: null,
+          strategy_id: null,
+          preset_id: null,
+        }
+      : {
+          kind: "NONE",
+          active_spec_id: null,
+          pending_spec_id: null,
+          strategy_id: null,
+          preset_id: null,
+        }
+    : {
+        kind: "REGISTERED",
+        active_spec_id: null,
+        pending_spec_id: null,
+        strategy_id: strategyId,
+        preset_id: null,
+      }
+
+  const idea: IdeaArtifact = {
+    schema_version: "research_lab.idea.v2",
     idea_id: ideaId,
     ...scope,
     title,
     thesis,
     sleeve: sleeveRaw as ResearchSleeve,
-    strategy_id: strategyId,
+    tags: tags ?? [],
+    params,
+    strategy_ref: strategyRef,
     status,
+    needs_spec: strategyRef.kind === "NONE",
     created_at: createdAt,
     created_by: actor,
     source,
-    params,
-    ...(strategyFamily && { strategy_family: strategyFamily }),
-    ...(tags && { tags }),
+    // Compatibility fields for existing UI readers. stripViewFields()
+    // keeps these out of persisted idea.v2 YAML.
+    strategy_id: strategyId,
+    strategy_family: strategyId ? strategyFamily ?? null : null,
+    code_pending: strategyRef.kind !== "REGISTERED",
     // Promotion fields are meaningless on code-pending ideas — drop them
     // even if the caller sent them.
     ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
     ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
-    ...(codePending && { code_pending: true }),
   }
 
   const relpath = ideaRelpath(scope, ideaId)

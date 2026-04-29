@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation"
 import type { IdeaStatus } from "@/lib/research-lab-contracts"
 
 // Mirrors the OPERATOR_ALLOWED_TRANSITIONS map in
-// app/api/research/ideas/[id]/route.ts. Keep these in lockstep.
+// app/api/research/ideas/[id]/transitions/route.ts. Keep these in lockstep.
 const OPERATOR_ALLOWED_TRANSITIONS: Record<IdeaStatus, IdeaStatus[]> = {
   DRAFT:   ["READY", "SHELVED", "RETIRED"],
   READY:   ["DRAFT", "SHELVED", "RETIRED"],
@@ -101,8 +101,8 @@ export function IdeaStatusControl({
     setBusy(next)
     setError(null)
     try {
-      const res = await fetch(`/api/research/ideas/${encodeURIComponent(ideaId)}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/research/ideas/${encodeURIComponent(ideaId)}/transitions`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: next }),
       })

@@ -31,6 +31,19 @@ export type IdeaStatus =
 
 export type IdeaSource = "CONVERSATION" | "MANUAL" | "IMPORTED"
 
+export type StrategyRefKind = "NONE" | "SPEC_PENDING" | "REGISTERED"
+
+export type SpecAuthoringMode = "AI_DRAFTED" | "OPERATOR_DRAFTED"
+
+export type StrategySpecState =
+  | "DRAFTING"
+  | "AWAITING_APPROVAL"
+  | "APPROVED"
+  | "IMPLEMENTING"
+  | "REGISTERED"
+  | "REJECTED"
+  | "SUPERSEDED"
+
 // Phase 1a/1b allowed job states. CANCELLED is reserved but not exercised
 // until Phase 1c.
 export type JobState =
@@ -129,6 +142,71 @@ export interface IdeaV1 extends ScopeTriple {
    *  strategy_id is updated to the registered name and code_pending is
    *  cleared. */
   code_pending?: boolean
+}
+
+// ─── idea.v2 / strategy_spec.v1 ────────────────────────────────────────────
+
+export interface StrategyRefV2 {
+  kind: StrategyRefKind
+  active_spec_id?: string | null
+  /** Only meaningful while kind === REGISTERED during a re-spec. */
+  pending_spec_id?: string | null
+  strategy_id?: string | null
+  preset_id?: string | null
+}
+
+export interface IdeaV2 extends ScopeTriple {
+  schema_version: "research_lab.idea.v2"
+  idea_id: string
+  title: string
+  thesis: string
+  sleeve: ResearchSleeve
+  tags?: string[] | null
+  params: Record<string, unknown>
+  strategy_ref: StrategyRefV2
+  status: IdeaStatus
+  /** Operator intent flag, only meaningful when strategy_ref.kind === NONE. */
+  needs_spec?: boolean
+  created_at: string
+  created_by: string
+  source: IdeaSource
+  provenance?: ResearchLabProvenance | null
+  promote_to_campaign?: boolean
+  promotion_target?: IdeaPromotionTarget | null
+}
+
+export interface StrategySpecV1 extends ScopeTriple {
+  schema_version: "research_lab.strategy_spec.v1"
+  spec_id: string
+  spec_version: number
+  idea_id: string
+  created_at: string
+  authoring_mode: SpecAuthoringMode
+  authored_by: string
+  state: StrategySpecState
+  signal_logic: string
+  universe: Record<string, unknown>
+  entry_rules: string
+  exit_rules: string
+  risk_model: Record<string, unknown>
+  sweep_params: Record<string, unknown>
+  required_data: string[]
+  benchmark?: string | null
+  acceptance_criteria: Record<string, unknown>
+  candidate_strategy_family?: string | null
+  implementation_notes?: string | null
+  parent_spec_id?: string | null
+  registered_strategy_id?: string | null
+}
+
+/** In-memory adapter shape used while v1 YAML and v2 YAML coexist. */
+export interface IdeaArtifact extends IdeaV2 {
+  /** Compatibility value for existing UI consumers; derived from strategy_ref. */
+  strategy_id: string
+  /** Joined at read-time from preset metadata; never persisted on idea.v2. */
+  strategy_family?: string | null
+  /** Compatibility value for the old code-pending shell. */
+  code_pending: boolean
 }
 
 // ─── preset.v1 ──────────────────────────────────────────────────────────────
