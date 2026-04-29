@@ -41,13 +41,21 @@ interface Props {
   ideaId: string
   currentStatus: IdeaStatus
   codePending: boolean
+  // Whether the "Convert to code-pending" quick action is available.
+  // Server enforces the same rule (DRAFT-only + no Lab campaign).
+  convertToCodePendingAvailable: boolean
 }
 
 // Hard-delete is only offered from these states. Server still enforces
 // the same rule + the campaign-linked check.
 const DELETABLE_FROM: IdeaStatus[] = ["DRAFT", "SHELVED"]
 
-export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props) {
+export function IdeaStatusControl({
+  ideaId,
+  currentStatus,
+  codePending,
+  convertToCodePendingAvailable,
+}: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState<IdeaStatus | "DELETE" | null>(null)
@@ -132,6 +140,29 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
       }
       setBusy(null)
       setDeleted(true)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error")
+      setBusy(null)
+    }
+  }
+
+  const convertToCodePending = async () => {
+    setBusy("DELETE") // reuse the busy guard so other items disable
+    setError(null)
+    try {
+      const res = await fetch(`/api/research/ideas/${encodeURIComponent(ideaId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code_pending: true }),
+      })
+      const data = (await res.json()) as { ok?: boolean; error?: string }
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? `HTTP ${res.status}`)
+        setBusy(null)
+        return
+      }
+      setBusy(null)
+      setPendingChange("Converted to code-pending")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error")
       setBusy(null)
@@ -293,6 +324,54 @@ export function IdeaStatusControl({ ideaId, currentStatus, codePending }: Props)
               </button>
             )
           })}
+          {!deleted && !pendingChange && convertToCodePendingAvailable && !codePending && (
+            <>
+              <div
+                style={{
+                  height: 1,
+                  background: "var(--vr-line)",
+                  margin: "4px 6px",
+                }}
+              />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={convertToCodePending}
+                disabled={busy != null}
+                style={{
+                  textAlign: "left",
+                  padding: "8px 10px",
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "var(--r-inset)",
+                  color: "var(--vr-cream)",
+                  cursor: busy != null ? "not-allowed" : "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                }}
+                onMouseEnter={e => {
+                  if (busy == null) e.currentTarget.style.background = "var(--vr-line)"
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "transparent"
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--ff-serif)",
+                    fontStyle: "italic",
+                    fontSize: 13,
+                  }}
+                >
+                  Convert to code-pending
+                </span>
+                <span style={{ fontSize: 10.5, color: "var(--vr-cream-mute)" }}>
+                  Clears the strategy assignment. Use when no registered strategy fits the thesis.
+                </span>
+              </button>
+            </>
+          )}
           {!deleted && !pendingChange && deletable && (
             <>
               <div

@@ -7,10 +7,10 @@
 //     SHELVED, RETIRED). System-driven transitions (READY → QUEUED →
 //     ACTIVE) are NOT permitted here; those are written by the lab
 //     pipeline. Code-pending ideas are locked out of READY.
-//
-// Everything else (thesis, strategy_id, sleeve, params) is still locked
-// once the idea is authored. Operators should create a new idea if those
-// fundamentals need to change.
+//   - draft fields (title, thesis, sleeve, strategy_id, code_pending,
+//     strategy_family, tags, params): editable while the idea is in
+//     DRAFT and no Lab campaign references it. Once the idea is
+//     "released" (READY) or anything has run against it, these lock.
 //
 // Persistence mirrors the POST route: GitHub Contents API when
 // GITHUB_TOKEN is set, local FS otherwise (dev path).
@@ -25,11 +25,15 @@ import type {
   IdeaPromotionTarget,
   IdeaStatus,
   IdeaV1,
+  ResearchSleeve,
   ScopeTriple,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 import { ideaPath, loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
+
+const VALID_SLEEVES: ResearchSleeve[] = ["STOCKS", "CRYPTO", "OPTIONS"]
+const CODE_PENDING_STRATEGY_ID = "__code_pending__"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
@@ -39,6 +43,48 @@ interface PatchBody {
   promote_to_campaign?: unknown
   status?: unknown
   scope?: unknown
+  // Draft-only edits (locked once status leaves DRAFT or a Lab campaign
+  // exists for the idea):
+  title?: unknown
+  thesis?: unknown
+  sleeve?: unknown
+  strategy_id?: unknown
+  code_pending?: unknown
+  strategy_family?: unknown
+  tags?: unknown
+  params?: unknown
+}
+
+// Mirrors the POST route's preset registry validator. Duplicated rather
+// than extracted to keep the import surface small; the function is six
+// lines.
+async function loadRegisteredStrategies(): Promise<Set<string>> {
+  try {
+    const indexPath = path.join(process.cwd(), "data", "research_lab", "presets", "_index.json")
+    const raw = await fs.readFile(indexPath, "utf-8")
+    const parsed = JSON.parse(raw) as { presets?: { strategy_id?: string }[] }
+    const ids = new Set<string>()
+    for (const p of parsed.presets ?? []) {
+      if (p.strategy_id) ids.add(p.strategy_id)
+    }
+    return ids
+  } catch {
+    return new Set<string>()
+  }
+}
+
+function normalizeTags(input: unknown): string[] | undefined {
+  if (!Array.isArray(input)) return undefined
+  const tags = input
+    .filter((t): t is string => typeof t === "string")
+    .map(t => t.trim())
+    .filter(t => t.length > 0)
+  return tags
+}
+
+function normalizeParams(input: unknown): Record<string, unknown> | undefined {
+  if (!input || typeof input !== "object") return undefined
+  return input as Record<string, unknown>
 }
 
 // Operator-allowed transitions. Anything not listed here returns 400.
@@ -185,9 +231,21 @@ export async function PATCH(
   const hasPromotionTarget = "promotion_target" in body
   const hasPromoteToCampaign = "promote_to_campaign" in body
   const hasStatus = "status" in body
-  if (!hasPromotionTarget && !hasPromoteToCampaign && !hasStatus) {
+  // Draft-only edit fields. If any of these are present, we'll need to
+  // verify the lock condition before applying them.
+  const DRAFT_FIELDS = [
+    "title", "thesis", "sleeve", "strategy_id", "code_pending",
+    "strategy_family", "tags", "params",
+  ] as const
+  const hasDraftEdits = DRAFT_FIELDS.some(k => k in body)
+  if (!hasPromotionTarget && !hasPromoteToCampaign && !hasStatus && !hasDraftEdits) {
     return NextResponse.json(
-      { error: "promotion_target, promote_to_campaign, or status required" },
+      {
+        error:
+          "At least one mutable field required: " +
+          "promotion_target, promote_to_campaign, status, or any draft field " +
+          `(${DRAFT_FIELDS.join(", ")}).`,
+      },
       { status: 400 },
     )
   }
@@ -267,15 +325,157 @@ export async function PATCH(
     }
   }
 
+  // Apply draft field edits if any are present. Locked once status is
+  // anything other than DRAFT or once a Lab campaign references the idea
+  // (downstream artifacts would lose their meaning if we mutated the
+  // thesis/strategy underneath them).
+  let titleValue       = existing.title
+  let thesisValue      = existing.thesis
+  let sleeveValue      = existing.sleeve
+  let strategyIdValue  = existing.strategy_id
+  let codePendingValue = existing.code_pending === true
+  let strategyFamilyValue: string | undefined = existing.strategy_family ?? undefined
+  let tagsValue: string[] | undefined = existing.tags ?? undefined
+  let paramsValue      = existing.params
+  const draftFieldsTouched: string[] = []
+  if (hasDraftEdits) {
+    if (existing.status !== "DRAFT") {
+      return NextResponse.json(
+        {
+          error:
+            `Idea is in ${existing.status} state — title, thesis, strategy, sleeve, params and tags ` +
+            `are locked once an idea moves out of DRAFT. Move it back to DRAFT first if you need to edit.`,
+        },
+        { status: 409 },
+      )
+    }
+    const campaignExists = await hasLabCampaignForIdea(ideaId)
+    if (campaignExists) {
+      return NextResponse.json(
+        {
+          error:
+            "A Lab campaign already exists for this idea — its thesis and strategy are now locked. " +
+            "Create a new idea if you need different fundamentals.",
+        },
+        { status: 409 },
+      )
+    }
+
+    // Validate + normalize each provided field.
+    if ("title" in body) {
+      const v = typeof body.title === "string" ? body.title.trim() : ""
+      if (!v) return NextResponse.json({ error: "title can't be empty" }, { status: 400 })
+      titleValue = v
+      draftFieldsTouched.push("title")
+    }
+    if ("thesis" in body) {
+      const v = typeof body.thesis === "string" ? body.thesis.trim() : ""
+      if (!v) return NextResponse.json({ error: "thesis can't be empty" }, { status: 400 })
+      thesisValue = v
+      draftFieldsTouched.push("thesis")
+    }
+    if ("sleeve" in body) {
+      const v = typeof body.sleeve === "string" ? body.sleeve.trim().toUpperCase() : ""
+      if (!VALID_SLEEVES.includes(v as ResearchSleeve)) {
+        return NextResponse.json(
+          { error: "sleeve must be STOCKS | CRYPTO | OPTIONS" },
+          { status: 400 },
+        )
+      }
+      sleeveValue = v as ResearchSleeve
+      draftFieldsTouched.push("sleeve")
+    }
+    if ("code_pending" in body) {
+      if (typeof body.code_pending !== "boolean") {
+        return NextResponse.json(
+          { error: "code_pending must be a boolean" },
+          { status: 400 },
+        )
+      }
+      codePendingValue = body.code_pending
+      draftFieldsTouched.push("code_pending")
+    }
+    if ("strategy_id" in body) {
+      const v = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
+      // When code-pending, strategy_id intentionally clears.
+      if (codePendingValue) {
+        strategyIdValue = ""
+      } else {
+        if (!v) {
+          return NextResponse.json(
+            { error: "strategy_id required unless code_pending is true" },
+            { status: 400 },
+          )
+        }
+        if (v !== CODE_PENDING_STRATEGY_ID) {
+          const registered = await loadRegisteredStrategies()
+          if (registered.size > 0 && !registered.has(v)) {
+            return NextResponse.json(
+              {
+                error: `strategy_id "${v}" is not registered. Valid options: ${[...registered].join(", ")}`,
+              },
+              { status: 400 },
+            )
+          }
+        }
+        strategyIdValue = v
+      }
+      draftFieldsTouched.push("strategy_id")
+    } else if ("code_pending" in body && codePendingValue) {
+      // Toggling on code_pending without explicitly clearing strategy_id —
+      // do it for the operator so the artifact stays coherent.
+      strategyIdValue = ""
+      if (!draftFieldsTouched.includes("strategy_id")) {
+        draftFieldsTouched.push("strategy_id (cleared)")
+      }
+    }
+    if ("strategy_family" in body) {
+      const v = typeof body.strategy_family === "string" ? body.strategy_family.trim() : ""
+      strategyFamilyValue = v || undefined
+      draftFieldsTouched.push("strategy_family")
+    }
+    if ("tags" in body) {
+      tagsValue = normalizeTags(body.tags)
+      draftFieldsTouched.push("tags")
+    }
+    if ("params" in body) {
+      const v = normalizeParams(body.params)
+      paramsValue = v ?? {}
+      draftFieldsTouched.push("params")
+    }
+  }
+
   // Rebuild idea preserving all other fields. Drop the keys when their
   // resolved value is falsy/null — matches the POST route's serialization
   // shape (it only emits these keys when truthy).
-  const { promotion_target: _pt, promote_to_campaign: _pc, status: _s, ...rest } = existing
+  const {
+    promotion_target: _pt,
+    promote_to_campaign: _pc,
+    status: _s,
+    title: _t,
+    thesis: _th,
+    sleeve: _sl,
+    strategy_id: _sid,
+    code_pending: _cp,
+    strategy_family: _sf,
+    tags: _tg,
+    params: _pa,
+    ...rest
+  } = existing
   const updated: IdeaV1 = {
     ...rest,
+    title: titleValue,
+    thesis: thesisValue,
+    sleeve: sleeveValue,
+    strategy_id: strategyIdValue,
     status: statusValue,
-    ...(promotionTargetValue && { promotion_target: promotionTargetValue }),
-    ...(promoteToCampaignValue && { promote_to_campaign: true }),
+    params: paramsValue,
+    ...(strategyFamilyValue && { strategy_family: strategyFamilyValue }),
+    ...(tagsValue && tagsValue.length > 0 && { tags: tagsValue }),
+    ...(codePendingValue && { code_pending: true }),
+    // Promotion fields are meaningless on code-pending — drop them.
+    ...(!codePendingValue && promotionTargetValue && { promotion_target: promotionTargetValue }),
+    ...(!codePendingValue && promoteToCampaignValue && { promote_to_campaign: true }),
   }
 
   // Compose a concise commit message that reflects what actually changed.
@@ -283,6 +483,7 @@ export async function PATCH(
   if (statusChanged) changeNotes.push(`status → ${statusValue}`)
   if (hasPromotionTarget) changeNotes.push(promotionTargetValue ? "assign promotion slot" : "clear promotion slot")
   if (hasPromoteToCampaign) changeNotes.push(`promote_to_campaign=${Boolean(promoteToCampaignValue)}`)
+  if (draftFieldsTouched.length > 0) changeNotes.push(`edit ${draftFieldsTouched.join("/")}`)
   const commitMessage = `research lab: ${changeNotes.join(" · ") || "update"} on ${updated.idea_id}`
 
   let persisted:

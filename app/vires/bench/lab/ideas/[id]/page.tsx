@@ -108,6 +108,7 @@ export default async function ViresLabIdeaDetailPage({
             ideaId={idea.idea_id}
             currentStatus={idea.status}
             codePending={idea.code_pending === true}
+            convertToCodePendingAvailable={idea.status === "DRAFT" && !labCampaignExists}
           />
           {idea.code_pending && (
             <span
@@ -128,6 +129,24 @@ export default async function ViresLabIdeaDetailPage({
           <span className="t-eyebrow" style={{ fontSize: 9, color: "var(--vr-cream-mute)" }}>
             {idea.sleeve}
           </span>
+          {idea.status === "DRAFT" && !labCampaignExists && (
+            <Link
+              href={`/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/edit`}
+              style={{
+                marginLeft: "auto",
+                fontFamily: "var(--ff-mono)",
+                fontSize: 10.5,
+                color: "var(--vr-gold)",
+                padding: "3px 9px",
+                border: "1px solid var(--vr-gold-line)",
+                borderRadius: 2,
+                background: "var(--vr-gold-soft)",
+                textDecoration: "none",
+              }}
+            >
+              Edit →
+            </Link>
+          )}
         </div>
         <h1
           className="t-display"

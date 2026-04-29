@@ -3,6 +3,9 @@ idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
 user_id: jacob
 account_id: paper_main
 strategy_group_id: default
+created_at: '2026-04-25T05:22:53.609Z'
+created_by: jacob
+source: MANUAL
 title: Ape Wisdom
 thesis: >-
   The plan is simple. We start by targeting stocks that are trending in places like r/wallstreetbets
@@ -18,11 +21,8 @@ thesis: >-
   enjoy healthy gain without getting greedy.
 sleeve: STOCKS
 strategy_id: regime_aware_momentum
-created_at: '2026-04-25T05:22:53.609Z'
-created_by: jacob
-source: MANUAL
+status: DRAFT
 params: {}
 strategy_family: REGIME_AWARE_MOMENTUM
 tags:
   - Trendy
-status: DRAFT
