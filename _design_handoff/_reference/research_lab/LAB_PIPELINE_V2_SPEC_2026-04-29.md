@@ -1,6 +1,6 @@
 # Lab Pipeline v2 — Idea-first strategy factory
 
-**Status:** v0 alignment draft
+**Status:** Phase A landed 2026-04-29 — see §12
 **Date:** 2026-04-29
 **Authors:** Jacob (intent), Codex (backend), Claude (frontend/UX)
 **Supersedes (semantically):** the parts of `SPEC_REVIEW_2026-04-23.md`
@@ -228,7 +228,7 @@ Cross-product gates:
 
 ## 5. Phased build plan
 
-### Phase A — API split + schema lock (no UX changes)
+### Phase A — API split + schema lock (no UX changes) ✓ Landed 2026-04-29
 - Land Idea v2 type definitions (TypeScript + backend models).
 - Decompose PATCH into PATCH (body) + transitions/promotion endpoints.
 - Existing PATCH continues to work in compat mode for one deploy
@@ -468,3 +468,54 @@ proof point.
   request.
 - Phase D UX work Claude does in parallel ships behind a feature flag
   until Phase C's spec contract lands.
+
+---
+
+## §12 — Phase A landing record
+
+**Landed:** 2026-04-29
+
+### Commits
+
+| Repo         | Commit    | Scope |
+|---|---|---|
+| trading-bot  | `8ba3ec1` | IdeaV2, StrategyRefV2, StrategySpecV1 types + v1→v2 normalization + worker/rollup compatibility |
+| claw-dashboard | `2e854ad` | idea.v2 YAML write path, draft-edit PATCH split from `/transitions` and `/promotion`, `strategy_family` derived from preset metadata, non-registered ideas blocked from campaign submission |
+| claw-dashboard | `3984d62` | live Ape Wisdom smoke — operator toggle of code-pending wrote v2 YAML to disk |
+
+### Verification
+
+- Trading-bot Research Lab tests: **66 passed**
+- Trading-bot Python import smoke: **passed**
+- Trading-bot worker parsed live v2 Ape Wisdom artifact from
+  dashboard origin/main: **passed**
+- Dashboard `npx tsc --noEmit`: **passed**
+- Dashboard `npm run build`: **passed**
+- Live `/transitions` probe confirmed new deployment before PATCH
+- Live PATCH returned commit `3984d62`
+
+### Bug closure
+
+- **`strategy_family` desync bug is dead on disk.** Ape Wisdom YAML
+  is now `research_lab.idea.v2` with `strategy_ref.kind: NONE`, no
+  top-level `strategy_family`, `strategy_id`, or `code_pending`.
+- Class of bug eliminated: `strategy_id` and `strategy_family` can no
+  longer desync because family is derived from preset metadata, not
+  persisted on the idea.
+
+### What's now true
+
+- Idea v2 schema is the on-disk shape for any idea touched after
+  2026-04-29. Untouched v1 YAMLs are normalized at read time by the
+  v1→v2 adapter on both sides.
+- Operator lifecycle moves go through `/transitions`. Promotion
+  intent goes through `/promotion`. Body PATCH is draft edits only.
+- Phase B (mechanical migration of remaining v1 YAMLs) is no longer
+  blocking — the read adapter makes it cosmetic. Run when convenient.
+- Phase C (StrategySpec artifact) and Phase D (UX prep) are
+  unblocked.
+
+### Sign-off
+
+§11 pre-Phase-A checklist is fully closed. Phase A itself has
+shipped, been smoke-tested live, and is operating in production.
