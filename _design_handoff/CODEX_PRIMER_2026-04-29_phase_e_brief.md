@@ -432,7 +432,7 @@ trading-bot SHA. Other events leave it null.
 Every spec-state transition in §4 emits one event. Endpoints write
 the event line in the same dashboard commit as the state change.
 The worker writes events at:
-- Claim (DRAFTING-side queue change, no spec event)
+- Claim (queue change only, no spec event)
 - Projection commit success (REGISTERED event with
   implementation_commit)
 - Phase 1 failure (no spec event; queue-entry-only failure log)
@@ -527,7 +527,7 @@ data to migrate. The optional schema additions to `StrategySpecV1`
 | OQE-3 | Cancel-after-claim mechanism | flag in queue entry, worker honors at next checkpoint |
 | OQE-4 | Should the audit trail also cover idea `strategy_ref` updates? | Spec only for v1 |
 | OQE-5 | Should `/approve` accept an `acceptance_criteria_override`? | No — operator edits spec instead |
-| OQE-6 | Bump `StrategySpecV1` to `v1.1` for the new optional fields, or keep `v1`? | Keep `v1` — additions are optional |
+| OQE-6 | Bump `StrategySpecV1` to `v1.1` for the new optional fields, or keep `v1`? | **LOCKED 2026-04-29 — keep `v1`.** Optional + backward-compatible; a version bump would create needless reader churn. |
 
 Lock these or push back. Defaults are non-blocking.
 
@@ -553,3 +553,43 @@ Lock these or push back. Defaults are non-blocking.
 - [ ] Git Data API helper (§2) scoped — built fresh or extended
       from any existing trading-bot helper Codex has.
 - [ ] Rollback story (§7) confirmed against the live deploy lag.
+
+---
+
+## §11 — Phase E v1 scope clarification (Codex lock 2026-04-29)
+
+Phase E v1 is a **foundation slice**, not full autonomous strategy
+generation. In scope:
+
+- Approve endpoint with all preconditions, multi-file commit, audit
+  event.
+- Queue artifact model + readers + idempotent projection commit
+  helper.
+- Audit log writes from every spec-state transition.
+- Multi-file dashboard commit helper (Git Data API).
+- State-transition guard (`canTransitionSpec`) shared across
+  endpoints.
+- Worker-side queue claim + projection scaffolding.
+
+**Out of scope for v1, deferred:**
+
+- Autonomous code generation from arbitrary spec content. The "actual
+  generate brand-new strategy code from spec" step is, for now, an
+  **explicit manual / Codex-session implementation handoff**: the
+  worker claims the queue entry, a Codex session reads the spec,
+  writes the strategy module, runs tests, registers the strategy,
+  and lets the projection commit complete. This keeps Phase E from
+  ballooning into the full Talon/Codex autonomous coding problem.
+
+Operator UX is honest about this: the seven-step thread shows
+"Awaiting implementation" while the spec is APPROVED and the queue
+entry is QUEUED/CLAIMED/IMPLEMENTING. The operator doesn't need to
+know whether Codex is doing autonomous generation or a human session
+is — both produce the same projection commit.
+
+Future phase work (post-E v1):
+- Talon's drafting endpoint (Phase D-implementation feature flag
+  flips on when Talon is unblocked).
+- Autonomous code generation from spec (Phase E v2 or later).
+- Idea-side audit log (OQE-4 v2).
+- Webhook / push notifications on transitions.
