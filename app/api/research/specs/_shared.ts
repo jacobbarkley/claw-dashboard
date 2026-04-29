@@ -4,6 +4,7 @@ import path from "path"
 import yaml from "js-yaml"
 
 import type {
+  IdeaArtifact,
   ScopeTriple,
   SpecAuthoringMode,
   StrategySpecState,
@@ -27,7 +28,11 @@ export const VALID_SPEC_STATES: StrategySpecState[] = [
 ]
 
 export const VALID_AUTHORING_MODES: SpecAuthoringMode[] = ["AI_DRAFTED", "OPERATOR_DRAFTED"]
-export const CRUD_WRITABLE_SPEC_STATES: StrategySpecState[] = ["DRAFTING", "AWAITING_APPROVAL"]
+export const CRUD_WRITABLE_SPEC_STATES: StrategySpecState[] = [
+  "DRAFTING",
+  "AWAITING_APPROVAL",
+  "REJECTED",
+]
 
 export function normalizeScope(input: unknown): ScopeTriple {
   if (!input || typeof input !== "object") return { ...PHASE_1_DEFAULT_SCOPE }
@@ -113,17 +118,41 @@ export function parseAuthoringMode(input: unknown, fallback: SpecAuthoringMode):
   throw new Error(`authoring_mode must be one of ${VALID_AUTHORING_MODES.join(" | ")}`)
 }
 
+export function canTransitionSpec(
+  current: StrategySpecState,
+  next: StrategySpecState,
+): { ok: true } | { ok: false; error: string } {
+  if (current === next) return { ok: true }
+  const allowed: Partial<Record<StrategySpecState, StrategySpecState[]>> = {
+    DRAFTING: ["AWAITING_APPROVAL"],
+    AWAITING_APPROVAL: ["DRAFTING", "APPROVED", "REJECTED"],
+    APPROVED: ["REGISTERED", "REJECTED"],
+    REGISTERED: ["SUPERSEDED"],
+  }
+  if ((allowed[current] ?? []).includes(next)) return { ok: true }
+  return { ok: false, error: `Illegal StrategySpec transition: ${current} -> ${next}` }
+}
+
 export function validateStrategySpec(spec: StrategySpecV1): void {
   safePathSegment(spec.spec_id, "spec_id")
   safePathSegment(spec.idea_id, "idea_id")
   if (spec.parent_spec_id) safePathSegment(spec.parent_spec_id, "parent_spec_id")
   if (spec.registered_strategy_id) safePathSegment(spec.registered_strategy_id, "registered_strategy_id")
+  if (spec.preset_id) safePathSegment(spec.preset_id, "preset_id")
   if (spec.spec_version < 1 || !Number.isFinite(spec.spec_version)) {
     throw new Error("spec_version must be >= 1")
   }
   if (spec.state === "REGISTERED" && !spec.registered_strategy_id) {
     throw new Error("REGISTERED strategy specs require registered_strategy_id")
   }
+}
+
+export function strategySpecToYaml(spec: StrategySpecV1): string {
+  return yaml.dump(stripSchemaAlias(spec), { noRefs: true, lineWidth: 100 })
+}
+
+export function ideaArtifactToYaml(idea: IdeaArtifact): string {
+  return yaml.dump(stripIdeaViewFields(idea), { noRefs: true, lineWidth: 100 })
 }
 
 export async function persistStrategySpecArtifact(
@@ -170,7 +199,7 @@ async function persistGithub(
 ): Promise<{ mode: "github"; file: string; commit_sha: string }> {
   const relpath = strategySpecRepoRelpath(spec.spec_id, scope)
   const existingSha = await githubFileSha(relpath, token)
-  const yamlText = yaml.dump(stripSchemaAlias(spec), { noRefs: true, lineWidth: 100 })
+  const yamlText = strategySpecToYaml(spec)
   const content = Buffer.from(yamlText, "utf-8").toString("base64")
   const body: Record<string, unknown> = { message: commitMessage, content }
   if (existingSha) body.sha = existingSha
@@ -248,5 +277,16 @@ async function githubFileSha(relpath: string, token: string): Promise<string | n
 
 function stripSchemaAlias(spec: StrategySpecV1): Record<string, unknown> {
   const { schema: _schema, ...persisted } = spec as StrategySpecV1 & { schema?: unknown }
+  return persisted
+}
+
+function stripIdeaViewFields(idea: IdeaArtifact): Record<string, unknown> {
+  const {
+    schema: _schema,
+    strategy_id: _strategyId,
+    strategy_family: _strategyFamily,
+    code_pending: _codePending,
+    ...persisted
+  } = idea as IdeaArtifact & { schema?: unknown }
   return persisted
 }

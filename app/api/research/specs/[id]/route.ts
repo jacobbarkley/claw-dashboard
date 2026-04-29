@@ -3,21 +3,33 @@
 // Draft-friendly StrategySpec CRUD. Approval/implementation transitions
 // intentionally wait for Phase E's dedicated approve route.
 
+import { randomBytes } from "crypto"
+
 import { NextRequest, NextResponse } from "next/server"
+import yaml from "js-yaml"
 
 import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import { commitDashboardFiles, readDashboardFileText } from "@/lib/github-multi-file-commit.server"
+import {
+  loadSpecImplementationQueueEntry,
+  specAuditLogRelpath,
+  specImplementationQueueRelpath,
+} from "@/lib/research-lab-queue.server"
 import { loadStrategySpecById } from "@/lib/research-lab-specs.server"
 
 import {
+  canTransitionSpec,
   deleteStrategySpecArtifact,
   normalizeScope,
   optionalString,
   parseAuthoringMode,
   parseCrudWritableSpecState,
+  parseSpecState,
   persistStrategySpecArtifact,
   recordOrEmpty,
   requiredString,
   safePathSegment,
+  strategySpecToYaml,
   stringListOrEmpty,
   validateStrategySpec,
 } from "../_shared"
@@ -41,7 +53,10 @@ interface PatchBody {
   implementation_notes?: unknown
   parent_spec_id?: unknown
   registered_strategy_id?: unknown
+  cancel_reason?: unknown
 }
+
+const APPROVED_CANCEL_BODY_KEYS = new Set(["scope", "state", "cancel_reason"])
 
 export async function GET(
   req: NextRequest,
@@ -65,11 +80,53 @@ export async function PATCH(
   const resolved = await resolveSpec(req, ctx, body.scope)
   if ("response" in resolved) return resolved.response
 
-  if (resolved.spec.state !== "DRAFTING" && resolved.spec.state !== "AWAITING_APPROVAL") {
+  const currentState = resolved.spec.state
+  if (currentState === "APPROVED") {
+    const invalidKeys = Object.keys(body as Record<string, unknown>).filter(
+      key => !APPROVED_CANCEL_BODY_KEYS.has(key),
+    )
+    let updated: StrategySpecV1
+    try {
+      const requestedState = parseSpecState(body.state, currentState)
+      if (requestedState !== "REJECTED") {
+        throw new Error("APPROVED specs can only transition to REJECTED before implementation claim.")
+      }
+      if (invalidKeys.length) {
+        throw new Error(
+          `APPROVED spec cancellation may only include scope, state, and cancel_reason. ` +
+            `Unexpected fields: ${invalidKeys.join(", ")}`,
+        )
+      }
+      const transition = canTransitionSpec(currentState, requestedState)
+      if (!transition.ok) throw new Error(transition.error)
+      updated = { ...resolved.spec, state: requestedState }
+      validateStrategySpec(updated)
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Invalid strategy spec cancellation" },
+        { status: 400 },
+      )
+    }
+    try {
+      const persisted = await persistApprovedCancel({
+        spec: updated,
+        previousState: currentState,
+        scope: resolved.scope,
+        actor: "jacob",
+        reason: optionalString(body.cancel_reason),
+      })
+      return NextResponse.json({ ok: true, ...persisted, spec: updated })
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "Unknown persistence failure"
+      return NextResponse.json({ error: `Failed to persist strategy spec: ${detail}` }, { status: 500 })
+    }
+  }
+
+  if (currentState !== "DRAFTING" && currentState !== "AWAITING_APPROVAL") {
     return NextResponse.json(
       {
         error:
-          `${resolved.spec.state} specs are not writable through generic StrategySpec CRUD. ` +
+          `${currentState} specs are not writable through generic StrategySpec CRUD. ` +
           "Use the dedicated approval/implementation route for lifecycle transitions.",
       },
       { status: 409 },
@@ -127,6 +184,8 @@ export async function PATCH(
         : resolved.spec.registered_strategy_id ?? null,
     }
     validateStrategySpec(updated)
+    const transition = canTransitionSpec(currentState, updated.state)
+    if (!transition.ok) throw new Error(transition.error)
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Invalid strategy spec" },
@@ -135,16 +194,149 @@ export async function PATCH(
   }
 
   try {
-    const persisted = await persistStrategySpecArtifact(
-      updated,
-      resolved.scope,
-      `research lab: update strategy spec ${updated.spec_id}`,
-    )
+    const persisted = currentState === updated.state
+      ? await persistStrategySpecArtifact(
+          updated,
+          resolved.scope,
+          `research lab: update strategy spec ${updated.spec_id}`,
+        )
+      : await persistSpecStateChange({
+          spec: updated,
+          previousState: currentState,
+          scope: resolved.scope,
+          actor: "jacob",
+          message: `research lab: transition strategy spec ${updated.spec_id} to ${updated.state}`,
+        })
     return NextResponse.json({ ok: true, ...persisted, spec: updated })
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown persistence failure"
     return NextResponse.json({ error: `Failed to persist strategy spec: ${detail}` }, { status: 500 })
   }
+}
+
+async function persistApprovedCancel({
+  spec,
+  previousState,
+  scope,
+  actor,
+  reason,
+}: {
+  spec: StrategySpecV1
+  previousState: StrategySpecV1["state"]
+  scope: ScopeTriple
+  actor: string
+  reason: string | null
+}) {
+  const queueEntry = await loadSpecImplementationQueueEntry(spec.spec_id, scope)
+  if (!queueEntry) {
+    throw new Error(`Cannot cancel approved spec ${spec.spec_id}: implementation queue entry not found.`)
+  }
+  if (queueEntry.state !== "QUEUED") {
+    throw new Error(`Cannot cancel approved spec ${spec.spec_id}: queue state is ${queueEntry.state}.`)
+  }
+  const now = new Date().toISOString()
+  const cancelledQueueEntry = {
+    ...queueEntry,
+    state: "CANCELLED" as const,
+    cancelled_at: now,
+    cancelled_by: actor,
+    cancel_reason: reason ?? "operator cancelled before implementation claim",
+  }
+  const message = `research lab: cancel approved strategy spec ${spec.spec_id}`
+  const auditRelpath = specAuditLogRelpath(spec.spec_id, scope)
+  const existingAudit = await readDashboardFileText(auditRelpath)
+  const event = {
+    event_id: `evt_${ulid()}`,
+    spec_id: spec.spec_id,
+    ts: now,
+    actor_kind: "operator",
+    actor_id: actor,
+    transition: { from: previousState, to: spec.state },
+    context: {
+      dashboard_commit: null,
+      implementation_commit: null,
+      queue_entry_id: queueEntry.queue_entry_id,
+      message,
+    },
+  }
+  return commitDashboardFiles({
+    message,
+    files: [
+      {
+        relpath: `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs/${spec.spec_id}.yaml`,
+        content: strategySpecToYaml(spec),
+      },
+      {
+        relpath: specImplementationQueueRelpath(spec.spec_id, scope),
+        content: yaml.dump(cancelledQueueEntry, { noRefs: true, lineWidth: 100 }),
+      },
+      {
+        relpath: auditRelpath,
+        content: `${existingAudit ?? ""}${JSON.stringify(event)}\n`,
+      },
+    ],
+  })
+}
+
+async function persistSpecStateChange({
+  spec,
+  previousState,
+  scope,
+  actor,
+  message,
+}: {
+  spec: StrategySpecV1
+  previousState: StrategySpecV1["state"]
+  scope: ScopeTriple
+  actor: string
+  message: string
+}) {
+  const auditRelpath = specAuditLogRelpath(spec.spec_id, scope)
+  const existingAudit = await readDashboardFileText(auditRelpath)
+  const event = {
+    event_id: `evt_${ulid()}`,
+    spec_id: spec.spec_id,
+    ts: new Date().toISOString(),
+    actor_kind: "operator",
+    actor_id: actor,
+    transition: { from: previousState, to: spec.state },
+    context: {
+      dashboard_commit: null,
+      implementation_commit: null,
+      queue_entry_id: null,
+      message,
+    },
+  }
+  return commitDashboardFiles({
+    message,
+    files: [
+      {
+        relpath: `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs/${spec.spec_id}.yaml`,
+        content: strategySpecToYaml(spec),
+      },
+      {
+        relpath: auditRelpath,
+        content: `${existingAudit ?? ""}${JSON.stringify(event)}\n`,
+      },
+    ],
+  })
+}
+
+const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+function ulid(): string {
+  let ts = Date.now()
+  let tsStr = ""
+  for (let i = 0; i < 10; i++) {
+    tsStr = CROCKFORD[ts % 32] + tsStr
+    ts = Math.floor(ts / 32)
+  }
+  const rand = randomBytes(10)
+  let randStr = ""
+  for (let i = 0; i < 16; i++) {
+    randStr += CROCKFORD[rand[i % rand.length] % 32]
+  }
+  return tsStr + randStr
 }
 
 export async function DELETE(

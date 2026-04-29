@@ -1,30 +1,33 @@
 // GET/POST /api/research/specs
 //
-// Phase C contract surface for Lab Pipeline v2. This route persists the
-// versioned implementation contract only; Phase D owns the operator action
-// that links a newly drafted spec back onto idea.strategy_ref.
+// Phase E foundation surface for Lab Pipeline v2. Creating a spec now links
+// it onto the owning idea in the same persistence operation, so the approve
+// route can enforce the idea <-> spec pointer invariant.
 
 import { randomBytes } from "crypto"
 
 import { NextRequest, NextResponse } from "next/server"
 
-import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import type { IdeaArtifact, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import {
   loadStrategySpecById,
   loadStrategySpecs,
   loadStrategySpecsForIdea,
+  strategySpecRepoRelpath,
 } from "@/lib/research-lab-specs.server"
 
 import {
+  ideaArtifactToYaml,
   normalizeScope,
   optionalString,
   parseAuthoringMode,
   parseCrudWritableSpecState,
-  persistStrategySpecArtifact,
   recordOrEmpty,
   requiredString,
   safePathSegment,
+  strategySpecToYaml,
   stringListOrEmpty,
   validateStrategySpec,
 } from "./_shared"
@@ -117,6 +120,10 @@ export async function POST(req: NextRequest) {
     const ideaId = safePathSegment(requiredString(body.idea_id, "idea_id"), "idea_id")
     const specVersionRaw = typeof body.spec_version === "number" ? body.spec_version : 1
     const specVersion = Number.isFinite(specVersionRaw) ? Math.max(1, Math.floor(specVersionRaw)) : 1
+    const initialState = parseCrudWritableSpecState(body.state, "DRAFTING")
+    if (initialState === "REJECTED") {
+      throw new Error("New strategy specs cannot start in REJECTED state")
+    }
     spec = {
       schema_version: "research_lab.strategy_spec.v1",
       spec_id: specId,
@@ -128,7 +135,7 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
       authoring_mode: parseAuthoringMode(body.authoring_mode, "OPERATOR_DRAFTED"),
       authored_by: requiredString(body.authored_by ?? "jacob", "authored_by"),
-      state: parseCrudWritableSpecState(body.state, "DRAFTING"),
+      state: initialState,
       signal_logic: requiredString(body.signal_logic, "signal_logic"),
       universe: recordOrEmpty(body.universe),
       entry_rules: requiredString(body.entry_rules, "entry_rules"),
@@ -158,6 +165,15 @@ export async function POST(req: NextRequest) {
       { status: 404 },
     )
   }
+  let linkedIdea: IdeaArtifact
+  try {
+    linkedIdea = linkIdeaToSpec(idea, spec.spec_id)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Idea cannot accept this strategy spec" },
+      { status: 409 },
+    )
+  }
 
   const existing = await loadStrategySpecById(spec.spec_id, scope)
   if (existing) {
@@ -168,14 +184,71 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const persisted = await persistStrategySpecArtifact(
-      spec,
-      scope,
-      `research lab: save strategy spec ${spec.spec_id}`,
-    )
-    return NextResponse.json({ ok: true, ...persisted, spec })
+    const persisted = await commitDashboardFiles({
+      message: `research lab: save strategy spec ${spec.spec_id}`,
+      files: [
+        {
+          relpath: strategySpecRepoRelpath(spec.spec_id, scope),
+          content: strategySpecToYaml(spec),
+        },
+        {
+          relpath: ideaRelpath(scope, linkedIdea.idea_id),
+          content: ideaArtifactToYaml(linkedIdea),
+        },
+      ],
+    })
+    return NextResponse.json({ ok: true, ...persisted, spec, idea: linkedIdea })
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown persistence failure"
     return NextResponse.json({ error: `Failed to persist strategy spec: ${detail}` }, { status: 500 })
   }
+}
+
+function linkIdeaToSpec(idea: IdeaArtifact, specId: string): IdeaArtifact {
+  if (idea.strategy_ref.kind === "NONE") {
+    return {
+      ...idea,
+      needs_spec: false,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        kind: "SPEC_PENDING",
+        active_spec_id: specId,
+        pending_spec_id: null,
+        strategy_id: null,
+        preset_id: null,
+      },
+    }
+  }
+  if (idea.strategy_ref.kind === "SPEC_PENDING") {
+    const activeSpecId = idea.strategy_ref.active_spec_id ?? null
+    if (activeSpecId && activeSpecId !== specId) {
+      throw new Error(`Idea already points at active_spec_id ${activeSpecId}`)
+    }
+    return {
+      ...idea,
+      needs_spec: false,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        active_spec_id: specId,
+      },
+    }
+  }
+  if (idea.strategy_ref.kind === "REGISTERED") {
+    const pendingSpecId = idea.strategy_ref.pending_spec_id ?? null
+    if (pendingSpecId && pendingSpecId !== specId) {
+      throw new Error(`Idea already has pending_spec_id ${pendingSpecId}`)
+    }
+    return {
+      ...idea,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        pending_spec_id: specId,
+      },
+    }
+  }
+  throw new Error(`Unsupported strategy_ref.kind ${(idea.strategy_ref as { kind?: unknown }).kind}`)
+}
+
+function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }

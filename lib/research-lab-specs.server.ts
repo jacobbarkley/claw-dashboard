@@ -13,6 +13,7 @@ import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
 import type { ScopeTriple, StrategySpecV1 } from "./research-lab-contracts"
+import { readDashboardFileText } from "./github-multi-file-commit.server"
 
 const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
 const GITHUB_API = "https://api.github.com/repos/jacobbarkley/claw-dashboard/contents"
@@ -46,7 +47,8 @@ function normalizeStrategySpec(parsed: unknown): StrategySpecV1 | null {
   const raw = parsed as Record<string, unknown>
   const schemaVersion = raw.schema_version ?? raw.schema
   if (schemaVersion !== "research_lab.strategy_spec.v1") return null
-  const { schema: _schema, ...canonicalRaw } = raw
+  const canonicalRaw = { ...raw }
+  delete canonicalRaw.schema
   const createdAt = normalizeDateString(canonicalRaw.created_at)
   return {
     ...canonicalRaw,
@@ -62,6 +64,9 @@ function normalizeStrategySpec(parsed: unknown): StrategySpecV1 | null {
     implementation_notes: (canonicalRaw.implementation_notes ?? null) as string | null,
     parent_spec_id: (canonicalRaw.parent_spec_id ?? null) as string | null,
     registered_strategy_id: (canonicalRaw.registered_strategy_id ?? null) as string | null,
+    approved_at: normalizeNullableDateString(canonicalRaw.approved_at),
+    approved_by: (canonicalRaw.approved_by ?? null) as string | null,
+    preset_id: (canonicalRaw.preset_id ?? null) as string | null,
   } as StrategySpecV1
 }
 
@@ -69,6 +74,12 @@ function normalizeDateString(value: unknown): string {
   if (value instanceof Date) return value.toISOString()
   if (typeof value === "string") return value
   return ""
+}
+
+function normalizeNullableDateString(value: unknown): string | null {
+  if (value == null) return null
+  const normalized = normalizeDateString(value)
+  return normalized || null
 }
 
 async function readYamlIfPresent(absPath: string): Promise<StrategySpecV1 | null> {
@@ -103,6 +114,10 @@ export async function loadStrategySpecById(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<StrategySpecV1 | null> {
   if (!specId || !SAFE_ID.test(specId)) return null
+  if (process.env.GITHUB_TOKEN) {
+    const raw = await readDashboardFileText(strategySpecRepoRelpath(specId, scope))
+    if (raw) return normalizeStrategySpec(yaml.load(raw))
+  }
   const local = await readYamlIfPresent(strategySpecPath(specId, scope))
   if (local) return local
   return fetchYamlFromGithub(specId, scope)
