@@ -1,0 +1,125 @@
+{
+  "schema_version": "research_lab.data_capability.v1",
+  "catalog_version": "2026-04-30.1",
+  "generated_at": "2026-04-30T00:00:00.000Z",
+  "doc": "Data the Lab can feed to a strategy TODAY. AVAILABLE means the compiler/executor can wire it into a backtest or live run with no further connector work. PARTIAL means a research path exists but production wiring is missing or scope is tight. PLANNED means we intend to build it; UNAVAILABLE means there is no connector and no near-term plan. Codex owns updates as new connectors come online; bump catalog_version on every change.",
+  "capabilities": [
+    {
+      "capability_id": "alpaca_equity_ohlcv",
+      "display_name": "Equity OHLCV (Alpaca)",
+      "category": "Price OHLCV",
+      "status": "AVAILABLE",
+      "sleeves": ["STOCKS"],
+      "asof_coverage": "2016-present",
+      "notes": "Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research."
+    },
+    {
+      "capability_id": "alpaca_crypto_ohlcv",
+      "display_name": "Crypto OHLCV (Alpaca)",
+      "category": "Price OHLCV",
+      "status": "PARTIAL",
+      "sleeves": ["CRYPTO"],
+      "asof_coverage": "2024-10-23-present",
+      "notes": "BTC and ETH only via Alpaca. ~1.5 years of history — sufficient for execution and recent-regime work, insufficient for multi-era analysis. Use ccxt_binance_crypto_ohlcv for longer history (research-only, no execution coupling)."
+    },
+    {
+      "capability_id": "ccxt_binance_crypto_ohlcv",
+      "display_name": "Binance Crypto OHLCV via ccxt (research)",
+      "category": "Price OHLCV",
+      "status": "PARTIAL",
+      "sleeves": ["CRYPTO"],
+      "asof_coverage": "2017-present (BTC); shorter for alts",
+      "notes": "Public Binance OHLCV pulled via ccxt for research backtests only. NOT wired into the executor — execution stays on Alpaca. Operator-pulled: no live connector, scripted backfills."
+    },
+    {
+      "capability_id": "alpaca_options_chain",
+      "display_name": "Options chain (Alpaca, live)",
+      "category": "Options chain",
+      "status": "PARTIAL",
+      "sleeves": ["OPTIONS"],
+      "asof_coverage": "live snapshot only",
+      "notes": "Live chain via Alpaca. NOT historical: no point-in-time reconstruction for backtests. Strategies that depend on historical chain state need a separate provider before they can be Lab-tested."
+    },
+    {
+      "capability_id": "iv_surface_constructed",
+      "display_name": "Implied vol surface (constructed)",
+      "category": "Implied vol surface",
+      "status": "UNAVAILABLE",
+      "sleeves": ["OPTIONS"],
+      "asof_coverage": null,
+      "notes": "Would require historical chain history we don't have. No connector and no construction pipeline. Strategies depending on IV surface skew/term structure should BLOCK."
+    },
+    {
+      "capability_id": "wikipedia_pageviews",
+      "display_name": "Wikipedia pageviews (attention proxy)",
+      "category": "Attention proxies",
+      "status": "PARTIAL",
+      "sleeves": ["STOCKS", "CRYPTO"],
+      "asof_coverage": "2016-present (research backfills)",
+      "notes": "Wikimedia REST API is freely accessible; research backfill scripts exist. No production connector wired into the Lab pipeline yet — operator-driven pulls. Don't claim AVAILABLE until a daily-update connector lands."
+    },
+    {
+      "capability_id": "gdelt_full",
+      "display_name": "GDELT (full attention/news index)",
+      "category": "Attention proxies",
+      "status": "PARTIAL",
+      "sleeves": ["STOCKS", "CRYPTO"],
+      "asof_coverage": "2015-present (research backfills)",
+      "notes": "GDELT API is free; backfill scripts exist. No daily-update connector wired into the Lab. Same status caveat as wikipedia_pageviews."
+    },
+    {
+      "capability_id": "google_trends",
+      "display_name": "Google Trends",
+      "category": "Attention proxies",
+      "status": "UNAVAILABLE",
+      "sleeves": ["STOCKS", "CRYPTO"],
+      "asof_coverage": null,
+      "notes": "No wired connector. Sample-rate noise + rate limiting on the public endpoint make it a v2-or-later candidate."
+    },
+    {
+      "capability_id": "apewisdom_top100",
+      "display_name": "Ape Wisdom retail-attention rank",
+      "category": "Sentiment",
+      "status": "AVAILABLE",
+      "sleeves": ["STOCKS"],
+      "asof_coverage": "2024-present (continuous)",
+      "notes": "Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. Aggregates WSB + adjacent communities; raw per-thread velocity is NOT separately exposed."
+    },
+    {
+      "capability_id": "reddit_wsb_velocity",
+      "display_name": "Reddit WSB raw mention velocity",
+      "category": "Sentiment",
+      "status": "UNAVAILABLE",
+      "sleeves": ["STOCKS"],
+      "asof_coverage": null,
+      "notes": "Raw r/wallstreetbets per-thread velocity is NOT pulled separately. Use apewisdom_top100 for the aggregated signal. Strategies that genuinely require sub-Ape-Wisdom granularity should BLOCK."
+    },
+    {
+      "capability_id": "fundamentals_basic",
+      "display_name": "Basic fundamentals (mkt cap, ADV)",
+      "category": "Fundamentals",
+      "status": "PARTIAL",
+      "sleeves": ["STOCKS"],
+      "asof_coverage": "current snapshot only",
+      "notes": "Market cap + average daily volume reachable via Alpaca asset metadata. Not point-in-time. Strategies needing historical fundamentals (P/E, EPS surprise, balance-sheet items) are NOT covered."
+    },
+    {
+      "capability_id": "crypto_onchain",
+      "display_name": "Crypto on-chain metrics",
+      "category": "Crypto on-chain",
+      "status": "UNAVAILABLE",
+      "sleeves": ["CRYPTO"],
+      "asof_coverage": null,
+      "notes": "No on-chain connector (Glassnode, Dune, etc.). Strategies referencing whale flows, exchange reserves, miner behavior, or staking metrics should BLOCK."
+    },
+    {
+      "capability_id": "macro_fred_subset",
+      "display_name": "Macro indicators (FRED, hand-pulled)",
+      "category": "Macro",
+      "status": "UNAVAILABLE",
+      "sleeves": ["STOCKS", "CRYPTO", "OPTIONS"],
+      "asof_coverage": null,
+      "notes": "FRED series are operator-curated as needed for one-off research; no Lab-wired connector. Strategies depending on macro inputs (fed funds path, CPI surprises, yield curve shape) should BLOCK until a connector lands."
+    }
+  ]
+}
