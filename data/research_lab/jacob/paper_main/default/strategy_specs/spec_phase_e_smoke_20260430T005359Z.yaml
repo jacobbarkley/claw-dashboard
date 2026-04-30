@@ -8,7 +8,7 @@ strategy_group_id: default
 created_at: '2026-04-30T00:53:59.463Z'
 authoring_mode: OPERATOR_DRAFTED
 authored_by: codex-smoke
-state: DRAFTING
+state: AWAITING_APPROVAL
 signal_logic: >-
   Smoke-test spec for Ape Wisdom: rank social-attention names and gate by liquidity plus simple
   trend confirmation.
@@ -38,3 +38,6 @@ candidate_strategy_family: social_attention_momentum
 implementation_notes: Phase E live smoke. This spec is cancelled after queue creation and should not be implemented.
 parent_spec_id: null
 registered_strategy_id: null
+approved_at: null
+approved_by: null
+preset_id: null
