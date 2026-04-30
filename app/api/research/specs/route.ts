@@ -4,8 +4,6 @@
 // it onto the owning idea in the same persistence operation, so the approve
 // route can enforce the idea <-> spec pointer invariant.
 
-import { randomBytes } from "crypto"
-
 import { NextRequest, NextResponse } from "next/server"
 
 import type { IdeaArtifact, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
@@ -20,6 +18,8 @@ import {
 
 import {
   ideaArtifactToYaml,
+  ideaRepoRelpath,
+  linkIdeaToSpec,
   normalizeScope,
   optionalString,
   parseAuthoringMode,
@@ -29,25 +29,9 @@ import {
   safePathSegment,
   strategySpecToYaml,
   stringListOrEmpty,
+  ulid,
   validateStrategySpec,
 } from "./_shared"
-
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-
-function ulid(): string {
-  let ts = Date.now()
-  let tsStr = ""
-  for (let i = 0; i < 10; i++) {
-    tsStr = CROCKFORD[ts % 32] + tsStr
-    ts = Math.floor(ts / 32)
-  }
-  const rand = randomBytes(10)
-  let randStr = ""
-  for (let i = 0; i < 16; i++) {
-    randStr += CROCKFORD[rand[i % rand.length] % 32]
-  }
-  return tsStr + randStr
-}
 
 interface CreateBody {
   spec_id?: unknown
@@ -192,7 +176,7 @@ export async function POST(req: NextRequest) {
           content: strategySpecToYaml(spec),
         },
         {
-          relpath: ideaRelpath(scope, linkedIdea.idea_id),
+          relpath: ideaRepoRelpath(scope, linkedIdea.idea_id),
           content: ideaArtifactToYaml(linkedIdea),
         },
       ],
@@ -202,53 +186,4 @@ export async function POST(req: NextRequest) {
     const detail = error instanceof Error ? error.message : "Unknown persistence failure"
     return NextResponse.json({ error: `Failed to persist strategy spec: ${detail}` }, { status: 500 })
   }
-}
-
-function linkIdeaToSpec(idea: IdeaArtifact, specId: string): IdeaArtifact {
-  if (idea.strategy_ref.kind === "NONE") {
-    return {
-      ...idea,
-      needs_spec: false,
-      strategy_ref: {
-        ...idea.strategy_ref,
-        kind: "SPEC_PENDING",
-        active_spec_id: specId,
-        pending_spec_id: null,
-        strategy_id: null,
-        preset_id: null,
-      },
-    }
-  }
-  if (idea.strategy_ref.kind === "SPEC_PENDING") {
-    const activeSpecId = idea.strategy_ref.active_spec_id ?? null
-    if (activeSpecId && activeSpecId !== specId) {
-      throw new Error(`Idea already points at active_spec_id ${activeSpecId}`)
-    }
-    return {
-      ...idea,
-      needs_spec: false,
-      strategy_ref: {
-        ...idea.strategy_ref,
-        active_spec_id: specId,
-      },
-    }
-  }
-  if (idea.strategy_ref.kind === "REGISTERED") {
-    const pendingSpecId = idea.strategy_ref.pending_spec_id ?? null
-    if (pendingSpecId && pendingSpecId !== specId) {
-      throw new Error(`Idea already has pending_spec_id ${pendingSpecId}`)
-    }
-    return {
-      ...idea,
-      strategy_ref: {
-        ...idea.strategy_ref,
-        pending_spec_id: specId,
-      },
-    }
-  }
-  throw new Error(`Unsupported strategy_ref.kind ${(idea.strategy_ref as { kind?: unknown }).kind}`)
-}
-
-function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
-  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }

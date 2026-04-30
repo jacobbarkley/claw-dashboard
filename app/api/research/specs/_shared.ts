@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto"
 import { promises as fs } from "fs"
 import path from "path"
 
@@ -16,6 +17,7 @@ import { strategySpecPath, strategySpecRepoRelpath } from "@/lib/research-lab-sp
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
 const SAFE_PATH_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
+const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 
 export const VALID_SPEC_STATES: StrategySpecState[] = [
   "DRAFTING",
@@ -66,6 +68,25 @@ export function safePathSegment(value: string, label: string): string {
     throw new Error(`${label} must be a safe path segment`)
   }
   return trimmed
+}
+
+export function ulid(): string {
+  let ts = Date.now()
+  let tsStr = ""
+  for (let i = 0; i < 10; i++) {
+    tsStr = CROCKFORD[ts % 32] + tsStr
+    ts = Math.floor(ts / 32)
+  }
+  const rand = randomBytes(10)
+  let randStr = ""
+  for (let i = 0; i < 16; i++) {
+    randStr += CROCKFORD[rand[i % rand.length] % 32]
+  }
+  return tsStr + randStr
+}
+
+export function ideaRepoRelpath(scope: ScopeTriple, ideaId: string): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }
 
 export function optionalString(input: unknown): string | null {
@@ -145,6 +166,51 @@ export function validateStrategySpec(spec: StrategySpecV1): void {
   if (spec.state === "REGISTERED" && !spec.registered_strategy_id) {
     throw new Error("REGISTERED strategy specs require registered_strategy_id")
   }
+}
+
+export function linkIdeaToSpec(idea: IdeaArtifact, specId: string): IdeaArtifact {
+  if (idea.strategy_ref.kind === "NONE") {
+    return {
+      ...idea,
+      needs_spec: false,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        kind: "SPEC_PENDING",
+        active_spec_id: specId,
+        pending_spec_id: null,
+        strategy_id: null,
+        preset_id: null,
+      },
+    }
+  }
+  if (idea.strategy_ref.kind === "SPEC_PENDING") {
+    const activeSpecId = idea.strategy_ref.active_spec_id ?? null
+    if (activeSpecId && activeSpecId !== specId) {
+      throw new Error(`Idea already points at active_spec_id ${activeSpecId}`)
+    }
+    return {
+      ...idea,
+      needs_spec: false,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        active_spec_id: specId,
+      },
+    }
+  }
+  if (idea.strategy_ref.kind === "REGISTERED") {
+    const pendingSpecId = idea.strategy_ref.pending_spec_id ?? null
+    if (pendingSpecId && pendingSpecId !== specId) {
+      throw new Error(`Idea already has pending_spec_id ${pendingSpecId}`)
+    }
+    return {
+      ...idea,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        pending_spec_id: specId,
+      },
+    }
+  }
+  throw new Error(`Unsupported strategy_ref.kind ${(idea.strategy_ref as { kind?: unknown }).kind}`)
 }
 
 export function strategySpecToYaml(spec: StrategySpecV1): string {
@@ -276,17 +342,16 @@ async function githubFileSha(relpath: string, token: string): Promise<string | n
 }
 
 function stripSchemaAlias(spec: StrategySpecV1): Record<string, unknown> {
-  const { schema: _schema, ...persisted } = spec as StrategySpecV1 & { schema?: unknown }
+  const persisted = { ...(spec as StrategySpecV1 & { schema?: unknown }) } as Record<string, unknown>
+  delete persisted.schema
   return persisted
 }
 
 function stripIdeaViewFields(idea: IdeaArtifact): Record<string, unknown> {
-  const {
-    schema: _schema,
-    strategy_id: _strategyId,
-    strategy_family: _strategyFamily,
-    code_pending: _codePending,
-    ...persisted
-  } = idea as IdeaArtifact & { schema?: unknown }
+  const persisted = { ...(idea as IdeaArtifact & { schema?: unknown }) } as Record<string, unknown>
+  delete persisted.schema
+  delete persisted.strategy_id
+  delete persisted.strategy_family
+  delete persisted.code_pending
   return persisted
 }

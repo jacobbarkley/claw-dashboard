@@ -3,8 +3,6 @@
 // Draft-friendly StrategySpec CRUD. Approval/implementation transitions
 // intentionally wait for Phase E's dedicated approve route.
 
-import { randomBytes } from "crypto"
-
 import { NextRequest, NextResponse } from "next/server"
 import yaml from "js-yaml"
 
@@ -22,6 +20,7 @@ import {
   canTransitionSpec,
   deleteStrategySpecArtifact,
   ideaArtifactToYaml,
+  ideaRepoRelpath,
   normalizeScope,
   optionalString,
   parseAuthoringMode,
@@ -33,6 +32,7 @@ import {
   safePathSegment,
   strategySpecToYaml,
   stringListOrEmpty,
+  ulid,
   validateStrategySpec,
 } from "../_shared"
 
@@ -278,7 +278,7 @@ async function persistApprovedCancel({
         content: yaml.dump(cancelledQueueEntry, { noRefs: true, lineWidth: 100 }),
       },
       {
-        relpath: ideaRelpath(scope, restoredIdea.idea_id),
+        relpath: ideaRepoRelpath(scope, restoredIdea.idea_id),
         content: ideaArtifactToYaml(restoredIdea),
       },
       {
@@ -313,10 +313,6 @@ function restoreIdeaAfterSpecCancel(idea: IdeaArtifact, specId: string): IdeaArt
     }
   }
   throw new Error(`Cannot cancel approved spec ${specId}: idea strategy_ref no longer points at this spec.`)
-}
-
-function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
-  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }
 
 async function persistSpecStateChange({
@@ -361,23 +357,6 @@ async function persistSpecStateChange({
       },
     ],
   })
-}
-
-const CROCKFORD = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
-
-function ulid(): string {
-  let ts = Date.now()
-  let tsStr = ""
-  for (let i = 0; i < 10; i++) {
-    tsStr = CROCKFORD[ts % 32] + tsStr
-    ts = Math.floor(ts / 32)
-  }
-  const rand = randomBytes(10)
-  let randStr = ""
-  for (let i = 0; i < 16; i++) {
-    randStr += CROCKFORD[rand[i % rand.length] % 32]
-  }
-  return tsStr + randStr
 }
 
 export async function DELETE(
