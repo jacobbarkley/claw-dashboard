@@ -1,0 +1,27 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQECNZYS7QEQEV2T2B7QEQEV
+spec_version: 1
+idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-04-30T05:09:44.538Z'
+authoring_mode: OPERATOR_DRAFTED
+authored_by: jacob
+state: DRAFTING
+signal_logic: Draft — describe the edge in plain language.
+universe: {}
+entry_rules: Draft — when does this enter?
+exit_rules: Draft — when does this exit?
+risk_model: {}
+sweep_params: {}
+required_data: []
+benchmark: null
+acceptance_criteria:
+  min_sharpe: 1
+  max_drawdown: 20
+  min_hit_rate: 45
+candidate_strategy_family: null
+implementation_notes: null
+parent_spec_id: null
+registered_strategy_id: null
