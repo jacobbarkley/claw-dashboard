@@ -15,8 +15,12 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 
-import type { JobState, JobV1 } from "@/lib/research-lab-contracts"
+import type { JobState, JobV1, ResearchSleeve } from "@/lib/research-lab-contracts"
 import { useLabSleeveFilter } from "./use-lab-sleeve-filter"
+
+interface IdeaDisplayMap {
+  [ideaId: string]: { title: string; sleeve: ResearchSleeve | null }
+}
 
 type ListResponse =
   | {
@@ -24,6 +28,7 @@ type ListResponse =
       scope: { user_id: string; account_id: string; strategy_group_id: string }
       source: "store"
       jobs: JobV1[]
+      idea_display?: IdeaDisplayMap
       state: "populated" | "empty"
       cold_terminal_count: number
       polled_at: string
@@ -33,6 +38,7 @@ type ListResponse =
       scope: { user_id: string; account_id: string; strategy_group_id: string }
       source: "unconfigured"
       jobs: []
+      idea_display?: IdeaDisplayMap
       cold_terminal_count: number
       polled_at: string
     }
@@ -41,6 +47,7 @@ type ListResponse =
       scope: { user_id: string; account_id: string; strategy_group_id: string }
       source: "outage"
       jobs: []
+      idea_display?: IdeaDisplayMap
       error: string
       cold_terminal_count: number
       polled_at: string
@@ -95,12 +102,19 @@ function relTime(iso: string | null | undefined): string {
   return `${day}d ago`
 }
 
-function JobRow({ job }: { job: JobV1 }) {
+function JobRow({
+  job,
+  display,
+}: {
+  job: JobV1
+  display?: { title: string; sleeve: ResearchSleeve | null }
+}) {
   const progress = job.progress
   const progressStr =
     progress && progress.variants_total > 0
       ? `${progress.variants_complete}/${progress.variants_total}`
       : null
+  const friendlyTitle = display?.title ?? deriveFallbackTitle(job)
 
   return (
     <Link
@@ -119,20 +133,36 @@ function JobRow({ job }: { job: JobV1 }) {
     >
       <div style={{ minWidth: 0, flex: 1 }}>
         <div
-          className="t-mono"
           style={{
-            fontSize: 11,
+            fontFamily: "var(--ff-serif)",
+            fontStyle: "italic",
+            fontSize: 14,
             color: "var(--vr-cream)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
+            lineHeight: 1.25,
+          }}
+        >
+          {friendlyTitle}
+        </div>
+        <div
+          className="t-mono"
+          style={{
+            marginTop: 3,
+            fontSize: 9.5,
+            color: "var(--vr-cream-faint)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            letterSpacing: "0.04em",
           }}
         >
           {job.job_id}
         </div>
         <div
           style={{
-            marginTop: 3,
+            marginTop: 4,
             fontSize: 10,
             color: "var(--vr-cream-mute)",
             display: "flex",
@@ -140,6 +170,8 @@ function JobRow({ job }: { job: JobV1 }) {
             flexWrap: "wrap",
           }}
         >
+          {display?.sleeve ? <span>{display.sleeve.toLowerCase()}</span> : null}
+          {display?.sleeve ? <span>·</span> : null}
           <span>{relTime(job.created_at)}</span>
           {progressStr ? <span>· {progressStr}</span> : null}
           {progress?.phase ? <span>· {progress.phase}</span> : null}
@@ -151,6 +183,17 @@ function JobRow({ job }: { job: JobV1 }) {
       <StateChip state={job.state} />
     </Link>
   )
+}
+
+// Fallback when the joined idea title isn't available — derive something
+// readable from preset_id, otherwise show a short suffix of the job id.
+function deriveFallbackTitle(job: JobV1): string {
+  if (typeof job.preset_id === "string" && job.preset_id) {
+    const cleaned = job.preset_id.replace(/^stocks\.|^crypto\.|^options\./, "")
+    return cleaned.replace(/\./g, " ").replace(/_/g, " ")
+  }
+  if (typeof job.idea_id === "string" && job.idea_id) return job.idea_id
+  return `Run ${job.job_id.slice(-6)}`
 }
 
 function EmptyStoreCard() {
@@ -216,7 +259,7 @@ function OutageCard() {
         Live view paused
       </div>
       <div style={{ fontSize: 12.5, color: "var(--vr-cream)", lineHeight: 1.55 }}>
-        Can't read the queue right now. Runs continue; results appear on completion.
+        Can&apos;t read the queue right now. Runs continue; results appear on completion.
       </div>
     </div>
   )
@@ -288,10 +331,15 @@ export function JobsListPoll() {
   else if (data.source === "outage") body = <OutageCard />
   else if (filteredJobs.length === 0) body = <EmptyStoreCard />
   else {
+    const ideaDisplay = data.source === "store" ? data.idea_display ?? {} : {}
     body = (
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filteredJobs.map(job => (
-          <JobRow key={job.job_id} job={job} />
+          <JobRow
+            key={job.job_id}
+            job={job}
+            display={job.idea_id ? ideaDisplay[job.idea_id] : undefined}
+          />
         ))}
       </div>
     )

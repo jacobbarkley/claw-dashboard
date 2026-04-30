@@ -20,13 +20,19 @@ import path from "path"
 
 import { NextRequest, NextResponse } from "next/server"
 
-import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import { PHASE_1_DEFAULT_SCOPE, type ResearchSleeve } from "@/lib/research-lab-contracts"
 import type { JobV1 } from "@/lib/research-lab-contracts"
+import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 
 type JobListResult =
   | { source: "store"; jobs: JobV1[]; state: "populated" | "empty" }
   | { source: "unconfigured"; jobs: [] }
   | { source: "outage"; jobs: []; error: string }
+
+interface JobDisplayEntry {
+  title: string
+  sleeve: ResearchSleeve | null
+}
 
 const SCOPE = PHASE_1_DEFAULT_SCOPE
 const KEY_PATTERN = `research_lab:${SCOPE.user_id}:${SCOPE.account_id}:${SCOPE.strategy_group_id}:job:*`
@@ -136,6 +142,31 @@ async function countColdTerminalJobs(): Promise<number> {
   }
 }
 
+// ─── Idea-title enrichment ──────────────────────────────────────────────
+//
+// Job rows in the dashboard read better with a friendly label derived from
+// the owning idea's title + sleeve. We do the join here (one read per
+// distinct idea_id) rather than extending JobV1 — that contract belongs to
+// Codex, and the join is purely view-side.
+
+async function loadIdeaDisplayMap(jobs: JobV1[]): Promise<Record<string, JobDisplayEntry>> {
+  const ideaIds = new Set<string>()
+  for (const job of jobs) {
+    if (typeof job.idea_id === "string" && job.idea_id) ideaIds.add(job.idea_id)
+  }
+  if (ideaIds.size === 0) return {}
+  const entries = await Promise.all(
+    [...ideaIds].map(async ideaId => {
+      const idea = await loadIdeaById(ideaId, SCOPE)
+      if (!idea) return [ideaId, null] as const
+      return [ideaId, { title: idea.title, sleeve: idea.sleeve }] as const
+    }),
+  )
+  const out: Record<string, JobDisplayEntry> = {}
+  for (const [ideaId, entry] of entries) if (entry) out[ideaId] = entry
+  return out
+}
+
 // ─── Handler ────────────────────────────────────────────────────────────
 
 export async function GET(_req: NextRequest) {
@@ -144,10 +175,14 @@ export async function GET(_req: NextRequest) {
     countColdTerminalJobs(),
   ])
 
+  const ideaDisplayMap =
+    store.source === "store" ? await loadIdeaDisplayMap(store.jobs) : {}
+
   return NextResponse.json({
     ok: true,
     scope: SCOPE,
     ...store,
+    idea_display: ideaDisplayMap,
     cold_terminal_count: coldTerminalCount,
     polled_at: new Date().toISOString(),
   })

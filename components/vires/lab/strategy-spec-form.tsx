@@ -597,13 +597,14 @@ function ChipToggle({
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "8px 10px",
+  padding: "10px 12px",
   border: "1px solid var(--vr-line)",
   borderRadius: 3,
   background: "var(--vr-ink)",
   color: "var(--vr-cream)",
   fontFamily: "inherit",
-  fontSize: 12.5,
+  // 16px or larger keeps iOS Safari from auto-zooming the page on focus.
+  fontSize: 16,
 }
 
 const textareaStyle: React.CSSProperties = {

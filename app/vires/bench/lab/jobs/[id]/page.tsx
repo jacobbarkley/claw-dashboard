@@ -8,6 +8,7 @@ import {
   loadCandidateByJobId,
   loadResultById,
 } from "@/lib/research-lab-cold.server"
+import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
 
 export const metadata = {
@@ -32,9 +33,12 @@ export default async function ViresLabJobDetailPage({
   const jobId = decodeURIComponent(id)
   const { result, candidate } = await loadCold(jobId)
   const campaignIdeaId = candidate?.idea_id ?? null
+  const owningIdea = campaignIdeaId ? await loadIdeaById(campaignIdeaId) : null
   const labCampaignExists = campaignIdeaId
     ? await hasLabCampaignForIdea(campaignIdeaId)
     : false
+  const headlineTitle = owningIdea?.title ?? "Run"
+  const sleeveLabel = owningIdea?.sleeve ?? null
 
   return (
     <>
@@ -42,21 +46,31 @@ export default async function ViresLabJobDetailPage({
       <div style={{ padding: "24px 20px 12px", maxWidth: 720, margin: "0 auto" }}>
         <div
           className="t-eyebrow"
-          style={{ fontSize: 10, color: "var(--vr-gold)", marginBottom: 10, letterSpacing: "0.14em" }}
+          style={{
+            fontSize: 10,
+            color: "var(--vr-gold)",
+            marginBottom: 10,
+            letterSpacing: "0.14em",
+            display: "flex",
+            gap: 8,
+          }}
         >
-          Run
+          <span>Run</span>
+          {sleeveLabel && (
+            <span style={{ color: "var(--vr-cream-mute)" }}>· {sleeveLabel.toLowerCase()}</span>
+          )}
         </div>
         <h1
           className="t-display"
           style={{
             margin: 0,
             fontSize: 26,
-            lineHeight: 1.15,
+            lineHeight: 1.2,
             color: "var(--vr-cream)",
             fontWeight: 400,
           }}
         >
-          Campaign status
+          {headlineTitle}
         </h1>
         <div
           className="t-mono"
@@ -69,6 +83,22 @@ export default async function ViresLabJobDetailPage({
         >
           {jobId}
         </div>
+        {owningIdea && (
+          <Link
+            href={`/vires/bench/lab/ideas/${encodeURIComponent(owningIdea.idea_id)}`}
+            className="t-eyebrow"
+            style={{
+              display: "inline-block",
+              marginTop: 6,
+              fontSize: 9,
+              letterSpacing: "0.14em",
+              color: "var(--vr-cream-mute)",
+              textDecoration: "none",
+            }}
+          >
+            ← back to idea
+          </Link>
+        )}
       </div>
 
       <div
