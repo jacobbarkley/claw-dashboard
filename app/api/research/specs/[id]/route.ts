@@ -8,8 +8,9 @@ import { randomBytes } from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import yaml from "js-yaml"
 
-import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import type { IdeaArtifact, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
 import { commitDashboardFiles, readDashboardFileText } from "@/lib/github-multi-file-commit.server"
+import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import {
   loadSpecImplementationQueueEntry,
   specAuditLogRelpath,
@@ -20,6 +21,7 @@ import { loadStrategySpecById } from "@/lib/research-lab-specs.server"
 import {
   canTransitionSpec,
   deleteStrategySpecArtifact,
+  ideaArtifactToYaml,
   normalizeScope,
   optionalString,
   parseAuthoringMode,
@@ -242,6 +244,11 @@ async function persistApprovedCancel({
     cancelled_by: actor,
     cancel_reason: reason ?? "operator cancelled before implementation claim",
   }
+  const idea = await loadIdeaById(spec.idea_id, scope)
+  if (!idea) {
+    throw new Error(`Cannot cancel approved spec ${spec.spec_id}: idea ${spec.idea_id} not found.`)
+  }
+  const restoredIdea = restoreIdeaAfterSpecCancel(idea, spec.spec_id)
   const message = `research lab: cancel approved strategy spec ${spec.spec_id}`
   const auditRelpath = specAuditLogRelpath(spec.spec_id, scope)
   const existingAudit = await readDashboardFileText(auditRelpath)
@@ -271,11 +278,45 @@ async function persistApprovedCancel({
         content: yaml.dump(cancelledQueueEntry, { noRefs: true, lineWidth: 100 }),
       },
       {
+        relpath: ideaRelpath(scope, restoredIdea.idea_id),
+        content: ideaArtifactToYaml(restoredIdea),
+      },
+      {
         relpath: auditRelpath,
         content: `${existingAudit ?? ""}${JSON.stringify(event)}\n`,
       },
     ],
   })
+}
+
+function restoreIdeaAfterSpecCancel(idea: IdeaArtifact, specId: string): IdeaArtifact {
+  if (idea.strategy_ref.kind === "SPEC_PENDING" && idea.strategy_ref.active_spec_id === specId) {
+    return {
+      ...idea,
+      needs_spec: true,
+      strategy_ref: {
+        kind: "NONE",
+        active_spec_id: null,
+        pending_spec_id: null,
+        strategy_id: null,
+        preset_id: null,
+      },
+    }
+  }
+  if (idea.strategy_ref.kind === "REGISTERED" && idea.strategy_ref.pending_spec_id === specId) {
+    return {
+      ...idea,
+      strategy_ref: {
+        ...idea.strategy_ref,
+        pending_spec_id: null,
+      },
+    }
+  }
+  throw new Error(`Cannot cancel approved spec ${specId}: idea strategy_ref no longer points at this spec.`)
+}
+
+function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }
 
 async function persistSpecStateChange({
