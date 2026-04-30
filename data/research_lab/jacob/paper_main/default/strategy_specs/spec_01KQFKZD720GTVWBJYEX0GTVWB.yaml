@@ -8,7 +8,7 @@ strategy_group_id: default
 created_at: '2026-04-30T16:36:52.189Z'
 authoring_mode: AI_DRAFTED
 authored_by: jacob
-state: DRAFTING
+state: AWAITING_APPROVAL
 signal_logic: >-
   Smoke test strategy: confirm the pipeline is operational end-to-end. Use a simple price-momentum
   signal on a small equity universe — rank constituents by trailing 20-day return and go long the
@@ -62,3 +62,6 @@ implementation_notes: >-
   any pipeline errors as P0 issues regardless of strategy performance.
 parent_spec_id: null
 registered_strategy_id: null
+approved_at: null
+approved_by: null
+preset_id: null
