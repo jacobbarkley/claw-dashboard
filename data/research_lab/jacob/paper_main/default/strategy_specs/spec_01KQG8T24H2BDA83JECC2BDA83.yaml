@@ -1,0 +1,79 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQG8T24H2BDA83JECC2BDA83
+spec_version: 1
+idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-04-30T22:41:10.286Z'
+authoring_mode: AI_DRAFTED
+authored_by: jacob
+state: DRAFTING
+signal_logic: >-
+  Primary signal is constructed from the apewisdom_top100 feed. Each daily sweep ranks the top-100
+  tickers by a composite attention score: (1) likes-to-mentions ratio (upvote ratio from the feed)
+  must exceed a threshold (e.g., top tercile of the current sweep), and (2) current-day trading
+  volume must be within ±1 standard deviation of the ticker's trailing 30-day average daily volume
+  (ADV), computed from OHLCV bars. Tickers passing both filters enter a technical refinement layer:
+  RSI(14) must be between 40 and 65 (not overbought, not in freefall), price must be above its
+  20-day SMA, and the 9-day EMA must be above the 21-day EMA (short-term momentum confirmation).
+  Survivors of all filters constitute the daily candidate set. Optionally, a manual market-research
+  gate can be applied by the operator before order submission.
+universe:
+  description: >-
+    Dynamic universe drawn daily from the apewisdom_top100 ranked list, filtered down to U.S. equity
+    tickers tradeable on Alpaca (common stocks and ETFs). Penny stocks below $1.00 are excluded.
+    Tickers with ADV below $1M (30-day) are excluded. No sector or market-cap restriction, though
+    the operator should be aware the universe will skew toward small/mid-cap and meme-adjacent
+    names.
+entry_rules: >-
+  Enter long at next-day market open for any ticker that clears all signal filters on the prior
+  day's sweep. Position sizing is equal-weight across all candidates, subject to a maximum of 10
+  simultaneous open positions. Minimum liquidity gate: ADV must exceed $1M (derived from OHLCV
+  volume). No leverage. No short positions. New entries are only taken if the portfolio has
+  available cash allocation.
+exit_rules: >-
+  Primary profit target: close position at +20% gain from entry price (limit order). Hard stop-loss:
+  close position at -10% from entry price (stop order). Time-based exit: if neither target nor stop
+  is hit within 15 calendar days, exit at market open on day 16. Re-entry into the same ticker is
+  permitted only after a full exit and a minimum 3-day cooling-off period. If a ticker drops out of
+  the apewisdom_top100 entirely for 3 consecutive days while the position is open and is below entry
+  price, exit at next open (sentiment deterioration exit).
+risk_model:
+  description: >-
+    Equal-weight position sizing across up to 10 concurrent positions, implying a maximum
+    single-position weight of 10% of portfolio NAV. Hard stop at -10% per position limits maximum
+    single-trade loss to ~1% of NAV. Portfolio-level drawdown circuit breaker: if total portfolio
+    drawdown from peak exceeds 15%, halt new entries until NAV recovers above the 90% of peak
+    threshold. No leverage. Concentration cap: no single ticker may exceed 10% NAV at entry. Sector
+    concentration is not explicitly capped given the opportunistic nature of the universe, but
+    operator review is recommended when >3 positions share a sector.
+sweep_params:
+  description: >-
+    likes_to_mentions_ratio_threshold: [top-tercile, top-quartile]; rsi_upper_bound: [60, 65, 70];
+    rsi_lower_bound: [35, 40, 45]; volume_zscore_window: [20, 30]; sma_period: [20, 50];
+    profit_target_pct: [15, 20, 25]; stop_loss_pct: [8, 10, 12]; max_holding_days: [10, 15, 20];
+    max_concurrent_positions: [5, 8, 10]
+required_data:
+  - apewisdom_top100
+  - alpaca_equity_ohlcv
+benchmark: SPY (S&P 500 ETF) buy-and-hold over the same period.
+acceptance_criteria:
+  min_sharpe: 0.8
+  max_drawdown: 25
+  min_hit_rate: 45
+  other: >-
+    Average winning trade / average losing trade (profit factor) >= 1.5. Median holding period
+    should fall between 3 and 15 days. At least 50 closed trades required for statistical validity
+    before live deployment.
+candidate_strategy_family: Retail-sentiment momentum with technical confirmation (mean-reversion guard)
+implementation_notes: >-
+  apewisdom_top100 coverage begins 2024; backtest window is therefore limited to ~2 years. Operator
+  should acknowledge this constraint and not over-fit on a short sample. The manual market-research
+  gate described in the thesis is supported as an optional operator review step before order
+  submission but cannot be automated or backtested. Sentiment deterioration exit requires daily
+  re-scoring of open positions against the apewisdom feed — ensure the pipeline re-runs the sweep
+  for held tickers even when no new entries are triggered. ADV and volume z-score are derived from
+  alpaca_equity_ohlcv; no separate data feed is needed.
+parent_spec_id: null
+registered_strategy_id: null

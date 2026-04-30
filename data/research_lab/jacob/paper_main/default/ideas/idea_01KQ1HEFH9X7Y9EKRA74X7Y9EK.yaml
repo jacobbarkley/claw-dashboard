@@ -30,7 +30,7 @@ params:
       when bull conviction is high and lower percentage when conviction is low.
 strategy_ref:
   kind: SPEC_PENDING
-  active_spec_id: null
+  active_spec_id: spec_01KQG8T24H2BDA83JECC2BDA83
   pending_spec_id: null
   strategy_id: null
   preset_id: null
