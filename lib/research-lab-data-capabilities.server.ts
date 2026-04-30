@@ -127,7 +127,7 @@ export function assessDataReadiness({
         `Capability ${capability.capability_id} is ${capability.category}, ` +
         `which does not satisfy requested data ${requested}.`
     } else if (!capability.sleeves.includes(sleeve)) {
-      notes ??= `${capability.display_name} is not available for the ${sleeve.toLowerCase()} sleeve.`
+      notes ??= `${capability.display_name} is not wired for the ${sleeve.toLowerCase()} sleeve.`
     } else if (capability.status === "AVAILABLE") {
       status = "AVAILABLE"
       source = capability.capability_id
@@ -203,12 +203,21 @@ function capabilityMatchesRequest(capability: DataCapabilityV1, requested: strin
     "on-chain": ["Crypto on-chain"],
   }
   const allowed = aliases[normalized]
-  if (!allowed) return true
+  if (!allowed) {
+    return [
+      capability.capability_id,
+      capability.display_name,
+      capability.category,
+    ].some(label => {
+      const normalizedLabel = normalizeRequirement(label)
+      return normalizedLabel.includes(normalized) || normalized.includes(normalizedLabel)
+    })
+  }
   return allowed.includes(category)
 }
 
 function normalizeRequirement(input: string): string {
-  return input.trim().toLowerCase().replace(/\s+/g, " ")
+  return input.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
 }
 
 export function dataReadinessForResponse(assessment: DataReadinessAssessment) {

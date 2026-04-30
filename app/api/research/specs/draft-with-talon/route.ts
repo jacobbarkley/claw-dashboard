@@ -323,7 +323,7 @@ function buildStrategySpec({
     exit_rules: proposal.exit_rules.trim(),
     risk_model: descriptionRecord(proposal.risk_model),
     sweep_params: descriptionRecord(proposal.sweep_params ?? ""),
-    required_data: proposal.required_data.map(item => item.trim()).filter(Boolean),
+    required_data: dedupeStrings(proposal.required_data),
     benchmark: normalizeBenchmark(proposal.benchmark),
     acceptance_criteria: {
       min_sharpe: proposal.acceptance_criteria.min_sharpe,
@@ -457,6 +457,20 @@ function mergeStrings(first: string[], second: string[]): string[] {
     const trimmed = value.trim()
     if (trimmed && !seen.has(trimmed)) {
       seen.add(trimmed)
+      out.push(trimmed)
+    }
+  }
+  return out
+}
+
+function dedupeStrings(values: string[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const value of values) {
+    const trimmed = value.trim()
+    const key = trimmed.toLowerCase()
+    if (trimmed && !seen.has(key)) {
+      seen.add(key)
       out.push(trimmed)
     }
   }
