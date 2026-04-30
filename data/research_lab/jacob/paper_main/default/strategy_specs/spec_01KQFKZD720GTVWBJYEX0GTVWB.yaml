@@ -1,0 +1,64 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQFKZD720GTVWBJYEX0GTVWB
+spec_version: 1
+idea_id: idea_01KQFKZ2P43XNAJM3RHR3XNAJM
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-04-30T16:36:52.189Z'
+authoring_mode: AI_DRAFTED
+authored_by: jacob
+state: DRAFTING
+signal_logic: >-
+  Smoke test strategy: confirm the pipeline is operational end-to-end. Use a simple price-momentum
+  signal on a small equity universe — rank constituents by trailing 20-day return and go long the
+  top decile. No exotic data dependencies; relies solely on daily OHLCV.
+universe:
+  description: >-
+    S&P 500 constituents (or a liquid proxy list of ~500 large-cap US equities). Filter to names
+    with average daily volume > $5M using current snapshot from fundamentals_basic. Static list
+    acceptable for smoke-test purposes given point-in-time limitation.
+entry_rules: >-
+  At the open of each rebalance day (weekly, every Monday), enter long positions in the top-decile
+  stocks ranked by 20-day trailing return. Equal-weight allocation across selected names. Execute
+  via market-on-open orders.
+exit_rules: >-
+  Exit any position that falls out of the top-decile rank on the next weekly rebalance. Also exit
+  any position that hits a 10% stop-loss from entry price intraday. Full portfolio liquidation if a
+  system health check fails.
+risk_model:
+  description: >-
+    Equal-weight position sizing. Maximum single-position weight: 10%. Maximum gross exposure: 100%
+    (long-only). Portfolio-level stop: halt new entries if rolling 4-week drawdown exceeds 15%. No
+    leverage.
+sweep_params:
+  description: 'lookback_days: [10, 20, 40]; rebalance_freq: [weekly, biweekly]; top_decile_pct: [10, 15, 20]'
+required_data:
+  - alpaca_equity_ohlcv
+  - fundamentals_basic
+benchmark: SPY (S&P 500 ETF)
+acceptance_criteria:
+  min_sharpe: 0.5
+  max_drawdown: 20
+  min_hit_rate: 45
+  other: >-
+    Primary goal is pipeline validation. Performance thresholds are intentionally loose for a smoke
+    test. Confirm data loads, signal computes, orders generate, and backtest completes without
+    errors.
+candidate_strategy_family: Cross-sectional momentum (price-based)
+implementation_notes: >-
+  Data-readiness warnings:
+
+  - fundamentals_basic: PARTIAL (fundamentals_basic) - Used only for a static ADV filter at universe
+  construction time. Current snapshot (not point-in-time) is sufficient for this smoke-test use
+  case. Non-core here because a static hard-coded universe list is an acceptable fallback. Raises a
+  WARN rather than BLOCK.
+
+
+  This is a smoke-test spec. The thesis is intentionally thin — the goal is to verify that the Lab
+  pipeline runs correctly from data ingestion through signal generation to order output.
+  fundamentals_basic is used only for a static ADV filter at universe construction time; its lack of
+  point-in-time history is acceptable here since we are not backtesting a fundamentals signal. Flag
+  any pipeline errors as P0 issues regardless of strategy performance.
+parent_spec_id: null
+registered_strategy_id: null
