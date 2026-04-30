@@ -14,6 +14,9 @@ import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
 import { TALON_WARN_KEY_PREFIX } from "./idea-thread-live"
 import { specToFormValues, formValuesToPatch } from "./spec-form-mapping"
 import { StrategySpecForm, type SpecFormValues } from "./strategy-spec-form"
+import { TalonChatPanel } from "./talon-chat-panel"
+
+const TALON_DRAFTING_ENABLED = process.env.NEXT_PUBLIC_TALON_DRAFTING_ENABLED === "1"
 
 interface TalonWarnPayload {
   warnings: string[]
@@ -142,6 +145,15 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {talonWarn && (
         <TalonWarnCallout payload={talonWarn} onDismiss={dismissTalonWarn} />
+      )}
+      {TALON_DRAFTING_ENABLED && (
+        <TalonChatPanel
+          specId={spec.spec_id}
+          scope={scope}
+          authoringMode={spec.authoring_mode}
+          specState={spec.state}
+          onRevised={() => router.refresh()}
+        />
       )}
       <StrategySpecForm
         ideaTitle={idea.title}
