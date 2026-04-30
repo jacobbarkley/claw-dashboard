@@ -25,10 +25,10 @@ tags:
   - Trendy
 params: {}
 strategy_ref:
-  kind: NONE
-  active_spec_id: null
+  kind: SPEC_PENDING
+  active_spec_id: spec_phase_e_smoke_20260430T005359Z
   pending_spec_id: null
   strategy_id: null
   preset_id: null
 status: DRAFT
-needs_spec: true
+needs_spec: false
