@@ -1,6 +1,6 @@
 schema_version: research_lab.strategy_spec.v1
 spec_id: spec_01KQG8T24H2BDA83JECC2BDA83
-spec_version: 1
+spec_version: 2
 idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
 user_id: jacob
 account_id: paper_main
@@ -17,8 +17,16 @@ signal_logic: >-
   (ADV), computed from OHLCV bars. Tickers passing both filters enter a technical refinement layer:
   RSI(14) must be between 40 and 65 (not overbought, not in freefall), price must be above its
   20-day SMA, and the 9-day EMA must be above the 21-day EMA (short-term momentum confirmation).
-  Survivors of all filters constitute the daily candidate set. Optionally, a manual market-research
-  gate can be applied by the operator before order submission.
+  Survivors of all filters constitute the daily candidate set.
+
+
+  Conviction Score: Each surviving ticker is assigned a continuous conviction score C ∈ [0, 1]
+  composed of three sub-signals, equally weighted by default (weights are sweep parameters):
+    - Sentiment strength (0–1): normalized likes-to-mentions ratio percentile rank within the current sweep's top-100.
+    - Technical alignment (0–1): composite of RSI proximity to 50 (peak score at RSI=52), EMA spread magnitude (9-EMA minus 21-EMA as % of price), and SMA distance (price % above 20-day SMA).
+    - Earnings proximity modifier: if an earnings announcement is within 5 calendar days (before or after entry), apply a dampening multiplier of 0.6 to C to reflect two-way event risk. If earnings are 6–15 days out, apply a mild dampening of 0.85. Beyond 15 days, no adjustment.
+
+  Optionally, a manual market-research gate can be applied by the operator before order submission.
 universe:
   description: >-
     Dynamic universe drawn daily from the apewisdom_top100 ranked list, filtered down to U.S. equity
@@ -31,28 +39,42 @@ entry_rules: >-
   day's sweep. Position sizing is equal-weight across all candidates, subject to a maximum of 10
   simultaneous open positions. Minimum liquidity gate: ADV must exceed $1M (derived from OHLCV
   volume). No leverage. No short positions. New entries are only taken if the portfolio has
-  available cash allocation.
+  available cash allocation. The conviction score C is computed at entry and stored with the
+  position record; it is used to set dynamic exit targets (see exit rules).
 exit_rules: >-
-  Primary profit target: close position at +20% gain from entry price (limit order). Hard stop-loss:
-  close position at -10% from entry price (stop order). Time-based exit: if neither target nor stop
-  is hit within 15 calendar days, exit at market open on day 16. Re-entry into the same ticker is
-  permitted only after a full exit and a minimum 3-day cooling-off period. If a ticker drops out of
-  the apewisdom_top100 entirely for 3 consecutive days while the position is open and is below entry
-  price, exit at next open (sentiment deterioration exit).
+  Exit targets are dynamically set at entry using the conviction score C ∈ [0, 1]:
+    - Profit target: PT = 12% + (C × 16%), yielding a range of +12% (low conviction) to +28% (high conviction). Implemented as a limit order placed at entry.
+    - Stop-loss: SL = 7% + (C × 5%), yielding a range of -7% (low conviction) to -12% (high conviction). Higher conviction justifies a slightly wider stop to avoid shaking out on noise. Implemented as a stop order placed at entry.
+    - Both orders are placed as a bracket at entry and updated if C is recalculated on a subsequent day (e.g., if the operator re-runs the sweep mid-hold).
+
+  Time-based exit: if neither target nor stop is hit within 15 calendar days, exit at market open on
+  day 16.
+
+
+  Sentiment deterioration exit: if a ticker drops out of the apewisdom_top100 entirely for 3
+  consecutive days while the position is open and is below entry price, exit at next open.
+
+
+  Re-entry into the same ticker is permitted only after a full exit and a minimum 3-day cooling-off
+  period.
 risk_model:
   description: >-
     Equal-weight position sizing across up to 10 concurrent positions, implying a maximum
-    single-position weight of 10% of portfolio NAV. Hard stop at -10% per position limits maximum
-    single-trade loss to ~1% of NAV. Portfolio-level drawdown circuit breaker: if total portfolio
-    drawdown from peak exceeds 15%, halt new entries until NAV recovers above the 90% of peak
-    threshold. No leverage. Concentration cap: no single ticker may exceed 10% NAV at entry. Sector
-    concentration is not explicitly capped given the opportunistic nature of the universe, but
-    operator review is recommended when >3 positions share a sector.
+    single-position weight of 10% of portfolio NAV. Dynamic stop-loss ranges from -7% to -12% per
+    position depending on conviction score, limiting maximum single-trade loss to approximately
+    0.7%–1.2% of NAV. Portfolio-level drawdown circuit breaker: if total portfolio drawdown from
+    peak exceeds 15%, halt new entries until NAV recovers above 90% of peak threshold. No leverage.
+    Concentration cap: no single ticker may exceed 10% NAV at entry. Sector concentration is not
+    explicitly capped given the opportunistic nature of the universe, but operator review is
+    recommended when >3 positions share a sector.
 sweep_params:
   description: >-
     likes_to_mentions_ratio_threshold: [top-tercile, top-quartile]; rsi_upper_bound: [60, 65, 70];
     rsi_lower_bound: [35, 40, 45]; volume_zscore_window: [20, 30]; sma_period: [20, 50];
-    profit_target_pct: [15, 20, 25]; stop_loss_pct: [8, 10, 12]; max_holding_days: [10, 15, 20];
+    profit_target_range: [12%+C×16% (fixed formula, sweep conviction weights)]; stop_loss_range:
+    [7%+C×5% (fixed formula, sweep conviction weights)]; conviction_weight_sentiment: [0.25, 0.33,
+    0.50]; conviction_weight_technical: [0.25, 0.33, 0.50]; earnings_near_dampener: [0.5, 0.6, 0.7];
+    earnings_mid_dampener: [0.8, 0.85, 0.9]; max_holding_days: [10, 15, 20];
     max_concurrent_positions: [5, 8, 10]
 required_data:
   - apewisdom_top100
@@ -65,18 +87,30 @@ acceptance_criteria:
   other: >-
     Average winning trade / average losing trade (profit factor) >= 1.5. Median holding period
     should fall between 3 and 15 days. At least 50 closed trades required for statistical validity
-    before live deployment.
-candidate_strategy_family: Retail-sentiment momentum with technical confirmation (mean-reversion guard)
+    before live deployment. Conviction score calibration check: high-conviction trades (C > 0.7)
+    should show a higher average return than low-conviction trades (C < 0.3) in backtest — if not,
+    the conviction weighting should be re-tuned before live deployment.
+candidate_strategy_family: Retail-sentiment momentum with technical confirmation and conviction-scaled dynamic exits
 implementation_notes: >-
+  Data-readiness warnings:
+
+  - earnings_calendar: MISSING - Required for the earnings proximity conviction modifier. Not wired
+  into the Lab. Marked non-core because the dampener can be applied manually via the operator review
+  gate in v1; automated use would require a connector. Flag as v2.
+
+
   apewisdom_top100 coverage begins 2024; backtest window is therefore limited to ~2 years. Operator
   should acknowledge this constraint and not over-fit on a short sample. The manual market-research
   gate described in the thesis is supported as an optional operator review step before order
   submission but cannot be automated or backtested. Sentiment deterioration exit requires daily
   re-scoring of open positions against the apewisdom feed — ensure the pipeline re-runs the sweep
-  for held tickers even when no new entries are triggered. ADV and volume z-score are derived from
-  alpaca_equity_ohlcv; no separate data feed is needed.
+  for held tickers even when no new entries are triggered. ADV, volume z-score, RSI, SMA, and EMA
+  are all derived from alpaca_equity_ohlcv; no separate data feed is needed. Earnings dates must be
+  sourced for the earnings proximity modifier — Alpaca asset metadata does not provide point-in-time
+  earnings calendars; operator should wire a free earnings calendar source (e.g., Nasdaq earnings
+  calendar, EOD Historical Data free tier) or apply the dampener manually during the operator review
+  gate. Headline sentiment is a v2 candidate: free APIs exist (e.g., NewsAPI free tier, Alpaca news
+  feed) but none are currently wired into the Lab pipeline. Flag for future integration when a
+  connector lands.
 parent_spec_id: null
 registered_strategy_id: null
-approved_at: null
-approved_by: null
-preset_id: null
