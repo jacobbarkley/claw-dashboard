@@ -25,10 +25,10 @@ tags:
   - Trendy
 params: {}
 strategy_ref:
-  kind: SPEC_PENDING
-  active_spec_id: spec_01KQECNZYS7QEQEV2T2B7QEQEV
+  kind: NONE
+  active_spec_id: null
   pending_spec_id: null
   strategy_id: null
   preset_id: null
 status: DRAFT
-needs_spec: false
+needs_spec: true
