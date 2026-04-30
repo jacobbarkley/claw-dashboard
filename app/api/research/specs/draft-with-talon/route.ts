@@ -36,6 +36,43 @@ const DEFAULT_MODEL = "claude-sonnet-4-6"
 
 const requirementStatusSchema = z.enum(["AVAILABLE", "PARTIAL", "MISSING"])
 
+// Anthropic's structured-output JSON Schema subset rejects validation
+// keywords such as minimum/maximum. Keep the provider-facing schema loose,
+// then apply the stricter Zod parse after generation.
+const talonGenerationSchema = z.object({
+  proposal: z.object({
+    signal_logic: z.string(),
+    entry_rules: z.string(),
+    exit_rules: z.string(),
+    risk_model: z.string(),
+    universe: z.string(),
+    required_data: z.array(z.string()),
+    benchmark: z.string(),
+    acceptance_criteria: z.object({
+      min_sharpe: z.number(),
+      max_drawdown_pct: z.number(),
+      min_hit_rate_pct: z.number(),
+      other: z.string().optional().nullable(),
+    }),
+    candidate_strategy_family: z.string().optional().nullable(),
+    sweep_params: z.string().optional().nullable(),
+    implementation_notes: z.string().optional().nullable(),
+  }),
+  assessment: z.object({
+    verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
+    requirements: z.array(z.object({
+      requested: z.string(),
+      core: z.boolean().optional().nullable(),
+      status: requirementStatusSchema.optional().nullable(),
+      matched_capability: z.string().optional().nullable(),
+      notes: z.string().optional().nullable(),
+    })),
+    blocking_summary: z.string().optional().nullable(),
+    suggested_action: z.string().optional().nullable(),
+    warnings: z.array(z.string()).optional(),
+  }),
+})
+
 const talonOutputSchema = z.object({
   proposal: z.object({
     signal_logic: z.string().min(40),
@@ -59,7 +96,7 @@ const talonOutputSchema = z.object({
     verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
     requirements: z.array(z.object({
       requested: z.string().min(1),
-      core: z.boolean().default(true),
+      core: z.boolean().optional().nullable(),
       status: requirementStatusSchema.optional().nullable(),
       matched_capability: z.string().optional().nullable(),
       notes: z.string().optional().nullable(),
@@ -162,11 +199,11 @@ export async function POST(req: NextRequest) {
   try {
     const result = await generateText({
       model: anthropic(model),
-      output: Output.object({ schema: talonOutputSchema }),
+      output: Output.object({ schema: talonGenerationSchema }),
       temperature: 0.4,
       prompt,
     })
-    talonOutput = result.output
+    talonOutput = talonOutputSchema.parse(result.output)
     rawCompletion = typeof result.text === "string" ? result.text : null
   } catch (error) {
     return NextResponse.json(
