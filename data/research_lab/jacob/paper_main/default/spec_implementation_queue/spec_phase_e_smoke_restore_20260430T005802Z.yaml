@@ -6,7 +6,7 @@ idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
 user_id: jacob
 account_id: paper_main
 strategy_group_id: default
-state: QUEUED
+state: CANCELLED
 queued_at: '2026-04-30T00:58:08.240Z'
 queued_by: codex-smoke
 claimed_at: null
@@ -19,6 +19,6 @@ registered_strategy_id: null
 preset_id: null
 last_error: null
 last_error_at: null
-cancelled_at: null
-cancelled_by: null
-cancel_reason: null
+cancelled_at: '2026-04-30T00:58:10.860Z'
+cancelled_by: jacob
+cancel_reason: phase e restore-path smoke test complete
