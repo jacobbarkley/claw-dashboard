@@ -21,12 +21,16 @@ thesis: >-
   further and then perform market research on the remainders. Also sets reasonable sell limits to
   enjoy healthy gain without getting greedy.
 sleeve: STOCKS
-tags:
-  - Trendy
-params: {}
+tags: []
+params:
+  spec:
+    data_sources: ApeWisdom, yfinance, alpaca, others
+    exit_rules: >-
+      At a reasonable profit percentage based on bullish conviction. Higher percentage exit target
+      when bull conviction is high and lower percentage when conviction is low.
 strategy_ref:
   kind: SPEC_PENDING
-  active_spec_id: spec_01KQFSND4PDH9F01QFNQDH9F01
+  active_spec_id: null
   pending_spec_id: null
   strategy_id: null
   preset_id: null
