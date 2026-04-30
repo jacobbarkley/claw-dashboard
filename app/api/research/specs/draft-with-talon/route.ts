@@ -7,8 +7,10 @@ import type { IdeaArtifact, ScopeTriple, StrategySpecV1 } from "@/lib/research-l
 import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
 import {
   assessDataReadiness,
+  capabilityMatchesRequest,
   dataReadinessForResponse,
   loadDataCapabilityCatalog,
+  type DataCapabilityCatalogV1,
   type DataReadinessAssessment,
   type ModelDataRequirement,
 } from "@/lib/research-lab-data-capabilities.server"
@@ -222,6 +224,7 @@ export async function POST(req: NextRequest) {
       requirements: includeProposalRequirements({
         requiredData: talonOutput.proposal.required_data,
         assessedRequirements: talonOutput.assessment.requirements,
+        catalog,
       }),
     }),
     talonOutput.assessment,
@@ -423,17 +426,24 @@ function buildPrompt({
 function includeProposalRequirements({
   requiredData,
   assessedRequirements,
+  catalog,
 }: {
   requiredData: string[]
   assessedRequirements: ModelDataRequirement[]
+  catalog: DataCapabilityCatalogV1
 }): ModelDataRequirement[] {
-  const covered = new Set(
-    assessedRequirements.map(req => normalizeRequirementLabel(req.requested)),
-  )
+  const capabilitiesById = new Map(catalog.capabilities.map(capability => [
+    capability.capability_id,
+    capability,
+  ]))
   const missingAssessments = requiredData
     .map(item => item.trim())
     .filter(Boolean)
-    .filter(item => !covered.has(normalizeRequirementLabel(item)))
+    .filter(item => !assessedRequirements.some(req => requirementCoversProposalItem({
+      proposalItem: item,
+      assessedRequirement: req,
+      capabilitiesById,
+    })))
     .map(item => ({
       requested: item,
       core: true,
@@ -442,6 +452,31 @@ function includeProposalRequirements({
       notes: "Talon proposed this required_data entry but did not assess it against the catalog.",
     }))
   return [...assessedRequirements, ...missingAssessments]
+}
+
+function requirementCoversProposalItem({
+  proposalItem,
+  assessedRequirement,
+  capabilitiesById,
+}: {
+  proposalItem: string
+  assessedRequirement: ModelDataRequirement
+  capabilitiesById: Map<string, DataCapabilityCatalogV1["capabilities"][number]>
+}): boolean {
+  if (requirementLabelsOverlap(proposalItem, assessedRequirement.requested)) {
+    return true
+  }
+  const matchedCapability = assessedRequirement.matched_capability
+    ? capabilitiesById.get(assessedRequirement.matched_capability)
+    : null
+  return matchedCapability ? capabilityMatchesRequest(matchedCapability, proposalItem) : false
+}
+
+function requirementLabelsOverlap(first: string, second: string): boolean {
+  const a = normalizeRequirementLabel(first)
+  const b = normalizeRequirementLabel(second)
+  if (!a || !b) return false
+  return a === b || a.includes(b) || b.includes(a)
 }
 
 function applyModelVerdictFloor(
@@ -515,7 +550,7 @@ function dedupeStrings(values: string[]): string[] {
 }
 
 function normalizeRequirementLabel(input: string): string {
-  return input.trim().toLowerCase()
+  return input.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
 }
 
 function descriptionRecord(description: string): Record<string, unknown> {

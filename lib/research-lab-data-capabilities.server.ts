@@ -181,7 +181,7 @@ export function assessDataReadiness({
   }
 }
 
-function capabilityMatchesRequest(capability: DataCapabilityV1, requested: string): boolean {
+export function capabilityMatchesRequest(capability: DataCapabilityV1, requested: string): boolean {
   const normalized = normalizeRequirement(requested)
   const category = capability.category
   if (normalized === normalizeRequirement(category)) return true
