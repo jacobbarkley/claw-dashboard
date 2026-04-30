@@ -1,0 +1,91 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQEKCMFRANZWV9JG99ANZWV9
+spec_version: 1
+idea_id: idea_talon_smoke_pass_20260430T070132Z
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-04-30T07:07:47.140Z'
+authoring_mode: AI_DRAFTED
+authored_by: codex
+state: DRAFTING
+signal_logic: >-
+  Primary signal: ApeWisdom top-100 retail attention rank improvement. A stock enters the signal
+  universe when its ApeWisdom rank improves (rank number decreases) over a rolling lookback window
+  (e.g., 3-day or 5-day). Momentum confirmation: require that the stock's closing price is above its
+  N-day simple moving average (e.g., 20-day SMA) using Alpaca OHLCV daily bars, confirming that
+  price action is consistent with rising retail interest. Combined signal fires when both conditions
+  are met simultaneously.
+universe:
+  description: >-
+    US equities present in the ApeWisdom top-100 retail attention ranking on the signal date,
+    cross-referenced with Alpaca equity universe (tradable, non-OTC preferred). No explicit
+    market-cap filter in v1 (fundamentals_basic is snapshot-only and not point-in-time safe);
+    operator may apply a manual liquidity screen using average daily volume from Alpaca asset
+    metadata as a pre-filter.
+entry_rules: >-
+  Enter a long position at the next day's open (using Alpaca daily OHLCV open price) when: (1) the
+  stock's ApeWisdom rank has improved by at least R positions over the lookback window (e.g., rank
+  improved by ≥10 positions over 3 days), AND (2) the prior day's closing price is above the 20-day
+  SMA. Limit entries to stocks present in the ApeWisdom top-100 list on the signal date. No short
+  entries in this initial version.
+exit_rules: >-
+  Exit the position at the open of the Nth day after entry (e.g., holding period = 5 trading days),
+  OR if the closing price falls below the 20-day SMA on any day during the holding period (momentum
+  invalidation stop), whichever comes first. No hard stop-loss beyond the SMA exit in the base spec;
+  sweep params will test trailing stops.
+risk_model:
+  description: >-
+    Equal-weight position sizing across all concurrent signals, capped at a maximum of 10
+    simultaneous positions (10% gross weight per position). Maximum gross exposure: 100% long. No
+    leverage. Per-trade risk limited implicitly by equal-weight cap. No sector concentration
+    constraint in v1 — note this as a known gap given the retail-attention universe may cluster in
+    meme-adjacent sectors.
+sweep_params:
+  description: >-
+    Rank improvement threshold R: [5, 10, 15, 20]; Lookback window: [3, 5, 7 days]; SMA period: [10,
+    20, 30 days]; Holding period: [3, 5, 10 days]; Max concurrent positions: [5, 10, 15]
+required_data:
+  - apewisdom_top100
+  - alpaca_equity_ohlcv
+benchmark: SPY (S&P 500 ETF) total return, sourced from alpaca_equity_ohlcv
+acceptance_criteria:
+  min_sharpe: 0.8
+  max_drawdown: 25
+  min_hit_rate: 45
+  other: >-
+    Minimum 50 trades over backtest period to ensure statistical credibility. Backtest window:
+    2024-present (constrained by ApeWisdom coverage start). Annualized return must exceed SPY over
+    the same window.
+candidate_strategy_family: Retail-sentiment momentum (attention-driven price continuation)
+implementation_notes: >-
+  Data-readiness warnings:
+
+  - wikipedia_pageviews (excluded): MISSING - Explicitly excluded by operator thesis. Not required
+  by this strategy. No impact on verdict.
+
+  - gdelt_full (excluded): MISSING - Explicitly excluded by operator thesis. Not required by this
+  strategy. No impact on verdict.
+
+  - reddit_wsb_velocity (excluded): MISSING - Explicitly excluded by operator thesis. Raw velocity
+  not required; ApeWisdom aggregated rank is the designated substitute. No impact on verdict.
+
+  - google_trends (excluded): MISSING - Explicitly excluded by operator thesis. UNAVAILABLE in
+  catalog but not needed. No impact on verdict.
+
+  - fundamentals_basic (excluded): PARTIAL (fundamentals_basic) - Not used as a signal input.
+  Operator may optionally use Alpaca asset metadata (avg daily volume) as a manual pre-filter for
+  liquidity screening, but this is not a core signal dependency. Snapshot-only nature noted.
+
+  - macro_fred_subset (excluded): MISSING - Explicitly excluded by operator thesis. UNAVAILABLE in
+  catalog but not needed. No impact on verdict.
+
+
+  ApeWisdom coverage begins 2024; backtest history is limited to ~2 years. This is a known
+  constraint — results may not generalize across multiple market regimes. Raw per-thread Reddit
+  velocity is intentionally excluded per thesis; ApeWisdom aggregated rank is the sole sentiment
+  input. Fundamentals, options, macro, Wikipedia, GDELT, and Google Trends are all explicitly
+  excluded per operator thesis. Sector clustering risk in meme-adjacent names (tech, biotech, EV)
+  should be monitored in post-backtest analysis even if no hard constraint is applied in v1.
+parent_spec_id: null
+registered_strategy_id: null
