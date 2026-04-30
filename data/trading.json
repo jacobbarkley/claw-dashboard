@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-30T14:30:09.328349+00:00",
+  "generated_at": "2026-04-30T14:45:09.838932+00:00",
   "as_of_date": "2026-04-30",
   "account": {
     "equity": 85612.81,
@@ -1646,36 +1646,18 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "SCHW",
-        "price": 94.8,
-        "sector": "Financial Services",
-        "expiry": "2026-05-22",
-        "dte": 22,
-        "short_strike": 98.0,
-        "long_strike": 93.0,
-        "spread_width": 5.0,
-        "net_credit": 2.75,
-        "credit_width_ratio": 0.55,
-        "annualized_yield_pct": 956.0,
-        "max_loss_per_contract": 225.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "SMCI",
         "price": 25.26,
         "sector": "Technology",
         "expiry": "2026-05-22",
         "dte": 22,
-        "short_strike": 27.0,
-        "long_strike": 22.0,
+        "short_strike": 26.0,
+        "long_strike": 21.0,
         "spread_width": 5.0,
-        "net_credit": 1.51,
-        "credit_width_ratio": 0.302,
-        "annualized_yield_pct": 524.9,
-        "max_loss_per_contract": 349.0,
+        "net_credit": 1.42,
+        "credit_width_ratio": 0.284,
+        "annualized_yield_pct": 493.6,
+        "max_loss_per_contract": 358.0,
         "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -1685,7 +1667,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
