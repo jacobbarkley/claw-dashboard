@@ -8,7 +8,7 @@ strategy_group_id: default
 created_at: '2026-04-30T00:53:59.463Z'
 authoring_mode: OPERATOR_DRAFTED
 authored_by: codex-smoke
-state: APPROVED
+state: REJECTED
 signal_logic: >-
   Smoke-test spec for Ape Wisdom: rank social-attention names and gate by liquidity plus simple
   trend confirmation.
