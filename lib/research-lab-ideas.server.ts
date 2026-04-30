@@ -14,12 +14,11 @@
 // ──────────────────
 // Vercel serverless functions read from a build-time filesystem snapshot.
 // When the operator authors a new idea, the POST commits a YAML to GitHub
-// and the form navigates to the detail page — but the detail page may
-// route into the *previous* deployment's bundle for ~60s until the auto-
-// deploy completes. To make the loader robust to that window, after a
-// local FS miss we fall back to a raw GitHub fetch. Once Vercel rebuilds,
-// the local hit returns first (faster path) and the GitHub fetch is only
-// used for the post-create window.
+// and the form navigates to the detail page — but the detail page may route
+// into the *previous* deployment's bundle for ~60s until the auto-deploy
+// completes. In production, GITHUB_TOKEN tells us to read the live GitHub
+// file first; in local dev, we keep the fast local read with a raw GitHub
+// fallback for the post-create window.
 
 import { promises as fs } from "fs"
 import path from "path"
@@ -27,6 +26,7 @@ import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
 import type { IdeaArtifact, IdeaV1, IdeaV2, ScopeTriple, StrategyRefV2 } from "./research-lab-contracts"
+import { readDashboardFileText } from "./github-multi-file-commit.server"
 
 const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
 const PRESET_INDEX_PATH = path.join(process.cwd(), "data", "research_lab", "presets", "_index.json")
@@ -78,7 +78,8 @@ function normalizeIdeaArtifact(
   const raw = parsed as Record<string, unknown>
   const schemaVersion = raw.schema_version ?? raw.schema
   if (schemaVersion === "research_lab.idea.v2") {
-    const { schema: _schema, ...canonicalRaw } = raw
+    const canonicalRaw = { ...raw }
+    delete canonicalRaw.schema
     const idea = canonicalRaw as unknown as IdeaV2
     const strategyId = idea.strategy_ref?.strategy_id ?? ""
     const strategyFamily = strategyId ? familyByStrategy.get(strategyId) ?? null : null
@@ -177,6 +178,10 @@ export async function loadIdeaById(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<IdeaArtifact | null> {
   if (!ideaId || !SAFE_ID.test(ideaId)) return null
+  if (process.env.GITHUB_TOKEN) {
+    const raw = await readDashboardFileText(ideaRepoRelpath(ideaId, scope))
+    if (raw) return normalizeIdeaArtifact(yaml.load(raw), await strategyFamilyById())
+  }
   const local = await readYamlIfPresent(ideaPath(ideaId, scope))
   if (local) return local
   // Local FS miss — could be a brand-new idea whose Vercel deploy hasn't

@@ -44,6 +44,14 @@ export type StrategySpecState =
   | "REJECTED"
   | "SUPERSEDED"
 
+export type SpecImplementationQueueState =
+  | "QUEUED"
+  | "CLAIMED"
+  | "IMPLEMENTING"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELLED"
+
 // Phase 1a/1b allowed job states. CANCELLED is reserved but not exercised
 // until Phase 1c.
 export type JobState =
@@ -197,6 +205,53 @@ export interface StrategySpecV1 extends ScopeTriple {
   implementation_notes?: string | null
   parent_spec_id?: string | null
   registered_strategy_id?: string | null
+  /** Phase E approval metadata. Optional for pre-approval/backfilled specs. */
+  approved_at?: string | null
+  approved_by?: string | null
+  /** Executable preset created by the implementation loop. */
+  preset_id?: string | null
+}
+
+export interface SpecImplementationQueueV1 extends ScopeTriple {
+  schema_version: "research_lab.spec_implementation_queue.v1"
+  queue_entry_id: string
+  spec_id: string
+  spec_version: number
+  idea_id: string
+  state: SpecImplementationQueueState
+  queued_at: string
+  queued_by: string
+  claimed_at?: string | null
+  claimed_by?: string | null
+  attempts: number
+  implementation_started_at?: string | null
+  implementation_finished_at?: string | null
+  implementation_commit?: string | null
+  registered_strategy_id?: string | null
+  preset_id?: string | null
+  last_error?: string | null
+  last_error_at?: string | null
+  cancelled_at?: string | null
+  cancelled_by?: string | null
+  cancel_reason?: string | null
+}
+
+export interface SpecAuditEventV1 {
+  event_id: string
+  spec_id: string
+  ts: string
+  actor_kind: "operator" | "worker" | "system"
+  actor_id: string
+  transition: {
+    from: StrategySpecState | null
+    to: StrategySpecState
+  }
+  context: {
+    dashboard_commit?: string | null
+    implementation_commit?: string | null
+    queue_entry_id?: string | null
+    message?: string | null
+  }
 }
 
 /** In-memory adapter shape used while v1 YAML and v2 YAML coexist. */
