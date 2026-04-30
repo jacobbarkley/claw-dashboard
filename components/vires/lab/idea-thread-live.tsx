@@ -277,8 +277,10 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
     setBusy("talon")
     setError(null)
     setBlocked(null)
+
+    let res: Response
     try {
-      const res = await fetch("/api/research/specs/draft-with-talon", {
+      res = await fetch("/api/research/specs/draft-with-talon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -287,71 +289,88 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
           authored_by: props.idea.created_by ?? "jacob",
         }),
       })
+    } catch (err) {
+      console.error("[talon] fetch threw:", err)
+      setError(`Network error reaching Talon: ${err instanceof Error ? err.message : String(err)}`)
+      setBusy(null)
+      return
+    }
 
-      if (res.status === 422) {
-        const payload = (await res.json()) as {
-          error?: string
-          data_readiness?: TalonReadiness
-        }
-        const dr = payload.data_readiness
-        if (dr) {
-          setBlocked({
-            catalogVersion: dr.catalog_version,
-            blockingSummary:
-              dr.blocking_summary ??
-              "Talon couldn't draft this — required data isn't wired in yet.",
-            suggestedAction:
-              dr.suggested_action ??
-              "Re-frame the thesis around data we have, or queue the missing capability for Codex.",
-            requirements: dr.requirements ?? [],
-          })
-          return
-        }
-        throw new Error(payload.error ?? "Talon refused — data unavailable.")
-      }
+    const rawBody = await res.text()
+    let payload: {
+      ok?: boolean
+      spec?: { spec_id?: string }
+      data_readiness?: TalonReadiness
+      error?: string
+      detail?: string
+      talon_error?: string
+    } = {}
+    try {
+      payload = rawBody ? JSON.parse(rawBody) : {}
+    } catch (parseErr) {
+      console.error("[talon] response not JSON:", { status: res.status, rawBody, parseErr })
+      setError(`Talon returned non-JSON (status ${res.status}): ${rawBody.slice(0, 200) || "<empty>"}`)
+      setBusy(null)
+      return
+    }
 
-      if (res.status === 502 || res.status === 503) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string }
-        throw new Error(
-          payload.error ??
-            (res.status === 503
-              ? "Talon isn't configured on this deployment."
-              : "Talon is unreachable right now. Try again, or author the spec yourself."),
-        )
-      }
-
-      const payload = (await res.json()) as {
-        spec?: { spec_id?: string }
-        data_readiness?: TalonReadiness
-        error?: string
-      }
-      if (!res.ok || !payload.spec?.spec_id) {
-        throw new Error(payload.error ?? `Talon drafting failed (${res.status})`)
-      }
-
+    if (res.status === 422) {
       const dr = payload.data_readiness
-      if (dr && dr.verdict === "WARN" && dr.warnings.length > 0) {
-        try {
-          window.localStorage.setItem(
-            `${TALON_WARN_KEY_PREFIX}${payload.spec.spec_id}`,
-            JSON.stringify({
-              warnings: dr.warnings,
-              catalog_version: dr.catalog_version,
-              created_at: new Date().toISOString(),
-            }),
-          )
-        } catch {
-          // localStorage unavailable — warning won't surface on the edit
-          // page. Not worth blocking the redirect.
-        }
+      if (dr) {
+        setBlocked({
+          catalogVersion: dr.catalog_version,
+          blockingSummary:
+            dr.blocking_summary ??
+            "Talon couldn't draft this — required data isn't wired in yet.",
+          suggestedAction:
+            dr.suggested_action ??
+            "Re-frame the thesis around data we have, or queue the missing capability for Codex.",
+          requirements: dr.requirements ?? [],
+        })
+        return
       }
+      setError(payload.error ?? "Talon refused — data unavailable.")
+      setBusy(null)
+      return
+    }
 
-      router.push(
-        `/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/spec/edit?spec_id=${encodeURIComponent(payload.spec.spec_id)}`,
-      )
+    if (!res.ok || !payload.spec?.spec_id) {
+      const baseLabel =
+        res.status === 503
+          ? "Talon isn't configured on this deployment"
+          : res.status === 502
+            ? "Talon is unreachable right now"
+            : `Talon drafting failed (${res.status})`
+      const serverDetail = payload.talon_error ?? payload.detail ?? payload.error
+      console.error("[talon] non-success:", { status: res.status, payload })
+      setError(serverDetail ? `${baseLabel}: ${serverDetail}` : baseLabel)
+      setBusy(null)
+      return
+    }
+
+    const dr = payload.data_readiness
+    if (dr && dr.verdict === "WARN" && dr.warnings.length > 0) {
+      try {
+        window.localStorage.setItem(
+          `${TALON_WARN_KEY_PREFIX}${payload.spec.spec_id}`,
+          JSON.stringify({
+            warnings: dr.warnings,
+            catalog_version: dr.catalog_version,
+            created_at: new Date().toISOString(),
+          }),
+        )
+      } catch (storageErr) {
+        console.warn("[talon] localStorage unavailable:", storageErr)
+      }
+    }
+
+    try {
+      const target = `/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/spec/edit?spec_id=${encodeURIComponent(payload.spec.spec_id)}`
+      router.push(target)
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Talon drafting failed")
+      console.error("[talon] redirect threw:", err)
+      setError(`Spec saved as ${payload.spec.spec_id}, but redirect failed: ${err instanceof Error ? err.message : String(err)}. Open the idea page to find it.`)
       setBusy(null)
     }
   }
