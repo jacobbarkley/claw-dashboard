@@ -1,35 +1,32 @@
 // POST /api/research/specs/[id]/revise-with-talon
 //
-// Conversational revision endpoint for an existing AI_DRAFTED spec. The
-// operator chats with Talon; on each turn Talon either asks a clarifying
-// question (kind=clarification, no spec changes) or returns a revised
-// proposal that the server re-checks against the data-capability catalog
-// and persists in place (kind=revision).
+// Propose-only conversational endpoint for an existing AI_DRAFTED spec.
+// The operator chats with Talon; on each turn Talon either:
+//   - asks a clarifying question (kind=clarification), or
+//   - returns a proposed revision (kind=revision + proposal + assessment).
 //
-// Persistence semantics: the spec_id stays stable; spec_version increments;
-// state drops AWAITING_APPROVAL → DRAFTING (revisions invalidate any
-// in-flight approval); the original draft provenance file is left intact
-// and a per-revision provenance file is written alongside it.
+// This endpoint NEVER persists. The proposal is returned to the client
+// and remains a proposal until the operator deliberately taps "Apply" —
+// which hits the sibling apply-talon-revision endpoint with the same
+// proposal+assessment payload.
 //
-// BLOCKED on revision: the new content is NOT persisted. Operator keeps
-// the existing spec and Talon's reply explains what blocked the revision.
+// BLOCKED revisions are still returned (with verdict=BLOCKED in
+// data_readiness) so the UI can render a "blocked, can't apply" affordance.
 
 import { anthropic } from "@ai-sdk/anthropic"
 import { generateText, Output } from "ai"
 import { NextRequest, NextResponse } from "next/server"
 
 import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
-import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
 import {
   assessDataReadiness,
   dataReadinessForResponse,
   loadDataCapabilityCatalog,
 } from "@/lib/research-lab-data-capabilities.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
-import { loadStrategySpecById, strategySpecRepoRelpath } from "@/lib/research-lab-specs.server"
+import { loadStrategySpecById } from "@/lib/research-lab-specs.server"
 import {
   applyModelVerdictFloor,
-  buildStrategySpec,
   DATA_READINESS_PROMPT_RULES,
   formatCatalogForPrompt,
   includeProposalRequirements,
@@ -41,8 +38,6 @@ import {
   normalizeScope,
   requiredString,
   safePathSegment,
-  strategySpecToYaml,
-  validateStrategySpec,
 } from "../../_shared"
 
 export const runtime = "nodejs"
@@ -190,91 +185,21 @@ export async function POST(
     assessment,
   )
 
-  if (readiness.verdict === "BLOCKED") {
-    return NextResponse.json({
-      kind: "revision",
-      reply: parsed.reply,
-      data_readiness: dataReadinessForResponse(readiness),
-    })
-  }
-
-  const newState: StrategySpecV1["state"] =
-    spec.state === "AWAITING_APPROVAL" ? "DRAFTING" : spec.state
-  const newVersion = spec.spec_version + 1
-
-  let revisedSpec: StrategySpecV1
-  try {
-    revisedSpec = buildStrategySpec({
-      specId: spec.spec_id,
-      scope,
-      ideaId: spec.idea_id,
-      authoredBy: spec.authored_by,
-      proposal,
-      readiness,
-      base: {
-        spec_version: newVersion,
-        parent_spec_id: spec.parent_spec_id,
-        created_at: spec.created_at,
-        state: newState,
-      },
-    })
-    validateStrategySpec(revisedSpec)
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Talon returned an invalid revised spec" },
-      { status: 502 },
-    )
-  }
-
-  const revisionProvenance = {
-    schema_version: "research_lab.spec_revision_provenance.v1",
-    spec_id: revisedSpec.spec_id,
-    spec_version: revisedSpec.spec_version,
-    revised_at: new Date().toISOString(),
+  // Always return the proposal — applying it is a separate operator action
+  // via the apply-talon-revision endpoint. BLOCKED proposals come back too
+  // so the UI can render the verdict + reasons but disable Apply.
+  return NextResponse.json({
+    kind: "revision",
+    reply: parsed.reply,
+    proposal,
+    assessment,
+    data_readiness: dataReadinessForResponse(readiness),
+    base_spec_version: spec.spec_version,
     model,
     catalog_version: catalog.catalog_version,
     prompt_version: PROMPT_VERSION,
-    data_readiness: {
-      ...dataReadinessForResponse(readiness),
-      discrepancies: readiness.discrepancies,
-    },
-    operator_message: message,
-    conversation_at_revision: conversation,
-    talon_reply: parsed.reply,
-    prompt,
     raw_completion: rawCompletion,
-    raw_proposal: proposal,
-    raw_assessment: assessment,
-  }
-
-  try {
-    const persisted = await commitDashboardFiles({
-      message: `research lab: Talon-revised strategy spec ${revisedSpec.spec_id} v${revisedSpec.spec_version}`,
-      files: [
-        {
-          relpath: strategySpecRepoRelpath(revisedSpec.spec_id, scope),
-          content: strategySpecToYaml(revisedSpec),
-        },
-        {
-          relpath: revisionProvenanceRelpath(revisedSpec.spec_id, revisedSpec.spec_version, scope),
-          content: `${JSON.stringify(revisionProvenance, null, 2)}\n`,
-        },
-      ],
-    })
-    return NextResponse.json({
-      kind: "revision",
-      reply: parsed.reply,
-      ...persisted,
-      spec: revisedSpec,
-      data_readiness: dataReadinessForResponse(readiness),
-    })
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : "Unknown persistence failure"
-    return NextResponse.json(
-      { error: `Failed to persist revised strategy spec: ${detail}` },
-      { status: 500 },
-    )
-  }
+  })
 }
 
 function parseConversation(input: unknown): ConversationMessage[] {
@@ -291,14 +216,6 @@ function parseConversation(input: unknown): ConversationMessage[] {
     out.push({ role, content: trimmed })
   }
   return out
-}
-
-function revisionProvenanceRelpath(
-  specId: string,
-  version: number,
-  scope: ScopeTriple,
-): string {
-  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs/${specId}_revision_v${version}.json`
 }
 
 function buildPrompt({
