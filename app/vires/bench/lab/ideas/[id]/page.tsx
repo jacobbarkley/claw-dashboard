@@ -1,10 +1,18 @@
 import Link from "next/link"
 
 import { IdeaStatusControl } from "@/components/vires/lab/idea-status-control"
+import { IdeaThreadLive } from "@/components/vires/lab/idea-thread-live"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
-import type { StrategySpecV1 } from "@/lib/research-lab-contracts"
+import { specAuthoringEnabled } from "@/lib/feature-flags.server"
+import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import type {
+  IdeaArtifact,
+  SpecImplementationQueueV1,
+  StrategySpecV1,
+} from "@/lib/research-lab-contracts"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { loadSpecImplementationQueueEntry } from "@/lib/research-lab-queue.server"
 import { loadStrategySpecsForIdea } from "@/lib/research-lab-specs.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
 
@@ -45,6 +53,10 @@ export default async function ViresLabIdeaDetailPage({
   const idea = await loadIdeaById(decoded)
   const labCampaignExists = idea ? await hasLabCampaignForIdea(idea.idea_id) : false
   const strategySpecs = idea ? await loadStrategySpecsForIdea(idea.idea_id) : []
+  const threadEnabled = specAuthoringEnabled()
+  const { activeSpec, pendingSpec, activeQueueEntry } = threadEnabled && idea
+    ? await loadThreadDataForIdea(idea, strategySpecs)
+    : { activeSpec: null, pendingSpec: null, activeQueueEntry: null }
 
   if (!idea) {
     return (
@@ -185,7 +197,18 @@ export default async function ViresLabIdeaDetailPage({
           gap: 16,
         }}
       >
-        {labCampaignExists && (
+        {threadEnabled && (
+          <IdeaThreadLive
+            idea={idea}
+            scope={PHASE_1_DEFAULT_SCOPE}
+            activeSpec={activeSpec}
+            pendingSpec={pendingSpec}
+            activeQueueEntry={activeQueueEntry}
+            labCampaignExists={labCampaignExists}
+          />
+        )}
+
+        {!threadEnabled && labCampaignExists && (
           <Link
             href={`/vires/bench/campaigns/${encodeURIComponent(`lab_${idea.idea_id}`)}`}
             className="vr-card"
@@ -236,8 +259,10 @@ export default async function ViresLabIdeaDetailPage({
 
         {/* Code-pending honest state — replaces the submit CTA when no
             executable strategy exists yet. Operator captured the thesis;
-            Codex / Talon V1 picks it up from this surface to implement. */}
-        {idea.code_pending ? (
+            Codex / Talon V1 picks it up from this surface to implement.
+            Suppressed when the spec-authoring thread is active — the thread
+            renders the action surface for steps 5/6/7. */}
+        {!threadEnabled && (idea.code_pending ? (
           <div
             className="vr-card"
             style={{
@@ -319,7 +344,7 @@ export default async function ViresLabIdeaDetailPage({
             {labCampaignExists ? "Run again →" : "New campaign →"}
           </span>
         </Link>
-        )}
+        ))}
 
         {/* Thesis */}
         <section>
@@ -637,4 +662,29 @@ function SpecRow({ label, value, last = false }: { label: string; value: string;
       </div>
     </div>
   )
+}
+
+async function loadThreadDataForIdea(
+  idea: IdeaArtifact,
+  specs: StrategySpecV1[],
+): Promise<{
+  activeSpec: StrategySpecV1 | null
+  pendingSpec: StrategySpecV1 | null
+  activeQueueEntry: SpecImplementationQueueV1 | null
+}> {
+  const ref = idea.strategy_ref
+  const findSpec = (specId: string | null | undefined): StrategySpecV1 | null => {
+    if (!specId) return null
+    return specs.find(s => s.spec_id === specId) ?? null
+  }
+  const activeSpec = findSpec(ref.active_spec_id)
+  const pendingSpec = findSpec(ref.pending_spec_id)
+  // Re-spec precedence — when a pending spec exists, the thread (and its
+  // queue surface) tracks the pending spec's lifecycle.
+  const queueLookupSpec = pendingSpec ?? activeSpec
+  const activeQueueEntry =
+    queueLookupSpec && (queueLookupSpec.state === "APPROVED" || queueLookupSpec.state === "REGISTERED")
+      ? await loadSpecImplementationQueueEntry(queueLookupSpec.spec_id)
+      : null
+  return { activeSpec, pendingSpec, activeQueueEntry }
 }
