@@ -1,7 +1,7 @@
 {
   "schema_version": "research_lab.data_capability.v1",
-  "catalog_version": "2026-04-30.1",
-  "generated_at": "2026-04-30T00:00:00.000Z",
+  "catalog_version": "2026-04-30.2",
+  "generated_at": "2026-04-30T07:30:00.000Z",
   "doc": "Data the Lab can feed to a strategy TODAY. AVAILABLE means the compiler/executor can wire it into a backtest or live run with no further connector work. PARTIAL means a research path exists but production wiring is missing or scope is tight. PLANNED means we intend to build it; UNAVAILABLE means there is no connector and no near-term plan. Codex owns updates as new connectors come online; bump catalog_version on every change.",
   "capabilities": [
     {
@@ -11,7 +11,7 @@
       "status": "AVAILABLE",
       "sleeves": ["STOCKS"],
       "asof_coverage": "2016-present",
-      "notes": "Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research."
+      "notes": "Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research. Covers any signal derivable from OHLCV bars: open/high/low/close, volume, average daily volume (ADV), trailing returns, momentum, moving averages, RSI, realized volatility, mean reversion bands. Strategies should list this capability_id once for the underlying feed and not emit each derived metric as a separate data requirement."
     },
     {
       "capability_id": "alpaca_crypto_ohlcv",
@@ -83,7 +83,7 @@
       "status": "AVAILABLE",
       "sleeves": ["STOCKS"],
       "asof_coverage": "2024-present (continuous)",
-      "notes": "Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. Aggregates WSB + adjacent communities; raw per-thread velocity is NOT separately exposed."
+      "notes": "Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. THIS IS THE PROXY for r/wallstreetbets, X/Twitter trending tickers, StockTwits, Reddit investing subs, and adjacent retail communities — Ape Wisdom aggregates these into one feed. If a thesis mentions 'WSB / Reddit / X / Twitter / StockTwits / retail buzz / social trending' as a signal, list apewisdom_top100 once and do NOT emit those underlying source names as separate requirements. Raw per-thread velocity is not exposed; only the aggregate rank + mention ratio."
     },
     {
       "capability_id": "reddit_wsb_velocity",
