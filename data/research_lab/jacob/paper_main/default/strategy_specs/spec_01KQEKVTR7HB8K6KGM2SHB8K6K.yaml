@@ -1,0 +1,73 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQEKVTR7HB8K6KGM2SHB8K6K
+spec_version: 1
+idea_id: idea_talon_smoke_pass2_20260430T070938Z
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-04-30T07:15:49.650Z'
+authoring_mode: AI_DRAFTED
+authored_by: codex
+state: DRAFTING
+signal_logic: >-
+  Compute two signals entirely from daily OHLCV bars sourced from alpaca_equity_ohlcv. (1) Trend
+  signal: 20-day exponential moving average (EMA20) vs 60-day exponential moving average (EMA60). A
+  stock is in an uptrend when EMA20 > EMA60 and in a downtrend when EMA20 < EMA60. (2) Volatility
+  filter: 20-day realized volatility (annualised standard deviation of daily log returns). Only
+  trade stocks whose realised vol is between a lower bound (e.g. 15% annualised) and an upper bound
+  (e.g. 80% annualised), filtering out both dormant and hyper-volatile names. The composite signal
+  score = (EMA20 - EMA60) / EMA60, normalised cross-sectionally each day. Long the top decile by
+  score; flat or short the bottom decile (long-only variant: long top decile only).
+universe:
+  description: >-
+    S&P 500 constituents (or a liquid large/mid-cap proxy list of ~500 US equities) with price > $5
+    and 60-day average daily dollar volume > $10M, sourced from alpaca_equity_ohlcv. Universe is
+    refreshed monthly using the most recent 60-day ADV computed from OHLCV data alone (no
+    point-in-time fundamentals required).
+entry_rules: >-
+  At the daily close, rank all universe members by the composite signal score. Enter long positions
+  in the top-decile names that (a) have EMA20 > EMA60, (b) pass the realised-vol filter, and (c) are
+  not already held. Positions are sized by inverse-volatility weighting within the selected basket.
+  Execute at next-day open (or MOC if available) to avoid look-ahead on the signal close price.
+exit_rules: >-
+  Exit a position when any of the following occur: (1) the stock falls out of the top two deciles on
+  the next daily rebalance (rank-based exit); (2) EMA20 crosses below EMA60 (trend reversal); (3)
+  realised vol breaches the upper bound (risk filter breach); (4) a hard stop-loss of 8% from entry
+  price is hit intraday; (5) a portfolio-level drawdown circuit-breaker of 15% from the rolling
+  60-day equity peak triggers a full flat. Rebalance frequency: daily evaluation, with position
+  changes executed at the following open.
+risk_model:
+  description: >-
+    Inverse-volatility position sizing: each position weight = (1 / sigma_i) / sum(1 / sigma_j) for
+    all held positions j, where sigma_i is the 20-day realised vol of stock i. Maximum
+    single-position weight capped at 10% of NAV. Maximum gross long exposure capped at 100% of NAV
+    (long-only). Portfolio-level stop: flatten all positions if portfolio drawdown from 60-day peak
+    exceeds 15%. No leverage. Cash held in remainder when fewer than 10 qualifying names exist.
+sweep_params:
+  description: >-
+    EMA short window: [10, 15, 20]; EMA long window: [40, 50, 60]; realised-vol lower bound: [10%,
+    15%, 20%]; realised-vol upper bound: [60%, 80%, 100%]; hard stop-loss: [5%, 8%, 12%]; top-decile
+    cutoff: [10%, 15%, 20%]
+required_data:
+  - >-
+    alpaca_equity_ohlcv: daily OHLCV bars for signal computation (EMA, realised vol), entry/exit
+    logic, and universe liquidity screening
+benchmark: SPY (S&P 500 ETF) buy-and-hold total return
+acceptance_criteria:
+  min_sharpe: 0.8
+  max_drawdown: 25
+  min_hit_rate: 48
+  other: >-
+    Annualised return > 8%; average holding period >= 3 days; strategy must show positive alpha vs
+    SPY on a rolling 252-day basis for at least 55% of trading days in the backtest window.
+candidate_strategy_family: Cross-sectional momentum / trend-following (price-based, OHLCV-only)
+implementation_notes: >-
+  All signals are derived exclusively from closing prices and volume in alpaca_equity_ohlcv. No
+  external data sources are required. Universe construction uses 60-day ADV from the same OHLCV
+  feed; no point-in-time fundamentals are needed because the liquidity screen is price/volume-based.
+  Backtest window recommended: 2016-01-01 to present (full alpaca_equity_ohlcv coverage).
+  Survivorship bias should be mitigated by using a fixed large-cap proxy list or a point-in-time
+  index membership file if available; operator should note this limitation if using a static ticker
+  list.
+parent_spec_id: null
+registered_strategy_id: null

@@ -14,13 +14,13 @@ tags:
   - pass2
 params: {}
 strategy_ref:
-  kind: NONE
-  active_spec_id: null
+  kind: SPEC_PENDING
+  active_spec_id: spec_01KQEKVTR7HB8K6KGM2SHB8K6K
   pending_spec_id: null
   strategy_id: null
   preset_id: null
 status: DRAFT
-needs_spec: true
+needs_spec: false
 created_at: '2026-04-30T07:09:39.268Z'
 created_by: codex
 source: IMPORTED
