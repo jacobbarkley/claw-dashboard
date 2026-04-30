@@ -7,15 +7,17 @@
 // per-step body. Action handlers hit the live Phase E endpoints:
 //
 //   - "Author spec yourself" → POST /api/research/specs
+//   - "Draft with Talon"     → POST /api/research/specs/draft-with-talon
 //   - "Approve"              → POST /api/research/specs/[id]/approve
 //   - "Send back"            → PATCH /api/research/specs/[id] (state DRAFTING)
 //
 // Phase D-implementation guard: only mounted when the
 // `vires.lab.spec_authoring` flag is enabled in the page's server component.
+// Talon button is independently gated by NEXT_PUBLIC_TALON_DRAFTING_ENABLED.
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import type {
   IdeaArtifact,
@@ -24,7 +26,38 @@ import type {
   StrategySpecV1,
 } from "@/lib/research-lab-contracts"
 
+import { DataUnavailableCard } from "./data-unavailable-card"
 import { IdeaThreadStepper, type ThreadStep } from "./idea-thread-stepper"
+
+const TALON_DRAFTING_ENABLED = process.env.NEXT_PUBLIC_TALON_DRAFTING_ENABLED === "1"
+
+// localStorage key namespace for WARN-verdict warnings handed to the spec
+// edit page on first load. Keyed by spec_id so dismissed warnings on one
+// spec never bleed into another draft.
+export const TALON_WARN_KEY_PREFIX = "talon-warn:"
+
+interface TalonReadinessRequirement {
+  requested: string
+  status: "AVAILABLE" | "PARTIAL" | "MISSING"
+  source?: string | null
+  notes?: string | null
+}
+
+interface TalonReadiness {
+  verdict: "PASS" | "WARN" | "BLOCKED"
+  catalog_version: string
+  requirements: TalonReadinessRequirement[]
+  warnings: string[]
+  blocking_summary?: string
+  suggested_action?: string
+}
+
+interface TalonBlockedState {
+  catalogVersion: string
+  blockingSummary: string
+  suggestedAction: string
+  requirements: TalonReadinessRequirement[]
+}
 
 const STEP_INFO: Record<ThreadStep, string> = {
   describe:
@@ -179,13 +212,32 @@ function StepBody(props: IdeaThreadProps & { step: ThreadStep }) {
 
 // ─── Step 2 — awaiting-spec ────────────────────────────────────────────────
 
+const TALON_DRAFTING_STAGES = [
+  "Reading your thesis…",
+  "Proposing signal logic…",
+  "Checking data availability…",
+]
+
 function AwaitingSpecBody(props: IdeaThreadProps) {
   const router = useRouter()
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<"author" | "talon" | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [blocked, setBlocked] = useState<TalonBlockedState | null>(null)
+  const [stageIdx, setStageIdx] = useState(0)
+
+  useEffect(() => {
+    if (busy !== "talon") {
+      setStageIdx(0)
+      return
+    }
+    const handle = setInterval(() => {
+      setStageIdx(idx => (idx + 1) % TALON_DRAFTING_STAGES.length)
+    }, 5000)
+    return () => clearInterval(handle)
+  }, [busy])
 
   const onAuthor = async () => {
-    setBusy(true)
+    setBusy("author")
     setError(null)
     try {
       const res = await fetch("/api/research/specs", {
@@ -217,9 +269,133 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to author spec")
-      setBusy(false)
+      setBusy(null)
     }
   }
+
+  const onDraftWithTalon = async () => {
+    setBusy("talon")
+    setError(null)
+    setBlocked(null)
+    try {
+      const res = await fetch("/api/research/specs/draft-with-talon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea_id: props.idea.idea_id,
+          scope: props.scope,
+          authored_by: props.idea.created_by ?? "jacob",
+        }),
+      })
+
+      if (res.status === 422) {
+        const payload = (await res.json()) as {
+          error?: string
+          data_readiness?: TalonReadiness
+        }
+        const dr = payload.data_readiness
+        if (dr) {
+          setBlocked({
+            catalogVersion: dr.catalog_version,
+            blockingSummary:
+              dr.blocking_summary ??
+              "Talon couldn't draft this — required data isn't wired in yet.",
+            suggestedAction:
+              dr.suggested_action ??
+              "Re-frame the thesis around data we have, or queue the missing capability for Codex.",
+            requirements: dr.requirements ?? [],
+          })
+          return
+        }
+        throw new Error(payload.error ?? "Talon refused — data unavailable.")
+      }
+
+      if (res.status === 502 || res.status === 503) {
+        const payload = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(
+          payload.error ??
+            (res.status === 503
+              ? "Talon isn't configured on this deployment."
+              : "Talon is unreachable right now. Try again, or author the spec yourself."),
+        )
+      }
+
+      const payload = (await res.json()) as {
+        spec?: { spec_id?: string }
+        data_readiness?: TalonReadiness
+        error?: string
+      }
+      if (!res.ok || !payload.spec?.spec_id) {
+        throw new Error(payload.error ?? `Talon drafting failed (${res.status})`)
+      }
+
+      const dr = payload.data_readiness
+      if (dr && dr.verdict === "WARN" && dr.warnings.length > 0) {
+        try {
+          window.localStorage.setItem(
+            `${TALON_WARN_KEY_PREFIX}${payload.spec.spec_id}`,
+            JSON.stringify({
+              warnings: dr.warnings,
+              catalog_version: dr.catalog_version,
+              created_at: new Date().toISOString(),
+            }),
+          )
+        } catch {
+          // localStorage unavailable — warning won't surface on the edit
+          // page. Not worth blocking the redirect.
+        }
+      }
+
+      router.push(
+        `/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/spec/edit?spec_id=${encodeURIComponent(payload.spec.spec_id)}`,
+      )
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Talon drafting failed")
+      setBusy(null)
+    }
+  }
+
+  if (blocked) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <DataUnavailableCard
+          catalogVersion={blocked.catalogVersion}
+          blockingSummary={blocked.blockingSummary}
+          suggestedAction={blocked.suggestedAction}
+          requirements={blocked.requirements}
+          onDismiss={() => setBlocked(null)}
+        />
+        <div className="vr-card" style={panel}>
+          <div style={panelTitle}>Author the spec yourself anyway</div>
+          <div style={panelBody}>
+            Talon refused, but you can still draft the spec by hand — the
+            implementation queue will block on the missing capability when
+            Codex tries to compile it.
+          </div>
+          <button
+            type="button"
+            onClick={onAuthor}
+            disabled={busy === "author"}
+            style={secondaryButton}
+          >
+            {busy === "author" ? "Opening…" : "Author spec"}
+          </button>
+          {error && <ErrorLine message={error} />}
+        </div>
+      </div>
+    )
+  }
+
+  const talonLabel =
+    busy === "talon"
+      ? TALON_DRAFTING_STAGES[stageIdx]
+      : TALON_DRAFTING_ENABLED
+        ? "Draft with Talon"
+        : "Draft with Talon (off)"
+  const talonSubtitle = TALON_DRAFTING_ENABLED
+    ? "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
+    : "Talon reads your thesis, asks clarifying questions, and produces an editable spec. Hidden until Talon is unblocked."
 
   return (
     <div className="vr-card" style={panel}>
@@ -232,19 +408,19 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <ActionRow
           title="Draft with Talon"
-          subtitle="Talon reads your thesis, asks clarifying questions, and produces an editable spec. Hidden until Talon is unblocked."
-          ctaLabel="Draft with Talon"
-          ctaTone="muted"
-          disabled
-          onClick={() => {}}
+          subtitle={talonSubtitle}
+          ctaLabel={talonLabel}
+          ctaTone={TALON_DRAFTING_ENABLED ? "primary" : "muted"}
+          disabled={!TALON_DRAFTING_ENABLED || busy !== null}
+          onClick={onDraftWithTalon}
         />
         <ActionRow
           title="Author the spec yourself"
           subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
-          ctaLabel={busy ? "Opening…" : "Author spec"}
-          ctaTone="primary"
+          ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
+          ctaTone={TALON_DRAFTING_ENABLED ? "muted" : "primary"}
           onClick={onAuthor}
-          disabled={busy}
+          disabled={busy !== null}
         />
       </div>
       {error && <ErrorLine message={error} />}

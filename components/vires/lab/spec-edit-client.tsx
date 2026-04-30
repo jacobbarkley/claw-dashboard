@@ -7,12 +7,19 @@
 // of which pointer (active vs pending) it sits on.
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
 
+import { TALON_WARN_KEY_PREFIX } from "./idea-thread-live"
 import { specToFormValues, formValuesToPatch } from "./spec-form-mapping"
 import { StrategySpecForm, type SpecFormValues } from "./strategy-spec-form"
+
+interface TalonWarnPayload {
+  warnings: string[]
+  catalog_version: string
+  created_at: string
+}
 
 interface IdeaHeader {
   idea_id: string
@@ -33,6 +40,40 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [talonWarn, setTalonWarn] = useState<TalonWarnPayload | null>(null)
+
+  const warnStorageKey = `${TALON_WARN_KEY_PREFIX}${spec.spec_id}`
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(warnStorageKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as Partial<TalonWarnPayload>
+      if (
+        parsed &&
+        Array.isArray(parsed.warnings) &&
+        parsed.warnings.length > 0 &&
+        typeof parsed.catalog_version === "string"
+      ) {
+        setTalonWarn({
+          warnings: parsed.warnings,
+          catalog_version: parsed.catalog_version,
+          created_at: parsed.created_at ?? "",
+        })
+      }
+    } catch {
+      // localStorage unavailable or malformed — render without callout.
+    }
+  }, [warnStorageKey])
+
+  const dismissTalonWarn = () => {
+    try {
+      window.localStorage.removeItem(warnStorageKey)
+    } catch {
+      // ignore
+    }
+    setTalonWarn(null)
+  }
 
   const initialValues = specToFormValues(spec)
 
@@ -79,14 +120,19 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
 
   if (isReadOnly) {
     return (
-      <div className="vr-card" style={readOnlyPanel}>
-        <div style={{ fontFamily: "var(--ff-serif)", fontStyle: "italic", fontSize: 16, color: "var(--vr-cream)" }}>
-          This spec is no longer editable
-        </div>
-        <div style={{ fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.55 }}>
-          State is <span className="t-mono">{spec.state}</span>. Edits are only
-          allowed on DRAFTING or AWAITING_APPROVAL specs. Re-spec the idea to
-          author a new draft.
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {talonWarn && (
+          <TalonWarnCallout payload={talonWarn} onDismiss={dismissTalonWarn} />
+        )}
+        <div className="vr-card" style={readOnlyPanel}>
+          <div style={{ fontFamily: "var(--ff-serif)", fontStyle: "italic", fontSize: 16, color: "var(--vr-cream)" }}>
+            This spec is no longer editable
+          </div>
+          <div style={{ fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.55 }}>
+            State is <span className="t-mono">{spec.state}</span>. Edits are only
+            allowed on DRAFTING or AWAITING_APPROVAL specs. Re-spec the idea to
+            author a new draft.
+          </div>
         </div>
       </div>
     )
@@ -94,6 +140,9 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {talonWarn && (
+        <TalonWarnCallout payload={talonWarn} onDismiss={dismissTalonWarn} />
+      )}
       <StrategySpecForm
         ideaTitle={idea.title}
         ideaThesis={idea.thesis}
@@ -110,6 +159,117 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
       )}
       {notice && !busy && <div style={notePanel("var(--vr-up)")}>{notice}</div>}
       {error && <div style={errorPanel}>{error}</div>}
+    </div>
+  )
+}
+
+function TalonWarnCallout({
+  payload,
+  onDismiss,
+}: {
+  payload: TalonWarnPayload
+  onDismiss: () => void
+}) {
+  return (
+    <div
+      className="vr-card"
+      style={{
+        padding: "14px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        borderLeft: "2px solid var(--vr-gold)",
+        background: "rgba(207,168,84,0.05)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--ff-serif)",
+            fontStyle: "italic",
+            fontSize: 16,
+            color: "var(--vr-cream)",
+          }}
+        >
+          Talon flagged data caveats on this draft
+        </div>
+        <span
+          className="t-eyebrow"
+          style={{
+            padding: "3px 8px",
+            fontSize: 9,
+            letterSpacing: "0.08em",
+            borderRadius: 2,
+            border: "1px solid var(--vr-gold-line)",
+            background: "var(--vr-gold-soft)",
+            color: "var(--vr-gold)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          WARN
+        </span>
+      </div>
+      <ul
+        style={{
+          listStyle: "none",
+          margin: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        {payload.warnings.map((w, idx) => (
+          <li
+            key={`${idx}-${w.slice(0, 24)}`}
+            style={{
+              fontSize: 12,
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            — {w}
+          </li>
+        ))}
+      </ul>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <span
+          className="t-mono"
+          style={{ fontSize: 9.5, color: "var(--vr-cream-faint)", letterSpacing: "0.04em" }}
+        >
+          catalog · {payload.catalog_version}
+        </span>
+        <button
+          type="button"
+          onClick={onDismiss}
+          style={{
+            padding: "6px 12px",
+            fontSize: 11,
+            fontFamily: "var(--ff-mono)",
+            background: "transparent",
+            border: "1px solid var(--vr-line)",
+            color: "var(--vr-cream-mute)",
+            borderRadius: 3,
+            cursor: "pointer",
+          }}
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
   )
 }
