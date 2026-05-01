@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-01T13:45:10.398927+00:00",
+  "generated_at": "2026-05-01T13:50:02.583544+00:00",
   "as_of_date": "2026-05-01",
   "source_context": {
     "mode": "canonical",
@@ -18,36 +18,24 @@
     "total_pnl_pct": -14.4608,
     "today_pnl": -76.28,
     "today_pnl_pct": -0.0891,
-    "positions_value": 56231.59,
-    "equity_deployed": 55349.12,
-    "crypto_deployed": 882.47,
+    "positions_value": 54867.63,
+    "equity_deployed": 53984.67,
+    "crypto_deployed": 882.96,
     "options_deployed": 0,
-    "unrealized_pnl": 29.08,
+    "unrealized_pnl": 26.58,
     "unrealized_pnl_pct": 0.05
   },
   "positions": [
-    {
-      "symbol": "AAPL",
-      "qty": 5.0,
-      "side": "long",
-      "entry_price": 272.294,
-      "current_price": 278.84,
-      "market_value": 1394.2,
-      "unrealized_pnl": 32.73,
-      "unrealized_pct": 2.4,
-      "change_today_pct": 2.76,
-      "asset_type": "EQUITY"
-    },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 414.985,
-      "market_value": 1244.955,
-      "unrealized_pnl": 39.954999,
-      "unrealized_pct": 3.32,
-      "change_today_pct": -0.59,
+      "current_price": 421.3,
+      "market_value": 1263.9,
+      "unrealized_pnl": 58.899999,
+      "unrealized_pct": 4.89,
+      "change_today_pct": 0.93,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +43,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78225.722,
-      "market_value": 882.472114,
-      "unrealized_pnl": 21.995051,
-      "unrealized_pct": 2.56,
-      "change_today_pct": 1.89,
+      "current_price": 78268.598,
+      "market_value": 882.955803,
+      "unrealized_pnl": 22.47874,
+      "unrealized_pct": 2.61,
+      "change_today_pct": 1.94,
       "asset_type": "CRYPTO"
     },
     {
@@ -67,11 +55,11 @@
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 200.43,
-      "market_value": 1403.01,
-      "unrealized_pnl": -1.520001,
-      "unrealized_pct": -0.11,
-      "change_today_pct": 0.43,
+      "current_price": 201.9736,
+      "market_value": 1413.8152,
+      "unrealized_pnl": 9.285199,
+      "unrealized_pct": 0.66,
+      "change_today_pct": 1.2,
       "asset_type": "EQUITY"
     },
     {
@@ -98,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-01T13:45:10.398981+00:00"
+    "audit_written_at": "2026-05-01T13:50:02.583596+00:00"
   },
   "kpis": {
     "total_trades": 65,
@@ -113,7 +101,7 @@
     "max_win_streak": 1,
     "max_loss_streak": 10,
     "source": "legacy_pipeline_kpis_v1",
-    "positions_count": 5
+    "positions_count": 4
   },
   "daily_performance": [
     {
@@ -965,7 +953,7 @@
         },
         {
           "date": "2026-05-01",
-          "market_value": 55349.12
+          "market_value": 53984.67
         }
       ]
     },
@@ -1034,7 +1022,7 @@
         },
         {
           "date": "2026-05-01",
-          "market_value": 882.47
+          "market_value": 882.96
         }
       ]
     },
@@ -1109,26 +1097,26 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-01T13:45:05.513793186Z",
+    "as_of": "2026-05-01T13:50:02.286698923Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 282.215,
+        "current_price": 283.33,
         "prior_close": 271.145,
-        "change_usd": 11.07,
-        "change_pct": 4.0827,
+        "change_usd": 12.185,
+        "change_pct": 4.4939,
         "return_20d_pct": 6.4714,
-        "in_position": true,
+        "in_position": false,
         "strategy_member": true,
-        "position_qty": 5.0
+        "position_qty": 0.0
       },
       {
         "symbol": "AVGO",
-        "current_price": 421.35,
+        "current_price": 421.04,
         "prior_close": 417.55,
-        "change_usd": 3.8,
-        "change_pct": 0.9101,
+        "change_usd": 3.49,
+        "change_pct": 0.8358,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1136,10 +1124,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1019.05,
+        "current_price": 1023.83,
         "prior_close": 1014.45,
-        "change_usd": 4.6,
-        "change_pct": 0.4534,
+        "change_usd": 9.38,
+        "change_pct": 0.9246,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1147,10 +1135,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 978.24,
+        "current_price": 973.06,
         "prior_close": 934.86,
-        "change_usd": 43.38,
-        "change_pct": 4.6403,
+        "change_usd": 38.2,
+        "change_pct": 4.0862,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1158,10 +1146,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 612.63,
+        "current_price": 611.465,
         "prior_close": 612.16,
-        "change_usd": 0.47,
-        "change_pct": 0.0768,
+        "change_usd": -0.695,
+        "change_pct": -0.1135,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1169,10 +1157,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 201.94,
+        "current_price": 200.275,
         "prior_close": 199.54,
-        "change_usd": 2.4,
-        "change_pct": 1.2028,
+        "change_usd": 0.735,
+        "change_pct": 0.3683,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1180,10 +1168,10 @@
       },
       {
         "symbol": "SGOV",
-        "current_price": 100.41,
+        "current_price": 100.405,
         "prior_close": 100.67,
-        "change_usd": -0.26,
-        "change_pct": -0.2583,
+        "change_usd": -0.265,
+        "change_pct": -0.2632,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": false,
@@ -1195,7 +1183,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-01T13:45:05.935827+00:00",
+        "as_of": "2026-05-01T13:50:02.443954+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1205,7 +1193,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-01T13:45:10.398787+00:00",
+        "as_of": "2026-05-01T13:50:02.583398+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1971,7 +1959,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 882.472114,
+          "market_value": 882.955803,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -1995,11 +1983,6 @@
             "color": null
           },
           {
-            "sym": "AAPL",
-            "label": "AAPL",
-            "color": null
-          },
-          {
             "sym": "AVGO",
             "label": "AVGO",
             "color": null
@@ -2011,13 +1994,12 @@
           {
             "date": "2026-05-01",
             "weights": {
-              "SGOV": 92.7,
-              "NVDA": 2.53,
-              "AAPL": 2.52,
-              "AVGO": 2.25
+              "SGOV": 95.04,
+              "NVDA": 2.62,
+              "AVGO": 2.34
             },
             "cash": 0.0,
-            "total": 55349.12
+            "total": 53984.67
           }
         ]
       },
@@ -2061,7 +2043,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 882.47
+            "total": 882.96
           }
         ]
       },
@@ -2118,15 +2100,6 @@
           "price": 100.57,
           "usd": null,
           "note": "Cash management reserve park"
-        },
-        {
-          "date": "2026-04-20",
-          "side": "BUY",
-          "sym": "AAPL",
-          "qty": 5.0,
-          "price": 272.294,
-          "usd": null,
-          "note": "Market order submitted. size_modifier=FULL, shares=5, notional=$1602.33."
         },
         {
           "date": "2026-04-21",
@@ -2249,7 +2222,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-01T13:45:02.324585+00:00",
+        "as_of": "2026-05-01T13:50:02.215131+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2259,7 +2232,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-01T13:45:05.935827+00:00",
+        "as_of": "2026-05-01T13:50:02.443954+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2269,7 +2242,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-01T13:45:10.398787+00:00",
+        "as_of": "2026-05-01T13:50:02.583398+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
