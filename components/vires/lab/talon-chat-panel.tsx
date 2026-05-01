@@ -177,6 +177,8 @@ export function TalonChatPanel({
     setBusy(true)
     setError(null)
 
+    const restoreInput = () => setInput(trimmed)
+
     let res: Response
     try {
       res = await fetch(
@@ -195,7 +197,8 @@ export function TalonChatPanel({
       )
     } catch (err) {
       console.error("[talon-revise] fetch threw:", err)
-      setError(`Network error: ${err instanceof Error ? err.message : String(err)}`)
+      setError(`Network error: ${err instanceof Error ? err.message : String(err)}. Your message is back in the input — try again.`)
+      restoreInput()
       setBusy(false)
       return
     }
@@ -206,7 +209,12 @@ export function TalonChatPanel({
       payload = rawBody ? (JSON.parse(rawBody) as ReviseResponse) : {}
     } catch {
       console.error("[talon-revise] non-JSON response:", { status: res.status, rawBody })
-      setError(`Talon returned non-JSON (status ${res.status})`)
+      const timeoutLabel =
+        res.status === 504
+          ? "Talon timed out (Vercel cut the request after 60s before Anthropic finished). Try again — your message is back in the input. Tighter messages tend to come back faster."
+          : `Talon returned non-JSON (status ${res.status}). Your message is back in the input.`
+      setError(timeoutLabel)
+      restoreInput()
       setBusy(false)
       return
     }
@@ -218,15 +226,19 @@ export function TalonChatPanel({
           ? "Talon isn't configured on this deployment"
           : res.status === 502
             ? "Talon is unreachable right now"
-            : `Revision failed (${res.status})`
+            : res.status === 504
+              ? "Talon timed out (Vercel cut the request at 60s). Try again — your message is back in the input"
+              : `Revision failed (${res.status})`
       console.error("[talon-revise] non-success:", { status: res.status, payload })
       setError(detail ? `${baseLabel}: ${detail}` : baseLabel)
+      restoreInput()
       setBusy(false)
       return
     }
 
     if (!payload.reply || !payload.kind) {
-      setError("Talon returned an empty response.")
+      setError("Talon returned an empty response. Your message is back in the input — try again.")
+      restoreInput()
       setBusy(false)
       return
     }

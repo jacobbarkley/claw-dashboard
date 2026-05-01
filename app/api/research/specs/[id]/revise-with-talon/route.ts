@@ -46,7 +46,7 @@ export const maxDuration = 60
 
 const PROMPT_VERSION = "talon_spec_revision.v1"
 const DEFAULT_MODEL = "claude-sonnet-4-6"
-const MAX_CONVERSATION_TURNS_IN_PROMPT = 20
+const MAX_CONVERSATION_TURNS_IN_PROMPT = 12
 
 interface ReviseBody {
   scope?: unknown
@@ -260,7 +260,7 @@ function buildPrompt({
   const pendingBlock = pendingProposalSummary
     ? [
         "",
-        "Pending unapplied proposal (build on this — operator has NOT applied it yet, but it captures the changes already discussed in this conversation; treat it as the working baseline rather than the persisted spec above):",
+        "Pending unapplied proposal (working baseline — operator hasn't applied yet; build on this, NOT the persisted spec above):",
         pendingProposalSummary,
       ].join("\n")
     : ""
@@ -271,15 +271,11 @@ function buildPrompt({
     "Return only the structured object requested by the schema. Do not invent backtest results.",
     "",
     "Output rules:",
-    '- Return kind="clarification" + a brief reply (under 3 sentences) when you need more information before revising. Do NOT include proposal/assessment.',
-    '- Return kind="revision" + a brief reply summarizing the cumulative state of the proposal (what the spec WILL look like after Apply, not just the latest delta), plus a complete proposal + assessment.',
-    "- Keep replies short and snappy — the operator is chatting, not reading a report — but the proposal itself must be COMPLETE.",
-    "- Default to revising when the operator's message is concrete; default to one clarifying question when it's vague.",
+    '- kind="clarification" + brief reply (under 3 sentences) when you need more info. No proposal/assessment.',
+    '- kind="revision" + brief reply describing the CUMULATIVE state of the proposal (what spec looks like after Apply, not the delta) + complete proposal + assessment.',
+    "- Keep replies short. Default to revising on concrete asks, one clarifying question on vague ones.",
     "",
-    "Cumulative-proposal rules (CRITICAL — operator may chat several turns before applying):",
-    "- If a 'Pending unapplied proposal' block appears below, treat it as your working baseline. Your new proposal must INCLUDE every change in that pending proposal PLUS whatever the operator's latest message asks for. Do NOT silently drop earlier-discussed changes when responding to a new ask.",
-    "- If no pending proposal is provided but the conversation transcript shows you proposed changes in earlier turns, those still apply unless the operator explicitly retracted them. Carry them forward into the new proposal.",
-    "- The reply text should describe the CURRENT cumulative state of the proposal (\"the proposal now has X, Y, and Z\"), not the delta from the previous turn (\"I added Z\"). The operator is verifying the full picture before tapping Apply.",
+    "Cumulative-proposal rule (operator may chat several turns before applying): the 'Pending unapplied proposal' block (if present) is your working baseline. Every new proposal must carry forward all earlier-discussed changes PLUS the latest ask. Never silently drop changes. If no pending block but transcript shows earlier proposed changes, carry those forward unless the operator retracted them.",
     "",
     DATA_READINESS_PROMPT_RULES,
     "",
@@ -341,7 +337,6 @@ function formatPendingProposal(
   const lines: string[] = []
   if (typeof reply === "string" && reply.trim()) {
     lines.push(`Pending Talon reply: ${reply.trim()}`)
-    lines.push("")
   }
   lines.push(`signal_logic: ${stringFieldOrUnset(p.signal_logic)}`)
   lines.push(`entry_rules: ${stringFieldOrUnset(p.entry_rules)}`)
