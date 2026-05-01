@@ -85,12 +85,88 @@ export interface IdeaThreadProps {
   labCampaignExists: boolean
 }
 
+// sessionStorage key for cross-page optimistic spec hand-off (e.g. after
+// the spec edit page submits-for-approval and navigates back here, it
+// stashes the persisted spec under this key so we can render the
+// AwaitingApprovalPanel immediately instead of waiting for the deploy
+// roundtrip to make data/ readable.
+const SPEC_UPDATE_KEY_PREFIX = "spec-update:"
+
+function readSpecOverride(specId: string | undefined | null): StrategySpecV1 | null {
+  if (!specId || typeof window === "undefined") return null
+  try {
+    const raw = window.sessionStorage.getItem(`${SPEC_UPDATE_KEY_PREFIX}${specId}`)
+    if (!raw) return null
+    return JSON.parse(raw) as StrategySpecV1
+  } catch {
+    return null
+  }
+}
+
+function clearSpecOverride(specId: string | undefined | null): void {
+  if (!specId || typeof window === "undefined") return
+  try {
+    window.sessionStorage.removeItem(`${SPEC_UPDATE_KEY_PREFIX}${specId}`)
+  } catch {
+    // ignore
+  }
+}
+
 export function IdeaThreadLive(props: IdeaThreadProps) {
-  const step = computeStep(props)
-  const ref = props.idea.strategy_ref
+  // Optimistic spec mirrors. Initialized from props, replaced by API
+  // response payloads after each state-change action. Done so transitions
+  // feel instant — without this we'd need to wait ~60s for Vercel to
+  // rebuild the bundled data/ before the new state shows up.
+  const [activeSpec, setActiveSpec] = useState<StrategySpecV1 | null>(props.activeSpec)
+  const [pendingSpec, setPendingSpec] = useState<StrategySpecV1 | null>(props.pendingSpec)
+  const [queue, setQueue] = useState<SpecImplementationQueueV1 | null>(props.activeQueueEntry)
+
+  // After hydration, drain any sessionStorage overrides written by other
+  // pages (most notably the spec-edit page's submit-for-approval handler).
+  // Effect rather than lazy useState init to avoid SSR/CSR mismatch —
+  // sessionStorage is unreadable during SSR, so a lazy initializer would
+  // produce different initial state on server vs client.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const candidates = [props.activeSpec?.spec_id, props.pendingSpec?.spec_id]
+    for (const id of candidates) {
+      const override = readSpecOverride(id)
+      if (!override) continue
+      if (props.activeSpec && override.spec_id === props.activeSpec.spec_id) {
+        setActiveSpec(override)
+      }
+      if (props.pendingSpec && override.spec_id === props.pendingSpec.spec_id) {
+        setPendingSpec(override)
+      }
+      clearSpecOverride(id)
+    }
+  }, [props.activeSpec, props.pendingSpec])
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const view: IdeaThreadProps = {
+    ...props,
+    activeSpec,
+    pendingSpec,
+    activeQueueEntry: queue,
+  }
+
+  const step = computeStep(view)
+  const ref = view.idea.strategy_ref
 
   const reSpecActive =
-    ref.kind === "REGISTERED" && !!ref.pending_spec_id && !!props.pendingSpec
+    ref.kind === "REGISTERED" && !!ref.pending_spec_id && !!view.pendingSpec
+
+  // Targeted setter for child handlers — write the optimistic spec into
+  // whichever slot it belongs to. Both slots can hold the same spec_id
+  // (re-spec branch); we update both to keep computeStep correct.
+  const onSpecUpdated = (next: StrategySpecV1) => {
+    if (activeSpec && next.spec_id === activeSpec.spec_id) setActiveSpec(next)
+    if (pendingSpec && next.spec_id === pendingSpec.spec_id) setPendingSpec(next)
+  }
+
+  const onQueueUpdated = (next: SpecImplementationQueueV1 | null) => {
+    setQueue(next)
+  }
 
   return (
     <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -150,9 +226,19 @@ export function IdeaThreadLive(props: IdeaThreadProps) {
         </div>
       </div>
 
-      <StepBody step={step} {...props} />
+      <StepBody
+        step={step}
+        {...view}
+        onSpecUpdated={onSpecUpdated}
+        onQueueUpdated={onQueueUpdated}
+      />
     </section>
   )
+}
+
+interface StepBodyExtras {
+  onSpecUpdated: (spec: StrategySpecV1) => void
+  onQueueUpdated: (queue: SpecImplementationQueueV1 | null) => void
 }
 
 function computeStep(props: IdeaThreadProps): ThreadStep {
@@ -191,7 +277,7 @@ function computeStep(props: IdeaThreadProps): ThreadStep {
   return "ready-to-run"
 }
 
-function StepBody(props: IdeaThreadProps & { step: ThreadStep }) {
+function StepBody(props: IdeaThreadProps & StepBodyExtras & { step: ThreadStep }) {
   switch (props.step) {
     case "describe":
       return null
@@ -449,15 +535,21 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
 
 // ─── Step 3 — spec-drafted ─────────────────────────────────────────────────
 
-function SpecDraftedBody(props: IdeaThreadProps) {
-  const router = useRouter()
+function SpecDraftedBody(props: IdeaThreadProps & StepBodyExtras) {
   // Re-spec precedence — the pending spec is what the operator is actively
   // editing/approving, even when an older spec is registered.
   const spec = props.pendingSpec ?? props.activeSpec
   if (!spec) return null
 
   if (spec.state === "AWAITING_APPROVAL") {
-    return <AwaitingApprovalPanel spec={spec} scope={props.scope} onChanged={() => router.refresh()} />
+    return (
+      <AwaitingApprovalPanel
+        spec={spec}
+        scope={props.scope}
+        onSpecUpdated={props.onSpecUpdated}
+        onQueueUpdated={props.onQueueUpdated}
+      />
+    )
   }
 
   // DRAFTING (and any other still-editable state)
@@ -482,13 +574,14 @@ function SpecDraftedBody(props: IdeaThreadProps) {
 function AwaitingApprovalPanel({
   spec,
   scope,
-  onChanged,
+  onSpecUpdated,
+  onQueueUpdated,
 }: {
   spec: StrategySpecV1
   scope: ScopeTriple
-  onChanged: () => void
+  onSpecUpdated: (spec: StrategySpecV1) => void
+  onQueueUpdated: (queue: SpecImplementationQueueV1 | null) => void
 }) {
-  const router = useRouter()
   const [busy, setBusy] = useState<"approve" | "sendback" | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -506,10 +599,14 @@ function AwaitingApprovalPanel({
           body: JSON.stringify({ scope }),
         },
       )
-      const payload = (await res.json()) as { error?: string }
+      const payload = (await res.json()) as {
+        error?: string
+        spec?: StrategySpecV1
+        queue_entry?: SpecImplementationQueueV1
+      }
       if (!res.ok) throw new Error(payload.error ?? `Approve failed (${res.status})`)
-      onChanged()
-      router.refresh()
+      if (payload.spec) onSpecUpdated(payload.spec)
+      if (payload.queue_entry) onQueueUpdated(payload.queue_entry)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to approve spec")
     } finally {
@@ -529,10 +626,9 @@ function AwaitingApprovalPanel({
           body: JSON.stringify({ scope, state: "DRAFTING" }),
         },
       )
-      const payload = (await res.json()) as { error?: string }
+      const payload = (await res.json()) as { error?: string; spec?: StrategySpecV1 }
       if (!res.ok) throw new Error(payload.error ?? `Send-back failed (${res.status})`)
-      onChanged()
-      router.refresh()
+      if (payload.spec) onSpecUpdated(payload.spec)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send spec back")
     } finally {

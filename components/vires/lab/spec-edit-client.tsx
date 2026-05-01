@@ -38,18 +38,23 @@ interface Props {
   ideaHref: string
 }
 
-export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
+export function SpecEditClient({ idea, spec: initialSpec, scope, ideaHref }: Props) {
   const router = useRouter()
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [talonWarn, setTalonWarn] = useState<TalonWarnPayload | null>(null)
+  // Optimistic spec mirror — every endpoint that mutates the spec returns
+  // the persisted entity in the response, so we swap local state from that
+  // payload immediately rather than waiting for a Vercel rebuild to make
+  // the new YAML readable on the next router.refresh.
+  const [spec, setSpec] = useState<StrategySpecV1>(initialSpec)
 
   const warnStorageKey = `${TALON_WARN_KEY_PREFIX}${spec.spec_id}`
 
   // spec.spec_version is in the dep list so the chat panel writing to
-  // localStorage during an Apply triggers a re-read here once router.refresh
-  // brings the new spec_version into props.
+  // localStorage during an Apply triggers a re-read here once onRevised
+  // swaps the new spec into local state.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(warnStorageKey)
@@ -113,14 +118,28 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
           body: JSON.stringify({ scope, state: nextState, ...patch }),
         },
       )
-      const payload = (await res.json()) as { error?: string }
+      const payload = (await res.json()) as { error?: string; spec?: StrategySpecV1 }
       if (!res.ok) throw new Error(payload.error ?? `Save failed (${res.status})`)
+      const updatedSpec = payload.spec ?? null
       if (nextState === "AWAITING_APPROVAL") {
+        // Hand the updated spec to the idea page via sessionStorage so it
+        // can render the AwaitingApprovalPanel immediately on mount,
+        // without waiting for the build-time data/ to refresh.
+        if (updatedSpec) {
+          try {
+            window.sessionStorage.setItem(
+              `spec-update:${updatedSpec.spec_id}`,
+              JSON.stringify(updatedSpec),
+            )
+          } catch {
+            // sessionStorage unavailable — fall back to whatever the idea
+            // page reads from props; user just hits a brief stale flash.
+          }
+        }
         router.push(ideaHref)
-        router.refresh()
       } else {
+        if (updatedSpec) setSpec(updatedSpec)
         setNotice("Draft saved.")
-        router.refresh()
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save spec")
@@ -160,14 +179,14 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
           scope={scope}
           authoringMode={spec.authoring_mode}
           specState={spec.state}
-          onRevised={() => router.refresh()}
+          onRevised={revisedSpec => setSpec(revisedSpec)}
         />
       )}
       <StrategySpecForm
         // Key on spec_version so a Talon-applied revision unmounts +
         // remounts the form with fresh initialValues. Without this the
-        // form keeps its v1 internal state even after router.refresh
-        // brings v2 into props.
+        // form keeps its v1 internal state even after onRevised swaps
+        // v2 into local state.
         key={`${spec.spec_id}:${spec.spec_version}`}
         ideaTitle={idea.title}
         ideaThesis={idea.thesis}

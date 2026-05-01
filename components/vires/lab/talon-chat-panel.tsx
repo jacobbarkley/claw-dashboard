@@ -72,7 +72,12 @@ interface TalonChatPanelProps {
   scope: ScopeTriple
   authoringMode: StrategySpecV1["authoring_mode"]
   specState: StrategySpecV1["state"]
-  onRevised: () => void
+  /**
+   * Called after a successful Apply with the revised spec from the server
+   * response. Parent should swap its local state to this spec immediately
+   * so the form rerenders with v(N+1) without waiting for a deploy roundtrip.
+   */
+  onRevised: (revisedSpec: StrategySpecV1) => void
 }
 
 export function TalonChatPanel({
@@ -368,6 +373,7 @@ export function TalonChatPanel({
       setApplyingIdx(null)
       return
     }
+    const revisedSpec = payload.spec
 
     // Mark this message applied, mark every earlier unapplied revision
     // superseded. Keep the warn-key in sync with the new readiness.
@@ -403,7 +409,7 @@ export function TalonChatPanel({
     }
 
     setApplyingIdx(null)
-    onRevised()
+    onRevised(revisedSpec)
   }
 
   // Find the latest revision message that is applyable (PASS/WARN,
