@@ -52,6 +52,11 @@ interface ReviseBody {
   scope?: unknown
   conversation?: unknown
   message?: unknown
+  // Latest unapplied proposal from the chat panel. When the operator
+  // chats multiple turns without applying, each new revision must build
+  // on the cumulative proposed changes, not just the persisted spec.
+  pending_proposal?: unknown
+  pending_proposal_reply?: unknown
 }
 
 interface ConversationMessage {
@@ -130,8 +135,20 @@ export async function POST(
     )
   }
 
+  const pendingProposalSummary = formatPendingProposal(
+    body.pending_proposal,
+    body.pending_proposal_reply,
+  )
+
   const model = process.env.TALON_SPEC_DRAFTING_MODEL ?? DEFAULT_MODEL
-  const prompt = buildPrompt({ idea, spec, catalog, conversation, message })
+  const prompt = buildPrompt({
+    idea,
+    spec,
+    catalog,
+    conversation,
+    message,
+    pendingProposalSummary,
+  })
 
   let parsed: ReturnType<typeof reviseOutputSchema.parse>
   let rawCompletion: string | null = null
@@ -224,12 +241,14 @@ function buildPrompt({
   catalog,
   conversation,
   message,
+  pendingProposalSummary,
 }: {
   idea: { sleeve: string; title: string; thesis: string }
   spec: StrategySpecV1
   catalog: Awaited<ReturnType<typeof loadDataCapabilityCatalog>>
   conversation: ConversationMessage[]
   message: string
+  pendingProposalSummary: string | null
 }): string {
   const trimmedConversation = conversation.slice(-MAX_CONVERSATION_TURNS_IN_PROMPT)
   const conversationBlock = trimmedConversation.length
@@ -238,6 +257,14 @@ function buildPrompt({
         .join("\n")
     : "(none yet — this is the first revision message)"
 
+  const pendingBlock = pendingProposalSummary
+    ? [
+        "",
+        "Pending unapplied proposal (build on this — operator has NOT applied it yet, but it captures the changes already discussed in this conversation; treat it as the working baseline rather than the persisted spec above):",
+        pendingProposalSummary,
+      ].join("\n")
+    : ""
+
   return [
     "You are Talon's spec-revision mode in the Vires Research Lab.",
     "You are iterating with the operator on an existing StrategySpecV1.",
@@ -245,10 +272,14 @@ function buildPrompt({
     "",
     "Output rules:",
     '- Return kind="clarification" + a brief reply (under 3 sentences) when you need more information before revising. Do NOT include proposal/assessment.',
-    '- Return kind="revision" + a brief reply summarizing what you changed, plus a complete proposal + assessment, when you have enough information to apply changes.',
-    "- Keep replies short and snappy — the operator is chatting, not reading a report.",
+    '- Return kind="revision" + a brief reply summarizing the cumulative state of the proposal (what the spec WILL look like after Apply, not just the latest delta), plus a complete proposal + assessment.',
+    "- Keep replies short and snappy — the operator is chatting, not reading a report — but the proposal itself must be COMPLETE.",
     "- Default to revising when the operator's message is concrete; default to one clarifying question when it's vague.",
-    "- When revising: reuse the existing spec's structure and only change what the operator asked for, plus anything logically required by that change.",
+    "",
+    "Cumulative-proposal rules (CRITICAL — operator may chat several turns before applying):",
+    "- If a 'Pending unapplied proposal' block appears below, treat it as your working baseline. Your new proposal must INCLUDE every change in that pending proposal PLUS whatever the operator's latest message asks for. Do NOT silently drop earlier-discussed changes when responding to a new ask.",
+    "- If no pending proposal is provided but the conversation transcript shows you proposed changes in earlier turns, those still apply unless the operator explicitly retracted them. Carry them forward into the new proposal.",
+    "- The reply text should describe the CURRENT cumulative state of the proposal (\"the proposal now has X, Y, and Z\"), not the delta from the previous turn (\"I added Z\"). The operator is verifying the full picture before tapping Apply.",
     "",
     DATA_READINESS_PROMPT_RULES,
     "",
@@ -256,8 +287,9 @@ function buildPrompt({
     `Idea title: ${idea.title}`,
     `Idea thesis: ${idea.thesis}`,
     "",
-    `Current spec (v${spec.spec_version}, state=${spec.state}):`,
+    `Current persisted spec (v${spec.spec_version}, state=${spec.state}):`,
     formatSpecForPrompt(spec),
+    pendingBlock,
     "",
     `Data capability catalog (${catalog.catalog_version}):`,
     formatCatalogForPrompt(catalog),
@@ -294,4 +326,42 @@ function recordDescription(record: Record<string, unknown>): string {
   if (typeof description === "string" && description.trim()) return description.trim()
   if (Object.keys(record).length === 0) return "(unset)"
   return JSON.stringify(record)
+}
+
+function formatPendingProposal(
+  proposal: unknown,
+  reply: unknown,
+): string | null {
+  if (!proposal || typeof proposal !== "object") return null
+  const p = proposal as Record<string, unknown>
+  const acceptance = (p.acceptance_criteria ?? {}) as Record<string, unknown>
+  const requiredData = Array.isArray(p.required_data)
+    ? (p.required_data as unknown[]).filter((x): x is string => typeof x === "string")
+    : []
+  const lines: string[] = []
+  if (typeof reply === "string" && reply.trim()) {
+    lines.push(`Pending Talon reply: ${reply.trim()}`)
+    lines.push("")
+  }
+  lines.push(`signal_logic: ${stringFieldOrUnset(p.signal_logic)}`)
+  lines.push(`entry_rules: ${stringFieldOrUnset(p.entry_rules)}`)
+  lines.push(`exit_rules: ${stringFieldOrUnset(p.exit_rules)}`)
+  lines.push(`universe: ${stringFieldOrUnset(p.universe)}`)
+  lines.push(`risk_model: ${stringFieldOrUnset(p.risk_model)}`)
+  lines.push(`sweep_params: ${stringFieldOrUnset(p.sweep_params)}`)
+  lines.push(`required_data: ${requiredData.length ? requiredData.join(", ") : "(none)"}`)
+  lines.push(`benchmark: ${stringFieldOrUnset(p.benchmark)}`)
+  lines.push(
+    `acceptance_criteria: min_sharpe=${stringFieldOrUnset(acceptance.min_sharpe)}, max_drawdown_pct=${stringFieldOrUnset(acceptance.max_drawdown_pct)}, min_hit_rate_pct=${stringFieldOrUnset(acceptance.min_hit_rate_pct)}${typeof acceptance.other === "string" && acceptance.other.trim() ? `, other=${acceptance.other.trim()}` : ""}`,
+  )
+  lines.push(`candidate_strategy_family: ${stringFieldOrUnset(p.candidate_strategy_family)}`)
+  lines.push(`implementation_notes: ${stringFieldOrUnset(p.implementation_notes)}`)
+  return lines.join("\n")
+}
+
+function stringFieldOrUnset(value: unknown): string {
+  if (typeof value === "number") return String(value)
+  if (typeof value !== "string") return "(unset)"
+  const trimmed = value.trim()
+  return trimmed ? trimmed : "(unset)"
 }

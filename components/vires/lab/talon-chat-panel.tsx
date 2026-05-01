@@ -152,6 +152,26 @@ export function TalonChatPanel({
       timestamp: new Date().toISOString(),
     }
     const conversationForServer = conversation
+    // Find the latest unapplied, non-blocked, non-superseded proposal —
+    // that's the cumulative working baseline Talon should build on.
+    const pendingProposalMessage = (() => {
+      for (let i = conversationForServer.length - 1; i >= 0; i--) {
+        const m = conversationForServer[i]
+        if (
+          m.role === "talon" &&
+          m.kind === "revision" &&
+          !m.applied &&
+          !m.superseded &&
+          m.data_readiness?.verdict !== "BLOCKED" &&
+          m.proposal &&
+          m.assessment
+        ) {
+          return m
+        }
+      }
+      return null
+    })()
+
     setConversation(prev => [...prev, operatorMessage])
     setInput("")
     setBusy(true)
@@ -168,6 +188,8 @@ export function TalonChatPanel({
             scope,
             conversation: conversationForServer.map(m => ({ role: m.role, content: m.content })),
             message: trimmed,
+            pending_proposal: pendingProposalMessage?.proposal ?? null,
+            pending_proposal_reply: pendingProposalMessage?.content ?? null,
           }),
         },
       )
@@ -221,7 +243,24 @@ export function TalonChatPanel({
       applied: false,
       superseded: false,
     }
-    setConversation(prev => [...prev, talonMessage])
+    // If the new turn is a revision, every earlier unapplied
+    // non-blocked proposal becomes superseded — only the latest
+    // proposal is the working baseline.
+    setConversation(prev => {
+      const next =
+        payload.kind === "revision" && payload.proposal
+          ? prev.map(m =>
+              m.role === "talon" &&
+              m.kind === "revision" &&
+              !m.applied &&
+              !m.superseded &&
+              m.data_readiness?.verdict !== "BLOCKED"
+                ? { ...m, superseded: true }
+                : m,
+            )
+          : prev
+      return [...next, talonMessage]
+    })
     setBusy(false)
   }
 
