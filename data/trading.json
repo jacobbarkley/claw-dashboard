@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-01T16:00:10.718397+00:00",
+  "generated_at": "2026-05-01T16:15:09.839882+00:00",
   "as_of_date": "2026-05-01",
   "account": {
-    "equity": 85569.44,
+    "equity": 85562.38,
     "cash": 30714.2,
-    "buying_power": 115398.01,
+    "buying_power": 115392.67,
     "base_value": 100000.0,
-    "total_pnl": -14430.56,
-    "total_pnl_pct": -14.4306,
-    "today_pnl": -46.02,
-    "today_pnl_pct": -0.0538,
-    "positions_value": 54855.24,
-    "equity_deployed": 54855.24,
+    "total_pnl": -14437.62,
+    "total_pnl_pct": -14.4376,
+    "today_pnl": -53.08,
+    "today_pnl_pct": -0.062,
+    "positions_value": 54848.11,
+    "equity_deployed": 54848.11,
     "options_deployed": 0,
-    "unrealized_pnl": 14.2,
-    "unrealized_pnl_pct": 0.03
+    "unrealized_pnl": 7.06,
+    "unrealized_pnl_pct": 0.01
   },
   "positions": [
     {
@@ -22,33 +22,33 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 421.9,
-      "market_value": 1265.7,
-      "unrealized_pnl": 60.699999,
-      "unrealized_pct": 5.04,
-      "change_today_pct": 1.07
+      "current_price": 420.75,
+      "market_value": 1262.25,
+      "unrealized_pnl": 57.249999,
+      "unrealized_pct": 4.75,
+      "change_today_pct": 0.8
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78505.918,
-      "market_value": 885.633033,
-      "unrealized_pnl": 25.15597,
-      "unrealized_pct": 2.92,
-      "change_today_pct": 2.25
+      "current_price": 78352.821,
+      "market_value": 883.905931,
+      "unrealized_pnl": 23.428868,
+      "unrealized_pct": 2.72,
+      "change_today_pct": 2.05
     },
     {
       "symbol": "NVDA",
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 199.2,
-      "market_value": 1394.4,
-      "unrealized_pnl": -10.130001,
-      "unrealized_pct": -0.72,
-      "change_today_pct": -0.18
+      "current_price": 198.9199,
+      "market_value": 1392.4393,
+      "unrealized_pnl": -12.090701,
+      "unrealized_pct": -0.86,
+      "change_today_pct": -0.33
     },
     {
       "symbol": "SGOV",
@@ -1667,29 +1667,11 @@
         "short_strike": 98.0,
         "long_strike": 93.0,
         "spread_width": 5.0,
-        "net_credit": 2.84,
-        "credit_width_ratio": 0.568,
-        "annualized_yield_pct": 987.2,
-        "max_loss_per_contract": 216.0,
+        "net_credit": 2.86,
+        "credit_width_ratio": 0.572,
+        "annualized_yield_pct": 994.2,
+        "max_loss_per_contract": 214.0,
         "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "KKR",
-        "price": 91.22,
-        "sector": "Financial Services",
-        "expiry": "2026-05-22",
-        "dte": 21,
-        "short_strike": 104.0,
-        "long_strike": 98.0,
-        "spread_width": 6.0,
-        "net_credit": 1.95,
-        "credit_width_ratio": 0.325,
-        "annualized_yield_pct": 564.9,
-        "max_loss_per_contract": 405.0,
-        "iv_rank_proxy": 0.02,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1698,7 +1680,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
