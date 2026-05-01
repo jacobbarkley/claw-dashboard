@@ -121,55 +121,49 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Draft-with-Talon placeholder — V1 */}
-      <div
-        className="vr-card"
+      {/* Draft-with-Talon — full-card golden button. Disabled until V1. */}
+      <button
+        type="button"
+        disabled
+        title="Coming in V1"
         style={{
-          padding: "12px 14px",
+          width: "100%",
+          padding: "26px 20px",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-          background: "rgba(241,236,224,0.02)",
+          justifyContent: "center",
+          gap: 8,
+          background:
+            "linear-gradient(135deg, rgba(200,169,104,0.14), rgba(200,169,104,0.05))",
+          border: "1px solid rgba(200,169,104,0.45)",
+          borderRadius: 4,
+          cursor: "not-allowed",
+          fontFamily: "inherit",
+          color: "var(--vr-gold)",
         }}
       >
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontFamily: "var(--ff-serif)",
-              fontStyle: "italic",
-              fontSize: 14,
-              color: "var(--vr-cream)",
-              lineHeight: 1.2,
-            }}
-          >
-            Draft with Talon
-          </div>
-          <div style={{ marginTop: 4, fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}>
-            A conversation that turns a half-formed thesis into a real spec. Coming in V1.
-          </div>
-        </div>
-        <button
-          type="button"
-          disabled
-          title="Coming in V1"
-          className="t-eyebrow"
+        <span
           style={{
-            padding: "7px 12px",
-            fontSize: 10,
-            letterSpacing: "0.14em",
-            borderRadius: 3,
-            border: "1px solid var(--vr-line)",
-            background: "transparent",
-            color: "var(--vr-cream-faint)",
-            cursor: "not-allowed",
-            fontFamily: "inherit",
-            whiteSpace: "nowrap",
+            fontFamily: "var(--ff-serif)",
+            fontSize: 22,
+            letterSpacing: "0.01em",
+            lineHeight: 1.1,
           }}
         >
           Draft with Talon
-        </button>
-      </div>
+        </span>
+        <span
+          className="t-eyebrow"
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.2em",
+            color: "var(--vr-cream-faint)",
+          }}
+        >
+          Coming in V1
+        </span>
+      </button>
 
       <div className="vr-card" style={{ padding: "16px 16px 18px" }}>
         <FormRow label="Title">
@@ -209,13 +203,11 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             <div
               style={{
                 marginTop: 6,
-                fontSize: 10.5,
+                fontSize: 11,
                 color: "var(--vr-cream-faint)",
-                fontStyle: "italic",
-                fontFamily: "var(--ff-serif)",
               }}
             >
-              No registered strategies for this sleeve yet — landing once the presets register one.
+              No registered strategies for this sleeve yet.
             </div>
           )}
         </FormRow>
@@ -252,7 +244,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               <div
                 style={{
                   fontFamily: "var(--ff-serif)",
-                  fontStyle: "italic",
                   fontSize: 13,
                   color: "var(--vr-gold)",
                   marginBottom: 6,
@@ -260,10 +251,8 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               >
                 Held until the strategy is written
               </div>
-              This idea will be saved as a code-pending capture: thesis only, no executable
-              strategy yet. It can&apos;t be submitted to the lab until Codex (or Talon V1)
-              implements the strategy and registers it. Status stays DRAFT and promotion
-              fields are hidden.
+              Saved as thesis only. Can&apos;t submit to the lab until Codex (or Talon V1)
+              implements the strategy. Status stays DRAFT; promotion fields are hidden.
             </div>
           </FormRow>
         ) : (
@@ -281,38 +270,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
                 </option>
               ))}
             </select>
-            <div
-              style={{
-                marginTop: 5,
-                fontSize: 10.5,
-                color: "var(--vr-cream-faint)",
-                fontStyle: "italic",
-                fontFamily: "var(--ff-serif)",
-                lineHeight: 1.5,
-              }}
-            >
-              Registered families only. If none of these fit the thesis you wrote above,
-              switch to{" "}
-              <button
-                type="button"
-                onClick={() => setCodePending(true)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  color: "var(--vr-gold)",
-                  fontStyle: "italic",
-                  fontFamily: "var(--ff-serif)",
-                  fontSize: "inherit",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                }}
-              >
-                + New strategy (code pending)
-              </button>
-              {" "}rather than forcing a fit — the lab will hold the idea until the
-              strategy is implemented.
-            </div>
           </FormRow>
         )}
 
@@ -351,7 +308,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
             <span
               style={{
                 fontFamily: "var(--ff-serif)",
-                fontStyle: "italic",
                 fontSize: 14,
                 color: "var(--vr-cream)",
               }}
@@ -359,7 +315,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               Strategy spec
             </span>
             <span style={{ fontSize: 11, color: "var(--vr-cream-mute)", display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontStyle: "italic", fontFamily: "var(--ff-serif)" }}>optional</span>
+              <span>optional</span>
               <span style={{ fontFamily: "var(--ff-mono)", fontSize: 13, color: "var(--vr-cream-dim)" }}>
                 {specOpen ? "−" : "+"}
               </span>
@@ -367,20 +323,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
           </button>
           {specOpen && (
             <div style={{ marginTop: 12 }}>
-              <div
-                style={{
-                  fontSize: 11,
-                  color: "var(--vr-cream-mute)",
-                  fontStyle: "italic",
-                  fontFamily: "var(--ff-serif)",
-                  marginBottom: 10,
-                  lineHeight: 1.5,
-                }}
-              >
-                Sketch what's in your head. None of these are required.
-                The more you fill in, the easier it is for Talon or Codex
-                to turn the thesis into real strategy code later.
-              </div>
               <FormRow label="Data sources">
                 <textarea
                   value={dataSources}
@@ -426,17 +368,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
                 onClick={() => setStatus(s)}
               />
             ))}
-          </div>
-          <div
-            style={{
-              marginTop: 5,
-              fontSize: 10.5,
-              color: "var(--vr-cream-faint)",
-              fontStyle: "italic",
-              fontFamily: "var(--ff-serif)",
-            }}
-          >
-            DRAFT stays quiet. READY makes the idea eligible for autopilot pickup.
           </div>
         </FormRow>
         )}
@@ -499,17 +430,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               Assign promotion slot
             </button>
           )}
-          <div
-            style={{
-              marginTop: 5,
-              fontSize: 10.5,
-              color: "var(--vr-cream-faint)",
-              fontStyle: "italic",
-              fontFamily: "var(--ff-serif)",
-            }}
-          >
-            Optional at authoring time. Without it, Nominate stays disabled on any spawned campaign until you assign a slot there.
-          </div>
         </FormRow>
         )}
 
