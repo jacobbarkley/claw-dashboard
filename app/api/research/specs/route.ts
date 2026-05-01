@@ -21,6 +21,7 @@ import {
   ideaRepoRelpath,
   linkIdeaToSpec,
   normalizeScope,
+  normalizeStrategySpecPatchExperimentPlan,
   optionalString,
   parseAuthoringMode,
   parseCrudWritableSpecState,
@@ -50,6 +51,7 @@ interface CreateBody {
   required_data?: unknown
   benchmark?: unknown
   acceptance_criteria?: unknown
+  experiment_plan?: unknown
   candidate_strategy_family?: unknown
   implementation_notes?: unknown
   parent_spec_id?: unknown
@@ -129,6 +131,10 @@ export async function POST(req: NextRequest) {
       required_data: stringListOrEmpty(body.required_data),
       benchmark: optionalString(body.benchmark),
       acceptance_criteria: recordOrEmpty(body.acceptance_criteria),
+      experiment_plan: normalizeStrategySpecPatchExperimentPlan(body.experiment_plan, {
+        specId,
+        ideaId,
+      }),
       candidate_strategy_family: optionalString(body.candidate_strategy_family),
       implementation_notes: optionalString(body.implementation_notes),
       parent_spec_id: optionalString(body.parent_spec_id),

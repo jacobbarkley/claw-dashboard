@@ -11,6 +11,7 @@ import {
 } from "@/lib/research-lab-data-capabilities.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { loadStrategySpecById, strategySpecRepoRelpath } from "@/lib/research-lab-specs.server"
+import { formatTalonLessonsForPrompt } from "@/lib/research-lab-talon-lessons.server"
 import {
   applyModelVerdictFloor,
   buildStrategySpec,
@@ -133,7 +134,8 @@ export async function POST(req: NextRequest) {
   let talonOutput: DraftOutput
   let rawCompletion: string | null = null
   const model = process.env.TALON_SPEC_DRAFTING_MODEL ?? DEFAULT_MODEL
-  const prompt = buildPrompt({ idea, overrideThesis, catalog })
+  const lessons = await formatTalonLessonsForPrompt()
+  const prompt = buildPrompt({ idea, overrideThesis, catalog, lessons })
   try {
     const result = await generateText({
       model: anthropic(model),
@@ -270,10 +272,12 @@ function buildPrompt({
   idea,
   overrideThesis,
   catalog,
+  lessons,
 }: {
   idea: IdeaArtifact
   overrideThesis: string | null
   catalog: Awaited<ReturnType<typeof loadDataCapabilityCatalog>>
+  lessons: string
 }): string {
   return [
     "You are Talon's spec-drafting mode inside the Vires Research Lab.",
@@ -281,7 +285,16 @@ function buildPrompt({
     "",
     "Your task has two parts:",
     "1. Draft a StrategySpecV1 starting point for the operator to review.",
-    "2. Assess whether every data dependency is actually available in the catalog.",
+    "2. Draft its experiment_plan: how the strategy will be judged before implementation.",
+    "3. Assess whether every data dependency is actually available in the catalog.",
+    "",
+    "Experiment-plan rules:",
+    "- The plan is part of the spec. Do not omit it.",
+    "- Use ISO dates for windows. If the idea does not specify dates, choose a recent executable window and state limitations.",
+    "- evidence_thresholds must be numeric. minimum_trade_count defaults to at least 5 for exploratory stock ideas unless the thesis justifies a higher floor.",
+    "- data_requirements are resolved by the server from your assessment; in experiment_plan focus on benchmark, windows, eras, thresholds, verdict rules, and limitations.",
+    "- If a strategy depends on seeded/current-only data, put that in known_limitations and make the plan clear that the first run validates plumbing, not historical edge.",
+    lessons ? ["", lessons].join("\n") : null,
     "",
     DATA_READINESS_PROMPT_RULES,
     "",

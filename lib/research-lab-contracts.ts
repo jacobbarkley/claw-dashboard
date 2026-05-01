@@ -210,6 +210,89 @@ export interface StrategySpecV1 extends ScopeTriple {
   approved_by?: string | null
   /** Executable preset created by the implementation loop. */
   preset_id?: string | null
+  /**
+   * How this strategy will be judged once it runs.
+   *
+   * Optional for legacy/backfilled specs, but required before a spec can move
+   * into AWAITING_APPROVAL or APPROVED in the v2 Lab flow.
+   */
+  experiment_plan?: ExperimentPlanV1 | null
+}
+
+export type ExperimentPlanIssueSeverity = "error" | "warn"
+export type RunnableEraStatus = "AVAILABLE" | "INCOMPLETE_DATA" | "UNAVAILABLE"
+export type ExperimentDataRequirementStatus = "AVAILABLE" | "PARTIAL" | "MISSING"
+export type ExperimentEraMode = "single" | "multi"
+export type BenchmarkComparisonMode = "absolute" | "deployment_matched" | "both"
+
+export interface ExperimentPlanValidityIssue {
+  field_id: string
+  severity: ExperimentPlanIssueSeverity
+  message: string
+}
+
+export interface ExperimentPlanBenchmark {
+  symbol: string
+  comparison_mode: BenchmarkComparisonMode
+}
+
+export interface ExperimentPlanWindows {
+  requested_start: string
+  requested_end: string
+  fresh_data_required_from?: string | null
+}
+
+export interface ExperimentPlanDateRange {
+  start: string
+  end: string
+}
+
+export interface RunnableEraRef {
+  era_id: string
+  label: string
+  date_range: ExperimentPlanDateRange
+  status: RunnableEraStatus
+  reason?: string | null
+}
+
+export interface ExperimentPlanEras {
+  mode: ExperimentEraMode
+  required_era_ids: string[]
+}
+
+export interface ExperimentPlanDataRequirement {
+  capability_id: string
+  required: boolean
+  status: ExperimentDataRequirementStatus
+  status_at_draft: ExperimentDataRequirementStatus
+  purpose?: string | null
+}
+
+export interface ExperimentPlanEvidenceThresholds {
+  minimum_trade_count: number
+  minimum_evaluated_trading_days: number
+}
+
+export interface ExperimentPlanDecisiveVerdictRules {
+  pass: string
+  inconclusive: string
+  fail: string
+}
+
+export interface ExperimentPlanV1 {
+  schema_version: "research_lab.experiment_plan.v1"
+  spec_id: string
+  idea_id: string
+  is_valid: boolean
+  validity_reasons: ExperimentPlanValidityIssue[]
+  benchmark: ExperimentPlanBenchmark
+  windows: ExperimentPlanWindows
+  runnable_eras: RunnableEraRef[]
+  eras: ExperimentPlanEras
+  data_requirements: ExperimentPlanDataRequirement[]
+  evidence_thresholds: ExperimentPlanEvidenceThresholds
+  decisive_verdict_rules: ExperimentPlanDecisiveVerdictRules
+  known_limitations: string[]
 }
 
 export interface SpecImplementationQueueV1 extends ScopeTriple {

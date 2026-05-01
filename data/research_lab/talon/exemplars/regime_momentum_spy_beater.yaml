@@ -1,0 +1,13 @@
+schema_version: research_lab.talon_exemplar.v1
+exemplar_id: regime_momentum_spy_beater_template
+title: Known-good regime-aware momentum template
+summary: >
+  Jacob and Codex previously found a regime-aware momentum pattern that beat
+  SPY by roughly ten percentage points. Treat it as the first known-good
+  template: simple OHLCV-derived momentum, explicit SPY benchmark, bounded
+  stop/target sweeps, enough trades to judge, and clear readiness gates.
+prompt_rules:
+  - Prefer simple, testable signal logic over clever data dependencies when the idea does not require exotic data.
+  - Include benchmark, eras/windows, trade-count floor, drawdown cap, and decisive verdict rules with the strategy draft.
+  - Use available OHLCV-derived features as the baseline template before reaching for unavailable sentiment, macro, options, or on-chain data.
+  - If the operator asks for a novel data source, first check whether an available proxy can honestly test the thesis.

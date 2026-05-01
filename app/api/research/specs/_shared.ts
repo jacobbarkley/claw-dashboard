@@ -5,6 +5,7 @@ import path from "path"
 import yaml from "js-yaml"
 
 import type {
+  ExperimentPlanV1,
   IdeaArtifact,
   ScopeTriple,
   SpecAuthoringMode,
@@ -12,6 +13,11 @@ import type {
   StrategySpecV1,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import {
+  normalizeExperimentPlan,
+  validateExperimentPlan,
+  withComputedExperimentPlanValidity,
+} from "@/lib/research-lab-experiment-plan"
 import { strategySpecPath, strategySpecRepoRelpath } from "@/lib/research-lab-specs.server"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
@@ -166,6 +172,39 @@ export function validateStrategySpec(spec: StrategySpecV1): void {
   if (spec.state === "REGISTERED" && !spec.registered_strategy_id) {
     throw new Error("REGISTERED strategy specs require registered_strategy_id")
   }
+  if (spec.experiment_plan) {
+    const plan = withComputedExperimentPlanValidity(spec.experiment_plan)
+    if (plan.spec_id !== spec.spec_id) {
+      throw new Error("Experiment plan spec_id must match the strategy spec.")
+    }
+    if (plan.idea_id !== spec.idea_id) {
+      throw new Error("Experiment plan idea_id must match the strategy spec.")
+    }
+    const validity = validateExperimentPlan(plan)
+    if (spec.state === "AWAITING_APPROVAL" || spec.state === "APPROVED") {
+      const errors = validity.validity_reasons.filter(reason => reason.severity === "error")
+      if (!validity.is_valid) {
+        throw new Error(
+          `Experiment plan is not valid: ${errors.map(reason => reason.message).join("; ")}`,
+        )
+      }
+    }
+  } else if (spec.state === "AWAITING_APPROVAL" || spec.state === "APPROVED") {
+    throw new Error("Experiment plan is required before a strategy spec can be submitted or approved.")
+  }
+}
+
+export function normalizeStrategySpecPatchExperimentPlan(
+  input: unknown,
+  identity?: { specId: string; ideaId: string },
+): ExperimentPlanV1 | null {
+  const plan = normalizeExperimentPlan(input)
+  if (!plan) return null
+  return withComputedExperimentPlanValidity({
+    ...plan,
+    spec_id: identity?.specId ?? plan.spec_id,
+    idea_id: identity?.ideaId ?? plan.idea_id,
+  })
 }
 
 export function linkIdeaToSpec(idea: IdeaArtifact, specId: string): IdeaArtifact {
@@ -344,6 +383,9 @@ async function githubFileSha(relpath: string, token: string): Promise<string | n
 function stripSchemaAlias(spec: StrategySpecV1): Record<string, unknown> {
   const persisted = { ...(spec as StrategySpecV1 & { schema?: unknown }) } as Record<string, unknown>
   delete persisted.schema
+  if (persisted.experiment_plan) {
+    persisted.experiment_plan = withComputedExperimentPlanValidity(persisted.experiment_plan as ExperimentPlanV1)
+  }
   return persisted
 }
 

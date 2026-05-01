@@ -7,7 +7,8 @@
 // the server-side parse after generation.
 
 import { z } from "zod"
-import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import type { ExperimentPlanV1, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import { withComputedExperimentPlanValidity } from "@/lib/research-lab-experiment-plan"
 import {
   capabilityMatchesRequest,
   type DataCapabilityCatalogV1,
@@ -18,6 +19,81 @@ import {
 // ─── Schemas ────────────────────────────────────────────────────────────────
 
 const requirementStatusSchema = z.enum(["AVAILABLE", "PARTIAL", "MISSING"])
+const benchmarkComparisonModeSchema = z.enum(["absolute", "deployment_matched", "both"])
+const eraStatusSchema = z.enum(["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"])
+const eraModeSchema = z.enum(["single", "multi"])
+
+const experimentPlanLoose = z.object({
+  benchmark: z.object({
+    symbol: z.string(),
+    comparison_mode: benchmarkComparisonModeSchema,
+  }),
+  windows: z.object({
+    requested_start: z.string(),
+    requested_end: z.string(),
+    fresh_data_required_from: z.string().optional().nullable(),
+  }),
+  runnable_eras: z.array(z.object({
+    era_id: z.string(),
+    label: z.string(),
+    date_range: z.object({
+      start: z.string(),
+      end: z.string(),
+    }),
+    status: eraStatusSchema,
+    reason: z.string().optional().nullable(),
+  })),
+  eras: z.object({
+    mode: eraModeSchema,
+    required_era_ids: z.array(z.string()),
+  }),
+  evidence_thresholds: z.object({
+    minimum_trade_count: z.number(),
+    minimum_evaluated_trading_days: z.number(),
+  }),
+  decisive_verdict_rules: z.object({
+    pass: z.string(),
+    inconclusive: z.string(),
+    fail: z.string(),
+  }),
+  known_limitations: z.array(z.string()),
+})
+
+const experimentPlanStrict = z.object({
+  benchmark: z.object({
+    symbol: z.string().min(1),
+    comparison_mode: benchmarkComparisonModeSchema,
+  }),
+  windows: z.object({
+    requested_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    requested_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    fresh_data_required_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  }),
+  runnable_eras: z.array(z.object({
+    era_id: z.string().min(1),
+    label: z.string().min(1),
+    date_range: z.object({
+      start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    }),
+    status: eraStatusSchema,
+    reason: z.string().optional().nullable(),
+  })),
+  eras: z.object({
+    mode: eraModeSchema,
+    required_era_ids: z.array(z.string().min(1)),
+  }),
+  evidence_thresholds: z.object({
+    minimum_trade_count: z.number().min(1),
+    minimum_evaluated_trading_days: z.number().min(1),
+  }),
+  decisive_verdict_rules: z.object({
+    pass: z.string().min(10),
+    inconclusive: z.string().min(10),
+    fail: z.string().min(10),
+  }),
+  known_limitations: z.array(z.string().min(1)),
+})
 
 const proposalLoose = z.object({
   signal_logic: z.string(),
@@ -26,6 +102,7 @@ const proposalLoose = z.object({
   risk_model: z.string(),
   universe: z.string(),
   required_data: z.array(z.string()),
+  experiment_plan: experimentPlanLoose,
   benchmark: z.string(),
   acceptance_criteria: z.object({
     min_sharpe: z.number(),
@@ -45,6 +122,7 @@ const proposalStrict = z.object({
   risk_model: z.string().min(20),
   universe: z.string().min(10),
   required_data: z.array(z.string().min(1)).min(1),
+  experiment_plan: experimentPlanStrict,
   benchmark: z.string().min(1),
   acceptance_criteria: z.object({
     min_sharpe: z.number().min(0),
@@ -277,11 +355,65 @@ export function buildStrategySpec({
         ? { other: proposal.acceptance_criteria.other.trim() }
         : {}),
     },
+    experiment_plan: buildExperimentPlan({
+      specId,
+      ideaId,
+      proposal,
+      readiness,
+    }),
     candidate_strategy_family: proposal.candidate_strategy_family?.trim() || null,
     implementation_notes: buildImplementationNotes(proposal.implementation_notes, readiness),
     parent_spec_id: base?.parent_spec_id ?? null,
     registered_strategy_id: null,
   }
+}
+
+function buildExperimentPlan({
+  specId,
+  ideaId,
+  proposal,
+  readiness,
+}: {
+  specId: string
+  ideaId: string
+  proposal: TalonProposal
+  readiness: DataReadinessAssessment
+}): ExperimentPlanV1 {
+  const plan = proposal.experiment_plan
+  const dataRequirements = readiness.requirements.map(requirement => ({
+    capability_id: requirement.source ?? normalizeCapabilityId(requirement.requested),
+    required: requirement.core,
+    status: requirement.status,
+    status_at_draft: requirement.status,
+    purpose: requirement.requested,
+  }))
+  return withComputedExperimentPlanValidity({
+    schema_version: "research_lab.experiment_plan.v1",
+    spec_id: specId,
+    idea_id: ideaId,
+    is_valid: false,
+    validity_reasons: [],
+    benchmark: {
+      symbol: plan.benchmark.symbol.trim().toUpperCase(),
+      comparison_mode: plan.benchmark.comparison_mode,
+    },
+    windows: {
+      requested_start: plan.windows.requested_start,
+      requested_end: plan.windows.requested_end,
+      fresh_data_required_from: plan.windows.fresh_data_required_from ?? null,
+    },
+    runnable_eras: plan.runnable_eras,
+    eras: plan.eras,
+    data_requirements: dataRequirements,
+    evidence_thresholds: plan.evidence_thresholds,
+    decisive_verdict_rules: plan.decisive_verdict_rules,
+    known_limitations: dedupeStrings(plan.known_limitations),
+  })
+}
+
+function normalizeCapabilityId(value: string): string {
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "")
+  return normalized || "unknown_requirement"
 }
 
 export function buildImplementationNotes(

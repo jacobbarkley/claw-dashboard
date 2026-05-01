@@ -25,6 +25,7 @@ import {
 } from "@/lib/research-lab-data-capabilities.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { loadStrategySpecById } from "@/lib/research-lab-specs.server"
+import { formatTalonLessonsForPrompt } from "@/lib/research-lab-talon-lessons.server"
 import {
   applyModelVerdictFloor,
   DATA_READINESS_PROMPT_RULES,
@@ -141,6 +142,7 @@ export async function POST(
   )
 
   const model = process.env.TALON_SPEC_DRAFTING_MODEL ?? DEFAULT_MODEL
+  const lessons = await formatTalonLessonsForPrompt()
   const prompt = buildPrompt({
     idea,
     spec,
@@ -148,6 +150,7 @@ export async function POST(
     conversation,
     message,
     pendingProposalSummary,
+    lessons,
   })
 
   let parsed: ReturnType<typeof reviseOutputSchema.parse>
@@ -242,6 +245,7 @@ function buildPrompt({
   conversation,
   message,
   pendingProposalSummary,
+  lessons,
 }: {
   idea: { sleeve: string; title: string; thesis: string }
   spec: StrategySpecV1
@@ -249,6 +253,7 @@ function buildPrompt({
   conversation: ConversationMessage[]
   message: string
   pendingProposalSummary: string | null
+  lessons: string
 }): string {
   const trimmedConversation = conversation.slice(-MAX_CONVERSATION_TURNS_IN_PROMPT)
   const conversationBlock = trimmedConversation.length
@@ -272,10 +277,17 @@ function buildPrompt({
     "",
     "Output rules:",
     '- kind="clarification" + brief reply (under 3 sentences) when you need more info. No proposal/assessment.',
-    '- kind="revision" + brief reply describing the CUMULATIVE state of the proposal (what spec looks like after Apply, not the delta) + complete proposal + assessment.',
+    '- kind="revision" + brief reply describing the CUMULATIVE state of the proposal (what spec+plan look like after Apply, not the delta) + complete proposal + assessment.',
     "- Keep replies short. Default to revising on concrete asks, one clarifying question on vague ones.",
     "",
     "Cumulative-proposal rule (operator may chat several turns before applying): the 'Pending unapplied proposal' block (if present) is your working baseline. Every new proposal must carry forward all earlier-discussed changes PLUS the latest ask. Never silently drop changes. If no pending block but transcript shows earlier proposed changes, carry those forward unless the operator retracted them.",
+    "",
+    "Experiment-plan revision rules:",
+    "- Every revision proposal must include the full experiment_plan as part of proposal.",
+    "- If you change signal logic, universe, benchmark, required data, or acceptance criteria, update the plan too.",
+    "- In your reply, explicitly mention any plan changes, even if the signal logic changed more.",
+    "- Keep thresholds numeric and windows as ISO dates.",
+    lessons ? ["", lessons].join("\n") : null,
     "",
     DATA_READINESS_PROMPT_RULES,
     "",
@@ -314,6 +326,7 @@ function formatSpecForPrompt(spec: StrategySpecV1): string {
     `acceptance_criteria: min_sharpe=${spec.acceptance_criteria.min_sharpe}, max_drawdown=${spec.acceptance_criteria.max_drawdown}, min_hit_rate=${spec.acceptance_criteria.min_hit_rate}${spec.acceptance_criteria.other ? `, other=${spec.acceptance_criteria.other}` : ""}`,
     `candidate_strategy_family: ${spec.candidate_strategy_family ?? "(unset)"}`,
     `implementation_notes: ${spec.implementation_notes ?? "(unset)"}`,
+    `experiment_plan: ${spec.experiment_plan ? JSON.stringify(spec.experiment_plan) : "(unset)"}`,
   ].join("\n")
 }
 
@@ -351,6 +364,7 @@ function formatPendingProposal(
   )
   lines.push(`candidate_strategy_family: ${stringFieldOrUnset(p.candidate_strategy_family)}`)
   lines.push(`implementation_notes: ${stringFieldOrUnset(p.implementation_notes)}`)
+  lines.push(`experiment_plan: ${p.experiment_plan ? JSON.stringify(p.experiment_plan) : "(unset)"}`)
   return lines.join("\n")
 }
 

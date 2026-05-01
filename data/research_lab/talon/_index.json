@@ -1,0 +1,9 @@
+{
+  "schema_version": "research_lab.talon_context_index.v1",
+  "lesson_files": [
+    "data/research_lab/talon/strategy_lessons/ape_wisdom_seeded_attention.yaml"
+  ],
+  "exemplar_files": [
+    "data/research_lab/talon/exemplars/regime_momentum_spy_beater.yaml"
+  ]
+}

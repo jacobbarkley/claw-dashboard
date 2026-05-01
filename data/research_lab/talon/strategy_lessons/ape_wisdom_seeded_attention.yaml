@@ -1,0 +1,17 @@
+schema_version: research_lab.talon_strategy_lesson.v1
+lesson_id: ape_wisdom_seeded_attention_2026_05_01
+title: Ape Wisdom seeded-attention is proof plumbing unless historical attention exists
+source:
+  idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
+  job_id: job_01KQGW59ADQ578QZ8GXHQ578QZ
+summary: >
+  The first Ape Wisdom run proved the idea-to-job loop, but it did not prove a
+  historical edge. The strategy used a 2026-04-14 seeded attention artifact, so
+  only post-seed tape was honestly tradeable and the run produced one ASML
+  trade.
+prompt_rules:
+  - If an idea depends on seeded/current-only data, label the first run as a plumbing/proof run unless historical data exists.
+  - Separate config window, fresh usable tape, tradeable window, benchmark window, evaluated trading days, and trade count in the experiment plan.
+  - Do not imply a strategy is judgeable when expected trades are below the readiness floor.
+  - Ask for a broader universe, longer executable window, or missing historical connector when the plan cannot meet minimum evidence thresholds.
+  - Put seeded-data limitations in experiment_plan.known_limitations.

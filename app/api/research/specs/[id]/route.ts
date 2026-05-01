@@ -22,6 +22,7 @@ import {
   ideaArtifactToYaml,
   ideaRepoRelpath,
   normalizeScope,
+  normalizeStrategySpecPatchExperimentPlan,
   optionalString,
   parseAuthoringMode,
   parseCrudWritableSpecState,
@@ -51,6 +52,7 @@ interface PatchBody {
   required_data?: unknown
   benchmark?: unknown
   acceptance_criteria?: unknown
+  experiment_plan?: unknown
   candidate_strategy_family?: unknown
   implementation_notes?: unknown
   parent_spec_id?: unknown
@@ -172,6 +174,12 @@ export async function PATCH(
       acceptance_criteria: "acceptance_criteria" in body
         ? recordOrEmpty(body.acceptance_criteria)
         : resolved.spec.acceptance_criteria,
+      experiment_plan: "experiment_plan" in body
+        ? normalizeStrategySpecPatchExperimentPlan(body.experiment_plan, {
+            specId: resolved.spec.spec_id,
+            ideaId: resolved.spec.idea_id,
+          })
+        : resolved.spec.experiment_plan ?? null,
       candidate_strategy_family: "candidate_strategy_family" in body
         ? optionalString(body.candidate_strategy_family)
         : resolved.spec.candidate_strategy_family ?? null,
