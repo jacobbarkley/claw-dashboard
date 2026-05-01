@@ -7,7 +7,7 @@
   "benchmark_symbol": "SPY",
   "status": "EXPLORING",
   "summary": "Ape Wisdom has a scored Lab leader, but it remains blocked on readiness gates.",
-  "updated_at": "2026-05-01T00:22:48.206916-04:00",
+  "updated_at": "2026-05-01T00:36:08.679208-04:00",
   "updated_by": "codex",
   "current_leader_candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ",
   "last_run_at": "2026-05-01T00:20:14.654546-04:00",
@@ -89,7 +89,9 @@
         "result_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
         "candidate_path": "data/research_lab/jacob/paper_main/default/candidates/candidate_candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
         "job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
-        "origin_job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ"
+        "origin_job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+        "equity_swarm_path": "data/research_lab/jacob/paper_main/default/equity_swarm/equity_swarm_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+        "equity_swarm_artifact_id": "research_lab.equity_swarm.v1"
       },
       "latest_run": {
         "run_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
