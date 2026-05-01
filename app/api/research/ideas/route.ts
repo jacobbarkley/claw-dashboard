@@ -29,6 +29,9 @@ import type {
   StrategyRefV2,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import {
+  normalizeReferenceStrategies,
+} from "@/lib/research-lab-strategy-references.server"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
@@ -66,6 +69,7 @@ interface SubmitBody {
   source?: unknown
   tags?: unknown
   params?: unknown
+  reference_strategies?: unknown
   promote_to_campaign?: unknown
   promotion_target?: unknown
   scope?: unknown
@@ -205,13 +209,11 @@ function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
 }
 
 function stripViewFields(idea: IdeaArtifact): Record<string, unknown> {
-  const {
-    schema: _schema,
-    strategy_id: _strategyId,
-    strategy_family: _strategyFamily,
-    code_pending: _codePending,
-    ...persisted
-  } = idea as IdeaArtifact & { schema?: unknown }
+  const persisted = { ...idea } as Record<string, unknown>
+  delete persisted.schema
+  delete persisted.strategy_id
+  delete persisted.strategy_family
+  delete persisted.code_pending
   return persisted
 }
 
@@ -229,24 +231,22 @@ export async function POST(req: NextRequest) {
   const title = typeof body.title === "string" ? body.title.trim() : ""
   const thesis = typeof body.thesis === "string" ? body.thesis.trim() : ""
   const sleeveRaw = typeof body.sleeve === "string" ? body.sleeve.trim().toUpperCase() : ""
-  const codePending = body.code_pending === true
+  const explicitCodePending = body.code_pending === true
   const strategyIdInput = typeof body.strategy_id === "string" ? body.strategy_id.trim() : ""
-  const strategyId = codePending ? "" : strategyIdInput
+  const createsRegisteredIdea = !explicitCodePending && strategyIdInput.length > 0
+  const strategyId = createsRegisteredIdea ? strategyIdInput : ""
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 })
   if (!thesis) return NextResponse.json({ error: "thesis required" }, { status: 400 })
   if (!VALID_SLEEVES.includes(sleeveRaw as ResearchSleeve)) {
     return NextResponse.json({ error: "sleeve must be STOCKS | CRYPTO | OPTIONS" }, { status: 400 })
   }
-  if (!codePending && !strategyId) {
-    return NextResponse.json({ error: "strategy_id required" }, { status: 400 })
-  }
+  const registered = await loadRegisteredStrategies()
 
   // Validate strategy_id against the preset index — guardrail: no
   // hand-authored unsupported strategies. Skipped for code-pending ideas
   // since their sentinel intentionally isn't registered.
-  if (!codePending) {
-    const registered = await loadRegisteredStrategies()
+  if (createsRegisteredIdea) {
     if (registered.size > 0 && !registered.has(strategyId)) {
       return NextResponse.json(
         {
@@ -255,6 +255,16 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       )
     }
+  }
+
+  let referenceStrategies: IdeaArtifact["reference_strategies"] = []
+  try {
+    referenceStrategies = normalizeReferenceStrategies(body.reference_strategies, registered)
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Invalid reference_strategies" },
+      { status: 400 },
+    )
   }
 
   // Optional fields
@@ -271,9 +281,7 @@ export async function POST(req: NextRequest) {
   const statusIn = typeof body.status === "string" ? body.status.trim().toUpperCase() : "DRAFT"
   // Code-pending ideas must stay DRAFT — there's no executable strategy
   // to mark READY/QUEUED/ACTIVE against yet.
-  const status: IdeaStatus = codePending
-    ? "DRAFT"
-    : VALID_STATUSES.includes(statusIn as IdeaStatus)
+  const status: IdeaStatus = createsRegisteredIdea && VALID_STATUSES.includes(statusIn as IdeaStatus)
       ? (statusIn as IdeaStatus)
       : "DRAFT"
   const sourceIn = typeof body.source === "string" ? body.source.trim().toUpperCase() : "MANUAL"
@@ -342,8 +350,15 @@ export async function POST(req: NextRequest) {
   }
   const createdAt = new Date().toISOString()
 
-  const strategyRef: StrategyRefV2 = codePending
-    ? hasMeaningfulSpecSeed(params)
+  const strategyRef: StrategyRefV2 = createsRegisteredIdea
+    ? {
+        kind: "REGISTERED",
+        active_spec_id: null,
+        pending_spec_id: null,
+        strategy_id: strategyId,
+        preset_id: null,
+      }
+    : hasMeaningfulSpecSeed(params)
       ? {
           kind: "SPEC_PENDING",
           active_spec_id: null,
@@ -358,13 +373,6 @@ export async function POST(req: NextRequest) {
           strategy_id: null,
           preset_id: null,
         }
-    : {
-        kind: "REGISTERED",
-        active_spec_id: null,
-        pending_spec_id: null,
-        strategy_id: strategyId,
-        preset_id: null,
-      }
 
   const idea: IdeaArtifact = {
     schema_version: "research_lab.idea.v2",
@@ -375,6 +383,7 @@ export async function POST(req: NextRequest) {
     sleeve: sleeveRaw as ResearchSleeve,
     tags: tags ?? [],
     params,
+    reference_strategies: referenceStrategies,
     strategy_ref: strategyRef,
     status,
     needs_spec: strategyRef.kind === "NONE",
@@ -388,8 +397,8 @@ export async function POST(req: NextRequest) {
     code_pending: strategyRef.kind !== "REGISTERED",
     // Promotion fields are meaningless on code-pending ideas — drop them
     // even if the caller sent them.
-    ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
-    ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
+    ...(createsRegisteredIdea && promoteToCampaign && { promote_to_campaign: true }),
+    ...(createsRegisteredIdea && promotionTarget && { promotion_target: promotionTarget }),
   }
 
   const relpath = ideaRelpath(scope, ideaId)

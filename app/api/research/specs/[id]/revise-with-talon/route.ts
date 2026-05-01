@@ -25,6 +25,7 @@ import {
 } from "@/lib/research-lab-data-capabilities.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { loadStrategySpecById } from "@/lib/research-lab-specs.server"
+import { formatReferenceStrategiesForPrompt } from "@/lib/research-lab-strategy-references.server"
 import { formatTalonLessonsForPrompt } from "@/lib/research-lab-talon-lessons.server"
 import {
   applyModelVerdictFloor,
@@ -143,6 +144,7 @@ export async function POST(
 
   const model = process.env.TALON_SPEC_DRAFTING_MODEL ?? DEFAULT_MODEL
   const lessons = await formatTalonLessonsForPrompt()
+  const referenceContext = await formatReferenceStrategiesForPrompt(idea.reference_strategies)
   const prompt = buildPrompt({
     idea,
     spec,
@@ -151,6 +153,7 @@ export async function POST(
     message,
     pendingProposalSummary,
     lessons,
+    referenceContext,
   })
 
   let parsed: ReturnType<typeof parseReviseGeneratedOutput>
@@ -246,6 +249,7 @@ function buildPrompt({
   message,
   pendingProposalSummary,
   lessons,
+  referenceContext,
 }: {
   idea: { sleeve: string; title: string; thesis: string }
   spec: StrategySpecV1
@@ -254,6 +258,7 @@ function buildPrompt({
   message: string
   pendingProposalSummary: string | null
   lessons: string
+  referenceContext: string
 }): string {
   const trimmedConversation = conversation.slice(-MAX_CONVERSATION_TURNS_IN_PROMPT)
   const conversationBlock = trimmedConversation.length
@@ -291,6 +296,7 @@ function buildPrompt({
     "- If you change signal logic, universe, benchmark, required data, or acceptance criteria, update the plan too.",
     "- In your reply, explicitly mention any plan changes, even if the signal logic changed more.",
     "- Keep thresholds numeric and windows as ISO dates.",
+    "- If reference strategies are supplied, preserve them as lineage/context for NEW code; never revise by pointing the idea back to a parent strategy as-is.",
     lessons ? ["", lessons].join("\n") : null,
     "",
     DATA_READINESS_PROMPT_RULES,
@@ -298,6 +304,9 @@ function buildPrompt({
     `Idea sleeve: ${idea.sleeve}`,
     `Idea title: ${idea.title}`,
     `Idea thesis: ${idea.thesis}`,
+    "",
+    "Reference-strategy context:",
+    referenceContext,
     "",
     `Current persisted spec (v${spec.spec_version}, state=${spec.state}):`,
     formatSpecForPrompt(spec),

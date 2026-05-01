@@ -163,6 +163,13 @@ export interface StrategyRefV2 {
   preset_id?: string | null
 }
 
+export interface ReferenceStrategy {
+  /** Registered strategy this idea derives from. Lineage/context only. */
+  strategy_id: string
+  /** Operator note describing the intended delta from the parent. */
+  delta_note?: string | null
+}
+
 export interface IdeaV2 extends ScopeTriple {
   schema_version: "research_lab.idea.v2"
   idea_id: string
@@ -171,6 +178,11 @@ export interface IdeaV2 extends ScopeTriple {
   sleeve: ResearchSleeve
   tags?: string[] | null
   params: Record<string, unknown>
+  /**
+   * Parent strategies this idea derives from. This never routes execution;
+   * strategy_ref remains the authoritative pointer for this idea's own code.
+   */
+  reference_strategies?: ReferenceStrategy[] | null
   strategy_ref: StrategyRefV2
   status: IdeaStatus
   /** Operator intent flag, only meaningful when strategy_ref.kind === NONE. */

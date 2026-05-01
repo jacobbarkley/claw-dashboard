@@ -11,6 +11,7 @@ import {
 } from "@/lib/research-lab-data-capabilities.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { loadStrategySpecById, strategySpecRepoRelpath } from "@/lib/research-lab-specs.server"
+import { formatReferenceStrategiesForPrompt } from "@/lib/research-lab-strategy-references.server"
 import { formatTalonLessonsForPrompt } from "@/lib/research-lab-talon-lessons.server"
 import {
   applyModelVerdictFloor,
@@ -132,7 +133,8 @@ export async function POST(req: NextRequest) {
   let rawCompletion: string | null = null
   const model = process.env.TALON_SPEC_DRAFTING_MODEL ?? DEFAULT_MODEL
   const lessons = await formatTalonLessonsForPrompt()
-  const prompt = buildPrompt({ idea, overrideThesis, catalog, lessons })
+  const referenceContext = await formatReferenceStrategiesForPrompt(idea.reference_strategies)
+  const prompt = buildPrompt({ idea, overrideThesis, catalog, lessons, referenceContext })
   try {
     const result = await generateText({
       model: anthropic(model),
@@ -272,11 +274,13 @@ function buildPrompt({
   overrideThesis,
   catalog,
   lessons,
+  referenceContext,
 }: {
   idea: IdeaArtifact
   overrideThesis: string | null
   catalog: Awaited<ReturnType<typeof loadDataCapabilityCatalog>>
   lessons: string
+  referenceContext: string
 }): string {
   return [
     "You are Talon's spec-drafting mode inside the Vires Research Lab.",
@@ -290,6 +294,7 @@ function buildPrompt({
     "1. Draft a StrategySpecV1 starting point for the operator to review.",
     "2. Draft its experiment_plan: how the strategy will be judged before implementation.",
     "3. Assess whether every data dependency is actually available in the catalog.",
+    "4. If reference strategies are supplied, use them as parent/context for NEW code and honor the operator's delta notes. Do not simply route the idea to a parent strategy.",
     "",
     "Experiment-plan rules:",
     "- The plan is part of the spec. Do not omit it.",
@@ -305,6 +310,9 @@ function buildPrompt({
     `Idea title: ${idea.title}`,
     `Idea thesis: ${idea.thesis}`,
     overrideThesis ? `Operator augmentation: ${overrideThesis}` : null,
+    "",
+    "Reference-strategy context:",
+    referenceContext,
     "",
     `Data capability catalog (${catalog.catalog_version}):`,
     formatCatalogForPrompt(catalog),

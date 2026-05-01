@@ -28,6 +28,7 @@ import type {
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 import { ideaPath, loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { normalizeReferenceStrategies } from "@/lib/research-lab-strategy-references.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
 
 const VALID_SLEEVES: ResearchSleeve[] = ["STOCKS", "CRYPTO", "OPTIONS"]
@@ -52,6 +53,7 @@ interface PatchBody {
   strategy_family?: unknown
   tags?: unknown
   params?: unknown
+  reference_strategies?: unknown
 }
 
 // Mirrors the POST route's preset registry validator. Duplicated rather
@@ -248,13 +250,11 @@ function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
 }
 
 function stripViewFields(idea: IdeaArtifact): Record<string, unknown> {
-  const {
-    schema: _schema,
-    strategy_id: _strategyId,
-    strategy_family: _strategyFamily,
-    code_pending: _codePending,
-    ...persisted
-  } = idea as IdeaArtifact & { schema?: unknown }
+  const persisted = { ...idea } as Record<string, unknown>
+  delete persisted.schema
+  delete persisted.strategy_id
+  delete persisted.strategy_family
+  delete persisted.code_pending
   return persisted
 }
 
@@ -287,7 +287,7 @@ export async function PATCH(
   // verify the lock condition before applying them.
   const DRAFT_FIELDS = [
     "title", "thesis", "sleeve", "strategy_id", "code_pending",
-    "strategy_family", "tags", "params",
+    "strategy_family", "tags", "params", "reference_strategies",
   ] as const
   const hasDraftEdits = DRAFT_FIELDS.some(k => k in body)
   if (hasStatus) {
@@ -415,6 +415,7 @@ export async function PATCH(
   let strategyFamilyValue: string | undefined = existing.strategy_family ?? undefined
   let tagsValue: string[] | undefined = existing.tags ?? undefined
   let paramsValue      = existing.params
+  let referenceStrategiesValue = existing.reference_strategies ?? []
   const draftFieldsTouched: string[] = []
   if (hasDraftEdits) {
     if (existing.status !== "DRAFT") {
@@ -533,6 +534,20 @@ export async function PATCH(
       paramsValue = v ?? {}
       draftFieldsTouched.push("params")
     }
+    if ("reference_strategies" in body) {
+      try {
+        referenceStrategiesValue = normalizeReferenceStrategies(
+          body.reference_strategies,
+          await loadRegisteredStrategies(),
+        )
+      } catch (error) {
+        return NextResponse.json(
+          { error: error instanceof Error ? error.message : "Invalid reference_strategies" },
+          { status: 400 },
+        )
+      }
+      draftFieldsTouched.push("reference_strategies")
+    }
   }
 
   // Rebuild idea preserving all other fields. Drop the keys when their
@@ -589,12 +604,14 @@ export async function PATCH(
     strategy_id: _sid,
     code_pending: _cp,
     strategy_family: _sf,
+    reference_strategies: _refs,
     strategy_ref: _sr,
     needs_spec: _ns,
     tags: _tg,
     params: _pa,
     ...rest
   } = existing
+  void [_pt, _pc, _s, _t, _th, _sl, _sid, _cp, _sf, _refs, _sr, _ns, _tg, _pa]
   const updated: IdeaArtifact = {
     ...rest,
     schema_version: "research_lab.idea.v2",
@@ -603,6 +620,7 @@ export async function PATCH(
     sleeve: sleeveValue,
     tags: tagsValue ?? [],
     params: paramsValue,
+    reference_strategies: referenceStrategiesValue,
     strategy_ref: strategyRefValue,
     status: statusValue,
     needs_spec: strategyRefValue.kind === "NONE",
