@@ -967,14 +967,22 @@ export function StocksScreen({ data, rules, operator }: {
   // portfolio including reserves.
   // TODO(multi-tenant): make this per-user config when scope-aware.
   const STOCKS_RESERVE_SYMBOLS = new Set(["SGOV"])
-  const positions = data.positions.filter(
-    p => (p.asset_type ?? "EQUITY") === "EQUITY" && !STOCKS_RESERVE_SYMBOLS.has(p.symbol),
-  ) as ViresPosition[]
+  const allEquity = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY")
+  const positions = allEquity.filter(p => !STOCKS_RESERVE_SYMBOLS.has(p.symbol)) as ViresPosition[]
+  // Codex's sleeve_equity_history.stocks includes reserves at every historic
+  // point. Once we strip them from the live hero value, the sparkline turns
+  // apples-to-oranges (today vs. last week with SGOV). Suppress the chart
+  // until Codex ships strategy-only history; falls back to the existing
+  // "LIVE VALUE ONLY · HISTORY PENDING" placeholder.
+  const reservesInRawPositions = allEquity.some(p => STOCKS_RESERVE_SYMBOLS.has(p.symbol))
+  const stocksSleeveHistory = reservesInRawPositions
+    ? null
+    : data.sleeve_equity_history?.stocks ?? null
   const effectiveRules: StrategyRules = rules ?? { stop_loss_pct: null, target_pct: null }
   const op = operator as SleeveOperator | null | undefined
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <SleeveSummary sleeve="stocks" positions={positions} equityCurve={data.equity_curve} sleeveHistory={data.sleeve_equity_history?.stocks ?? null} />
+      <SleeveSummary sleeve="stocks" positions={positions} equityCurve={data.equity_curve} sleeveHistory={stocksSleeveHistory} />
       <ActiveStrategy sleeve="stocks" operator={op} />
       <OpenPositions positions={positions} />
       <StrategyUniverse universe={data.strategy_universe ?? null} positions={positions} rules={effectiveRules} />
