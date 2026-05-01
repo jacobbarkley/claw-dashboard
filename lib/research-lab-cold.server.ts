@@ -17,7 +17,12 @@ import { promises as fs } from "fs"
 import path from "path"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
-import type { CandidateV1, ResultV1, ScopeTriple } from "./research-lab-contracts"
+import type {
+  CandidateV1,
+  EquitySwarmV1,
+  ResultV1,
+  ScopeTriple,
+} from "./research-lab-contracts"
 
 function scopeRoot(scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE): string {
   return path.join(
@@ -77,5 +82,21 @@ export async function loadCandidateById(
   if (!candidateId || !/^[A-Za-z0-9_.:-]+$/.test(candidateId)) return null
   return readJsonIfPresent<CandidateV1>(
     path.join(scopeRoot(scope), "candidates", `candidate_${candidateId}.json`),
+  )
+}
+
+// Loads an equity_swarm.v1 artifact from a repo-relative path stamped by
+// the producer in `ResultV1.equity_swarm_artifact.path`. Path is checked
+// to live under data/research_lab/ so a tampered result file can't read
+// arbitrary files off the deployment filesystem.
+export async function loadEquitySwarmFromArtifactPath(
+  artifactPath: string,
+): Promise<EquitySwarmV1 | null> {
+  if (!artifactPath || typeof artifactPath !== "string") return null
+  if (!artifactPath.endsWith(".json")) return null
+  if (artifactPath.includes("..")) return null
+  if (!artifactPath.startsWith("data/research_lab/")) return null
+  return readJsonIfPresent<EquitySwarmV1>(
+    path.join(process.cwd(), artifactPath),
   )
 }

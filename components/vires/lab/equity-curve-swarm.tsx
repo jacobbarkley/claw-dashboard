@@ -17,7 +17,7 @@ import {
   ComposedChart, Line, Area, XAxis, YAxis, Tooltip, Brush,
   ResponsiveContainer, ReferenceLine,
 } from "recharts"
-import type { EquitySwarmV1, EquitySwarmTrade } from "./equity-curve-swarm.mock"
+import type { EquitySwarmV1, EquitySwarmTrade } from "@/lib/research-lab-contracts"
 
 type ScaleMode = "usd" | "pct"
 type SortMode  = "recent" | "biggest_winners" | "biggest_losers"

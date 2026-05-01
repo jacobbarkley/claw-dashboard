@@ -4,8 +4,10 @@ import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { JobStatusPoll } from "@/components/vires/lab/job-status-poll"
 import { ResultLeaderboard } from "@/components/vires/lab/result-leaderboard"
 import { CandidateScorecard } from "@/components/vires/lab/candidate-scorecard"
+import { TradeAtlas } from "@/components/vires/lab/equity-curve-swarm"
 import {
   loadCandidateByJobId,
+  loadEquitySwarmFromArtifactPath,
   loadResultById,
 } from "@/lib/research-lab-cold.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
@@ -18,10 +20,18 @@ export const metadata = {
 async function loadCold(jobId: string): Promise<{
   result: Awaited<ReturnType<typeof loadResultById>>
   candidate: Awaited<ReturnType<typeof loadCandidateByJobId>>
+  swarm: Awaited<ReturnType<typeof loadEquitySwarmFromArtifactPath>>
 }> {
   const candidate = await loadCandidateByJobId(jobId)
   const result = candidate ? await loadResultById(candidate.result_id) : null
-  return { result, candidate }
+  const swarmPath = result?.equity_swarm_artifact?.path ?? null
+  const swarm = swarmPath ? await loadEquitySwarmFromArtifactPath(swarmPath) : null
+  return { result, candidate, swarm }
+}
+
+function fmtDateRange(window: { from: string; to: string; days: number } | null | undefined): string | null {
+  if (!window) return null
+  return `${window.from} → ${window.to} · ${window.days} days`
 }
 
 export default async function ViresLabJobDetailPage({
@@ -31,7 +41,7 @@ export default async function ViresLabJobDetailPage({
 }) {
   const { id } = await params
   const jobId = decodeURIComponent(id)
-  const { result, candidate } = await loadCold(jobId)
+  const { result, candidate, swarm } = await loadCold(jobId)
   const campaignIdeaId = candidate?.idea_id ?? null
   const owningIdea = campaignIdeaId ? await loadIdeaById(campaignIdeaId) : null
   const labCampaignExists = campaignIdeaId
@@ -39,6 +49,7 @@ export default async function ViresLabJobDetailPage({
     : false
   const headlineTitle = owningIdea?.title ?? "Run"
   const sleeveLabel = owningIdea?.sleeve ?? null
+  const evalWindow = fmtDateRange(result?.evaluation_window ?? null)
 
   return (
     <>
@@ -98,6 +109,19 @@ export default async function ViresLabJobDetailPage({
           >
             ← back to idea
           </Link>
+        )}
+        {evalWindow && (
+          <div
+            className="t-mono"
+            style={{
+              marginTop: 10,
+              fontSize: 10.5,
+              color: "var(--vr-cream-mute)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            evaluation window · {evalWindow}
+          </div>
         )}
       </div>
 
@@ -167,6 +191,8 @@ export default async function ViresLabJobDetailPage({
             <ResultLeaderboard result={result} />
           </div>
         ) : null}
+
+        {swarm ? <TradeAtlas data={swarm} /> : null}
 
         {candidate ? (
           <CandidateScorecard candidate={candidate} />

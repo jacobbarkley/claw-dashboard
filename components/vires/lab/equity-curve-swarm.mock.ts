@@ -1,72 +1,13 @@
-// Mock data for <EquityCurveSwarm /> while the producer-side
-// research_lab.equity_swarm.v1 artifact is being wired by Codex.
-//
-// Mirrors the contract from
-//   _design_handoff/CODEX_PRIMER_2026-04-28_lab_equity_swarm_contract.md
-//
-// Once the real artifact lands, the canonical EquitySwarmV1 type moves
-// to lib/research-lab-contracts.ts (regenerated from the contracts doc)
-// and this file goes away.
+// Mock data for <TradeAtlas /> at /vires/bench/lab/equity-swarm-preview.
+// Real consumers use the contracts version + loadEquitySwarmFromArtifactPath
+// against the producer artifact at the path stamped by Codex's worker.
+// This file stays only because the preview page is a useful design surface.
 
-// Mirrors EquitySwarmV1 from
-//   trading-bot/src/openclaw_core/research_lab/models.py
-// (commit bdb4f8d, 2026-04-28). Once the real artifact is wired into
-// the live Lab view, this type moves to lib/research-lab-contracts.ts.
-
-export interface EquitySwarmPoint {
-  date: string
-  value_usd: number
-  value_pct: number
-}
-
-export interface EquitySwarmTrade {
-  trade_id: string
-  symbol: string
-  side: string
-  entry_date: string
-  exit_date: string | null
-  entry_price: number
-  exit_price: number | null
-  shares: number
-  notional_usd_at_entry: number
-  pnl_usd: number
-  pnl_pct: number
-  status: "OPEN" | "CLOSED"
-  exit_reason: string | null
-  mtm_curve: EquitySwarmPoint[]
-}
-
-export interface EquitySwarmBenchmark {
-  symbol: string
-  label: string
-  curve: EquitySwarmPoint[]
-}
-
-export interface EquitySwarmDateRange {
-  start: string
-  end: string
-  as_of_date: string | null
-}
-
-export interface EquitySwarmV1 {
-  schema_version: "research_lab.equity_swarm.v1"
-  result_id: string
-  job_id: string
-  idea_id: string
-  run_id: string
-  campaign_id: string
-  source_variant_id: string
-  source_fold: string
-  source_simulation_path: string
-  source_dataset_path: string | null
-  generated_at: string
-  starting_capital_usd: number
-  currency: "USD"
-  date_range: EquitySwarmDateRange
-  strategy_curve: EquitySwarmPoint[]
-  benchmark: EquitySwarmBenchmark | null
-  trades: EquitySwarmTrade[]
-}
+import type {
+  EquitySwarmPoint,
+  EquitySwarmTrade,
+  EquitySwarmV1,
+} from "@/lib/research-lab-contracts"
 
 // ─── Mock generation ──────────────────────────────────────────────────────
 
@@ -177,6 +118,9 @@ const DAYS = tradingDays(START, END)
 
 export const MOCK_EQUITY_SWARM: EquitySwarmV1 = {
   schema_version: "research_lab.equity_swarm.v1",
+  user_id: "mock",
+  account_id: "mock",
+  strategy_group_id: "mock",
   result_id: "mock_result_q076b_2026_q1",
   job_id: "mock_job_q076b_2026_q1",
   idea_id: "mock_idea_regime_aware_momentum",

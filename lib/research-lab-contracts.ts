@@ -445,6 +445,84 @@ export interface ResultV1 extends ScopeTriple {
   benchmark?: ResultBenchmark | null
   /** AI-filled from Phase 4; null until then. */
   interpretation_summary?: string | null
+  /** Repo-relative pointer to the equity_swarm.v1 artifact for this result. */
+  equity_swarm_artifact?: ResultArtifactRef | null
+  /** Backtest evaluation window — informative; not a constraint Codex enforces. */
+  evaluation_window?: ResultEvaluationWindow | null
+}
+
+export interface ResultArtifactRef {
+  artifact_id: string
+  artifact_type: string
+  path: string
+  description?: string | null
+}
+
+export interface ResultEvaluationWindow {
+  from: string
+  to: string
+  days: number
+}
+
+// ─── equity_swarm.v1 ────────────────────────────────────────────────────────
+//
+// Per-result strategy + benchmark + per-trade equity series. Read from
+// the path in `ResultV1.equity_swarm_artifact.path`. Renderer: TradeAtlas
+// in components/vires/lab/equity-curve-swarm.tsx.
+
+export interface EquitySwarmPoint {
+  date: string
+  value_usd: number
+  value_pct: number
+}
+
+export interface EquitySwarmTrade {
+  trade_id: string
+  symbol: string
+  side: string
+  entry_date: string
+  exit_date: string | null
+  entry_price: number
+  exit_price: number | null
+  shares: number
+  notional_usd_at_entry: number
+  pnl_usd: number
+  pnl_pct: number
+  status: "OPEN" | "CLOSED"
+  exit_reason: string | null
+  mtm_curve: EquitySwarmPoint[]
+}
+
+export interface EquitySwarmBenchmark {
+  symbol: string
+  label: string
+  curve: EquitySwarmPoint[]
+}
+
+export interface EquitySwarmDateRange {
+  start: string
+  end: string
+  as_of_date: string | null
+}
+
+export interface EquitySwarmV1 extends ScopeTriple {
+  schema_version: "research_lab.equity_swarm.v1"
+  result_id: string
+  job_id: string
+  idea_id: string
+  run_id: string
+  campaign_id: string
+  source_variant_id: string
+  source_fold: string
+  source_simulation_path: string
+  source_dataset_path: string | null
+  generated_at: string
+  starting_capital_usd: number
+  currency: "USD"
+  date_range: EquitySwarmDateRange
+  strategy_curve: EquitySwarmPoint[]
+  benchmark: EquitySwarmBenchmark | null
+  trades: EquitySwarmTrade[]
 }
 
 // ─── candidate.v1 ───────────────────────────────────────────────────────────
