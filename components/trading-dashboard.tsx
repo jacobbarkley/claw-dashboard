@@ -2582,15 +2582,29 @@ function SleevePositionsChart({ positions }: { positions: Position[] }) {
 
 function StocksSleeve({ data }: { data: TradingData }) {
   const meta = SLEEVE_META.stocks
-  const equityPositions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY" && !parseOptionSymbol(p.symbol))
+  // Reserves (SGOV, etc.) are bank, not strategy. Excluded from the
+  // stocks sleeve view entirely — they distort allocation %, today's move,
+  // and the universe display since 90%+ of "deployed equity" can be
+  // sitting in a treasury ETF the strategy isn't actually trading.
+  // Home page still shows the full portfolio including reserves.
+  // TODO(multi-tenant): make this per-user config when scope-aware.
+  const RESERVE_SYMBOLS = new Set(["SGOV"])
+  const allEquityPositions = data.positions.filter(
+    p => (p.asset_type ?? "EQUITY") === "EQUITY" && !parseOptionSymbol(p.symbol),
+  )
+  const equityPositions = allEquityPositions.filter(p => !RESERVE_SYMBOLS.has(p.symbol))
+  const reservesValue = allEquityPositions
+    .filter(p => RESERVE_SYMBOLS.has(p.symbol))
+    .reduce((acc, p) => acc + (p.market_value ?? 0), 0)
   const equitySymbols = new Set(equityPositions.map(p => p.symbol))
   const equityExits = data.exit_candidates.filter(e => equitySymbols.has(e.symbol) || !data.positions.find(p => p.symbol === e.symbol && parseOptionSymbol(p.symbol)))
 
-  // Sleeve totals — prefer the operator-feed-computed equity_deployed, fall
-  // back to summing positions directly so the header stays honest if the
-  // field is ever missing.
-  const stockHoldings = data.account.equity_deployed
-    ?? equityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+  // Sleeve totals — operator-feed equity_deployed includes reserves, so we
+  // subtract them. Falls back to summing strategy-only positions if the
+  // operator-feed field is missing.
+  const stockHoldings = data.account.equity_deployed != null
+    ? Math.max(0, data.account.equity_deployed - reservesValue)
+    : equityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
 
   // Today's $ change for stocks — derived per-position from market_value and
   // change_today_pct using the exact identity P_now - P_prev. The portfolio
