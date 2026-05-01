@@ -162,12 +162,25 @@ function AllocationHeader({
   )
 }
 
+// ─── Reserves (sleeve-level cash equivalents) ──────────────────────────────
+// On the stocks sleeve, SGOV is bank — held as a cash park, not a strategy
+// position. We merge its weight into the CASH bucket on the Currently bar
+// and drop reserve fills from the blotter so the sleeve view reads as
+// strategy activity, not treasury management.
+// TODO(multi-tenant): make this per-user config when scope-aware.
+const RESERVE_SYMBOLS_BY_SLEEVE: Record<Sleeve, Set<string>> = {
+  stocks: new Set(["SGOV"]),
+  options: new Set(),
+  crypto: new Set(),
+}
+
 // ─── Currently panel ────────────────────────────────────────────────────────
 
-function CurrentlyPanel({ data }: { data: AllocationHistorySleeve }) {
+function CurrentlyPanel({ data, sleeve }: { data: AllocationHistorySleeve; sleeve: Sleeve }) {
   const series = data.series ?? []
   const last = series[series.length - 1]
   if (!last) return null
+  const reserves = RESERVE_SYMBOLS_BY_SLEEVE[sleeve]
 
   // Color resolution order:
   //   1. explicit color from the feed (when Codex ships one)
@@ -183,8 +196,21 @@ function CurrentlyPanel({ data }: { data: AllocationHistorySleeve }) {
     return KNOWN_SYMBOL_COLORS[sym] ?? fallbackColorFor(sym)
   }
 
-  const entries: Array<[string, number]> = Object.entries(last.weights ?? {})
-  if (last.cash != null) entries.push(["CASH", last.cash])
+  // Merge any reserve symbols (e.g. SGOV on the stocks sleeve) into the CASH
+  // bucket so the bar reads as strategy-deployed vs parked, not as a third
+  // category competing with real positions.
+  const rawWeights = last.weights ?? {}
+  let cashTotal = last.cash ?? 0
+  const merged: Record<string, number> = {}
+  for (const [sym, weight] of Object.entries(rawWeights)) {
+    if (reserves.has(sym)) {
+      cashTotal += weight
+    } else {
+      merged[sym] = (merged[sym] ?? 0) + weight
+    }
+  }
+  const entries: Array<[string, number]> = Object.entries(merged)
+  if (cashTotal > 0) entries.push(["CASH", cashTotal])
   const visible = entries
     .filter(([, v]) => v >= 1)
     .sort((a, b) => b[1] - a[1])
@@ -287,10 +313,15 @@ function fmtBlotterDate(d: string): string {
   }
 }
 
-function OrderBlotter({ orders }: { orders: OrderFill[] }) {
+function OrderBlotter({ orders, sleeve }: { orders: OrderFill[]; sleeve: Sleeve }) {
   const [expanded, setExpanded] = useState(false)
-  if (orders.length === 0) return null
-  const reversed = orders.slice().reverse()
+  const reserves = RESERVE_SYMBOLS_BY_SLEEVE[sleeve]
+  // Reserve fills (cash management on SGOV, etc.) aren't strategy activity —
+  // hide them from the sleeve view so the blotter reflects what the strategy
+  // actually did.
+  const strategyOrders = orders.filter(o => !reserves.has(o.sym))
+  if (strategyOrders.length === 0) return null
+  const reversed = strategyOrders.slice().reverse()
   const visible = expanded ? reversed : reversed.slice(0, 4)
 
   return (
@@ -308,7 +339,7 @@ function OrderBlotter({ orders }: { orders: OrderFill[] }) {
           color: "var(--vr-cream-faint)",
           letterSpacing: "0.15em",
         }}>
-          {orders.length} FILL{orders.length === 1 ? "" : "S"}
+          {strategyOrders.length} FILL{strategyOrders.length === 1 ? "" : "S"}
         </span>
       </div>
 
@@ -379,7 +410,7 @@ function OrderBlotter({ orders }: { orders: OrderFill[] }) {
         ))}
       </div>
 
-      {orders.length > 4 && (
+      {strategyOrders.length > 4 && (
         <button
           onClick={() => setExpanded(e => !e)}
           style={{
@@ -392,7 +423,7 @@ function OrderBlotter({ orders }: { orders: OrderFill[] }) {
             cursor: "pointer",
           }}
         >
-          {expanded ? "— Show recent only" : `+ ${orders.length - 4} earlier fills`}
+          {expanded ? "— Show recent only" : `+ ${strategyOrders.length - 4} earlier fills`}
         </button>
       )}
     </div>
@@ -516,8 +547,8 @@ export function AllocationHistory({
   return (
     <div className="vr-card">
       <AllocationHeader mode={mode} source={data.source ?? null} sleeveLabel={sleeveLabel} />
-      <CurrentlyPanel data={data} />
-      <OrderBlotter orders={orders ?? []} />
+      <CurrentlyPanel data={data} sleeve={sleeve} />
+      <OrderBlotter orders={orders ?? []} sleeve={sleeve} />
     </div>
   )
 }

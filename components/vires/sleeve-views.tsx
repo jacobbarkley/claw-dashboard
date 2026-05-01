@@ -962,7 +962,14 @@ export function StocksScreen({ data, rules, operator }: {
   rules?: StrategyRules
   operator?: unknown
 }) {
-  const positions = data.positions.filter(p => (p.asset_type ?? "EQUITY") === "EQUITY") as ViresPosition[]
+  // Reserves (SGOV, etc.) are bank, not strategy. The stocks sleeve view shows
+  // only what the strategy is actually trading — Home renders the full
+  // portfolio including reserves.
+  // TODO(multi-tenant): make this per-user config when scope-aware.
+  const STOCKS_RESERVE_SYMBOLS = new Set(["SGOV"])
+  const positions = data.positions.filter(
+    p => (p.asset_type ?? "EQUITY") === "EQUITY" && !STOCKS_RESERVE_SYMBOLS.has(p.symbol),
+  ) as ViresPosition[]
   const effectiveRules: StrategyRules = rules ?? { stop_loss_pct: null, target_pct: null }
   const op = operator as SleeveOperator | null | undefined
   return (
