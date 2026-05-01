@@ -13,7 +13,8 @@
 // - required_data: chip selections plus a free-text "other" comma-list. The
 //   canonical string[] is the union, deduped, in the order chips→other.
 
-import type { StrategySpecV1 } from "@/lib/research-lab-contracts"
+import type { ExperimentPlanV1, StrategySpecV1 } from "@/lib/research-lab-contracts"
+import { withComputedExperimentPlanValidity } from "@/lib/research-lab-experiment-plan"
 
 import type { SpecFormValues } from "./strategy-spec-form"
 import { EMPTY_SPEC } from "./strategy-spec-form"
@@ -85,6 +86,7 @@ export function specToFormValues(spec: StrategySpecV1): SpecFormValues {
     candidate_strategy_family: spec.candidate_strategy_family ?? "",
     sweep_params: recordDescription(spec.sweep_params),
     implementation_notes: spec.implementation_notes ?? "",
+    experiment_plan: spec.experiment_plan ?? null,
   }
 }
 
@@ -101,6 +103,7 @@ export interface SpecPatchPayload {
   acceptance_criteria: Record<string, unknown>
   candidate_strategy_family: string | null
   implementation_notes: string | null
+  experiment_plan: ExperimentPlanV1 | null
 }
 
 export function formValuesToPatch(
@@ -109,6 +112,19 @@ export function formValuesToPatch(
 ): SpecPatchPayload {
   const requiredData = mergeRequiredData(values.required_data, values.required_data_other)
   const acceptance = buildAcceptanceCriteria(values, spec.acceptance_criteria)
+  const benchmarkSymbol = resolveBenchmark(values.benchmark, values.benchmark_custom)
+  // Keep plan.benchmark.symbol in sync with the spec's benchmark — same
+  // value, two surfaces. The plan is the new home for comparison_mode +
+  // structured details; the spec field stays for legacy readers.
+  const experimentPlan = values.experiment_plan
+    ? withComputedExperimentPlanValidity({
+        ...values.experiment_plan,
+        benchmark: {
+          ...values.experiment_plan.benchmark,
+          symbol: benchmarkSymbol ?? values.experiment_plan.benchmark.symbol,
+        },
+      })
+    : null
   return {
     authoring_mode: values.authoring_mode,
     signal_logic: values.signal_logic.trim(),
@@ -118,10 +134,11 @@ export function formValuesToPatch(
     risk_model: setRecordDescription(spec.risk_model, values.risk_model),
     sweep_params: setRecordDescription(spec.sweep_params, values.sweep_params),
     required_data: requiredData,
-    benchmark: resolveBenchmark(values.benchmark, values.benchmark_custom),
+    benchmark: benchmarkSymbol,
     acceptance_criteria: acceptance,
     candidate_strategy_family: trimOrNull(values.candidate_strategy_family),
     implementation_notes: trimOrNull(values.implementation_notes),
+    experiment_plan: experimentPlan,
   }
 }
 

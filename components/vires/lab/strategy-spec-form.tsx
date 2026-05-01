@@ -10,12 +10,19 @@
 // route. Phase D-implementation will swap the in-memory state for
 // real persistence to /api/research/specs/[id] (Codex's Phase E).
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 import type {
+  ExperimentPlanV1,
   SpecAuthoringMode,
   StrategySpecState,
 } from "@/lib/research-lab-contracts"
+import {
+  validateExperimentPlan,
+  withComputedExperimentPlanValidity,
+} from "@/lib/research-lab-experiment-plan"
+
+import { ExperimentPlanSection } from "./experiment-plan-section"
 
 export type { SpecAuthoringMode, StrategySpecState }
 
@@ -46,6 +53,11 @@ export interface SpecFormValues {
   candidate_strategy_family: string
   sweep_params: string
   implementation_notes: string
+
+  // Group E — Experiment plan (kept as a structured object so the
+  // ExperimentPlanSection sub-component can mutate sub-fields without
+  // type drift; persisted as ExperimentPlanV1 on save).
+  experiment_plan: ExperimentPlanV1 | null
 }
 
 const DATA_CHIPS = [
@@ -85,6 +97,7 @@ export const EMPTY_SPEC: SpecFormValues = {
   candidate_strategy_family: "",
   sweep_params: "",
   implementation_notes: "",
+  experiment_plan: null,
 }
 
 interface Props {
@@ -111,6 +124,17 @@ export function StrategySpecForm({
     ...initialValues,
   })
   const [advancedOpen, setAdvancedOpen] = useState(false)
+
+  // Recompute plan validity from current form state. The server will
+  // re-validate on submit, but the operator should see the same answer
+  // live as they edit so the validity pill matches the eventual gate.
+  const planValidity = useMemo(
+    () => validateExperimentPlan(values.experiment_plan),
+    [values.experiment_plan],
+  )
+  const planIsValid = planValidity.is_valid
+  const planIssueCount = planValidity.validity_reasons.length
+  const planErrorCount = planValidity.validity_reasons.filter(i => i.severity === "error").length
 
   const update = <K extends keyof SpecFormValues>(key: K, value: SpecFormValues[K]) => {
     setValues(prev => ({ ...prev, [key]: value }))
@@ -399,6 +423,31 @@ export function StrategySpecForm({
         </FormRow>
       </SectionCard>
 
+      {/* Group E — Experiment plan */}
+      <SectionCard
+        title="Experiment plan"
+        subtitle="How this strategy will be judged. Submit-for-approval is blocked until the plan is valid."
+        rightSlot={
+          <ValidityPill
+            isValid={planIsValid}
+            issueCount={planIssueCount}
+            errorCount={planErrorCount}
+            hasPlan={values.experiment_plan != null}
+          />
+        }
+      >
+        <ExperimentPlanSection
+          plan={values.experiment_plan}
+          onChange={next =>
+            setValues(prev => ({
+              ...prev,
+              experiment_plan: withComputedExperimentPlanValidity(next),
+            }))
+          }
+          issues={planValidity.validity_reasons}
+        />
+      </SectionCard>
+
       {/* Group D — Advanced */}
       <div className="vr-card" style={{ padding: "12px 14px" }}>
         <button
@@ -489,7 +538,13 @@ export function StrategySpecForm({
         <button
           type="button"
           onClick={() => onSubmitForApproval?.(values)}
-          style={primaryButton}
+          disabled={!planIsValid}
+          style={planIsValid ? primaryButton : disabledPrimaryButton}
+          title={
+            planIsValid
+              ? undefined
+              : "Resolve experiment plan errors before submitting for approval."
+          }
         >
           Submit for approval
         </button>
@@ -503,23 +558,36 @@ export function StrategySpecForm({
 function SectionCard({
   title,
   subtitle,
+  rightSlot,
   children,
 }: {
   title: string
   subtitle: string
+  rightSlot?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <div className="vr-card" style={{ padding: "16px 16px 18px" }}>
       <div
         style={{
-          fontFamily: "var(--ff-serif)",
-          fontStyle: "italic",
-          fontSize: 16,
-          color: "var(--vr-cream)",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
         }}
       >
-        {title}
+        <div
+          style={{
+            fontFamily: "var(--ff-serif)",
+            fontStyle: "italic",
+            fontSize: 16,
+            color: "var(--vr-cream)",
+          }}
+        >
+          {title}
+        </div>
+        {rightSlot}
       </div>
       <div
         style={{
@@ -536,6 +604,51 @@ function SectionCard({
       </div>
       {children}
     </div>
+  )
+}
+
+function ValidityPill({
+  isValid,
+  issueCount,
+  errorCount,
+  hasPlan,
+}: {
+  isValid: boolean
+  issueCount: number
+  errorCount: number
+  hasPlan: boolean
+}) {
+  let label: string
+  let color: string
+  if (!hasPlan) {
+    label = "no plan"
+    color = "var(--vr-down)"
+  } else if (isValid && issueCount === 0) {
+    label = "Plan complete"
+    color = "var(--vr-up)"
+  } else if (isValid && issueCount > 0) {
+    label = `Caveats · ${issueCount}`
+    color = "var(--vr-gold)"
+  } else {
+    label = `Plan incomplete · ${errorCount}`
+    color = "var(--vr-down)"
+  }
+  return (
+    <span
+      className="t-eyebrow"
+      style={{
+        padding: "3px 9px",
+        fontSize: 9.5,
+        letterSpacing: "0.12em",
+        borderRadius: 2,
+        border: `1px solid ${color}`,
+        color,
+        background: "var(--vr-ink)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {label}
+    </span>
   )
 }
 
@@ -622,6 +735,14 @@ const primaryButton: React.CSSProperties = {
   color: "var(--vr-gold)",
   borderRadius: 3,
   cursor: "pointer",
+}
+
+const disabledPrimaryButton: React.CSSProperties = {
+  ...primaryButton,
+  background: "transparent",
+  border: "1px solid var(--vr-line)",
+  color: "var(--vr-cream-faint)",
+  cursor: "not-allowed",
 }
 
 const secondaryButton: React.CSSProperties = {
