@@ -1,0 +1,155 @@
+{
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "schema_version": "research_lab.equity_swarm.v1",
+  "result_id": "result_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "idea_id": "idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+  "run_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ-validation",
+  "campaign_id": "research_lab_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "source_variant_id": "stop_7_target_12_attention_score_threshold_035",
+  "source_fold": "fold-00",
+  "source_simulation_path": "backtest/experiments/research_lab_job_01KQGW59ADQ578QZ8GXHQ578QZ__stop_7_target_12_attention_score_threshold_035/results/job_01KQGW59ADQ578QZ8GXHQ578QZ-validation/simulations/fold-00.simulation_run.json",
+  "source_dataset_path": "backtest/experiments/research_lab_job_01KQGW59ADQ578QZ8GXHQ578QZ__stop_7_target_12_attention_score_threshold_035/results/job_01KQGW59ADQ578QZ8GXHQ578QZ-validation/historical_dataset.json",
+  "generated_at": "2026-05-01T00:35:50.242097-04:00",
+  "starting_capital_usd": 50000.0,
+  "currency": "USD",
+  "date_range": {
+    "start": "2026-04-21",
+    "end": "2026-04-30",
+    "as_of_date": "2026-04-30"
+  },
+  "strategy_curve": [
+    {
+      "date": "2026-04-21",
+      "value_usd": 50000.0,
+      "value_pct": 0.0
+    },
+    {
+      "date": "2026-04-22",
+      "value_usd": 49863.69,
+      "value_pct": -0.27262
+    },
+    {
+      "date": "2026-04-23",
+      "value_usd": 49760.25,
+      "value_pct": -0.4795
+    },
+    {
+      "date": "2026-04-24",
+      "value_usd": 49919.85,
+      "value_pct": -0.1603
+    },
+    {
+      "date": "2026-04-27",
+      "value_usd": 49818.81,
+      "value_pct": -0.36238
+    },
+    {
+      "date": "2026-04-28",
+      "value_usd": 49583.48,
+      "value_pct": -0.83304
+    },
+    {
+      "date": "2026-04-29",
+      "value_usd": 49583.48,
+      "value_pct": -0.83304
+    },
+    {
+      "date": "2026-04-30",
+      "value_usd": 49583.48,
+      "value_pct": -0.83304
+    }
+  ],
+  "benchmark": {
+    "symbol": "SPY",
+    "label": "SPY",
+    "curve": [
+      {
+        "date": "2026-04-21",
+        "value_usd": 50000.0,
+        "value_pct": 0.0
+      },
+      {
+        "date": "2026-04-22",
+        "value_usd": 50506.334507,
+        "value_pct": 1.012669
+      },
+      {
+        "date": "2026-04-23",
+        "value_usd": 50310.334053,
+        "value_pct": 0.620668
+      },
+      {
+        "date": "2026-04-24",
+        "value_usd": 50700.204522,
+        "value_pct": 1.400409
+      },
+      {
+        "date": "2026-04-27",
+        "value_usd": 50787.552551,
+        "value_pct": 1.575105
+      },
+      {
+        "date": "2026-04-28",
+        "value_usd": 50540.421543,
+        "value_pct": 1.080843
+      },
+      {
+        "date": "2026-04-29",
+        "value_usd": 50532.609931,
+        "value_pct": 1.06522
+      },
+      {
+        "date": "2026-04-30",
+        "value_usd": 51035.393705,
+        "value_pct": 2.070787
+      }
+    ]
+  },
+  "trades": [
+    {
+      "trade_id": "trade_0001",
+      "symbol": "ASML",
+      "side": "LONG",
+      "entry_date": "2026-04-22",
+      "exit_date": "2026-04-28",
+      "entry_price": 1477.7385,
+      "exit_price": 1373.6097,
+      "shares": 4,
+      "notional_usd_at_entry": 5910.954,
+      "pnl_usd": -416.52,
+      "pnl_pct": -7.0465,
+      "status": "CLOSED",
+      "exit_reason": "STOP",
+      "mtm_curve": [
+        {
+          "date": "2026-04-22",
+          "value_usd": 0.0,
+          "value_pct": 0.0
+        },
+        {
+          "date": "2026-04-23",
+          "value_usd": -239.754,
+          "value_pct": -4.056097
+        },
+        {
+          "date": "2026-04-24",
+          "value_usd": -80.154,
+          "value_pct": -1.356025
+        },
+        {
+          "date": "2026-04-27",
+          "value_usd": -181.1944,
+          "value_pct": -3.0654
+        },
+        {
+          "date": "2026-04-28",
+          "value_usd": -416.52,
+          "value_pct": -7.046578
+        }
+      ]
+    }
+  ]
+}

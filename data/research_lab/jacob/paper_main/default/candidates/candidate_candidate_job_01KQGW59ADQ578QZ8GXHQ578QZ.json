@@ -104,7 +104,12 @@
     ],
     "as_of": "2026-05-01T00:20:14.469249-04:00"
   },
-  "equity_swarm_artifact": null,
+  "equity_swarm_artifact": {
+    "artifact_id": "research_lab.equity_swarm.v1",
+    "artifact_type": "EQUITY_SWARM",
+    "path": "data/research_lab/jacob/paper_main/default/equity_swarm/equity_swarm_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+    "description": "Per-result strategy + benchmark + per-trade equity series."
+  },
   "promotion_event_id": null,
   "nomination_uri": null
 }
