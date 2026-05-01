@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T20:30:09.194347+00:00",
+  "generated_at": "2026-05-01T20:41:09.777128+00:00",
   "as_of_date": "2026-05-01",
   "account": {
     "equity": 85562.38,
@@ -76,13 +76,13 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 65,
-    "closed_trades": 21,
+    "total_trades": 66,
+    "closed_trades": 22,
     "open_trades": 44,
-    "win_rate_pct": 19.05,
-    "profit_factor": 0.4161,
-    "expectancy": -18.56,
-    "net_pnl": -317.34,
+    "win_rate_pct": 22.73,
+    "profit_factor": 0.5097,
+    "expectancy": -15.4,
+    "net_pnl": -266.48,
     "max_drawdown_pct": 0.4388,
     "max_drawdown_usd": 438.81,
     "max_win_streak": 1,
@@ -1701,30 +1701,12 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
-      },
-      {
-        "symbol": "KKR",
-        "price": 91.22,
-        "sector": "Financial Services",
-        "expiry": "2026-05-22",
-        "dte": 21,
-        "short_strike": 104.0,
-        "long_strike": 98.0,
-        "spread_width": 6.0,
-        "net_credit": 1.5,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 450.0,
-        "iv_rank_proxy": 0.02,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
