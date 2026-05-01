@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-01T13:15:09.940528+00:00",
+  "generated_at": "2026-05-01T13:30:09.886066+00:00",
   "as_of_date": "2026-05-01",
   "account": {
-    "equity": 85544.57,
+    "equity": 85536.94,
     "cash": 29301.87,
-    "buying_power": 113962.67,
+    "buying_power": 113956.34,
     "base_value": 100000.0,
-    "total_pnl": -14455.43,
-    "total_pnl_pct": -14.4554,
-    "today_pnl": -70.89,
-    "today_pnl_pct": -0.0828,
-    "positions_value": 56242.7,
-    "equity_deployed": 56242.7,
+    "total_pnl": -14463.06,
+    "total_pnl_pct": -14.4631,
+    "today_pnl": -78.52,
+    "today_pnl_pct": -0.0917,
+    "positions_value": 56231.59,
+    "equity_deployed": 56231.59,
     "options_deployed": 0,
-    "unrealized_pnl": 40.18,
-    "unrealized_pnl_pct": 0.07
+    "unrealized_pnl": 29.08,
+    "unrealized_pnl_pct": 0.05
   },
   "positions": [
     {
@@ -22,53 +22,53 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 272.294,
-      "current_price": 280.1288,
-      "market_value": 1400.644,
-      "unrealized_pnl": 39.174,
-      "unrealized_pct": 2.88,
-      "change_today_pct": 3.23
+      "current_price": 278.84,
+      "market_value": 1394.2,
+      "unrealized_pnl": 32.73,
+      "unrealized_pct": 2.4,
+      "change_today_pct": 2.76
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 414.61,
-      "market_value": 1243.83,
-      "unrealized_pnl": 38.829999,
-      "unrealized_pct": 3.22,
-      "change_today_pct": -0.68
+      "current_price": 414.985,
+      "market_value": 1244.955,
+      "unrealized_pnl": 39.954999,
+      "unrealized_pct": 3.32,
+      "change_today_pct": -0.59
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78340.3,
-      "market_value": 883.76468,
-      "unrealized_pnl": 23.287617,
-      "unrealized_pct": 2.71,
-      "change_today_pct": 2.04
+      "current_price": 78225.722,
+      "market_value": 882.472114,
+      "unrealized_pnl": 21.995051,
+      "unrealized_pct": 2.56,
+      "change_today_pct": 1.89
     },
     {
       "symbol": "NVDA",
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 200.78,
-      "market_value": 1405.46,
-      "unrealized_pnl": 0.929999,
-      "unrealized_pct": 0.07,
-      "change_today_pct": 0.61
+      "current_price": 200.43,
+      "market_value": 1403.01,
+      "unrealized_pnl": -1.520001,
+      "unrealized_pct": -0.11,
+      "change_today_pct": 0.43
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530411,
-      "current_price": 100.409,
-      "market_value": 51308.999,
-      "unrealized_pnl": -62.041021,
+      "current_price": 100.405,
+      "market_value": 51306.955,
+      "unrealized_pnl": -64.085021,
       "unrealized_pct": -0.12,
       "change_today_pct": -0.26
     }
