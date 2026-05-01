@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-04-30T20:45:08.509953+00:00",
-  "as_of_date": "2026-04-30",
+  "generated_at": "2026-05-01T13:00:11.807094+00:00",
+  "as_of_date": "2026-05-01",
   "account": {
-    "equity": 85619.06,
-    "cash": 29301.88,
-    "buying_power": 114058.11,
+    "equity": 85537.41,
+    "cash": 29301.87,
+    "buying_power": 113959.43,
     "base_value": 100000.0,
-    "total_pnl": -14380.94,
-    "total_pnl_pct": -14.3809,
-    "today_pnl": -73.63,
-    "today_pnl_pct": -0.0859,
-    "positions_value": 56316.94,
-    "equity_deployed": 56316.94,
+    "total_pnl": -14462.59,
+    "total_pnl_pct": -14.4626,
+    "today_pnl": -78.05,
+    "today_pnl_pct": -0.0912,
+    "positions_value": 56235.54,
+    "equity_deployed": 56235.54,
     "options_deployed": 0,
-    "unrealized_pnl": 114.42,
-    "unrealized_pnl_pct": 0.2
+    "unrealized_pnl": 33.02,
+    "unrealized_pnl_pct": 0.06
   },
   "positions": [
     {
@@ -22,55 +22,55 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 272.294,
-      "current_price": 272.61,
-      "market_value": 1363.05,
-      "unrealized_pnl": 1.58,
-      "unrealized_pct": 0.12,
-      "change_today_pct": 0.9
+      "current_price": 280.1,
+      "market_value": 1400.5,
+      "unrealized_pnl": 39.03,
+      "unrealized_pct": 2.87,
+      "change_today_pct": 3.23
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 414.33,
-      "market_value": 1242.99,
-      "unrealized_pnl": 37.989999,
-      "unrealized_pct": 3.15,
-      "change_today_pct": 2.19
+      "current_price": 413.71,
+      "market_value": 1241.13,
+      "unrealized_pnl": 36.129999,
+      "unrealized_pct": 3.0,
+      "change_today_pct": -0.89
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 76485.106,
-      "market_value": 862.836053,
-      "unrealized_pnl": 2.35899,
-      "unrealized_pct": 0.27,
-      "change_today_pct": 0.32
+      "current_price": 77993.0,
+      "market_value": 879.846754,
+      "unrealized_pnl": 19.369691,
+      "unrealized_pct": 2.25,
+      "change_today_pct": 1.58
     },
     {
       "symbol": "NVDA",
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 200.74,
-      "market_value": 1405.18,
-      "unrealized_pnl": 0.649999,
-      "unrealized_pct": 0.05,
-      "change_today_pct": -4.07
+      "current_price": 200.65,
+      "market_value": 1404.55,
+      "unrealized_pnl": 0.019999,
+      "unrealized_pct": 0.0,
+      "change_today_pct": 0.54
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530411,
-      "current_price": 100.671,
-      "market_value": 51442.881,
-      "unrealized_pnl": 71.840979,
-      "unrealized_pct": 0.14,
-      "change_today_pct": 0.0
+      "current_price": 100.41,
+      "market_value": 51309.51,
+      "unrealized_pnl": -61.530021,
+      "unrealized_pct": -0.12,
+      "change_today_pct": -0.26
     }
   ],
   "pipeline_status": {
@@ -826,6 +826,11 @@
       "date": "2026-04-30",
       "equity": 85692.69,
       "profit_loss": -30.55
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 85615.46,
+      "profit_loss": -77.23
     }
   ],
   "watchlist": {
@@ -1663,66 +1668,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-22",
-        "dte": 22,
-        "short_strike": 36.0,
-        "long_strike": 31.0,
-        "spread_width": 5.0,
-        "net_credit": 2.95,
-        "credit_width_ratio": 0.59,
-        "annualized_yield_pct": 1025.5,
-        "max_loss_per_contract": 205.0,
-        "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "KKR",
-        "price": 91.22,
-        "sector": "Financial Services",
-        "expiry": "2026-05-22",
-        "dte": 22,
-        "short_strike": 104.0,
-        "long_strike": 98.0,
-        "spread_width": 6.0,
-        "net_credit": 1.95,
-        "credit_width_ratio": 0.325,
-        "annualized_yield_pct": 564.9,
-        "max_loss_per_contract": 405.0,
-        "iv_rank_proxy": 0.02,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "BKNG",
-        "price": 173.46,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-05-22",
-        "dte": 22,
-        "short_strike": 180.0,
-        "long_strike": 174.8,
-        "spread_width": 5.199999999999989,
-        "net_credit": 1.4,
-        "credit_width_ratio": 0.269,
-        "annualized_yield_pct": 467.9,
-        "max_loss_per_contract": 380.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 3,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
