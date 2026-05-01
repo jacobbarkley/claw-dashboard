@@ -5,6 +5,9 @@ import { JobStatusPoll } from "@/components/vires/lab/job-status-poll"
 import { ResultLeaderboard } from "@/components/vires/lab/result-leaderboard"
 import { CandidateScorecard } from "@/components/vires/lab/candidate-scorecard"
 import { TradeAtlas } from "@/components/vires/lab/equity-curve-swarm"
+import { RunAnatomyPanel } from "@/components/vires/lab/run-anatomy-panel"
+import { VerdictExplainedPanel } from "@/components/vires/lab/verdict-explained-panel"
+import { DetailsDisclosure } from "@/components/vires/lab/details-disclosure"
 import {
   loadCandidateByJobId,
   loadEquitySwarmFromArtifactPath,
@@ -29,11 +32,6 @@ async function loadCold(jobId: string): Promise<{
   return { result, candidate, swarm }
 }
 
-function fmtDateRange(window: { from: string; to: string; days: number } | null | undefined): string | null {
-  if (!window) return null
-  return `${window.from} → ${window.to} · ${window.days} days`
-}
-
 export default async function ViresLabJobDetailPage({
   params,
 }: {
@@ -49,7 +47,6 @@ export default async function ViresLabJobDetailPage({
     : false
   const headlineTitle = owningIdea?.title ?? "Run"
   const sleeveLabel = owningIdea?.sleeve ?? null
-  const evalWindow = fmtDateRange(result?.evaluation_window ?? null)
 
   return (
     <>
@@ -109,19 +106,6 @@ export default async function ViresLabJobDetailPage({
           >
             ← back to idea
           </Link>
-        )}
-        {evalWindow && (
-          <div
-            className="t-mono"
-            style={{
-              marginTop: 10,
-              fontSize: 10.5,
-              color: "var(--vr-cream-mute)",
-              letterSpacing: "0.06em",
-            }}
-          >
-            evaluation window · {evalWindow}
-          </div>
         )}
       </div>
 
@@ -186,16 +170,29 @@ export default async function ViresLabJobDetailPage({
           </Link>
         )}
 
+        <RunAnatomyPanel
+          evaluationWindow={result?.evaluation_window ?? null}
+          swarm={swarm}
+          leaderboardBenchmarkDays={result?.evaluation_window?.days ?? null}
+        />
+
+        {swarm ? <TradeAtlas data={swarm} /> : null}
+
+        <VerdictExplainedPanel candidate={candidate} />
+
         {result ? (
           <div id="result">
             <ResultLeaderboard result={result} />
           </div>
         ) : null}
 
-        {swarm ? <TradeAtlas data={swarm} /> : null}
-
         {candidate ? (
-          <CandidateScorecard candidate={candidate} />
+          <DetailsDisclosure
+            label="Details"
+            hint="all gates, variant params, raw metrics"
+          >
+            <CandidateScorecard candidate={candidate} />
+          </DetailsDisclosure>
         ) : null}
       </div>
     </>
