@@ -108,9 +108,9 @@ export async function POST(
   if (!spec) {
     return NextResponse.json({ error: `Strategy spec not found: ${specId}` }, { status: 404 })
   }
-  if (spec.authoring_mode !== "AI_DRAFTED") {
+  if (spec.authoring_mode !== "AI_DRAFTED" && spec.authoring_mode !== "OPERATOR_DRAFTED") {
     return NextResponse.json(
-      { error: "Talon revisions are only applyable to AI_DRAFTED specs." },
+      { error: "Talon revisions can only be applied to editable operator- or Talon-drafted specs." },
       { status: 409 },
     )
   }

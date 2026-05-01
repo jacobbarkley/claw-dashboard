@@ -1,7 +1,7 @@
 "use client"
 
-// Conversational refinement panel for an AI_DRAFTED spec. Operator chats
-// with Talon; each turn either:
+// Conversational drafting/refinement panel for an editable spec. Operator
+// chats with Talon; each turn either:
 //   - asks a clarifying question (kind=clarification, no spec change),
 //   - returns a proposed revision (kind=revision; spec stays untouched
 //     until operator deliberately taps Apply), or
@@ -96,8 +96,15 @@ export function TalonChatPanel({
 
   const storageKey = `${TALON_CHAT_KEY_PREFIX}${specId}`
   const visible =
-    authoringMode === "AI_DRAFTED" &&
     (specState === "DRAFTING" || specState === "AWAITING_APPROVAL")
+  const isOperatorDrafted = authoringMode === "OPERATOR_DRAFTED"
+  const panelTitle = isOperatorDrafted ? "Draft with Talon" : "Refine with Talon"
+  const emptyCopy = isOperatorDrafted
+    ? "Tell Talon what this strategy should become. It will use the idea thesis, current template, reference strategies, experiment plan, and data catalog to propose a complete draft. Nothing overwrites until you tap Apply changes."
+    : "Spill what you want changed — sweep ranges, exit logic, universe, anything. Talon will ask follow-up questions if the message is vague, or propose a revised spec when it has enough to go on. Proposals don't auto-apply — review the reply, then tap Apply changes."
+  const placeholder = isOperatorDrafted
+    ? "Ask Talon to draft the full spec from this idea..."
+    : "Talk to Talon — what should change?"
 
   useEffect(() => {
     try {
@@ -216,7 +223,7 @@ export function TalonChatPanel({
       console.error("[talon-revise] non-JSON response:", { status: res.status, rawBody })
       const timeoutLabel =
         res.status === 504
-          ? "Talon timed out (Vercel cut the request after 60s before Anthropic finished). Try again — your message is back in the input. Tighter messages tend to come back faster."
+          ? "Talon timed out before Anthropic finished. Try again — your message is back in the input. Tighter messages tend to come back faster."
           : `Talon returned non-JSON (status ${res.status}). Your message is back in the input.`
       setError(timeoutLabel)
       restoreInput()
@@ -232,7 +239,7 @@ export function TalonChatPanel({
           : res.status === 502
             ? "Talon is unreachable right now"
             : res.status === 504
-              ? "Talon timed out (Vercel cut the request at 60s). Try again — your message is back in the input"
+              ? "Talon timed out. Try again — your message is back in the input"
               : `Revision failed (${res.status})`
       console.error("[talon-revise] non-success:", { status: res.status, payload })
       setError(detail ? `${baseLabel}: ${detail}` : baseLabel)
@@ -465,7 +472,7 @@ export function TalonChatPanel({
             color: "var(--vr-cream)",
           }}
         >
-          Refine with Talon
+          {panelTitle}
         </div>
         {conversation.length > 0 && (
           <button
@@ -515,7 +522,7 @@ export function TalonChatPanel({
               fontFamily: "var(--ff-serif)",
             }}
           >
-            Spill what you want changed — sweep ranges, exit logic, universe, anything. Talon will ask follow-up questions if the message is vague, or propose a revised spec when it has enough to go on. Proposals don&apos;t auto-apply — review the reply, then tap Apply changes.
+            {emptyCopy}
           </div>
         )}
         {conversation.map((m, idx) => (
@@ -552,7 +559,7 @@ export function TalonChatPanel({
           onKeyDown={onKeyDown}
           disabled={busy || applyingIdx !== null}
           rows={3}
-          placeholder="Talk to Talon — what should change?"
+          placeholder={placeholder}
           style={{
             width: "100%",
             resize: "vertical",

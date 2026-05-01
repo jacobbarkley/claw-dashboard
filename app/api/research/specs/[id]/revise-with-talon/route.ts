@@ -1,6 +1,6 @@
 // POST /api/research/specs/[id]/revise-with-talon
 //
-// Propose-only conversational endpoint for an existing AI_DRAFTED spec.
+// Propose-only conversational endpoint for an existing editable spec.
 // The operator chats with Talon; on each turn Talon either:
 //   - asks a clarifying question (kind=clarification), or
 //   - returns a proposed revision (kind=revision + proposal + assessment).
@@ -106,9 +106,9 @@ export async function POST(
   if (!spec) {
     return NextResponse.json({ error: `Strategy spec not found: ${specId}` }, { status: 404 })
   }
-  if (spec.authoring_mode !== "AI_DRAFTED") {
+  if (spec.authoring_mode !== "AI_DRAFTED" && spec.authoring_mode !== "OPERATOR_DRAFTED") {
     return NextResponse.json(
-      { error: "Talon revise is only available on AI_DRAFTED specs." },
+      { error: "Talon revise requires an editable operator- or Talon-drafted spec." },
       { status: 409 },
     )
   }
@@ -288,6 +288,7 @@ function buildPrompt({
     "- assessment_json must JSON.stringify the complete data-readiness assessment.",
     "- For kind=\"clarification\", leave proposal_json and assessment_json null or omitted.",
     "- Keep replies short. Default to revising on concrete asks, one clarifying question on vague ones.",
+    "- If the persisted spec is OPERATOR_DRAFTED and thin/template-like, treat the operator's request as permission to draft a complete Talon proposal. Do not preserve placeholder text just because it exists.",
     "",
     "Cumulative-proposal rule (operator may chat several turns before applying): the 'Pending unapplied proposal' block (if present) is your working baseline. Every new proposal must carry forward all earlier-discussed changes PLUS the latest ask. Never silently drop changes. If no pending block but transcript shows earlier proposed changes, carry those forward unless the operator retracted them.",
     "",
@@ -328,6 +329,7 @@ function formatSpecForPrompt(spec: StrategySpecV1): string {
   const riskModel = recordDescription(spec.risk_model)
   const sweep = recordDescription(spec.sweep_params)
   return [
+    `authoring_mode: ${spec.authoring_mode}`,
     `signal_logic: ${spec.signal_logic}`,
     `entry_rules: ${spec.entry_rules}`,
     `exit_rules: ${spec.exit_rules}`,

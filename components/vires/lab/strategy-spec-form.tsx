@@ -224,15 +224,13 @@ export function StrategySpecForm({
         >
           Authoring mode
         </span>
-        <ChipToggle
+        <AuthoringModeBadge
           label="Operator-drafted"
           active={values.authoring_mode === "OPERATOR_DRAFTED"}
-          onClick={() => update("authoring_mode", "OPERATOR_DRAFTED")}
         />
-        <ChipToggle
+        <AuthoringModeBadge
           label="Talon-drafted"
           active={values.authoring_mode === "AI_DRAFTED"}
-          onClick={() => update("authoring_mode", "AI_DRAFTED")}
         />
         <span style={statePillStyle}>{values.spec_state}</span>
       </div>
@@ -705,6 +703,34 @@ function ChipToggle({
     >
       {label}
     </button>
+  )
+}
+
+function AuthoringModeBadge({
+  active,
+  label,
+}: {
+  active: boolean
+  label: string
+}) {
+  return (
+    <span
+      className="t-eyebrow"
+      aria-current={active ? "true" : undefined}
+      style={{
+        padding: "6px 10px",
+        fontSize: 10.5,
+        letterSpacing: "0.1em",
+        borderRadius: 3,
+        border: `1px solid ${active ? "var(--vr-gold)" : "var(--vr-line)"}`,
+        background: active ? "rgba(200,169,104,0.12)" : "transparent",
+        color: active ? "var(--vr-gold)" : "var(--vr-cream-mute)",
+        opacity: active ? 1 : 0.58,
+        cursor: "default",
+      }}
+    >
+      {label}
+    </span>
   )
 }
 
