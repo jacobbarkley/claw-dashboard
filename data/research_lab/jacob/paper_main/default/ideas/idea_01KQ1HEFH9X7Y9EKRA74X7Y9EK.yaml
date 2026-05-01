@@ -36,3 +36,4 @@ strategy_ref:
   preset_id: stocks.ape_wisdom.seeded_attention.v1
 status: READY
 needs_spec: false
+promote_to_campaign: true
