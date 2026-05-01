@@ -1,0 +1,110 @@
+{
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "schema_version": "research_lab.candidate.v1",
+  "candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "result_id": "result_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "idea_id": "idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+  "origin_job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "sleeve": "STOCKS",
+  "strategy_id": "jacob_ape_wisdom_momentum",
+  "evaluated_at": "2026-05-01T00:20:14.469249-04:00",
+  "adapter_status": "WIRED",
+  "readiness": {
+    "overall_status": "BLOCKED",
+    "gates": [
+      {
+        "gate_id": "TRADE_COUNT",
+        "label": "Minimum trade count",
+        "status": "FAIL",
+        "source_kind": "VALIDATION_GATE",
+        "value": 1.0,
+        "threshold": 5.0,
+        "summary": "Completed-trade floor required before a decisive verdict is allowed.",
+        "detail": null
+      },
+      {
+        "gate_id": "PROFIT_FACTOR",
+        "label": "Profit factor",
+        "status": "FAIL",
+        "source_kind": "VALIDATION_GATE",
+        "value": 0.0,
+        "threshold": null,
+        "summary": "Gross-profit-to-gross-loss ratio for the full chained run.",
+        "detail": null
+      },
+      {
+        "gate_id": "EXPECTANCY",
+        "label": "Expectancy per trade",
+        "status": "FAIL",
+        "source_kind": "VALIDATION_GATE",
+        "value": -416.52,
+        "threshold": null,
+        "summary": "Average PnL per trade across the full chained run.",
+        "detail": null
+      },
+      {
+        "gate_id": "PROFITABLE_FOLDS",
+        "label": "Profitable folds",
+        "status": "FAIL",
+        "source_kind": "VALIDATION_GATE",
+        "value": 0.0,
+        "threshold": 50.0,
+        "summary": "Percent of folds that closed positive.",
+        "detail": null
+      },
+      {
+        "gate_id": "DRAWDOWN",
+        "label": "Max drawdown bound",
+        "status": "PASS",
+        "source_kind": "VALIDATION_GATE",
+        "value": 0.833,
+        "threshold": 20.0,
+        "summary": "Maximum chained drawdown allowed for a promotable edge.",
+        "detail": null
+      },
+      {
+        "gate_id": "BENCHMARK",
+        "label": "Beats benchmark",
+        "status": "FAIL",
+        "source_kind": "VALIDATION_GATE",
+        "value": null,
+        "threshold": null,
+        "summary": "Strategy return did not clear the configured benchmark comparison mode.",
+        "detail": null
+      },
+      {
+        "gate_id": "EXPECTANCY_DECAY",
+        "label": "Expectancy decay",
+        "status": "PENDING",
+        "source_kind": "VALIDATION_GATE",
+        "value": 1.0,
+        "threshold": 2.0,
+        "summary": "Not enough folds exist yet to evaluate expectancy decay across the sample.",
+        "detail": null
+      },
+      {
+        "gate_id": "HOLDBACK",
+        "label": "Held-out window",
+        "status": "PENDING",
+        "source_kind": "VALIDATION_GATE",
+        "value": 0.0,
+        "threshold": 0.0,
+        "summary": "No final held-out window was configured for this experiment.",
+        "detail": null
+      }
+    ],
+    "blockers": [
+      "TRADE_COUNT",
+      "PROFIT_FACTOR",
+      "EXPECTANCY",
+      "PROFITABLE_FOLDS",
+      "BENCHMARK"
+    ],
+    "as_of": "2026-05-01T00:20:14.469249-04:00"
+  },
+  "equity_swarm_artifact": null,
+  "promotion_event_id": null,
+  "nomination_uri": null
+}

@@ -1,0 +1,66 @@
+{
+  "user_id": "jacob",
+  "account_id": "paper_main",
+  "strategy_group_id": "default",
+  "schema_version": "research_lab.result.v1",
+  "result_id": "result_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "idea_id": "idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+  "sleeve": "STOCKS",
+  "completed_at": "2026-05-01T00:20:14.469249-04:00",
+  "variants": [
+    {
+      "variant_id": "stop_7_target_12_attention_score_threshold_035",
+      "params": {
+        "rsi_days": 14,
+        "rsi_min": 40.0,
+        "rsi_max": 65.0,
+        "sma_days": 20,
+        "fast_ema_days": 9,
+        "slow_ema_days": 21,
+        "adv_window_days": 30,
+        "min_adv_usd": 1000000.0,
+        "max_abs_volume_zscore": 1.0,
+        "attention_score_threshold": 0.35,
+        "max_candidates_per_day": 5,
+        "sentiment_weight": 0.55,
+        "technical_weight": 0.45,
+        "stop_loss_pct": 7.0,
+        "target_pct": 12.0
+      },
+      "metrics": {
+        "total_return_pct": -0.833,
+        "sharpe_ratio": -7.4679,
+        "sortino_ratio": -8.103,
+        "calmar_ratio": -31.2166,
+        "max_drawdown_pct": 0.833,
+        "win_rate_pct": 0.0,
+        "profit_factor": 0.0,
+        "trades": 1
+      },
+      "era_scores": null,
+      "rank": 1,
+      "winner": true
+    }
+  ],
+  "plateau_analysis": "INSUFFICIENT_EVIDENCE",
+  "plateau_spread": null,
+  "benchmark": {
+    "symbol": "SPY",
+    "total_return_pct": 0.728,
+    "sharpe_ratio": null,
+    "sortino_ratio": null,
+    "calmar_ratio": null,
+    "max_drawdown_pct": null,
+    "eras": null,
+    "eras_passed": null,
+    "eras_total": null
+  },
+  "evaluation_window": {
+    "from": "2026-01-07",
+    "to": "2026-04-30",
+    "days": 82
+  },
+  "interpretation_summary": null,
+  "equity_swarm_artifact": null
+}
