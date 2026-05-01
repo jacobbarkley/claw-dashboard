@@ -44,7 +44,7 @@ import {
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
-export const maxDuration = 60
+export const maxDuration = 300
 
 const PROMPT_VERSION = "talon_spec_revision.v1"
 const DEFAULT_MODEL = "claude-sonnet-4-6"
