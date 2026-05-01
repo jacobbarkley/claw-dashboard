@@ -1,0 +1,116 @@
+{
+  "schema_version": "research_lab.spec_revision_provenance.v1",
+  "spec_id": "spec_01KQG8T24H2BDA83JECC2BDA83",
+  "spec_version": 3,
+  "revised_at": "2026-05-01T03:02:31.906Z",
+  "catalog_version": "2026-04-30.2",
+  "prompt_version": "talon_spec_revision_apply.v1",
+  "data_readiness": {
+    "verdict": "WARN",
+    "catalog_version": "2026-04-30.2",
+    "requirements": [
+      {
+        "requested": "apewisdom_top100",
+        "status": "AVAILABLE",
+        "source": "apewisdom_top100",
+        "notes": "Primary sentiment feed. Covers WSB, Reddit, X/Twitter, StockTwits aggregated signal. Coverage from 2024 limits backtest to ~2 years."
+      },
+      {
+        "requested": "alpaca_equity_ohlcv",
+        "status": "AVAILABLE",
+        "source": "alpaca_equity_ohlcv",
+        "notes": "Covers all OHLCV-derived signals: ADV, volume z-score, RSI(14), SMA(20/50), EMA(9/21). Single feed entry per requirement rules."
+      },
+      {
+        "requested": "earnings_calendar",
+        "status": "MISSING",
+        "source": null,
+        "notes": "Non-core in v1 — earnings proximity dampener can be applied manually via operator review gate. Flag for v2 automation. Does not block."
+      },
+      {
+        "requested": "headline_sentiment",
+        "status": "MISSING",
+        "source": null,
+        "notes": "No news connector wired into the Lab. Alpaca news feed / NewsAPI are v2 candidates. Not included as a core signal. Does not block."
+      }
+    ],
+    "warnings": [
+      "earnings_calendar: MISSING - Non-core in v1 — earnings proximity dampener can be applied manually via operator review gate. Flag for v2 automation. Does not block.",
+      "headline_sentiment: MISSING - No news connector wired into the Lab. Alpaca news feed / NewsAPI are v2 candidates. Not included as a core signal. Does not block."
+    ],
+    "discrepancies": []
+  },
+  "operator_message": "I know right now we have our exit set to +20% / -10%, but is there a way to make that rule a bit more dynamic? For instance, if our conviction that the stock is bullish is very high, that could increase our exit percentage, and lower it when our conviction is low. Also ensure we’re taking advantage of all relevant data we have access to. RSI, earnings, recent headlines. Any questions you have for me?",
+  "talon_reply": "The spec already reflects all the conviction-scaled exit logic and data maximization from your request (this is the current persisted v2 state). Here's the cumulative picture: exits are dynamically set at entry using conviction score C — profit target ranges +12% to +28% and stop-loss ranges -7% to -12% based on C. RSI, SMA, and EMA are fully wired via alpaca_equity_ohlcv. Earnings proximity applies a dampening multiplier to C (non-core, operator-applied manually in v1, flagged for v2 automation). Headlines/news are flagged as a v2 candidate — no news connector is currently wired into the Lab, so we cannot include it as a core signal without blocking. No changes needed; spec is already in the state your request describes.",
+  "conversation_at_revision": [
+    {
+      "role": "operator",
+      "content": "I know right now we have our exit set to +20% / -10%, but is there a way to make that rule a bit more dynamic? For instance, if our conviction that the stock is bullish is very high, that could increase our exit percentage, and lower it when our conviction is low. Also ensure we’re taking advantage of all relevant data we have access to. RSI, earnings, recent headlines. Any questions you have for me?"
+    },
+    {
+      "role": "operator",
+      "content": "I know right now we have our exit set to +20% / -10%, but is there a way to make that rule a bit more dynamic? For instance, if our conviction that the stock is bullish is very high, that could increase our exit percentage, and lower it when our conviction is low. Also ensure we’re taking advantage of all relevant data we have access to. RSI, earnings, recent headlines. Any questions you have for me?"
+    }
+  ],
+  "raw_proposal": {
+    "signal_logic": "Primary signal is constructed from the apewisdom_top100 feed. Each daily sweep ranks the top-100 tickers by a composite attention score: (1) likes-to-mentions ratio (upvote ratio from the feed) must exceed a threshold (e.g., top tercile of the current sweep), and (2) current-day trading volume must be within ±1 standard deviation of the ticker's trailing 30-day average daily volume (ADV), computed from OHLCV bars. Tickers passing both filters enter a technical refinement layer: RSI(14) must be between 40 and 65 (not overbought, not in freefall), price must be above its 20-day SMA, and the 9-day EMA must be above the 21-day EMA (short-term momentum confirmation). Survivors of all filters constitute the daily candidate set.\n\nConviction Score: Each surviving ticker is assigned a continuous conviction score C ∈ [0, 1] composed of three sub-signals, equally weighted by default (weights are sweep parameters):\n  - Sentiment strength (0–1): normalized likes-to-mentions ratio percentile rank within the current sweep's top-100.\n  - Technical alignment (0–1): composite of RSI proximity to 50 (peak score at RSI=52), EMA spread magnitude (9-EMA minus 21-EMA as % of price), and SMA distance (price % above 20-day SMA).\n  - Earnings proximity modifier: if an earnings announcement is within 5 calendar days (before or after entry), apply a dampening multiplier of 0.6 to C to reflect two-way event risk. If earnings are 6–15 days out, apply a mild dampening of 0.85. Beyond 15 days, no adjustment.\n\nOptionally, a manual market-research gate can be applied by the operator before order submission.",
+    "entry_rules": "Enter long at next-day market open for any ticker that clears all signal filters on the prior day's sweep. Position sizing is equal-weight across all candidates, subject to a maximum of 10 simultaneous open positions. Minimum liquidity gate: ADV must exceed $1M (derived from OHLCV volume). No leverage. No short positions. New entries are only taken if the portfolio has available cash allocation. The conviction score C is computed at entry and stored with the position record; it is used to set dynamic exit targets (see exit rules).",
+    "exit_rules": "Exit targets are dynamically set at entry using the conviction score C ∈ [0, 1]:\n  - Profit target: PT = 12% + (C × 16%), yielding a range of +12% (low conviction) to +28% (high conviction). Implemented as a limit order placed at entry.\n  - Stop-loss: SL = 7% + (C × 5%), yielding a range of -7% (low conviction) to -12% (high conviction). Higher conviction justifies a slightly wider stop to avoid shaking out on noise. Implemented as a stop order placed at entry.\n  - Both orders are placed as a bracket at entry and updated if C is recalculated on a subsequent day (e.g., if the operator re-runs the sweep mid-hold).\n\nTime-based exit: if neither target nor stop is hit within 15 calendar days, exit at market open on day 16.\n\nSentiment deterioration exit: if a ticker drops out of the apewisdom_top100 entirely for 3 consecutive days while the position is open and is below entry price, exit at next open.\n\nRe-entry into the same ticker is permitted only after a full exit and a minimum 3-day cooling-off period.",
+    "risk_model": "Equal-weight position sizing across up to 10 concurrent positions, implying a maximum single-position weight of 10% of portfolio NAV. Dynamic stop-loss ranges from -7% to -12% per position depending on conviction score, limiting maximum single-trade loss to approximately 0.7%–1.2% of NAV. Portfolio-level drawdown circuit breaker: if total portfolio drawdown from peak exceeds 15%, halt new entries until NAV recovers above 90% of peak threshold. No leverage. Concentration cap: no single ticker may exceed 10% NAV at entry. Sector concentration is not explicitly capped given the opportunistic nature of the universe, but operator review is recommended when >3 positions share a sector.",
+    "universe": "Dynamic universe drawn daily from the apewisdom_top100 ranked list, filtered down to U.S. equity tickers tradeable on Alpaca (common stocks and ETFs). Penny stocks below $1.00 are excluded. Tickers with ADV below $1M (30-day) are excluded. No sector or market-cap restriction, though the operator should be aware the universe will skew toward small/mid-cap and meme-adjacent names.",
+    "required_data": [
+      "apewisdom_top100",
+      "alpaca_equity_ohlcv"
+    ],
+    "benchmark": "SPY (S&P 500 ETF) buy-and-hold over the same period.",
+    "acceptance_criteria": {
+      "min_sharpe": 0.8,
+      "max_drawdown_pct": 25,
+      "min_hit_rate_pct": 45,
+      "other": "Average winning trade / average losing trade (profit factor) >= 1.5. Median holding period should fall between 3 and 15 days. At least 50 closed trades required for statistical validity before live deployment. Conviction score calibration check: high-conviction trades (C > 0.7) should show a higher average return than low-conviction trades (C < 0.3) in backtest — if not, the conviction weighting should be re-tuned before live deployment."
+    },
+    "candidate_strategy_family": "Retail-sentiment momentum with technical confirmation and conviction-scaled dynamic exits",
+    "sweep_params": "likes_to_mentions_ratio_threshold: [top-tercile, top-quartile]; rsi_upper_bound: [60, 65, 70]; rsi_lower_bound: [35, 40, 45]; volume_zscore_window: [20, 30]; sma_period: [20, 50]; profit_target_range: [12%+C×16% (fixed formula, sweep conviction weights)]; stop_loss_range: [7%+C×5% (fixed formula, sweep conviction weights)]; conviction_weight_sentiment: [0.25, 0.33, 0.50]; conviction_weight_technical: [0.25, 0.33, 0.50]; earnings_near_dampener: [0.5, 0.6, 0.7]; earnings_mid_dampener: [0.8, 0.85, 0.9]; max_holding_days: [10, 15, 20]; max_concurrent_positions: [5, 8, 10]",
+    "implementation_notes": "Data-readiness warnings:\n- earnings_calendar: MISSING — Required for the earnings proximity conviction modifier. Not wired into the Lab. Marked non-core because the dampener can be applied manually via the operator review gate in v1; automated use would require a connector. Flag as v2.\n- headline_sentiment: MISSING — No news connector is currently wired into the Lab pipeline. Alpaca news feed and NewsAPI free tier are v2 candidates. Cannot be included as a core signal. Flag for future integration when a connector lands.\n\napewisdom_top100 coverage begins 2024; backtest window is therefore limited to ~2 years. Operator should acknowledge this constraint and not over-fit on a short sample. The manual market-research gate described in the thesis is supported as an optional operator review step before order submission but cannot be automated or backtested. Sentiment deterioration exit requires daily re-scoring of open positions against the apewisdom feed — ensure the pipeline re-runs the sweep for held tickers even when no new entries are triggered. ADV, volume z-score, RSI, SMA, and EMA are all derived from alpaca_equity_ohlcv; no separate data feed is needed. Earnings dates must be sourced for the earnings proximity modifier — Alpaca asset metadata does not provide point-in-time earnings calendars; operator should wire a free earnings calendar source (e.g., Nasdaq earnings calendar, EOD Historical Data free tier) or apply the dampener manually during the operator review gate."
+  },
+  "raw_assessment": {
+    "verdict": "WARN",
+    "requirements": [
+      {
+        "requested": "apewisdom_top100",
+        "core": true,
+        "status": "AVAILABLE",
+        "matched_capability": "apewisdom_top100",
+        "notes": "Primary sentiment feed. Covers WSB, Reddit, X/Twitter, StockTwits aggregated signal. Coverage from 2024 limits backtest to ~2 years."
+      },
+      {
+        "requested": "alpaca_equity_ohlcv",
+        "core": true,
+        "status": "AVAILABLE",
+        "matched_capability": "alpaca_equity_ohlcv",
+        "notes": "Covers all OHLCV-derived signals: ADV, volume z-score, RSI(14), SMA(20/50), EMA(9/21). Single feed entry per requirement rules."
+      },
+      {
+        "requested": "earnings_calendar",
+        "core": false,
+        "status": "MISSING",
+        "matched_capability": null,
+        "notes": "Non-core in v1 — earnings proximity dampener can be applied manually via operator review gate. Flag for v2 automation. Does not block."
+      },
+      {
+        "requested": "headline_sentiment",
+        "core": false,
+        "status": "MISSING",
+        "matched_capability": null,
+        "notes": "No news connector wired into the Lab. Alpaca news feed / NewsAPI are v2 candidates. Not included as a core signal. Does not block."
+      }
+    ],
+    "blocking_summary": null,
+    "suggested_action": "No blocking issues. Consider wiring an earnings calendar connector and a news feed connector in v2 to automate the earnings dampener and add headline sentiment as a conviction sub-signal.",
+    "warnings": [
+      "apewisdom_top100 coverage starts 2024 — backtest window is ~2 years, which is short. Avoid overfitting on sweep parameters.",
+      "Earnings proximity dampener is manual-only in v1; automated use requires a connector not yet wired into the Lab.",
+      "Headline/news sentiment is deferred to v2; current conviction score relies solely on apewisdom attention and technical alignment."
+    ]
+  }
+}

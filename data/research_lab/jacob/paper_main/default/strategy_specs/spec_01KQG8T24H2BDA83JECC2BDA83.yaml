@@ -1,6 +1,6 @@
 schema_version: research_lab.strategy_spec.v1
 spec_id: spec_01KQG8T24H2BDA83JECC2BDA83
-spec_version: 2
+spec_version: 3
 idea_id: idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK
 user_id: jacob
 account_id: paper_main
@@ -94,9 +94,22 @@ candidate_strategy_family: Retail-sentiment momentum with technical confirmation
 implementation_notes: >-
   Data-readiness warnings:
 
-  - earnings_calendar: MISSING - Required for the earnings proximity conviction modifier. Not wired
+  - earnings_calendar: MISSING - Non-core in v1 — earnings proximity dampener can be applied
+  manually via operator review gate. Flag for v2 automation. Does not block.
+
+  - headline_sentiment: MISSING - No news connector wired into the Lab. Alpaca news feed / NewsAPI
+  are v2 candidates. Not included as a core signal. Does not block.
+
+
+  Data-readiness warnings:
+
+  - earnings_calendar: MISSING — Required for the earnings proximity conviction modifier. Not wired
   into the Lab. Marked non-core because the dampener can be applied manually via the operator review
   gate in v1; automated use would require a connector. Flag as v2.
+
+  - headline_sentiment: MISSING — No news connector is currently wired into the Lab pipeline. Alpaca
+  news feed and NewsAPI free tier are v2 candidates. Cannot be included as a core signal. Flag for
+  future integration when a connector lands.
 
 
   apewisdom_top100 coverage begins 2024; backtest window is therefore limited to ~2 years. Operator
@@ -109,8 +122,6 @@ implementation_notes: >-
   sourced for the earnings proximity modifier — Alpaca asset metadata does not provide point-in-time
   earnings calendars; operator should wire a free earnings calendar source (e.g., Nasdaq earnings
   calendar, EOD Historical Data free tier) or apply the dampener manually during the operator review
-  gate. Headline sentiment is a v2 candidate: free APIs exist (e.g., NewsAPI free tier, Alpaca news
-  feed) but none are currently wired into the Lab pipeline. Flag for future integration when a
-  connector lands.
+  gate.
 parent_spec_id: null
 registered_strategy_id: null
