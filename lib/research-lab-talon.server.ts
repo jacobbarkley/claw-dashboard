@@ -2,9 +2,10 @@
 // endpoints. Both endpoints emit the same proposal/assessment shapes and run
 // the same data-readiness floor, so the schemas + builders + prompt rules
 // live here rather than being duplicated. Anthropic's structured-output JSON
-// Schema subset rejects validation keywords (.min/.max), so we expose two
-// schemas per shape: a loose one for the provider call and a strict one for
-// the server-side parse after generation.
+// Schema subset rejects validation keywords (.min/.max), and the full Lab
+// spec grammar became too large once experiment plans landed. The provider now
+// sees a tiny JSON-string envelope; the server parses those strings and applies
+// the full strict contract before anything is persisted or returned.
 
 import { z } from "zod"
 import type { ExperimentPlanV1, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
@@ -22,42 +23,6 @@ const requirementStatusSchema = z.enum(["AVAILABLE", "PARTIAL", "MISSING"])
 const benchmarkComparisonModeSchema = z.enum(["absolute", "deployment_matched", "both"])
 const eraStatusSchema = z.enum(["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"])
 const eraModeSchema = z.enum(["single", "multi"])
-
-const experimentPlanLoose = z.object({
-  benchmark: z.object({
-    symbol: z.string(),
-    comparison_mode: benchmarkComparisonModeSchema,
-  }),
-  windows: z.object({
-    requested_start: z.string(),
-    requested_end: z.string(),
-    fresh_data_required_from: z.string().optional().nullable(),
-  }),
-  runnable_eras: z.array(z.object({
-    era_id: z.string(),
-    label: z.string(),
-    date_range: z.object({
-      start: z.string(),
-      end: z.string(),
-    }),
-    status: eraStatusSchema,
-    reason: z.string().optional().nullable(),
-  })),
-  eras: z.object({
-    mode: eraModeSchema,
-    required_era_ids: z.array(z.string()),
-  }),
-  evidence_thresholds: z.object({
-    minimum_trade_count: z.number(),
-    minimum_evaluated_trading_days: z.number(),
-  }),
-  decisive_verdict_rules: z.object({
-    pass: z.string(),
-    inconclusive: z.string(),
-    fail: z.string(),
-  }),
-  known_limitations: z.array(z.string()),
-})
 
 const experimentPlanStrict = z.object({
   benchmark: z.object({
@@ -95,26 +60,6 @@ const experimentPlanStrict = z.object({
   known_limitations: z.array(z.string().min(1)),
 })
 
-const proposalLoose = z.object({
-  signal_logic: z.string(),
-  entry_rules: z.string(),
-  exit_rules: z.string(),
-  risk_model: z.string(),
-  universe: z.string(),
-  required_data: z.array(z.string()),
-  experiment_plan: experimentPlanLoose,
-  benchmark: z.string(),
-  acceptance_criteria: z.object({
-    min_sharpe: z.number(),
-    max_drawdown_pct: z.number(),
-    min_hit_rate_pct: z.number(),
-    other: z.string().optional().nullable(),
-  }),
-  candidate_strategy_family: z.string().optional().nullable(),
-  sweep_params: z.string().optional().nullable(),
-  implementation_notes: z.string().optional().nullable(),
-})
-
 const proposalStrict = z.object({
   signal_logic: z.string().min(40),
   entry_rules: z.string().min(20),
@@ -135,20 +80,6 @@ const proposalStrict = z.object({
   implementation_notes: z.string().optional().nullable(),
 })
 
-const assessmentLoose = z.object({
-  verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
-  requirements: z.array(z.object({
-    requested: z.string(),
-    core: z.boolean().optional().nullable(),
-    status: requirementStatusSchema.optional().nullable(),
-    matched_capability: z.string().optional().nullable(),
-    notes: z.string().optional().nullable(),
-  })),
-  blocking_summary: z.string().optional().nullable(),
-  suggested_action: z.string().optional().nullable(),
-  warnings: z.array(z.string()).optional(),
-})
-
 const assessmentStrict = z.object({
   verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
   requirements: z.array(z.object({
@@ -163,10 +94,12 @@ const assessmentStrict = z.object({
   warnings: z.array(z.string()).optional().default([]),
 })
 
-// Draft endpoint produces {proposal, assessment} on every call.
+// Draft endpoint produces JSON strings on every call. Keeping the provider
+// grammar this small avoids Anthropic's compiled-grammar ceiling while our
+// strict parser below still owns the real contract.
 export const draftGenerationSchema = z.object({
-  proposal: proposalLoose,
-  assessment: assessmentLoose,
+  proposal_json: z.string(),
+  assessment_json: z.string(),
 })
 
 export const draftOutputSchema = z.object({
@@ -174,14 +107,13 @@ export const draftOutputSchema = z.object({
   assessment: assessmentStrict,
 })
 
-// Revise endpoint produces {kind, reply, proposal?, assessment?}; the
-// provider sees a fully-optional shape and the server checks afterwards
-// that kind="revision" carries proposal+assessment.
+// Revise endpoint produces JSON strings only for kind="revision"; clarification
+// turns intentionally carry no proposal/assessment payload.
 export const reviseGenerationSchema = z.object({
   kind: z.enum(["clarification", "revision"]),
   reply: z.string(),
-  proposal: proposalLoose.optional().nullable(),
-  assessment: assessmentLoose.optional().nullable(),
+  proposal_json: z.string().optional().nullable(),
+  assessment_json: z.string().optional().nullable(),
 })
 
 export const reviseOutputSchema = z.object({
@@ -194,6 +126,60 @@ export const reviseOutputSchema = z.object({
 export type TalonProposal = z.infer<typeof proposalStrict>
 export type TalonAssessment = z.infer<typeof assessmentStrict>
 export type TalonReviseOutput = z.infer<typeof reviseOutputSchema>
+
+export type ParsedDraftGeneratedOutput = z.infer<typeof draftOutputSchema> & {
+  raw_proposal_json: string
+  raw_assessment_json: string
+}
+
+export type ParsedReviseGeneratedOutput = TalonReviseOutput & {
+  raw_proposal_json: string | null
+  raw_assessment_json: string | null
+}
+
+export function parseDraftGeneratedOutput(output: unknown): ParsedDraftGeneratedOutput {
+  const generated = draftGenerationSchema.parse(output)
+  const proposal = parseJsonField(generated.proposal_json, proposalStrict, "proposal_json")
+  const assessment = parseJsonField(generated.assessment_json, assessmentStrict, "assessment_json")
+  const parsed = draftOutputSchema.parse({ proposal, assessment })
+  return {
+    ...parsed,
+    raw_proposal_json: generated.proposal_json,
+    raw_assessment_json: generated.assessment_json,
+  }
+}
+
+export function parseReviseGeneratedOutput(output: unknown): ParsedReviseGeneratedOutput {
+  const generated = reviseGenerationSchema.parse(output)
+
+  if (generated.kind === "clarification") {
+    const parsed = reviseOutputSchema.parse({
+      kind: generated.kind,
+      reply: generated.reply,
+      proposal: null,
+      assessment: null,
+    })
+    return {
+      ...parsed,
+      raw_proposal_json: generated.proposal_json ?? null,
+      raw_assessment_json: generated.assessment_json ?? null,
+    }
+  }
+
+  const proposal = parseJsonField(generated.proposal_json, proposalStrict, "proposal_json")
+  const assessment = parseJsonField(generated.assessment_json, assessmentStrict, "assessment_json")
+  const parsed = reviseOutputSchema.parse({
+    kind: generated.kind,
+    reply: generated.reply,
+    proposal,
+    assessment,
+  })
+  return {
+    ...parsed,
+    raw_proposal_json: generated.proposal_json ?? null,
+    raw_assessment_json: generated.assessment_json ?? null,
+  }
+}
 
 // ─── Verdict reconciliation ─────────────────────────────────────────────────
 
@@ -461,6 +447,22 @@ export function formatCatalogForPrompt(catalog: DataCapabilityCatalogV1): string
 }
 
 // ─── Internal helpers ──────────────────────────────────────────────────────
+
+function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>, fieldName: string): T {
+  if (typeof raw !== "string" || !raw.trim()) {
+    throw new Error(`${fieldName} must be a non-empty JSON string`)
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new Error(`${fieldName} was not valid JSON: ${detail}`)
+  }
+
+  return schema.parse(parsed)
+}
 
 function dedupeStrings(values: string[]): string[] {
   const seen = new Set<string>()

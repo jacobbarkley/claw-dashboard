@@ -31,8 +31,8 @@ import {
   DATA_READINESS_PROMPT_RULES,
   formatCatalogForPrompt,
   includeProposalRequirements,
+  parseReviseGeneratedOutput,
   reviseGenerationSchema,
-  reviseOutputSchema,
 } from "@/lib/research-lab-talon.server"
 
 import {
@@ -153,7 +153,7 @@ export async function POST(
     lessons,
   })
 
-  let parsed: ReturnType<typeof reviseOutputSchema.parse>
+  let parsed: ReturnType<typeof parseReviseGeneratedOutput>
   let rawCompletion: string | null = null
   try {
     const result = await generateText({
@@ -162,7 +162,7 @@ export async function POST(
       temperature: 0.4,
       prompt,
     })
-    parsed = reviseOutputSchema.parse(result.output)
+    parsed = parseReviseGeneratedOutput(result.output)
     rawCompletion = typeof result.text === "string" ? result.text : null
   } catch (error) {
     return NextResponse.json(
@@ -278,6 +278,10 @@ function buildPrompt({
     "Output rules:",
     '- kind="clarification" + brief reply (under 3 sentences) when you need more info. No proposal/assessment.',
     '- kind="revision" + brief reply describing the CUMULATIVE state of the proposal (what spec+plan look like after Apply, not the delta) + complete proposal + assessment.',
+    "- For kind=\"revision\", emit proposal_json and assessment_json as valid JSON strings. They must not be markdown, fenced code, or comments.",
+    "- proposal_json must JSON.stringify the complete StrategySpec proposal, including experiment_plan.",
+    "- assessment_json must JSON.stringify the complete data-readiness assessment.",
+    "- For kind=\"clarification\", leave proposal_json and assessment_json null or omitted.",
     "- Keep replies short. Default to revising on concrete asks, one clarifying question on vague ones.",
     "",
     "Cumulative-proposal rule (operator may chat several turns before applying): the 'Pending unapplied proposal' block (if present) is your working baseline. Every new proposal must carry forward all earlier-discussed changes PLUS the latest ask. Never silently drop changes. If no pending block but transcript shows earlier proposed changes, carry those forward unless the operator retracted them.",

@@ -17,11 +17,11 @@ import {
   buildStrategySpec,
   DATA_READINESS_PROMPT_RULES,
   draftGenerationSchema,
-  draftOutputSchema,
   formatCatalogForPrompt,
   includeProposalRequirements,
+  parseDraftGeneratedOutput,
   specProvenanceRelpath,
-  type TalonProposal,
+  type ParsedDraftGeneratedOutput,
 } from "@/lib/research-lab-talon.server"
 
 import {
@@ -43,10 +43,7 @@ export const maxDuration = 60
 const PROMPT_VERSION = "talon_spec_drafting.v1"
 const DEFAULT_MODEL = "claude-sonnet-4-6"
 
-type DraftOutput = {
-  proposal: TalonProposal
-  assessment: ReturnType<typeof draftOutputSchema.parse>["assessment"]
-}
+type DraftOutput = ParsedDraftGeneratedOutput
 
 interface DraftBody {
   idea_id?: unknown
@@ -143,7 +140,7 @@ export async function POST(req: NextRequest) {
       temperature: 0.4,
       prompt,
     })
-    talonOutput = draftOutputSchema.parse(result.output)
+    talonOutput = parseDraftGeneratedOutput(result.output)
     rawCompletion = typeof result.text === "string" ? result.text : null
   } catch (error) {
     return NextResponse.json(
@@ -210,6 +207,8 @@ export async function POST(req: NextRequest) {
     },
     prompt,
     raw_completion: rawCompletion,
+    raw_proposal_json: talonOutput.raw_proposal_json,
+    raw_assessment_json: talonOutput.raw_assessment_json,
     raw_proposal: talonOutput.proposal,
     raw_assessment: talonOutput.assessment,
   }
@@ -282,6 +281,10 @@ function buildPrompt({
   return [
     "You are Talon's spec-drafting mode inside the Vires Research Lab.",
     "Return only the structured object requested by the schema. Do not invent backtest results.",
+    "The structured object has two string fields: proposal_json and assessment_json.",
+    "Each field must be valid JSON text, not markdown, not fenced code, and not comments.",
+    "proposal_json must JSON.stringify the complete StrategySpec proposal, including experiment_plan.",
+    "assessment_json must JSON.stringify the complete data-readiness assessment.",
     "",
     "Your task has two parts:",
     "1. Draft a StrategySpecV1 starting point for the operator to review.",
