@@ -1,0 +1,145 @@
+{
+  "schema_version": "bench_campaign_manifest.v2",
+  "campaign_id": "lab_idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+  "title": "Ape Wisdom",
+  "sleeve": "STOCKS",
+  "objective": "The plan is simple. We start by targeting stocks that are trending in places like r/wallstreetbets and similar circles on X (also monitored by sites like apewisdom.com) and perform technical analysis on hot candidates in the dataset to target which ones still hold an edge and haven\u2019t been fully priced in yet. Some may be large well known companies which we should pay attention to, but I think there\u2019s a lot of gain we can find from the newer stocks on that appear so long as we don\u2019t get greedy. This strategy will consistently sweep apewisdom\u2019s top 100 and filter them out by ones with a high likes to mentions ratio, and those whose current trading volume is within a standard deviation from its average 30 day volume to help weed out ones that have already moved considerably. We can then look at the RSI, several other moving average indicators to fine tune further and then perform market research on the remainders. Also sets reasonable sell limits to enjoy healthy gain without getting greedy.",
+  "benchmark_symbol": "SPY",
+  "status": "EXPLORING",
+  "summary": "Ape Wisdom has a scored Lab leader, but it remains blocked on readiness gates.",
+  "updated_at": "2026-05-01T00:22:48.206916-04:00",
+  "updated_by": "codex",
+  "current_leader_candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+  "last_run_at": "2026-05-01T00:20:14.654546-04:00",
+  "last_meaningful_change_at": "2026-05-01T00:20:14.654546-04:00",
+  "last_meaningful_change": "Stocks \u00b7 Ape Wisdom \u00b7 Seeded-attention v1 completed as blocked with winner stop_7_target_12_attention_score_threshold_035 returning -0.83%.",
+  "promotion_target": null,
+  "baseline": {
+    "kind": "NONE",
+    "candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+    "strategy_name": "APE_WISDOM_MOMENTUM",
+    "strategy_id": "jacob_ape_wisdom_momentum",
+    "variant": "stop_7_target_12_attention_score_threshold_035",
+    "why": "Current Lab leader used as the campaign baseline until a production reference exists."
+  },
+  "baseline_performance": {
+    "evaluation_window": {
+      "start": "2026-01-07",
+      "end": "2026-04-30",
+      "trading_days": 82
+    },
+    "eras": [],
+    "eras_passed": null,
+    "eras_total": null,
+    "total_return_pct": -0.833,
+    "benchmark_return_pct": 0.728,
+    "excess_return_pct": -1.561,
+    "max_drawdown_pct": 0.833,
+    "benchmark_max_drawdown_pct": null,
+    "sharpe": -7.4679,
+    "benchmark_sharpe": null,
+    "sortino": -8.103,
+    "calmar": -31.2166,
+    "profit_factor": 0.0,
+    "win_rate_pct": 0.0,
+    "trades": 1,
+    "source": {
+      "kind": "RESULT_BUNDLE",
+      "passport_id": null,
+      "bundle_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+      "generated_at": "2026-05-01T00:20:14.469249-04:00"
+    }
+  },
+  "leader_comparison_to_baseline": null,
+  "campaign_pressure": {
+    "status": "LEADER_NOT_YET_QUALITY_GATED",
+    "summary": "The current Lab leader is scored but still blocked on readiness gates.",
+    "as_of": "2026-05-01T00:20:14.469249-04:00"
+  },
+  "promotion_readiness": null,
+  "production_links": {
+    "active_record_id": null,
+    "passport_role_id": null,
+    "history": []
+  },
+  "promotion_events": [],
+  "recency_signals": {
+    "last_leader_change_at": "2026-05-01T00:20:14.654546-04:00",
+    "leader_stability_sessions": 1,
+    "runner_up_candidate_id": null,
+    "runner_up_gap": null,
+    "last_param_sweep_at": "2026-05-01T00:20:14.654546-04:00",
+    "days_since_param_sweep": 0
+  },
+  "family_groups": [
+    {
+      "family_id": "stocks.ape_wisdom.seeded_attention.v1",
+      "title": "Stocks \u00b7 Ape Wisdom \u00b7 Seeded-attention v1",
+      "summary": "First manual implementation-loop preset for Jacob's Ape Wisdom thesis. It uses the 2026-04-14 Ape Wisdom/alt-sentiment artifact as a static attention prior, then runs the existing stock validation engine on OHLCV-derived RSI, SMA, EMA, ADV, and volume-band confirmation."
+    }
+  ],
+  "candidates": [
+    {
+      "candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ",
+      "title": "stop_7_target_12_attention_score_threshold_035",
+      "family_id": "stocks.ape_wisdom.seeded_attention.v1",
+      "role": "LEADER",
+      "artifact_kind": "RESEARCH_LAB_RESULT",
+      "artifact_refs": {
+        "result_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+        "candidate_path": "data/research_lab/jacob/paper_main/default/candidates/candidate_candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+        "job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+        "origin_job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ"
+      },
+      "latest_run": {
+        "run_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+        "completed_at": "2026-05-01T00:20:14.654546-04:00",
+        "summary": "Stocks \u00b7 Ape Wisdom \u00b7 Seeded-attention v1 completed as blocked with winner stop_7_target_12_attention_score_threshold_035 returning -0.83%.",
+        "result_summary_path": "data/research_lab/jacob/paper_main/default/results/result_result_job_01KQGW59ADQ578QZ8GXHQ578QZ.json",
+        "run_stats_status": "INDEXED",
+        "run_stats": {
+          "period": {
+            "start": "2026-01-07",
+            "end": "2026-04-30",
+            "trading_days": 82
+          },
+          "eras": [],
+          "eras_passed": null,
+          "eras_total": null,
+          "total_return_pct": -0.833,
+          "benchmark_return_pct": 0.728,
+          "excess_return_pct": -1.561,
+          "max_drawdown_pct": 0.833,
+          "benchmark_max_drawdown_pct": null,
+          "sharpe": -7.4679,
+          "benchmark_sharpe": null,
+          "sortino": -8.103,
+          "calmar": -31.2166,
+          "profit_factor": 0.0,
+          "win_rate_pct": 0.0,
+          "trades": 1
+        }
+      },
+      "notes": [
+        "Origin job: job_01KQGW59ADQ578QZ8GXHQ578QZ",
+        "Plateau analysis: INSUFFICIENT_EVIDENCE"
+      ]
+    }
+  ],
+  "change_log": [
+    {
+      "at": "2026-05-01T00:20:14.654546-04:00",
+      "kind": "CANDIDATE_ADDED",
+      "title": "Stocks \u00b7 Ape Wisdom \u00b7 Seeded-attention v1 run landed in the campaign",
+      "detail": "Stocks \u00b7 Ape Wisdom \u00b7 Seeded-attention v1 completed as blocked with winner stop_7_target_12_attention_score_threshold_035 returning -0.83%.",
+      "actor": "codex",
+      "candidate_id": "candidate_job_01KQGW59ADQ578QZ8GXHQ578QZ"
+    }
+  ],
+  "origin": {
+    "kind": "LAB_IDEA",
+    "idea_id": "idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+    "first_job_id": "job_01KQGW59ADQ578QZ8GXHQ578QZ",
+    "created_at": "2026-05-01T00:20:14.654546-04:00"
+  }
+}

@@ -1,7 +1,14 @@
 {
   "schema_version": "bench_campaign_registry.v1",
-  "generated_at": "2026-04-24T22:55:35.238571-04:00",
+  "generated_at": "2026-05-01T00:22:48.206916-04:00",
   "campaigns": [
+    {
+      "campaign_id": "lab_idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK",
+      "title": "Ape Wisdom",
+      "sleeve": "STOCKS",
+      "status": "EXPLORING",
+      "manifest_path": "backtest/bench/campaigns/lab_idea_01KQ1HEFH9X7Y9EKRA74X7Y9EK.campaign_manifest.json"
+    },
     {
       "campaign_id": "lab_phase1a-short-window-smoke-2026-04-23-rerun",
       "title": "Phase 1a short-window smoke (rerun anchor)",
