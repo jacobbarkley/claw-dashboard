@@ -1,0 +1,91 @@
+schema_version: research_lab.preset.v1
+preset_id: stocks.ape_wisdom.seeded_attention.v1
+display_name: Stocks · Ape Wisdom · Seeded-attention v1
+phase: phase_e_manual
+sleeve: STOCKS
+strategy_id: jacob_ape_wisdom_momentum
+strategy_family: APE_WISDOM_MOMENTUM
+description: >
+  First manual implementation-loop preset for Jacob's Ape Wisdom thesis. It
+  uses the 2026-04-14 Ape Wisdom/alt-sentiment artifact as a static attention
+  prior, then runs the existing stock validation engine on OHLCV-derived RSI,
+  SMA, EMA, ADV, and volume-band confirmation.
+source_registry_preset_id: manual_v1_seeded_attention
+base_experiment:
+  asset_class: EQUITY
+  benchmark_symbol: SPY
+  benchmark_comparison_mode: both
+  symbols:
+    - GS
+    - UNH
+    - NFLX
+    - TSM
+    - BAC
+    - MS
+    - ASML
+    - JNJ
+    - NVDA
+    - LLY
+  train_window_days: 70
+  test_window_days: 5
+  step_size_days: 5
+  max_positions: 5
+  risk_pct_per_trade: 1.0
+  max_hold_days: 15
+  initial_capital_usd: 50000.0
+  slippage_bps: 5.0
+  fee_per_trade_usd: 0.0
+  minimum_trade_count: 5
+  minimum_profitable_fold_pct: 50.0
+  pass_max_drawdown_pct: 20.0
+  minimum_expectancy_decay_folds: 2
+  max_expectancy_decay_pct: 50.0
+  final_holdback_days: 0
+  inconclusive_follow_up_window_days: 14
+  strategy_params:
+    rsi_days: 14
+    rsi_min: 40.0
+    rsi_max: 65.0
+    sma_days: 20
+    fast_ema_days: 9
+    slow_ema_days: 21
+    adv_window_days: 30
+    min_adv_usd: 1000000.0
+    max_abs_volume_zscore: 1.0
+    attention_score_threshold: 0.35
+    max_candidates_per_day: 5
+    sentiment_weight: 0.55
+    technical_weight: 0.45
+param_schema:
+  stop_loss_pct:
+    type: enum_decimal
+    units: pct
+    default: 7.0
+    options:
+      - 6.0
+      - 7.0
+      - 8.0
+  target_pct:
+    type: enum_decimal
+    units: pct
+    default: 12.0
+    options:
+      - 10.0
+      - 12.0
+      - 14.0
+  attention_score_threshold:
+    type: enum_decimal
+    default: 0.35
+    options:
+      - 0.25
+      - 0.35
+      - 0.45
+bounds:
+  max_sweep_size: 27
+  max_era_windows: 4
+  max_wallclock_minutes: 30
+notes:
+  - Generated from approved spec spec_01KQG8T24H2BDA83JECC2BDA83.
+  - V1 is intentionally not a daily historical Ape Wisdom backtest; it is a seeded-universe implementation used to close the manual implementation loop honestly.
+  - Earnings proximity, headline sentiment, manual market-research override, and sentiment-deterioration exits are deferred until those data surfaces are first-class validation inputs.
+

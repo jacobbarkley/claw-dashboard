@@ -20,6 +20,15 @@
       "path": "data/research_lab/presets/stocks.momentum.stop_target.short_window.v1.yaml"
     },
     {
+      "preset_id": "stocks.ape_wisdom.seeded_attention.v1",
+      "display_name": "Stocks · Ape Wisdom · Seeded-attention v1",
+      "phase": "phase_e_manual",
+      "sleeve": "STOCKS",
+      "strategy_id": "jacob_ape_wisdom_momentum",
+      "strategy_family": "APE_WISDOM_MOMENTUM",
+      "path": "data/research_lab/presets/stocks.ape_wisdom.seeded_attention.v1.yaml"
+    },
+    {
       "preset_id": "crypto.tsmom_4h.v1",
       "display_name": "Crypto · BTC 4H TSMOM bounded sweep",
       "phase": "1b",
