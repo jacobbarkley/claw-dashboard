@@ -47,10 +47,16 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
 
   const warnStorageKey = `${TALON_WARN_KEY_PREFIX}${spec.spec_id}`
 
+  // spec.spec_version is in the dep list so the chat panel writing to
+  // localStorage during an Apply triggers a re-read here once router.refresh
+  // brings the new spec_version into props.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(warnStorageKey)
-      if (!raw) return
+      if (!raw) {
+        setTalonWarn(null)
+        return
+      }
       const parsed = JSON.parse(raw) as Partial<TalonWarnPayload>
       if (
         parsed &&
@@ -63,11 +69,13 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
           catalog_version: parsed.catalog_version,
           created_at: parsed.created_at ?? "",
         })
+      } else {
+        setTalonWarn(null)
       }
     } catch {
       // localStorage unavailable or malformed — render without callout.
     }
-  }, [warnStorageKey])
+  }, [warnStorageKey, spec.spec_version])
 
   const dismissTalonWarn = () => {
     try {
@@ -156,6 +164,11 @@ export function SpecEditClient({ idea, spec, scope, ideaHref }: Props) {
         />
       )}
       <StrategySpecForm
+        // Key on spec_version so a Talon-applied revision unmounts +
+        // remounts the form with fresh initialValues. Without this the
+        // form keeps its v1 internal state even after router.refresh
+        // brings v2 into props.
+        key={`${spec.spec_id}:${spec.spec_version}`}
         ideaTitle={idea.title}
         ideaThesis={idea.thesis}
         ideaSleeve={idea.sleeve}
