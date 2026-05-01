@@ -23,6 +23,8 @@ import type { ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
 import { TALON_WARN_KEY_PREFIX } from "./idea-thread-live"
 
 const TALON_CHAT_KEY_PREFIX = "talon-chat:"
+const OPERATOR_DRAFT_PROMPT =
+  "Draft the complete StrategySpec and experiment plan for this idea. Use the idea thesis, reference strategies, existing template fields, Talon lessons, and the data capability catalog. If anything is unavailable, warn or block honestly rather than inventing data access."
 
 type Verdict = "PASS" | "WARN" | "BLOCKED"
 
@@ -154,8 +156,8 @@ export function TalonChatPanel({
     setError(null)
   }
 
-  const onSend = async () => {
-    const trimmed = input.trim()
+  const onSend = async (overrideMessage?: string) => {
+    const trimmed = (overrideMessage ?? input).trim()
     if (!trimmed || busy) return
 
     const operatorMessage: ConversationMessage = {
@@ -522,7 +524,28 @@ export function TalonChatPanel({
               fontFamily: "var(--ff-serif)",
             }}
           >
-            {emptyCopy}
+            <div>{emptyCopy}</div>
+            {isOperatorDrafted && (
+              <button
+                type="button"
+                onClick={() => void onSend(OPERATOR_DRAFT_PROMPT)}
+                disabled={busy || applyingIdx !== null}
+                style={{
+                  marginTop: 10,
+                  padding: "8px 12px",
+                  fontSize: 11,
+                  fontFamily: "var(--ff-mono)",
+                  background: "var(--vr-gold-soft)",
+                  border: "1px solid var(--vr-gold-line)",
+                  color: "var(--vr-gold)",
+                  borderRadius: 3,
+                  cursor: busy || applyingIdx !== null ? "not-allowed" : "pointer",
+                  opacity: busy || applyingIdx !== null ? 0.5 : 1,
+                }}
+              >
+                Draft full spec with Talon
+              </button>
+            )}
           </div>
         )}
         {conversation.map((m, idx) => (

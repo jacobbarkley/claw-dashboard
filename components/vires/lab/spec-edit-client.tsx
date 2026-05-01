@@ -16,8 +16,6 @@ import { specToFormValues, formValuesToPatch } from "./spec-form-mapping"
 import { StrategySpecForm, type SpecFormValues } from "./strategy-spec-form"
 import { TalonChatPanel } from "./talon-chat-panel"
 
-const TALON_DRAFTING_ENABLED = process.env.NEXT_PUBLIC_TALON_DRAFTING_ENABLED === "1"
-
 interface TalonWarnPayload {
   warnings: string[]
   catalog_version: string
@@ -173,15 +171,13 @@ export function SpecEditClient({ idea, spec: initialSpec, scope, ideaHref }: Pro
       {talonWarn && (
         <TalonWarnCallout payload={talonWarn} onDismiss={dismissTalonWarn} />
       )}
-      {TALON_DRAFTING_ENABLED && (
-        <TalonChatPanel
-          specId={spec.spec_id}
-          scope={scope}
-          authoringMode={spec.authoring_mode}
-          specState={spec.state}
-          onRevised={revisedSpec => setSpec(revisedSpec)}
-        />
-      )}
+      <TalonChatPanel
+        specId={spec.spec_id}
+        scope={scope}
+        authoringMode={spec.authoring_mode}
+        specState={spec.state}
+        onRevised={revisedSpec => setSpec(revisedSpec)}
+      />
       <StrategySpecForm
         // Key on spec_version so a Talon-applied revision unmounts +
         // remounts the form with fresh initialValues. Without this the
