@@ -13,23 +13,21 @@
 //
 // Phase D-implementation guard: only mounted when the
 // `vires.lab.spec_authoring` flag is enabled in the page's server component.
-// Talon button is independently gated by NEXT_PUBLIC_TALON_DRAFTING_ENABLED.
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import type {
   IdeaArtifact,
   ScopeTriple,
   SpecImplementationQueueV1,
   StrategySpecV1,
+  TalonDraftJobV1,
 } from "@/lib/research-lab-contracts"
 
 import { DataUnavailableCard } from "./data-unavailable-card"
 import { IdeaThreadStepper, type ThreadStep } from "./idea-thread-stepper"
-
-const TALON_DRAFTING_ENABLED = process.env.NEXT_PUBLIC_TALON_DRAFTING_ENABLED === "1"
 
 // localStorage key namespace for WARN-verdict warnings handed to the spec
 // edit page on first load. Keyed by spec_id so dismissed warnings on one
@@ -41,15 +39,6 @@ interface TalonReadinessRequirement {
   status: "AVAILABLE" | "PARTIAL" | "MISSING"
   source?: string | null
   notes?: string | null
-}
-
-interface TalonReadiness {
-  verdict: "PASS" | "WARN" | "BLOCKED"
-  catalog_version: string
-  requirements: TalonReadinessRequirement[]
-  warnings: string[]
-  blocking_summary?: string
-  suggested_action?: string
 }
 
 interface TalonBlockedState {
@@ -304,12 +293,21 @@ const TALON_DRAFTING_STAGES = [
   "Checking data availability…",
 ]
 
+const TALON_TERMINAL_STATES = new Set<TalonDraftJobV1["state"]>([
+  "READY",
+  "WARN",
+  "BLOCKED",
+  "FAILED",
+  "CANCELLED",
+])
+
 function AwaitingSpecBody(props: IdeaThreadProps) {
   const router = useRouter()
   const [busy, setBusy] = useState<"author" | "talon" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [blocked, setBlocked] = useState<TalonBlockedState | null>(null)
   const [stageIdx, setStageIdx] = useState(0)
+  const [draftJob, setDraftJob] = useState<TalonDraftJobV1 | null>(null)
 
   useEffect(() => {
     if (busy !== "talon") {
@@ -321,6 +319,65 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
     }, 5000)
     return () => clearInterval(handle)
   }, [busy])
+
+  const handleTerminalTalonJob = useCallback((job: TalonDraftJobV1) => {
+    if (!TALON_TERMINAL_STATES.has(job.state)) return
+    if ((job.state === "READY" || job.state === "WARN" || job.state === "BLOCKED") && job.proposal?.spec_id) {
+      const warnings = [
+        ...(job.assessment?.warnings ?? []),
+        ...(job.state === "BLOCKED" && job.assessment?.blocking_summary
+          ? [job.assessment.blocking_summary]
+          : []),
+      ]
+      if (warnings.length > 0) {
+        try {
+          window.localStorage.setItem(
+            `${TALON_WARN_KEY_PREFIX}${job.proposal.spec_id}`,
+            JSON.stringify({
+              warnings,
+              catalog_version: job.assessment?.catalog_version ?? "",
+              created_at: new Date().toISOString(),
+            }),
+          )
+        } catch {
+          // Missing storage only drops the first-load callout.
+        }
+      }
+      router.push(
+        `/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/spec/edit?spec_id=${encodeURIComponent(job.proposal.spec_id)}`,
+      )
+      router.refresh()
+      return
+    }
+    if (job.state === "FAILED") {
+      setError(job.error ? `${job.error_code ?? "FAILED"}: ${job.error}` : "Talon draft failed.")
+    } else if (job.state === "CANCELLED") {
+      setError("Talon draft cancelled.")
+    }
+    setBusy(null)
+  }, [props.idea.idea_id, router])
+
+  useEffect(() => {
+    if (!draftJob || TALON_TERMINAL_STATES.has(draftJob.state)) return
+    const handle = window.setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/research/specs/draft-jobs/${encodeURIComponent(draftJob.job_id)}?${scopeQuery(props.scope)}`,
+          { cache: "no-store" },
+        )
+        const payload = (await res.json()) as { job?: TalonDraftJobV1; error?: string }
+        if (!res.ok || !payload.job) {
+          throw new Error(payload.error ?? `Talon draft poll failed (${res.status})`)
+        }
+        setDraftJob(payload.job)
+        handleTerminalTalonJob(payload.job)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Talon draft polling failed")
+        setBusy(null)
+      }
+    }, 2000)
+    return () => window.clearTimeout(handle)
+  }, [draftJob, handleTerminalTalonJob, props.scope])
 
   const onAuthor = async () => {
     setBusy("author")
@@ -363,16 +420,16 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
     setBusy("talon")
     setError(null)
     setBlocked(null)
+    setDraftJob(null)
 
     let res: Response
     try {
-      res = await fetch("/api/research/specs/draft-with-talon", {
+      res = await fetch("/api/research/specs/draft-jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea_id: props.idea.idea_id,
           scope: props.scope,
-          authored_by: props.idea.created_by ?? "jacob",
         }),
       })
     } catch (err) {
@@ -385,8 +442,7 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
     const rawBody = await res.text()
     let payload: {
       ok?: boolean
-      spec?: { spec_id?: string }
-      data_readiness?: TalonReadiness
+      job?: TalonDraftJobV1
       error?: string
       detail?: string
       talon_error?: string
@@ -400,32 +456,10 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
       return
     }
 
-    if (res.status === 422) {
-      const dr = payload.data_readiness
-      if (dr) {
-        setBlocked({
-          catalogVersion: dr.catalog_version,
-          blockingSummary:
-            dr.blocking_summary ??
-            "Talon couldn't draft this — required data isn't wired in yet.",
-          suggestedAction:
-            dr.suggested_action ??
-            "Re-frame the thesis around data we have, or queue the missing capability for Codex.",
-          requirements: dr.requirements ?? [],
-        })
-        return
-      }
-      setError(payload.error ?? "Talon refused — data unavailable.")
-      setBusy(null)
-      return
-    }
-
-    if (!res.ok || !payload.spec?.spec_id) {
+    if (!res.ok || !payload.job) {
       const baseLabel =
         res.status === 503
           ? "Talon isn't configured on this deployment"
-          : res.status === 502
-            ? "Talon is unreachable right now"
             : `Talon drafting failed (${res.status})`
       const serverDetail = payload.talon_error ?? payload.detail ?? payload.error
       console.error("[talon] non-success:", { status: res.status, payload })
@@ -434,30 +468,23 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
       return
     }
 
-    const dr = payload.data_readiness
-    if (dr && dr.verdict === "WARN" && dr.warnings.length > 0) {
-      try {
-        window.localStorage.setItem(
-          `${TALON_WARN_KEY_PREFIX}${payload.spec.spec_id}`,
-          JSON.stringify({
-            warnings: dr.warnings,
-            catalog_version: dr.catalog_version,
-            created_at: new Date().toISOString(),
-          }),
-        )
-      } catch (storageErr) {
-        console.warn("[talon] localStorage unavailable:", storageErr)
-      }
-    }
+    setDraftJob(payload.job)
+    handleTerminalTalonJob(payload.job)
+  }
 
+  const cancelDraftJob = async () => {
+    if (!draftJob || TALON_TERMINAL_STATES.has(draftJob.state)) return
     try {
-      const target = `/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/spec/edit?spec_id=${encodeURIComponent(payload.spec.spec_id)}`
-      router.push(target)
-      router.refresh()
-    } catch (err) {
-      console.error("[talon] redirect threw:", err)
-      setError(`Spec saved as ${payload.spec.spec_id}, but redirect failed: ${err instanceof Error ? err.message : String(err)}. Open the idea page to find it.`)
+      const res = await fetch(
+        `/api/research/specs/draft-jobs/${encodeURIComponent(draftJob.job_id)}?${scopeQuery(props.scope)}`,
+        { method: "DELETE" },
+      )
+      const payload = (await res.json()) as { job?: TalonDraftJobV1; error?: string }
+      if (!res.ok || !payload.job) throw new Error(payload.error ?? `Cancel failed (${res.status})`)
+      setDraftJob(payload.job)
       setBusy(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to cancel Talon draft")
     }
   }
 
@@ -494,13 +521,16 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
 
   const talonLabel =
     busy === "talon"
-      ? TALON_DRAFTING_STAGES[stageIdx]
-      : TALON_DRAFTING_ENABLED
-        ? "Draft with Talon"
-        : "Draft with Talon (off)"
-  const talonSubtitle = TALON_DRAFTING_ENABLED
-    ? "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
-    : "Talon reads your thesis, asks clarifying questions, and produces an editable spec. Hidden until Talon is unblocked."
+      ? draftJob?.state === "REPAIRING"
+        ? "Repairing draft…"
+        : draftJob?.current_step
+          ? `${draftJob.state.toLowerCase()} · ${draftJob.current_step}`
+          : TALON_DRAFTING_STAGES[stageIdx]
+      : "Draft with Talon"
+  const talonInFlight = draftJob != null && !TALON_TERMINAL_STATES.has(draftJob.state)
+  const talonSubtitle = draftJob && !TALON_TERMINAL_STATES.has(draftJob.state)
+    ? `Job ${draftJob.job_id} · ${draftJob.steps_completed.length} steps complete. This can keep running while you wait.`
+    : "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
 
   return (
     <div className="vr-card" style={panel}>
@@ -515,15 +545,24 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
           title="Draft with Talon"
           subtitle={talonSubtitle}
           ctaLabel={talonLabel}
-          ctaTone={TALON_DRAFTING_ENABLED ? "primary" : "muted"}
-          disabled={!TALON_DRAFTING_ENABLED || busy !== null}
+          ctaTone="primary"
+          disabled={busy !== null || talonInFlight}
           onClick={onDraftWithTalon}
         />
+        {draftJob && !TALON_TERMINAL_STATES.has(draftJob.state) && (
+          <button
+            type="button"
+            onClick={cancelDraftJob}
+            style={secondaryButton}
+          >
+            Cancel Talon draft
+          </button>
+        )}
         <ActionRow
           title="Author the spec yourself"
           subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
           ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
-          ctaTone={TALON_DRAFTING_ENABLED ? "muted" : "primary"}
+          ctaTone="muted"
           onClick={onAuthor}
           disabled={busy !== null}
         />
@@ -850,6 +889,14 @@ function ErrorLine({ message }: { message: string }) {
       {message}
     </div>
   )
+}
+
+function scopeQuery(scope: ScopeTriple): string {
+  return new URLSearchParams({
+    user_id: scope.user_id,
+    account_id: scope.account_id,
+    strategy_group_id: scope.strategy_group_id,
+  }).toString()
 }
 
 function statePill(stateLike: string): React.CSSProperties {

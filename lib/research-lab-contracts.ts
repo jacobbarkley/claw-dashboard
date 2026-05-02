@@ -52,6 +52,34 @@ export type SpecImplementationQueueState =
   | "FAILED"
   | "CANCELLED"
 
+export type TalonDraftJobState =
+  | "QUEUED"
+  | "RUNNING"
+  | "REPAIRING"
+  | "READY"
+  | "WARN"
+  | "BLOCKED"
+  | "FAILED"
+  | "CANCELLED"
+
+export type TalonDraftJobStep =
+  | "load_context"
+  | "draft_strategy_core"
+  | "draft_experiment_plan"
+  | "data_readiness"
+  | "validate_schema"
+  | "repair"
+  | "persist"
+
+export type TalonDraftJobErrorCode =
+  | "ANTHROPIC_TIMEOUT"
+  | "ANTHROPIC_RATE_LIMIT"
+  | "ANTHROPIC_ERROR"
+  | "VALIDATION_EXHAUSTED"
+  | "DATA_CATALOG_MISSING"
+  | "WORKER_TIMEOUT"
+  | "INTERNAL_ERROR"
+
 // Phase 1a/1b allowed job states. CANCELLED is reserved but not exercised
 // until Phase 1c.
 export type JobState =
@@ -347,6 +375,53 @@ export interface SpecAuditEventV1 {
     queue_entry_id?: string | null
     message?: string | null
   }
+}
+
+export interface TalonDraftJobModelCall {
+  step: TalonDraftJobStep
+  attempt: number
+  tokens_in: number
+  tokens_out: number
+  latency_ms: number
+  model: string
+  finish_reason?: string | null
+}
+
+export interface TalonDraftJobAssessmentRequirement {
+  requested: string
+  status: "AVAILABLE" | "PARTIAL" | "MISSING"
+  source?: string | null
+  notes?: string | null
+}
+
+export interface TalonDraftJobAssessment {
+  verdict: "PASS" | "WARN" | "BLOCKED"
+  catalog_version: string
+  requirements: TalonDraftJobAssessmentRequirement[]
+  warnings: string[]
+  blocking_summary?: string
+  suggested_action?: string
+}
+
+export interface TalonDraftJobV1 extends ScopeTriple {
+  schema_version: "research_lab.talon_draft_job.v1"
+  job_id: string
+  idea_id: string
+  created_at: string
+  updated_at: string
+  state: TalonDraftJobState
+  current_step: TalonDraftJobStep | null
+  steps_completed: TalonDraftJobStep[]
+  repair_attempts: number
+  intent_message?: string | null
+  proposal?: StrategySpecV1 | null
+  assessment?: TalonDraftJobAssessment | null
+  validity_issues?: ExperimentPlanValidityIssue[] | null
+  error?: string | null
+  error_code?: TalonDraftJobErrorCode | null
+  cancelled_by?: string | null
+  cancelled_at?: string | null
+  model_calls?: TalonDraftJobModelCall[]
 }
 
 /** In-memory adapter shape used while v1 YAML and v2 YAML coexist. */
