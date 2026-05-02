@@ -24,22 +24,51 @@ const benchmarkComparisonModeSchema = z.enum(["absolute", "deployment_matched", 
 const eraStatusSchema = z.enum(["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"])
 const eraModeSchema = z.enum(["single", "multi"])
 
-const experimentPlanStrict = z.object({
+const textFromDescriptionSchema = z.preprocess(
+  value => descriptionStringFromUnknown(value),
+  z.string(),
+)
+
+const requiredDataSchema = z.preprocess(
+  value => stringArrayFromUnknown(value),
+  z.array(z.string().min(1)).min(1),
+)
+
+const optionalTextFromDescriptionSchema = z.preprocess(
+  value => {
+    if (value == null) return null
+    const text = descriptionStringFromUnknown(value).trim()
+    return text || null
+  },
+  z.string().optional().nullable(),
+)
+
+const acceptanceCriteriaStrict = z.preprocess(
+  normalizeAcceptanceCriteriaInput,
+  z.object({
+    min_sharpe: z.number().min(0),
+    max_drawdown_pct: z.number().min(0).max(100),
+    min_hit_rate_pct: z.number().min(0).max(100),
+    other: z.string().optional().nullable(),
+  }),
+)
+
+const experimentPlanStrict = z.preprocess(normalizeExperimentPlanInput, z.object({
   benchmark: z.object({
-    symbol: z.string().min(1),
+    symbol: z.string(),
     comparison_mode: benchmarkComparisonModeSchema,
   }),
   windows: z.object({
-    requested_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    requested_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    fresh_data_required_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+    requested_start: z.string(),
+    requested_end: z.string(),
+    fresh_data_required_from: z.string().optional().nullable(),
   }),
   runnable_eras: z.array(z.object({
-    era_id: z.string().min(1),
-    label: z.string().min(1),
+    era_id: z.string(),
+    label: z.string(),
     date_range: z.object({
-      start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      start: z.string(),
+      end: z.string(),
     }),
     status: eraStatusSchema,
     reason: z.string().optional().nullable(),
@@ -53,31 +82,26 @@ const experimentPlanStrict = z.object({
     minimum_evaluated_trading_days: z.number().min(1),
   }),
   decisive_verdict_rules: z.object({
-    pass: z.string().min(10),
-    inconclusive: z.string().min(10),
-    fail: z.string().min(10),
+    pass: z.string(),
+    inconclusive: z.string(),
+    fail: z.string(),
   }),
-  known_limitations: z.array(z.string().min(1)),
-})
+  known_limitations: z.array(z.string()),
+}))
 
 const proposalStrict = z.object({
-  signal_logic: z.string().min(40),
-  entry_rules: z.string().min(20),
-  exit_rules: z.string().min(20),
-  risk_model: z.string().min(20),
-  universe: z.string().min(10),
-  required_data: z.array(z.string().min(1)).min(1),
+  signal_logic: textFromDescriptionSchema.pipe(z.string().min(40)),
+  entry_rules: textFromDescriptionSchema.pipe(z.string().min(20)),
+  exit_rules: textFromDescriptionSchema.pipe(z.string().min(20)),
+  risk_model: textFromDescriptionSchema.pipe(z.string().min(20)),
+  universe: textFromDescriptionSchema.pipe(z.string().min(10)),
+  required_data: requiredDataSchema,
   experiment_plan: experimentPlanStrict,
-  benchmark: z.string().min(1),
-  acceptance_criteria: z.object({
-    min_sharpe: z.number().min(0),
-    max_drawdown_pct: z.number().min(0).max(100),
-    min_hit_rate_pct: z.number().min(0).max(100),
-    other: z.string().optional().nullable(),
-  }),
+  benchmark: textFromDescriptionSchema.pipe(z.string().min(1)),
+  acceptance_criteria: acceptanceCriteriaStrict,
   candidate_strategy_family: z.string().optional().nullable(),
-  sweep_params: z.string().optional().nullable(),
-  implementation_notes: z.string().optional().nullable(),
+  sweep_params: optionalTextFromDescriptionSchema,
+  implementation_notes: optionalTextFromDescriptionSchema,
 })
 
 const assessmentStrict = z.object({
@@ -448,6 +472,100 @@ export function formatCatalogForPrompt(catalog: DataCapabilityCatalogV1): string
 
 // ─── Internal helpers ──────────────────────────────────────────────────────
 
+function normalizeAcceptanceCriteriaInput(input: unknown): Record<string, unknown> {
+  const raw = recordFromUnknown(input)
+  return {
+    min_sharpe: numberFromUnknown(raw.min_sharpe, 1),
+    max_drawdown_pct: numberFromUnknown(raw.max_drawdown_pct ?? raw.max_drawdown, 20),
+    min_hit_rate_pct: numberFromUnknown(raw.min_hit_rate_pct ?? raw.min_hit_rate, 45),
+    other: nullableStringFromUnknown(raw.other),
+  }
+}
+
+function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
+  const raw = recordFromUnknown(input)
+  const benchmarkRaw = raw.benchmark
+  const benchmark =
+    typeof benchmarkRaw === "string"
+      ? {
+          symbol: benchmarkRaw,
+          comparison_mode: stringEnumOrDefault(raw.comparison_mode, ["absolute", "deployment_matched", "both"], "both"),
+        }
+      : {
+          symbol: stringFromUnknown(recordFromUnknown(benchmarkRaw).symbol ?? recordFromUnknown(benchmarkRaw).benchmark ?? raw.benchmark_symbol),
+          comparison_mode: stringEnumOrDefault(
+            recordFromUnknown(benchmarkRaw).comparison_mode ?? raw.comparison_mode,
+            ["absolute", "deployment_matched", "both"],
+            "both",
+          ),
+        }
+
+  const windowsRaw = recordFromUnknown(raw.windows)
+  const runnableEras = normalizeRunnableEras(raw.runnable_eras)
+  const eraIds = runnableEras.map(era => era.era_id).filter(Boolean)
+  const erasRaw = recordFromUnknown(raw.eras)
+  const requiredEraIds = stringArrayFromUnknown(erasRaw.required_era_ids)
+
+  return {
+    benchmark,
+    windows: {
+      requested_start: stringFromUnknown(windowsRaw.requested_start ?? raw.requested_start),
+      requested_end: stringFromUnknown(windowsRaw.requested_end ?? raw.requested_end),
+      fresh_data_required_from: nullableStringFromUnknown(
+        windowsRaw.fresh_data_required_from ?? raw.fresh_data_required_from,
+      ),
+    },
+    runnable_eras: runnableEras,
+    eras: {
+      mode: stringEnumOrDefault(erasRaw.mode ?? raw.era_mode, ["single", "multi"], eraIds.length > 1 ? "multi" : "single"),
+      required_era_ids: requiredEraIds.length > 0 ? requiredEraIds : eraIds,
+    },
+    evidence_thresholds: {
+      minimum_trade_count: numberFromUnknown(recordFromUnknown(raw.evidence_thresholds).minimum_trade_count, 5),
+      minimum_evaluated_trading_days: numberFromUnknown(
+        recordFromUnknown(raw.evidence_thresholds).minimum_evaluated_trading_days,
+        20,
+      ),
+    },
+    decisive_verdict_rules: normalizeVerdictRules(raw.decisive_verdict_rules),
+    known_limitations: stringArrayFromUnknown(raw.known_limitations),
+  }
+}
+
+function normalizeRunnableEras(input: unknown): Array<Record<string, unknown>> {
+  return arrayFromUnknown(input).map((item, index) => {
+    const raw = recordFromUnknown(item)
+    const dateRange = recordFromUnknown(raw.date_range)
+    const eraId = stringFromUnknown(raw.era_id) || `era_${index + 1}`
+    return {
+      era_id: eraId,
+      label: stringFromUnknown(raw.label) || eraId,
+      date_range: {
+        start: stringFromUnknown(dateRange.start ?? raw.start),
+        end: stringFromUnknown(dateRange.end ?? raw.end),
+      },
+      status: stringEnumOrDefault(raw.status, ["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"], "INCOMPLETE_DATA"),
+      reason: nullableStringFromUnknown(raw.reason),
+    }
+  })
+}
+
+function normalizeVerdictRules(input: unknown): Record<string, unknown> {
+  if (typeof input === "string") {
+    return {
+      pass: input,
+      inconclusive: "Insufficient evidence if minimum trade count, evaluated days, or required era coverage is not met.",
+      fail: "Fails if it underperforms the benchmark after the evidence thresholds are met.",
+    }
+  }
+  const raw = recordFromUnknown(input)
+  return {
+    pass: stringFromUnknown(raw.pass),
+    inconclusive: stringFromUnknown(raw.inconclusive),
+    fail: stringFromUnknown(raw.fail),
+  }
+}
+
 function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>, fieldName: string): T {
   if (typeof raw !== "string" || !raw.trim()) {
     throw new Error(`${fieldName} must be a non-empty JSON string`)
@@ -461,7 +579,80 @@ function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>,
     throw new Error(`${fieldName} was not valid JSON: ${detail}`)
   }
 
-  return schema.parse(parsed)
+  const result = schema.safeParse(parsed)
+  if (!result.success) {
+    const issues = result.error.issues
+      .slice(0, 6)
+      .map(issue => `${issue.path.join(".") || fieldName}: ${issue.message}`)
+      .join("; ")
+    throw new Error(`${fieldName} did not match Talon's expected proposal shape: ${issues}`)
+  }
+  return result.data
+}
+
+function descriptionStringFromUnknown(value: unknown): string {
+  if (typeof value === "string") return value.trim()
+  if (typeof value === "number" && Number.isFinite(value)) return String(value)
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const raw = value as Record<string, unknown>
+    const description =
+      raw.description ??
+      raw.summary ??
+      raw.text ??
+      raw.value ??
+      raw.symbol ??
+      raw.benchmark
+    if (typeof description === "string") return description.trim()
+    if (typeof description === "number" && Number.isFinite(description)) return String(description)
+    const serialized = JSON.stringify(raw)
+    return serialized === "{}" ? "" : serialized
+  }
+  return ""
+}
+
+function recordFromUnknown(input: unknown): Record<string, unknown> {
+  return input && typeof input === "object" && !Array.isArray(input)
+    ? input as Record<string, unknown>
+    : {}
+}
+
+function arrayFromUnknown(input: unknown): unknown[] {
+  return Array.isArray(input) ? input : []
+}
+
+function stringArrayFromUnknown(input: unknown): string[] {
+  if (typeof input === "string") {
+    return input
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+  return arrayFromUnknown(input)
+    .map(item => descriptionStringFromUnknown(item))
+    .filter(Boolean)
+}
+
+function stringFromUnknown(input: unknown): string {
+  return descriptionStringFromUnknown(input)
+}
+
+function nullableStringFromUnknown(input: unknown): string | null {
+  const value = stringFromUnknown(input)
+  return value || null
+}
+
+function numberFromUnknown(input: unknown, fallback: number): number {
+  const value = typeof input === "number" ? input : Number(input)
+  return Number.isFinite(value) ? value : fallback
+}
+
+function stringEnumOrDefault<T extends string>(
+  input: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  const value = typeof input === "string" ? input.trim() : ""
+  return allowed.includes(value as T) ? value as T : fallback
 }
 
 function dedupeStrings(values: string[]): string[] {
