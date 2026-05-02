@@ -513,8 +513,18 @@ function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
         }
 
   const windowsRaw = recordFromUnknown(raw.windows)
-  const requestedStart = stringFromUnknown(windowsRaw.requested_start ?? raw.requested_start) || defaultWindow.start
-  const requestedEnd = stringFromUnknown(windowsRaw.requested_end ?? raw.requested_end) || defaultWindow.end
+  let requestedStart = isoDateOrDefault(
+    windowsRaw.requested_start ?? raw.requested_start,
+    defaultWindow.start,
+  )
+  let requestedEnd = isoDateOrDefault(
+    windowsRaw.requested_end ?? raw.requested_end,
+    defaultWindow.end,
+  )
+  if (new Date(`${requestedStart}T00:00:00Z`) > new Date(`${requestedEnd}T00:00:00Z`)) {
+    requestedStart = defaultWindow.start
+    requestedEnd = defaultWindow.end
+  }
   const runnableEras = normalizeRunnableEras(raw.runnable_eras, {
     start: requestedStart,
     end: requestedEnd,
@@ -528,7 +538,7 @@ function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
     windows: {
       requested_start: requestedStart,
       requested_end: requestedEnd,
-      fresh_data_required_from: nullableStringFromUnknown(
+      fresh_data_required_from: nullableIsoDateFromUnknown(
         windowsRaw.fresh_data_required_from ?? raw.fresh_data_required_from,
       ),
     },
@@ -571,8 +581,8 @@ function normalizeRunnableEras(
       era_id: eraId,
       label: stringFromUnknown(raw.label) || eraId,
       date_range: {
-        start: stringFromUnknown(dateRange.start ?? raw.start) || fallbackRange.start,
-        end: stringFromUnknown(dateRange.end ?? raw.end) || fallbackRange.end,
+        start: isoDateOrDefault(dateRange.start ?? raw.start, fallbackRange.start),
+        end: isoDateOrDefault(dateRange.end ?? raw.end, fallbackRange.end),
       },
       status: stringEnumOrDefault(raw.status, ["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"], "INCOMPLETE_DATA"),
       reason: nullableStringFromUnknown(raw.reason),
@@ -605,6 +615,20 @@ function defaultExperimentWindow(): { start: string; end: string } {
     start: start.toISOString().slice(0, 10),
     end: end.toISOString().slice(0, 10),
   }
+}
+
+function isoDateOrDefault(input: unknown, fallback: string): string {
+  const value = stringFromUnknown(input)
+  return isIsoDate(value) ? value : fallback
+}
+
+function nullableIsoDateFromUnknown(input: unknown): string | null {
+  const value = stringFromUnknown(input)
+  return isIsoDate(value) ? value : null
+}
+
+function isIsoDate(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value.trim())
 }
 
 function defaultVerdictRules(): { pass: string; inconclusive: string; fail: string } {
