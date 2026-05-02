@@ -72,6 +72,7 @@ export interface IdeaThreadProps {
   pendingSpec: StrategySpecV1 | null
   activeQueueEntry: SpecImplementationQueueV1 | null
   labCampaignExists: boolean
+  unifiedBuilderEnabled?: boolean
 }
 
 // sessionStorage key for cross-page optimistic spec hand-off (e.g. after
@@ -417,6 +418,11 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
   }
 
   const onDraftWithTalon = async () => {
+    if (props.unifiedBuilderEnabled) {
+      router.push(`/vires/bench/lab/ideas/${encodeURIComponent(props.idea.idea_id)}/builder`)
+      return
+    }
+
     setBusy("talon")
     setError(null)
     setBlocked(null)
@@ -520,7 +526,9 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
   }
 
   const talonLabel =
-    busy === "talon"
+    props.unifiedBuilderEnabled
+      ? "Open builder"
+      : busy === "talon"
       ? draftJob?.state === "REPAIRING"
         ? "Repairing draft…"
         : draftJob?.current_step
@@ -528,9 +536,12 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
           : TALON_DRAFTING_STAGES[stageIdx]
       : "Draft with Talon"
   const talonInFlight = draftJob != null && !TALON_TERMINAL_STATES.has(draftJob.state)
-  const talonSubtitle = draftJob && !TALON_TERMINAL_STATES.has(draftJob.state)
-    ? `Job ${draftJob.job_id} · ${draftJob.steps_completed.length} steps complete. This can keep running while you wait.`
-    : "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
+  const showLegacyTalonInFlight = talonInFlight && !props.unifiedBuilderEnabled
+  const talonSubtitle = props.unifiedBuilderEnabled
+    ? "Use the unified builder for Talon drafting, validation, review, and Apply."
+    : draftJob && !TALON_TERMINAL_STATES.has(draftJob.state)
+      ? `Job ${draftJob.job_id} · ${draftJob.steps_completed.length} steps complete. This can keep running while you wait.`
+      : "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
 
   return (
     <div className="vr-card" style={panel}>
@@ -546,10 +557,10 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
           subtitle={talonSubtitle}
           ctaLabel={talonLabel}
           ctaTone="primary"
-          disabled={busy !== null || talonInFlight}
+          disabled={busy !== null || showLegacyTalonInFlight}
           onClick={onDraftWithTalon}
         />
-        {draftJob && !TALON_TERMINAL_STATES.has(draftJob.state) && (
+        {showLegacyTalonInFlight && (
           <button
             type="button"
             onClick={cancelDraftJob}

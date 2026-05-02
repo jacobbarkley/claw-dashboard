@@ -393,6 +393,10 @@ function buildExperimentPlan({
   readiness: DataReadinessAssessment
 }): ExperimentPlanV1 {
   const plan = proposal.experiment_plan
+  const benchmarkSymbol =
+    plan.benchmark.symbol.trim().toUpperCase() ||
+    normalizeBenchmark(proposal.benchmark)?.toUpperCase() ||
+    "SPY"
   const dataRequirements = readiness.requirements.map(requirement => ({
     capability_id: requirement.source ?? normalizeCapabilityId(requirement.requested),
     required: requirement.core,
@@ -407,7 +411,7 @@ function buildExperimentPlan({
     is_valid: false,
     validity_reasons: [],
     benchmark: {
-      symbol: plan.benchmark.symbol.trim().toUpperCase(),
+      symbol: benchmarkSymbol,
       comparison_mode: plan.benchmark.comparison_mode,
     },
     windows: {
@@ -487,15 +491,20 @@ function normalizeAcceptanceCriteriaInput(input: unknown): Record<string, unknow
 
 function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
   const raw = recordFromUnknown(input)
+  const defaultWindow = defaultExperimentWindow()
   const benchmarkRaw = raw.benchmark
   const benchmark =
     typeof benchmarkRaw === "string"
       ? {
-          symbol: benchmarkRaw,
+          symbol: benchmarkRaw || "SPY",
           comparison_mode: stringEnumOrDefault(raw.comparison_mode, ["absolute", "deployment_matched", "both"], "both"),
         }
       : {
-          symbol: stringFromUnknown(recordFromUnknown(benchmarkRaw).symbol ?? recordFromUnknown(benchmarkRaw).benchmark ?? raw.benchmark_symbol),
+          symbol: stringFromUnknown(
+            recordFromUnknown(benchmarkRaw).symbol ??
+              recordFromUnknown(benchmarkRaw).benchmark ??
+              raw.benchmark_symbol,
+          ) || "SPY",
           comparison_mode: stringEnumOrDefault(
             recordFromUnknown(benchmarkRaw).comparison_mode ?? raw.comparison_mode,
             ["absolute", "deployment_matched", "both"],
@@ -504,7 +513,12 @@ function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
         }
 
   const windowsRaw = recordFromUnknown(raw.windows)
-  const runnableEras = normalizeRunnableEras(raw.runnable_eras)
+  const requestedStart = stringFromUnknown(windowsRaw.requested_start ?? raw.requested_start) || defaultWindow.start
+  const requestedEnd = stringFromUnknown(windowsRaw.requested_end ?? raw.requested_end) || defaultWindow.end
+  const runnableEras = normalizeRunnableEras(raw.runnable_eras, {
+    start: requestedStart,
+    end: requestedEnd,
+  })
   const eraIds = runnableEras.map(era => era.era_id).filter(Boolean)
   const erasRaw = recordFromUnknown(raw.eras)
   const requiredEraIds = stringArrayFromUnknown(erasRaw.required_era_ids)
@@ -512,8 +526,8 @@ function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
   return {
     benchmark,
     windows: {
-      requested_start: stringFromUnknown(windowsRaw.requested_start ?? raw.requested_start),
-      requested_end: stringFromUnknown(windowsRaw.requested_end ?? raw.requested_end),
+      requested_start: requestedStart,
+      requested_end: requestedEnd,
       fresh_data_required_from: nullableStringFromUnknown(
         windowsRaw.fresh_data_required_from ?? raw.fresh_data_required_from,
       ),
@@ -535,8 +549,21 @@ function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {
   }
 }
 
-function normalizeRunnableEras(input: unknown): Array<Record<string, unknown>> {
-  return arrayFromUnknown(input).map((item, index) => {
+function normalizeRunnableEras(
+  input: unknown,
+  fallbackRange: { start: string; end: string },
+): Array<Record<string, unknown>> {
+  const items = arrayFromUnknown(input)
+  if (items.length === 0) {
+    return [{
+      era_id: "recent_default",
+      label: "Recent default window",
+      date_range: fallbackRange,
+      status: "INCOMPLETE_DATA",
+      reason: "Talon did not specify runnable eras; server supplied a recent default window for review.",
+    }]
+  }
+  return items.map((item, index) => {
     const raw = recordFromUnknown(item)
     const dateRange = recordFromUnknown(raw.date_range)
     const eraId = stringFromUnknown(raw.era_id) || `era_${index + 1}`
@@ -544,8 +571,8 @@ function normalizeRunnableEras(input: unknown): Array<Record<string, unknown>> {
       era_id: eraId,
       label: stringFromUnknown(raw.label) || eraId,
       date_range: {
-        start: stringFromUnknown(dateRange.start ?? raw.start),
-        end: stringFromUnknown(dateRange.end ?? raw.end),
+        start: stringFromUnknown(dateRange.start ?? raw.start) || fallbackRange.start,
+        end: stringFromUnknown(dateRange.end ?? raw.end) || fallbackRange.end,
       },
       status: stringEnumOrDefault(raw.status, ["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"], "INCOMPLETE_DATA"),
       reason: nullableStringFromUnknown(raw.reason),
@@ -554,18 +581,37 @@ function normalizeRunnableEras(input: unknown): Array<Record<string, unknown>> {
 }
 
 function normalizeVerdictRules(input: unknown): Record<string, unknown> {
+  const defaults = defaultVerdictRules()
   if (typeof input === "string") {
     return {
-      pass: input,
-      inconclusive: "Insufficient evidence if minimum trade count, evaluated days, or required era coverage is not met.",
-      fail: "Fails if it underperforms the benchmark after the evidence thresholds are met.",
+      pass: input || defaults.pass,
+      inconclusive: defaults.inconclusive,
+      fail: defaults.fail,
     }
   }
   const raw = recordFromUnknown(input)
   return {
-    pass: stringFromUnknown(raw.pass),
-    inconclusive: stringFromUnknown(raw.inconclusive),
-    fail: stringFromUnknown(raw.fail),
+    pass: stringFromUnknown(raw.pass) || defaults.pass,
+    inconclusive: stringFromUnknown(raw.inconclusive) || defaults.inconclusive,
+    fail: stringFromUnknown(raw.fail) || defaults.fail,
+  }
+}
+
+function defaultExperimentWindow(): { start: string; end: string } {
+  const end = new Date()
+  const start = new Date(end)
+  start.setUTCDate(start.getUTCDate() - 90)
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
+  }
+}
+
+function defaultVerdictRules(): { pass: string; inconclusive: string; fail: string } {
+  return {
+    pass: "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+    inconclusive: "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+    fail: "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met.",
   }
 }
 

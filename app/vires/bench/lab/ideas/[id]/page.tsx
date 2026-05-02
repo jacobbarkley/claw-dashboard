@@ -4,7 +4,7 @@ import { IdeaStatusControl } from "@/components/vires/lab/idea-status-control"
 import { IdeaThreadLive } from "@/components/vires/lab/idea-thread-live"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
-import { specAuthoringEnabled } from "@/lib/feature-flags.server"
+import { specAuthoringEnabled, unifiedBuilderEnabled } from "@/lib/feature-flags.server"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 import type {
   IdeaArtifact,
@@ -54,6 +54,7 @@ export default async function ViresLabIdeaDetailPage({
   const labCampaignExists = idea ? await hasLabCampaignForIdea(idea.idea_id) : false
   const strategySpecs = idea ? await loadStrategySpecsForIdea(idea.idea_id) : []
   const threadEnabled = specAuthoringEnabled()
+  const builderEnabled = unifiedBuilderEnabled()
   const { activeSpec, pendingSpec, activeQueueEntry } = threadEnabled && idea
     ? await loadThreadDataForIdea(idea, strategySpecs)
     : { activeSpec: null, pendingSpec: null, activeQueueEntry: null }
@@ -205,6 +206,7 @@ export default async function ViresLabIdeaDetailPage({
             pendingSpec={pendingSpec}
             activeQueueEntry={activeQueueEntry}
             labCampaignExists={labCampaignExists}
+            unifiedBuilderEnabled={builderEnabled}
           />
         )}
 
