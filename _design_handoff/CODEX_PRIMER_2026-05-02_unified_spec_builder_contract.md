@@ -190,6 +190,11 @@ Storage:
   `talon_draft_job_record.v1`.
 - The final `StrategySpecV1` does not need to persist full builder
   state, but the provenance artifact should reference the job record.
+- `current_draft` is operator-editable while it lives on the builder
+  state. Those edits update `current_draft`, `fields`, and
+  `field_meta` in the job record; they do not require another Talon
+  call. After Apply, the persisted spec moves to the existing spec edit
+  surface.
 
 ---
 
@@ -304,8 +309,10 @@ Clarification cap:
 
 - Beginner: up to 3 questions per turn.
 - Intermediate: up to 2 questions per turn.
-- Advanced: default 1 question, because advanced users should usually
-  edit the exposed field directly.
+- Advanced: default 0 inline questions. Route ordinary questions to the
+  chat/assistant panel because advanced users have direct field access.
+  Allow at most 1 inline clarification only for hard blocks where the
+  worker cannot proceed without an answer.
 
 ---
 
@@ -350,6 +357,39 @@ This is a change from the current durable job implementation, which
 persists successful drafts immediately. I recommend changing it now
 while the feature is still young.
 
+### 7.1 Draft Editing Before Apply
+
+Because successful Talon proposals are not persisted as specs until
+Apply, the builder route becomes the proposal edit surface.
+
+Add endpoint:
+
+```http
+PATCH /api/research/specs/draft-jobs/[job_id]/draft
+{
+  "patch": { ...partial StrategySpecV1 fields... },
+  "field_meta": { ...partial BuilderFieldMeta map... }
+}
+```
+
+Behavior:
+
+1. Scope-check job.
+2. Require `builder_state.current_draft` to exist.
+3. Reject terminal `PROPOSAL_APPLIED` jobs.
+4. Apply the patch to `builder_state.current_draft`.
+5. Mirror edited fields into `builder_state.fields`.
+6. Mark edited field metadata as
+   `{ source: "operator", locked: true, operator_confirmed: true }`.
+7. Re-run schema, data-readiness, and experiment-plan validation.
+8. Return the updated job.
+
+This endpoint is deterministic. It does not call Talon. If the operator
+wants Talon to revise the proposal, that is a separate revision action.
+
+The existing `/vires/bench/lab/ideas/[id]/spec/edit` page becomes
+post-Apply only.
+
 ---
 
 ## 8. Mode Rules
@@ -359,7 +399,8 @@ Resolved defaults for Claude's open questions:
 1. **Default mode:** Intermediate.
 2. **Mode persistence:** last-used mode per user scope, with each job
    recording the mode it used. Do not persist mode on the final spec.
-3. **Clarification cap:** 3 beginner, 2 intermediate, 1 advanced.
+3. **Clarification cap:** 3 beginner, 2 intermediate, 0 advanced.
+   Advanced may surface 1 inline clarification only for hard blockers.
 4. **Downshift behavior:** preserve and hide. Hidden locked fields
    remain immutable. UI should show a small "using hidden overrides"
    chip when applicable.
@@ -442,9 +483,47 @@ Recommended shape:
 
 This keeps failed/abandoned drafts from polluting the idea record.
 
+### 11.1 Builder History
+
+Multiple builder jobs may exist for one idea. The default idea thread
+should stay focused on the active/applied journey, but the audit trail
+should not disappear when KV expires.
+
+Policy:
+
+- Persist a slim `talon_draft_job_record.v1` for every terminal job,
+  including `FAILED` and `CANCELLED`.
+- For `READY`, `WARN`, and `BLOCKED`, include the full terminal
+  builder state and provenance.
+- For `FAILED` and `CANCELLED`, persist the job metadata, state,
+  error/cancellation fields, model-call summary, token/cost summary
+  when available, and no full draft unless one already existed.
+- Idea thread shows the active job and applied spec by default.
+- Add an "audit history" expander later for power users; not required
+  for the first beginner-mode build.
+
+This gives us replay/debugging data without turning the main idea
+thread into a graveyard of abandoned drafts.
+
 ---
 
-## 12. Implementation Sequence
+## 12. Route Placement
+
+Use a hybrid placement:
+
+- Full builder lives at `/vires/bench/lab/ideas/[id]/builder`.
+- Idea detail/thread renders a compact spec-drafting card with state,
+  mode, active question count, and a "Resume drafting" link.
+- Apply navigates back to the idea thread.
+- After Apply, existing spec edit/readback routes own normal spec
+  editing and approval.
+
+This keeps the heavy mobile builder out of the vertical idea timeline
+while preserving journey context.
+
+---
+
+## 13. Implementation Sequence
 
 Proposed contract-first sequence:
 
@@ -464,7 +543,7 @@ Proposed contract-first sequence:
 
 ---
 
-## 13. Non-Goals For V1
+## 14. Non-Goals For V1
 
 - No autonomous implementation generation.
 - No multi-user permissions beyond ScopeTriple discipline.
@@ -475,17 +554,22 @@ Proposed contract-first sequence:
 
 ---
 
-## 14. Review Ask For Claude
+## 15. Claude Review Resolution
 
-Please review specifically:
+Claude reviewed this contract in
+`_design_handoff/CLAUDE_REVIEW_2026-05-02_unified_spec_builder_contract.md`.
+Resolution:
 
-1. Is `field_meta` enough to render "operator chose" vs "Talon chose"
-   without UI inference?
-2. Does delaying spec persistence until Apply match the operator mental
-   model, or does it complicate the current edit page too much?
-3. Are the clarification caps right for mobile?
-4. Does the contract give you enough state for hidden-field downshift
-   copy?
-5. Should the builder live as a standalone route first, or be mounted
-   directly inside the idea detail thread?
+1. `field_meta` is sufficient and should be treated as load-bearing.
+2. Delayed Apply is approved; builder route must own proposal editing
+   before Apply.
+3. Clarification caps become 3 beginner / 2 intermediate / 0 advanced,
+   with advanced allowing one hard-block inline question only.
+4. Hidden locked fields are queryable via `field_meta` and must remain
+   locked across mode switches.
+5. Builder route placement is hybrid: standalone builder page plus
+   compact idea-thread card.
+6. Persist slim terminal job records for all terminal jobs; surface
+   only active/applied by default.
 
+No blockers remain before the contract patch/build sequence.
