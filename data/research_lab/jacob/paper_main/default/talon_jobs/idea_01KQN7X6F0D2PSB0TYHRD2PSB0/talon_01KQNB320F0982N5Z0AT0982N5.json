@@ -1,0 +1,727 @@
+{
+  "schema_version": "research_lab.talon_draft_job_record.v1",
+  "recorded_at": "2026-05-02T21:59:00.289Z",
+  "job": {
+    "schema_version": "research_lab.talon_draft_job.v1",
+    "job_id": "talon_01KQNB320F0982N5Z0AT0982N5",
+    "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+    "user_id": "jacob",
+    "account_id": "paper_main",
+    "strategy_group_id": "default",
+    "created_at": "2026-05-02T21:56:36.494Z",
+    "updated_at": "2026-05-02T21:59:00.289Z",
+    "state": "WARN",
+    "current_step": "persist",
+    "steps_completed": [
+      "load_context",
+      "draft_strategy_core",
+      "repair",
+      "data_readiness",
+      "validate_schema"
+    ],
+    "repair_attempts": 1,
+    "intent_message": null,
+    "proposal": {
+      "schema_version": "research_lab.strategy_spec.v1",
+      "spec_id": "spec_01KQNB7EDZ3XHMYPSYKP3XHMYP",
+      "spec_version": 1,
+      "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+      "user_id": "jacob",
+      "account_id": "paper_main",
+      "strategy_group_id": "default",
+      "created_at": "2026-05-02T21:59:00.287Z",
+      "authoring_mode": "AI_DRAFTED",
+      "authored_by": "jacob",
+      "state": "DRAFTING",
+      "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\",\"inputs\":[\"SPY daily OHLCV\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"momentum_score\":{\"description\":\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\",\"inputs\":[\"daily close prices\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"sleeve_momentum_score\":{\"description\":\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\",\"derived_from\":\"alpaca_equity_ohlcv\"},\"volatility_scaling\":{\"description\":\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\",\"derived_from\":\"alpaca_equity_ohlcv\"}}",
+      "universe": {
+        "description": "{\"type\":\"fixed_multi_sleeve\",\"sleeves\":[{\"id\":\"anchor\",\"tickers\":[\"AVGO\",\"NVDA\",\"AAPL\",\"LLY\",\"META\",\"COS\"],\"description\":\"Original live sleeve — anchor template for fidelity checks\"},{\"id\":\"mega_cap_value\",\"tickers\":[\"MSFT\",\"GOOGL\",\"AMZN\",\"BRK.B\",\"JPM\",\"UNH\"],\"description\":\"Mega-cap diversified value/growth — lower beta, defensive rotation candidate\"},{\"id\":\"high_beta_growth\",\"tickers\":[\"TSLA\",\"AMD\",\"MSTR\",\"PLTR\",\"CRWD\",\"SMCI\"],\"description\":\"High-beta growth — expected to outperform in risk-on regimes\"},{\"id\":\"defensive_dividend\",\"tickers\":[\"JNJ\",\"PG\",\"KO\",\"XOM\",\"NEE\",\"VZ\"],\"description\":\"Defensive dividend payers — expected to outperform in risk-off / contraction regimes\"},{\"id\":\"financials_industrials\",\"tickers\":[\"GS\",\"BAC\",\"CAT\",\"HON\",\"DE\",\"RTX\"],\"description\":\"Financials and industrials — cyclical rotation candidate\"}],\"selection_rationale\":\"Each sleeve of six is chosen to be internally coherent: similar liquidity tier (ADV > $200M), same broad regime affinity, and sufficient OHLCV history back to 2016. COS (Canadian Oil Sands) is retained in the anchor sleeve for fidelity but noted as a lower-liquidity outlier; new sleeves use US-listed names only for execution simplicity.\"}"
+      },
+      "entry_rules": "{\"regime_gate\":\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\",\"sleeve_selection\":\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\",\"position_sizing\":\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\",\"rebalance_frequency\":\"Weekly (every Monday open, or next trading day if holiday).\"}",
+      "exit_rules": "{\"stop_loss\":\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\",\"profit_target\":\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\",\"regime_exit\":\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\",\"momentum_exit\":\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\",\"sleeve_rotation_exit\":\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\"}",
+      "risk_model": {
+        "description": "{\"max_single_position_pct\":0.2,\"max_sleeve_exposure_pct\":0.55,\"max_portfolio_drawdown_pct\":0.18,\"bear_regime_cash_floor_pct\":0.5,\"vol_scale_cap\":2,\"vol_scale_floor\":0.5}"
+      },
+      "sweep_params": {
+        "description": "{\"N_sleeves\":[1,2,3],\"stop_pct\":[-0.05,-0.07,-0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[126,189,252],\"vol_lookback_days\":[10,20,40]}"
+      },
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "benchmark": "SPY",
+      "acceptance_criteria": {
+        "min_sharpe": 1,
+        "max_drawdown": 20,
+        "min_hit_rate": 45
+      },
+      "experiment_plan": {
+        "schema_version": "research_lab.experiment_plan.v1",
+        "spec_id": "spec_01KQNB7EDZ3XHMYPSYKP3XHMYP",
+        "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+        "is_valid": true,
+        "validity_reasons": [
+          {
+            "field_id": "runnable_eras.recent_default.status",
+            "severity": "warn",
+            "message": "Selected era Recent default window has incomplete data."
+          }
+        ],
+        "benchmark": {
+          "symbol": "SPY TOTAL RETURN",
+          "comparison_mode": "both"
+        },
+        "windows": {
+          "requested_start": "2026-02-01",
+          "requested_end": "2026-05-02",
+          "fresh_data_required_from": null
+        },
+        "runnable_eras": [
+          {
+            "era_id": "recent_default",
+            "label": "Recent default window",
+            "date_range": {
+              "start": "2026-02-01",
+              "end": "2026-05-02"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": "Talon did not specify runnable eras; server supplied a recent default window for review."
+          }
+        ],
+        "eras": {
+          "mode": "single",
+          "required_era_ids": [
+            "recent_default"
+          ]
+        },
+        "data_requirements": [
+          {
+            "capability_id": "alpaca_equity_ohlcv",
+            "required": true,
+            "status": "AVAILABLE",
+            "status_at_draft": "AVAILABLE",
+            "purpose": "alpaca_equity_ohlcv"
+          }
+        ],
+        "evidence_thresholds": {
+          "minimum_trade_count": 40,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "known_limitations": [
+          "COS (Canadian Oil Sands) is in the anchor sleeve but may not have clean Alpaca OHLCV history back to 2016 — flag and substitute if needed.",
+          "Sleeve composition for v1 is hand-curated; a systematic selection algorithm is deferred to v2. Results may reflect selection bias in the proposed sleeves.",
+          "No exotic data dependencies — all signals are OHLCV-derived, so this is a true historical backtest, not a plumbing-only run.",
+          "Weekly rebalance frequency means trade count scales with number of active sleeves and regime conditions; 40-trade floor should be easily met across a 9-year window but verify per-sleeve counts.",
+          "BRK.B ticker in mega_cap_value sleeve — confirm Alpaca OHLCV coverage back to 2016 at implementation time.",
+          "Sweep over 5 parameters (N_sleeves, stop, target, momentum lookback, vol lookback) creates 3x3x3x3x3=243 combinations; recommend a coarse grid first, then refine around promising clusters to limit overfitting risk."
+        ]
+      },
+      "candidate_strategy_family": null,
+      "implementation_notes": "Data-readiness warnings:\n- Talon returned WARN even though the catalog resolver found no partial or missing source.\n\nThis is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve.",
+      "parent_spec_id": null,
+      "registered_strategy_id": null
+    },
+    "assessment": {
+      "verdict": "WARN",
+      "catalog_version": "2026-04-30.2",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "status": "AVAILABLE",
+          "source": "alpaca_equity_ohlcv",
+          "notes": "All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline."
+        }
+      ],
+      "warnings": [
+        "Talon returned WARN even though the catalog resolver found no partial or missing source."
+      ]
+    },
+    "validity_issues": [
+      {
+        "field_id": "runnable_eras.recent_default.status",
+        "severity": "warn",
+        "message": "Selected era Recent default window has incomplete data."
+      }
+    ],
+    "error": null,
+    "error_code": null,
+    "model_calls": [
+      {
+        "step": "repair",
+        "attempt": 1,
+        "model": "claude-sonnet-4-6",
+        "latency_ms": 65064,
+        "tokens_in": 5643,
+        "tokens_out": 3829,
+        "finish_reason": "stop"
+      }
+    ],
+    "builder_state": {
+      "schema_version": "research_lab.builder_state.v1",
+      "mode": "beginner",
+      "input_state": "PROPOSAL_READY",
+      "created_at": "2026-05-02T21:56:36.494Z",
+      "updated_at": "2026-05-02T21:59:00.289Z",
+      "fields": {
+        "title": "Frozen Six Rotation",
+        "thesis": "The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.",
+        "sleeve": "STOCKS",
+        "reference_strategies": [],
+        "tags": [
+          "momentum"
+        ],
+        "universe": null,
+        "stop_pct": null,
+        "target_pct": null,
+        "benchmark": "SPY",
+        "benchmark_comparison_mode": "both",
+        "era_mode": "single",
+        "era_ids": [
+          "recent_default"
+        ],
+        "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\",\"inputs\":[\"SPY daily OHLCV\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"momentum_score\":{\"description\":\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\",\"inputs\":[\"daily close prices\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"sleeve_momentum_score\":{\"description\":\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\",\"derived_from\":\"alpaca_equity_ohlcv\"},\"volatility_scaling\":{\"description\":\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\",\"derived_from\":\"alpaca_equity_ohlcv\"}}",
+        "entry_rules": "{\"regime_gate\":\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\",\"sleeve_selection\":\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\",\"position_sizing\":\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\",\"rebalance_frequency\":\"Weekly (every Monday open, or next trading day if holiday).\"}",
+        "exit_rules": "{\"stop_loss\":\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\",\"profit_target\":\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\",\"regime_exit\":\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\",\"momentum_exit\":\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\",\"sleeve_rotation_exit\":\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\"}",
+        "risk_model": {
+          "description": "{\"max_single_position_pct\":0.2,\"max_sleeve_exposure_pct\":0.55,\"max_portfolio_drawdown_pct\":0.18,\"bear_regime_cash_floor_pct\":0.5,\"vol_scale_cap\":2,\"vol_scale_floor\":0.5}"
+        },
+        "sweep_params": {
+          "description": "{\"N_sleeves\":[1,2,3],\"stop_pct\":[-0.05,-0.07,-0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[126,189,252],\"vol_lookback_days\":[10,20,40]}"
+        },
+        "required_data": [
+          "alpaca_equity_ohlcv"
+        ],
+        "evidence_thresholds": {
+          "minimum_trade_count": 40,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "implementation_notes": "Data-readiness warnings:\n- Talon returned WARN even though the catalog resolver found no partial or missing source.\n\nThis is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve.",
+        "promotion_target": null
+      },
+      "field_meta": {
+        "title": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "thesis": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "sleeve": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "reference_strategies": {
+          "source": "reference",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "tags": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "universe": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "stop_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "target_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark_comparison_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_ids": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "signal_logic": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "entry_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "exit_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "risk_model": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "sweep_params": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "required_data": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "evidence_thresholds": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "decisive_verdict_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "implementation_notes": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "promotion_target": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T21:56:36.494Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        }
+      },
+      "validation_issues": [
+        {
+          "field_id": "runnable_eras.recent_default.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era Recent default window has incomplete data.",
+          "suggested_action": null
+        }
+      ],
+      "open_questions": [],
+      "current_draft": {
+        "schema_version": "research_lab.strategy_spec.v1",
+        "spec_id": "spec_01KQNB7EDZ3XHMYPSYKP3XHMYP",
+        "spec_version": 1,
+        "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+        "user_id": "jacob",
+        "account_id": "paper_main",
+        "strategy_group_id": "default",
+        "created_at": "2026-05-02T21:59:00.287Z",
+        "authoring_mode": "AI_DRAFTED",
+        "authored_by": "jacob",
+        "state": "DRAFTING",
+        "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\",\"inputs\":[\"SPY daily OHLCV\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"momentum_score\":{\"description\":\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\",\"inputs\":[\"daily close prices\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"sleeve_momentum_score\":{\"description\":\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\",\"derived_from\":\"alpaca_equity_ohlcv\"},\"volatility_scaling\":{\"description\":\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\",\"derived_from\":\"alpaca_equity_ohlcv\"}}",
+        "universe": {
+          "description": "{\"type\":\"fixed_multi_sleeve\",\"sleeves\":[{\"id\":\"anchor\",\"tickers\":[\"AVGO\",\"NVDA\",\"AAPL\",\"LLY\",\"META\",\"COS\"],\"description\":\"Original live sleeve — anchor template for fidelity checks\"},{\"id\":\"mega_cap_value\",\"tickers\":[\"MSFT\",\"GOOGL\",\"AMZN\",\"BRK.B\",\"JPM\",\"UNH\"],\"description\":\"Mega-cap diversified value/growth — lower beta, defensive rotation candidate\"},{\"id\":\"high_beta_growth\",\"tickers\":[\"TSLA\",\"AMD\",\"MSTR\",\"PLTR\",\"CRWD\",\"SMCI\"],\"description\":\"High-beta growth — expected to outperform in risk-on regimes\"},{\"id\":\"defensive_dividend\",\"tickers\":[\"JNJ\",\"PG\",\"KO\",\"XOM\",\"NEE\",\"VZ\"],\"description\":\"Defensive dividend payers — expected to outperform in risk-off / contraction regimes\"},{\"id\":\"financials_industrials\",\"tickers\":[\"GS\",\"BAC\",\"CAT\",\"HON\",\"DE\",\"RTX\"],\"description\":\"Financials and industrials — cyclical rotation candidate\"}],\"selection_rationale\":\"Each sleeve of six is chosen to be internally coherent: similar liquidity tier (ADV > $200M), same broad regime affinity, and sufficient OHLCV history back to 2016. COS (Canadian Oil Sands) is retained in the anchor sleeve for fidelity but noted as a lower-liquidity outlier; new sleeves use US-listed names only for execution simplicity.\"}"
+        },
+        "entry_rules": "{\"regime_gate\":\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\",\"sleeve_selection\":\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\",\"position_sizing\":\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\",\"rebalance_frequency\":\"Weekly (every Monday open, or next trading day if holiday).\"}",
+        "exit_rules": "{\"stop_loss\":\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\",\"profit_target\":\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\",\"regime_exit\":\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\",\"momentum_exit\":\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\",\"sleeve_rotation_exit\":\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\"}",
+        "risk_model": {
+          "description": "{\"max_single_position_pct\":0.2,\"max_sleeve_exposure_pct\":0.55,\"max_portfolio_drawdown_pct\":0.18,\"bear_regime_cash_floor_pct\":0.5,\"vol_scale_cap\":2,\"vol_scale_floor\":0.5}"
+        },
+        "sweep_params": {
+          "description": "{\"N_sleeves\":[1,2,3],\"stop_pct\":[-0.05,-0.07,-0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[126,189,252],\"vol_lookback_days\":[10,20,40]}"
+        },
+        "required_data": [
+          "alpaca_equity_ohlcv"
+        ],
+        "benchmark": "SPY",
+        "acceptance_criteria": {
+          "min_sharpe": 1,
+          "max_drawdown": 20,
+          "min_hit_rate": 45
+        },
+        "experiment_plan": {
+          "schema_version": "research_lab.experiment_plan.v1",
+          "spec_id": "spec_01KQNB7EDZ3XHMYPSYKP3XHMYP",
+          "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+          "is_valid": true,
+          "validity_reasons": [
+            {
+              "field_id": "runnable_eras.recent_default.status",
+              "severity": "warn",
+              "message": "Selected era Recent default window has incomplete data."
+            }
+          ],
+          "benchmark": {
+            "symbol": "SPY TOTAL RETURN",
+            "comparison_mode": "both"
+          },
+          "windows": {
+            "requested_start": "2026-02-01",
+            "requested_end": "2026-05-02",
+            "fresh_data_required_from": null
+          },
+          "runnable_eras": [
+            {
+              "era_id": "recent_default",
+              "label": "Recent default window",
+              "date_range": {
+                "start": "2026-02-01",
+                "end": "2026-05-02"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": "Talon did not specify runnable eras; server supplied a recent default window for review."
+            }
+          ],
+          "eras": {
+            "mode": "single",
+            "required_era_ids": [
+              "recent_default"
+            ]
+          },
+          "data_requirements": [
+            {
+              "capability_id": "alpaca_equity_ohlcv",
+              "required": true,
+              "status": "AVAILABLE",
+              "status_at_draft": "AVAILABLE",
+              "purpose": "alpaca_equity_ohlcv"
+            }
+          ],
+          "evidence_thresholds": {
+            "minimum_trade_count": 40,
+            "minimum_evaluated_trading_days": 20
+          },
+          "decisive_verdict_rules": {
+            "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+            "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+            "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+          },
+          "known_limitations": [
+            "COS (Canadian Oil Sands) is in the anchor sleeve but may not have clean Alpaca OHLCV history back to 2016 — flag and substitute if needed.",
+            "Sleeve composition for v1 is hand-curated; a systematic selection algorithm is deferred to v2. Results may reflect selection bias in the proposed sleeves.",
+            "No exotic data dependencies — all signals are OHLCV-derived, so this is a true historical backtest, not a plumbing-only run.",
+            "Weekly rebalance frequency means trade count scales with number of active sleeves and regime conditions; 40-trade floor should be easily met across a 9-year window but verify per-sleeve counts.",
+            "BRK.B ticker in mega_cap_value sleeve — confirm Alpaca OHLCV coverage back to 2016 at implementation time.",
+            "Sweep over 5 parameters (N_sleeves, stop, target, momentum lookback, vol lookback) creates 3x3x3x3x3=243 combinations; recommend a coarse grid first, then refine around promising clusters to limit overfitting risk."
+          ]
+        },
+        "candidate_strategy_family": null,
+        "implementation_notes": "Data-readiness warnings:\n- Talon returned WARN even though the catalog resolver found no partial or missing source.\n\nThis is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve.",
+        "parent_spec_id": null,
+        "registered_strategy_id": null
+      },
+      "current_assessment": {
+        "verdict": "WARN",
+        "catalog_version": "2026-04-30.2",
+        "requirements": [
+          {
+            "requested": "alpaca_equity_ohlcv",
+            "status": "AVAILABLE",
+            "source": "alpaca_equity_ohlcv",
+            "notes": "All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline."
+          }
+        ],
+        "warnings": [
+          "Talon returned WARN even though the catalog resolver found no partial or missing source."
+        ]
+      },
+      "current_authoring_mode": "AI_ASSISTED"
+    }
+  },
+  "provenance": {
+    "schema_version": "research_lab.spec_provenance.v1",
+    "spec_id": "spec_01KQNB7EDZ3XHMYPSYKP3XHMYP",
+    "generated_at": "2026-05-02T21:59:00.289Z",
+    "model": "claude-sonnet-4-6",
+    "catalog_version": "2026-04-30.2",
+    "prompt_version": "talon_spec_drafting.v2",
+    "talon_job_id": "talon_01KQNB320F0982N5Z0AT0982N5",
+    "data_readiness": {
+      "verdict": "WARN",
+      "catalog_version": "2026-04-30.2",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "status": "AVAILABLE",
+          "source": "alpaca_equity_ohlcv",
+          "notes": "All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline."
+        }
+      ],
+      "warnings": [
+        "Talon returned WARN even though the catalog resolver found no partial or missing source."
+      ]
+    },
+    "prompt": "You are Talon's durable spec-drafting worker inside the Vires Research Lab.\nReturn only the structured object requested by the schema. Do not invent backtest results.\nThe structured object has two string fields: proposal_json and assessment_json.\nEach field must be valid JSON text, not markdown, not fenced code, and not comments.\nproposal_json must JSON.stringify the complete StrategySpec proposal, including experiment_plan.\nassessment_json must JSON.stringify the complete data-readiness assessment.\nThis is a repair pass. Fix the exact validation issues below, change nothing else unless required, and return the full corrected proposal.\nValidation error: proposal_json did not match Talon's expected JSON shape: acceptance_criteria: Invalid input\n\nYour task has two parts:\n1. Draft a StrategySpecV1 starting point for the operator to review.\n2. Draft its experiment_plan: how the strategy will be judged before implementation.\n3. Assess whether every data dependency is actually available in the catalog.\n4. If reference strategies are supplied, use them as parent/context for NEW code and honor the operator's delta notes. Do not simply route the idea to a parent strategy.\n\nExperiment-plan rules:\n- The plan is part of the spec. Do not omit it.\n- Use ISO dates for windows. If the idea does not specify dates, choose a recent executable window and state limitations.\n- evidence_thresholds must be numeric. minimum_trade_count defaults to at least 5 for exploratory stock ideas unless the thesis justifies a higher floor.\n- data_requirements are resolved by the server from your assessment; in experiment_plan focus on benchmark, windows, eras, thresholds, verdict rules, and limitations.\n- If a strategy depends on seeded/current-only data, put that in known_limitations and make the plan clear that the first run validates plumbing, not historical edge.\n\nDurable Talon strategy lessons:\n- Ape Wisdom seeded-attention is proof plumbing unless historical attention exists: The first Ape Wisdom run proved the idea-to-job loop, but it did not prove a historical edge. The strategy used a 2026-04-14 seeded attention artifact, so only post-seed tape was honestly tradeable and the run produced one ASML trade.\n  - If an idea depends on seeded/current-only data, label the first run as a plumbing/proof run unless historical data exists.\n  - Separate config window, fresh usable tape, tradeable window, benchmark window, evaluated trading days, and trade count in the experiment plan.\n  - Do not imply a strategy is judgeable when expected trades are below the readiness floor.\n  - Ask for a broader universe, longer executable window, or missing historical connector when the plan cannot meet minimum evidence thresholds.\n  - Put seeded-data limitations in experiment_plan.known_limitations.\n\nKnown-good / known-bad exemplars:\n- Known-good regime-aware momentum template: Jacob and Codex previously found a regime-aware momentum pattern that beat SPY by roughly ten percentage points. Treat it as the first known-good template: simple OHLCV-derived momentum, explicit SPY benchmark, bounded stop/target sweeps, enough trades to judge, and clear readiness gates.\n  - Prefer simple, testable signal logic over clever data dependencies when the idea does not require exotic data.\n  - Include benchmark, eras/windows, trade-count floor, drawdown cap, and decisive verdict rules with the strategy draft.\n  - Use available OHLCV-derived features as the baseline template before reaching for unavailable sentiment, macro, options, or on-chain data.\n  - If the operator asks for a novel data source, first check whether an available proxy can honestly test the thesis.\n\nUnified builder state:\n{\n  \"mode\": \"beginner\",\n  \"fields\": {\n    \"title\": \"Frozen Six Rotation\",\n    \"thesis\": \"The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.\",\n    \"sleeve\": \"STOCKS\",\n    \"reference_strategies\": [],\n    \"tags\": [\n      \"momentum\"\n    ],\n    \"universe\": null,\n    \"stop_pct\": null,\n    \"target_pct\": null,\n    \"benchmark\": null,\n    \"benchmark_comparison_mode\": null,\n    \"era_mode\": null,\n    \"era_ids\": [],\n    \"signal_logic\": null,\n    \"entry_rules\": null,\n    \"exit_rules\": null,\n    \"risk_model\": null,\n    \"sweep_params\": null,\n    \"required_data\": [],\n    \"evidence_thresholds\": null,\n    \"decisive_verdict_rules\": null,\n    \"implementation_notes\": null,\n    \"promotion_target\": null\n  },\n  \"field_meta\": {\n    \"title\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"thesis\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"sleeve\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"reference_strategies\": {\n      \"source\": \"reference\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"tags\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"universe\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"stop_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"target_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark_comparison_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_ids\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"signal_logic\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"entry_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"exit_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"risk_model\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"sweep_params\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"required_data\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"evidence_thresholds\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"decisive_verdict_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"implementation_notes\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"promotion_target\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-02T21:56:36.494Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    }\n  },\n  \"validation_issues\": [],\n  \"answered_questions\": []\n}\nLocked-field rules:\n- Any field with field_meta.locked=true is an operator decision. Do not contradict it.\n- Fill missing fields only. If a locked field makes the strategy impossible, surface that honestly in limitations or data readiness.\n- If the mode is advanced, avoid interrupting with inline clarifications unless the draft cannot proceed.\n\nData readiness rules:\n- PASS only when every core requirement maps to AVAILABLE.\n- WARN when requirements map to PARTIAL, or when a non-core nice-to-have is missing.\n- BLOCKED when any core signal, entry rule, or exit rule requires missing data.\n- When unsure whether data is core, treat it as core.\n- Thin theses are allowed. Unavailable data is not allowed.\n\nRequirement-emission rules (avoid false BLOCKEDs):\n- One capability per underlying feed. If a signal is derivable from OHLCV (volume, ADV, returns, momentum, moving averages, RSI, realized vol, mean reversion), list `alpaca_equity_ohlcv` (or the relevant OHLCV capability) once. Do NOT emit each derived metric as a separate `assessment.requirements` row.\n- When a catalog capability is the proxy for a thesis-mentioned source (e.g. apewisdom_top100 covers WSB / X / Twitter / StockTwits attention), list ONLY the proxy. Do not also list the upstream source names — that produces duplicate MISSING rows for data that's already covered.\n- If you must mention a thesis source that the actual spec does not depend on (incidental flavor, replaced by a proxy, deferred to v2), set `core: false` on that requirement OR omit it entirely. The verdict floor treats `core` as true by default; an unset `core` on a MISSING row will escalate to BLOCKED, even if your `notes` say it's non-core.\n\nIdea sleeve: STOCKS\nIdea title: Frozen Six Rotation\nIdea thesis: The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.\n\nReference-strategy context:\nReference strategies: none. Treat this as a blank-slate strategy idea.\n\nData capability catalog (2026-04-30.2):\n- alpaca_equity_ohlcv: Price OHLCV; AVAILABLE; sleeves=STOCKS; coverage=2016-present notes=Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research. Covers any signal derivable from OHLCV bars: open/high/low/close, volume, average daily volume (ADV), trailing returns, momentum, moving averages, RSI, realized volatility, mean reversion bands. Strategies should list this capability_id once for the underlying feed and not emit each derived metric as a separate data requirement.\n- alpaca_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2024-10-23-present notes=BTC and ETH only via Alpaca. ~1.5 years of history — sufficient for execution and recent-regime work, insufficient for multi-era analysis. Use ccxt_binance_crypto_ohlcv for longer history (research-only, no execution coupling).\n- ccxt_binance_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2017-present (BTC); shorter for alts notes=Public Binance OHLCV pulled via ccxt for research backtests only. NOT wired into the executor — execution stays on Alpaca. Operator-pulled: no live connector, scripted backfills.\n- alpaca_options_chain: Options chain; PARTIAL; sleeves=OPTIONS; coverage=live snapshot only notes=Live chain via Alpaca. NOT historical: no point-in-time reconstruction for backtests. Strategies that depend on historical chain state need a separate provider before they can be Lab-tested.\n- iv_surface_constructed: Implied vol surface; UNAVAILABLE; sleeves=OPTIONS; notes=Would require historical chain history we don't have. No connector and no construction pipeline. Strategies depending on IV surface skew/term structure should BLOCK.\n- wikipedia_pageviews: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2016-present (research backfills) notes=Wikimedia REST API is freely accessible; research backfill scripts exist. No production connector wired into the Lab pipeline yet — operator-driven pulls. Don't claim AVAILABLE until a daily-update connector lands.\n- gdelt_full: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2015-present (research backfills) notes=GDELT API is free; backfill scripts exist. No daily-update connector wired into the Lab. Same status caveat as wikipedia_pageviews.\n- google_trends: Attention proxies; UNAVAILABLE; sleeves=STOCKS, CRYPTO; notes=No wired connector. Sample-rate noise + rate limiting on the public endpoint make it a v2-or-later candidate.\n- apewisdom_top100: Sentiment; AVAILABLE; sleeves=STOCKS; coverage=2024-present (continuous) notes=Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. THIS IS THE PROXY for r/wallstreetbets, X/Twitter trending tickers, StockTwits, Reddit investing subs, and adjacent retail communities — Ape Wisdom aggregates these into one feed. If a thesis mentions 'WSB / Reddit / X / Twitter / StockTwits / retail buzz / social trending' as a signal, list apewisdom_top100 once and do NOT emit those underlying source names as separate requirements. Raw per-thread velocity is not exposed; only the aggregate rank + mention ratio.\n- reddit_wsb_velocity: Sentiment; UNAVAILABLE; sleeves=STOCKS; notes=Raw r/wallstreetbets per-thread velocity is NOT pulled separately. Use apewisdom_top100 for the aggregated signal. Strategies that genuinely require sub-Ape-Wisdom granularity should BLOCK.\n- fundamentals_basic: Fundamentals; PARTIAL; sleeves=STOCKS; coverage=current snapshot only notes=Market cap + average daily volume reachable via Alpaca asset metadata. Not point-in-time. Strategies needing historical fundamentals (P/E, EPS surprise, balance-sheet items) are NOT covered.\n- crypto_onchain: Crypto on-chain; UNAVAILABLE; sleeves=CRYPTO; notes=No on-chain connector (Glassnode, Dune, etc.). Strategies referencing whale flows, exchange reserves, miner behavior, or staking metrics should BLOCK.\n- macro_fred_subset: Macro; UNAVAILABLE; sleeves=STOCKS, CRYPTO, OPTIONS; notes=FRED series are operator-curated as needed for one-off research; no Lab-wired connector. Strategies depending on macro inputs (fed funds path, CPI surprises, yield curve shape) should BLOCK until a connector lands.",
+    "raw_completion": "{\"proposal_json\":\"{\\\"spec_version\\\":\\\"StrategySpecV1\\\",\\\"title\\\":\\\"Frozen Six Rotation\\\",\\\"sleeve\\\":\\\"STOCKS\\\",\\\"tags\\\":[\\\"momentum\\\",\\\"regime-aware\\\",\\\"rotation\\\",\\\"multi-sleeve\\\"],\\\"thesis\\\":\\\"Expand upon the live Regime-Aware Momentum Frozen Reference Paper v1 strategy by replicating its core logic across multiple curated groups ('sleeves') of six stocks each. The original sleeve (AVGO, NVDA, AAPL, LLY, META, COS) serves as the anchor template. New sleeves are selected to share the defining characteristics of the anchor group — large-cap, high-liquidity, sector-leading names with strong momentum properties — while diversifying across market regimes. The hypothesis is that different six-stock sleeves will outperform under different macro/regime conditions, improving era robustness and reducing concentration risk relative to the single-sleeve live strategy.\\\",\\\"universe\\\":{\\\"type\\\":\\\"fixed_multi_sleeve\\\",\\\"sleeves\\\":[{\\\"id\\\":\\\"anchor\\\",\\\"tickers\\\":[\\\"AVGO\\\",\\\"NVDA\\\",\\\"AAPL\\\",\\\"LLY\\\",\\\"META\\\",\\\"COS\\\"],\\\"description\\\":\\\"Original live sleeve — anchor template for fidelity checks\\\"},{\\\"id\\\":\\\"mega_cap_value\\\",\\\"tickers\\\":[\\\"MSFT\\\",\\\"GOOGL\\\",\\\"AMZN\\\",\\\"BRK.B\\\",\\\"JPM\\\",\\\"UNH\\\"],\\\"description\\\":\\\"Mega-cap diversified value/growth — lower beta, defensive rotation candidate\\\"},{\\\"id\\\":\\\"high_beta_growth\\\",\\\"tickers\\\":[\\\"TSLA\\\",\\\"AMD\\\",\\\"MSTR\\\",\\\"PLTR\\\",\\\"CRWD\\\",\\\"SMCI\\\"],\\\"description\\\":\\\"High-beta growth — expected to outperform in risk-on regimes\\\"},{\\\"id\\\":\\\"defensive_dividend\\\",\\\"tickers\\\":[\\\"JNJ\\\",\\\"PG\\\",\\\"KO\\\",\\\"XOM\\\",\\\"NEE\\\",\\\"VZ\\\"],\\\"description\\\":\\\"Defensive dividend payers — expected to outperform in risk-off / contraction regimes\\\"},{\\\"id\\\":\\\"financials_industrials\\\",\\\"tickers\\\":[\\\"GS\\\",\\\"BAC\\\",\\\"CAT\\\",\\\"HON\\\",\\\"DE\\\",\\\"RTX\\\"],\\\"description\\\":\\\"Financials and industrials — cyclical rotation candidate\\\"}],\\\"selection_rationale\\\":\\\"Each sleeve of six is chosen to be internally coherent: similar liquidity tier (ADV > $200M), same broad regime affinity, and sufficient OHLCV history back to 2016. COS (Canadian Oil Sands) is retained in the anchor sleeve for fidelity but noted as a lower-liquidity outlier; new sleeves use US-listed names only for execution simplicity.\\\"},\\\"signal_logic\\\":{\\\"regime_filter\\\":{\\\"description\\\":\\\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\\\",\\\"inputs\\\":[\\\"SPY daily OHLCV\\\"],\\\"derived_from\\\":\\\"alpaca_equity_ohlcv\\\"},\\\"momentum_score\\\":{\\\"description\\\":\\\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\\\",\\\"inputs\\\":[\\\"daily close prices\\\"],\\\"derived_from\\\":\\\"alpaca_equity_ohlcv\\\"},\\\"sleeve_momentum_score\\\":{\\\"description\\\":\\\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\\\",\\\"derived_from\\\":\\\"alpaca_equity_ohlcv\\\"},\\\"volatility_scaling\\\":{\\\"description\\\":\\\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\\\",\\\"derived_from\\\":\\\"alpaca_equity_ohlcv\\\"}},\\\"entry_rules\\\":{\\\"regime_gate\\\":\\\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\\\",\\\"sleeve_selection\\\":\\\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\\\",\\\"position_sizing\\\":\\\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\\\",\\\"rebalance_frequency\\\":\\\"Weekly (every Monday open, or next trading day if holiday).\\\"},\\\"exit_rules\\\":{\\\"stop_loss\\\":\\\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\\\",\\\"profit_target\\\":\\\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\\\",\\\"regime_exit\\\":\\\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\\\",\\\"momentum_exit\\\":\\\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\\\",\\\"sleeve_rotation_exit\\\":\\\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\\\"},\\\"risk_model\\\":{\\\"max_single_position_pct\\\":0.20,\\\"max_sleeve_exposure_pct\\\":0.55,\\\"max_portfolio_drawdown_pct\\\":0.18,\\\"bear_regime_cash_floor_pct\\\":0.50,\\\"vol_scale_cap\\\":2.0,\\\"vol_scale_floor\\\":0.5},\\\"sweep_params\\\":{\\\"N_sleeves\\\":[1,2,3],\\\"stop_pct\\\":[-0.05,-0.07,-0.10],\\\"target_pct\\\":[0.15,0.20,0.25],\\\"momentum_lookback_days\\\":[126,189,252],\\\"vol_lookback_days\\\":[10,20,40]},\\\"benchmark\\\":\\\"SPY\\\",\\\"benchmark_comparison_mode\\\":\\\"total_return\\\",\\\"era_mode\\\":\\\"manual\\\",\\\"era_ids\\\":[\\\"bull_2016_2018\\\",\\\"vol_spike_2018\\\",\\\"bull_2019\\\",\\\"covid_crash_2020\\\",\\\"recovery_bull_2020_2021\\\",\\\"rate_hike_bear_2022\\\",\\\"recovery_2023\\\",\\\"ai_bull_2024\\\",\\\"tariff_vol_2025\\\"],\\\"required_data\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"core\\\":true,\\\"notes\\\":\\\"All signals (momentum, vol scaling, regime filter via SPY) are derived from daily OHLCV. Single feed covers all requirements.\\\"}],\\\"evidence_thresholds\\\":{\\\"minimum_trade_count\\\":40,\\\"minimum_sharpe\\\":0.6,\\\"minimum_win_rate\\\":0.45,\\\"maximum_drawdown\\\":0.20,\\\"minimum_alpha_vs_spy_annualized\\\":0.03},\\\"acceptance_criteria\\\":{\\\"promote_if\\\":\\\"Sharpe >= 0.6 AND alpha_vs_SPY >= 3% annualized AND max_drawdown <= 20% AND trade_count >= 40 across full window\\\",\\\"investigate_if\\\":\\\"Sharpe between 0.4 and 0.6 OR alpha between 0% and 3% — review era breakdown before deciding\\\",\\\"reject_if\\\":\\\"Sharpe < 0.4 OR max_drawdown > 20% OR trade_count < 40\\\"},\\\"decisive_verdict_rules\\\":[\\\"PROMOTE if Sharpe >= 0.6, annualized alpha vs SPY >= 3%, max drawdown <= 20%, and trade count >= 40 across the full backtest window\\\",\\\"INVESTIGATE if Sharpe is 0.4–0.6 or alpha is 0–3% — break down by era and sleeve before deciding\\\",\\\"REJECT if Sharpe < 0.4, max drawdown exceeds 20%, or fewer than 40 trades are generated\\\",\\\"SLEEVE_REVIEW if any single sleeve contributes more than 70% of all trades — check for concentration and re-examine sleeve selection criteria\\\"],\\\"implementation_notes\\\":\\\"This is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve.\\\",\\\"promotion_target\\\":\\\"paper_trading_then_live\\\",\\\"experiment_plan\\\":{\\\"objective\\\":\\\"Validate that the multi-sleeve rotation logic produces a measurable improvement in era robustness and risk-adjusted returns versus the single-sleeve anchor strategy and SPY, using only OHLCV-derived signals across a multi-era backtest window.\\\",\\\"benchmark\\\":\\\"SPY total return\\\",\\\"anchor_comparison\\\":\\\"Regime-Aware Momentum Frozen Reference Paper v1 (anchor sleeve: AVGO, NVDA, AAPL, LLY, META, COS) — used as secondary benchmark to confirm the expansion adds value.\\\",\\\"windows\\\":[{\\\"label\\\":\\\"full_backtest\\\",\\\"start\\\":\\\"2016-01-04\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"purpose\\\":\\\"Primary evidence window — covers multiple bull, bear, and vol-spike eras\\\"},{\\\"label\\\":\\\"oos_holdout\\\",\\\"start\\\":\\\"2024-01-01\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"purpose\\\":\\\"Out-of-sample holdout — not used for parameter selection\\\"},{\\\"label\\\":\\\"recent_live_overlap\\\",\\\"start\\\":\\\"2025-01-01\\\",\\\"end\\\":\\\"2026-04-30\\\",\\\"purpose\\\":\\\"Overlap with live anchor strategy tape for plumbing and signal parity checks\\\"}],\\\"eras\\\":[{\\\"id\\\":\\\"bull_2016_2018\\\",\\\"start\\\":\\\"2016-01-04\\\",\\\"end\\\":\\\"2018-09-28\\\"},{\\\"id\\\":\\\"vol_spike_2018\\\",\\\"start\\\":\\\"2018-10-01\\\",\\\"end\\\":\\\"2018-12-31\\\"},{\\\"id\\\":\\\"bull_2019\\\",\\\"start\\\":\\\"2019-01-02\\\",\\\"end\\\":\\\"2019-12-31\\\"},{\\\"id\\\":\\\"covid_crash_2020\\\",\\\"start\\\":\\\"2020-02-19\\\",\\\"end\\\":\\\"2020-04-30\\\"},{\\\"id\\\":\\\"recovery_bull_2020_2021\\\",\\\"start\\\":\\\"2020-05-01\\\",\\\"end\\\":\\\"2021-12-31\\\"},{\\\"id\\\":\\\"rate_hike_bear_2022\\\",\\\"start\\\":\\\"2022-01-03\\\",\\\"end\\\":\\\"2022-12-30\\\"},{\\\"id\\\":\\\"recovery_2023\\\",\\\"start\\\":\\\"2023-01-03\\\",\\\"end\\\":\\\"2023-12-29\\\"},{\\\"id\\\":\\\"ai_bull_2024\\\",\\\"start\\\":\\\"2024-01-02\\\",\\\"end\\\":\\\"2024-12-31\\\"},{\\\"id\\\":\\\"tariff_vol_2025\\\",\\\"start\\\":\\\"2025-01-02\\\",\\\"end\\\":\\\"2025-12-31\\\"}],\\\"evidence_thresholds\\\":{\\\"minimum_trade_count\\\":40,\\\"minimum_sharpe\\\":0.6,\\\"minimum_win_rate\\\":0.45,\\\"maximum_drawdown\\\":0.20,\\\"minimum_alpha_vs_spy_annualized\\\":0.03},\\\"verdict_rules\\\":[\\\"PROMOTE if Sharpe >= 0.6, annualized alpha vs SPY >= 3%, max drawdown <= 20%, and trade count >= 40 across the full window\\\",\\\"INVESTIGATE if Sharpe is 0.4–0.6 or alpha is 0–3% — break down by era and sleeve before deciding\\\",\\\"REJECT if Sharpe < 0.4, max drawdown exceeds 20%, or fewer than 40 trades are generated\\\",\\\"SLEEVE_REVIEW if any single sleeve contributes more than 70% of all trades\\\"],\\\"known_limitations\\\":[\\\"COS (Canadian Oil Sands) is in the anchor sleeve but may not have clean Alpaca OHLCV history back to 2016 — flag and substitute if needed.\\\",\\\"Sleeve composition for v1 is hand-curated; a systematic selection algorithm is deferred to v2. Results may reflect selection bias in the proposed sleeves.\\\",\\\"No exotic data dependencies — all signals are OHLCV-derived, so this is a true historical backtest, not a plumbing-only run.\\\",\\\"Weekly rebalance frequency means trade count scales with number of active sleeves and regime conditions; 40-trade floor should be easily met across a 9-year window but verify per-sleeve counts.\\\",\\\"BRK.B ticker in mega_cap_value sleeve — confirm Alpaca OHLCV coverage back to 2016 at implementation time.\\\",\\\"Sweep over 5 parameters (N_sleeves, stop, target, momentum lookback, vol lookback) creates 3x3x3x3x3=243 combinations; recommend a coarse grid first, then refine around promising clusters to limit overfitting risk.\\\"],\\\"first_run_type\\\":\\\"full_historical_backtest\\\",\\\"plumbing_note\\\":\\\"All signals are derivable from alpaca_equity_ohlcv (AVAILABLE, 2016-present). No seeded or current-only data dependencies. The first run is a genuine historical backtest, not a plumbing-only proof run.\\\"}}\", \"assessment_json\":\"{\\\"overall_status\\\":\\\"PASS\\\",\\\"requirements\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"status\\\":\\\"AVAILABLE\\\",\\\"core\\\":true,\\\"notes\\\":\\\"All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline.\\\"}],\\\"gaps\\\":[{\\\"capability_id\\\":\\\"fundamentals_basic\\\",\\\"status\\\":\\\"PARTIAL\\\",\\\"core\\\":false,\\\"notes\\\":\\\"Current-snapshot market cap and ADV are available via Alpaca asset metadata and can be used for initial sleeve construction liquidity checks (ADV > $200M filter). Not point-in-time, so historical sleeve rebalancing based on fundamentals is not supported. Deferred to v2 sleeve-selection algorithm. Not a blocker for v1.\\\"}],\\\"verdict\\\":\\\"PASS — all core signal, entry, and exit logic is derivable from alpaca_equity_ohlcv (AVAILABLE, 2016-present). No exotic data dependencies. The strategy is ready for a full historical backtest across the proposed 2016–2025 window. One non-core gap noted: point-in-time fundamentals for systematic sleeve selection are not available, but v1 uses hand-curated fixed sleeves so this is not a blocker. COS Alpaca coverage should be verified at implementation time.\\\"}\"}",
+    "raw_proposal_json": "{\"spec_version\":\"StrategySpecV1\",\"title\":\"Frozen Six Rotation\",\"sleeve\":\"STOCKS\",\"tags\":[\"momentum\",\"regime-aware\",\"rotation\",\"multi-sleeve\"],\"thesis\":\"Expand upon the live Regime-Aware Momentum Frozen Reference Paper v1 strategy by replicating its core logic across multiple curated groups ('sleeves') of six stocks each. The original sleeve (AVGO, NVDA, AAPL, LLY, META, COS) serves as the anchor template. New sleeves are selected to share the defining characteristics of the anchor group — large-cap, high-liquidity, sector-leading names with strong momentum properties — while diversifying across market regimes. The hypothesis is that different six-stock sleeves will outperform under different macro/regime conditions, improving era robustness and reducing concentration risk relative to the single-sleeve live strategy.\",\"universe\":{\"type\":\"fixed_multi_sleeve\",\"sleeves\":[{\"id\":\"anchor\",\"tickers\":[\"AVGO\",\"NVDA\",\"AAPL\",\"LLY\",\"META\",\"COS\"],\"description\":\"Original live sleeve — anchor template for fidelity checks\"},{\"id\":\"mega_cap_value\",\"tickers\":[\"MSFT\",\"GOOGL\",\"AMZN\",\"BRK.B\",\"JPM\",\"UNH\"],\"description\":\"Mega-cap diversified value/growth — lower beta, defensive rotation candidate\"},{\"id\":\"high_beta_growth\",\"tickers\":[\"TSLA\",\"AMD\",\"MSTR\",\"PLTR\",\"CRWD\",\"SMCI\"],\"description\":\"High-beta growth — expected to outperform in risk-on regimes\"},{\"id\":\"defensive_dividend\",\"tickers\":[\"JNJ\",\"PG\",\"KO\",\"XOM\",\"NEE\",\"VZ\"],\"description\":\"Defensive dividend payers — expected to outperform in risk-off / contraction regimes\"},{\"id\":\"financials_industrials\",\"tickers\":[\"GS\",\"BAC\",\"CAT\",\"HON\",\"DE\",\"RTX\"],\"description\":\"Financials and industrials — cyclical rotation candidate\"}],\"selection_rationale\":\"Each sleeve of six is chosen to be internally coherent: similar liquidity tier (ADV > $200M), same broad regime affinity, and sufficient OHLCV history back to 2016. COS (Canadian Oil Sands) is retained in the anchor sleeve for fidelity but noted as a lower-liquidity outlier; new sleeves use US-listed names only for execution simplicity.\"},\"signal_logic\":{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\",\"inputs\":[\"SPY daily OHLCV\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"momentum_score\":{\"description\":\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\",\"inputs\":[\"daily close prices\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"sleeve_momentum_score\":{\"description\":\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\",\"derived_from\":\"alpaca_equity_ohlcv\"},\"volatility_scaling\":{\"description\":\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\",\"derived_from\":\"alpaca_equity_ohlcv\"}},\"entry_rules\":{\"regime_gate\":\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\",\"sleeve_selection\":\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\",\"position_sizing\":\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\",\"rebalance_frequency\":\"Weekly (every Monday open, or next trading day if holiday).\"},\"exit_rules\":{\"stop_loss\":\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\",\"profit_target\":\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\",\"regime_exit\":\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\",\"momentum_exit\":\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\",\"sleeve_rotation_exit\":\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\"},\"risk_model\":{\"max_single_position_pct\":0.20,\"max_sleeve_exposure_pct\":0.55,\"max_portfolio_drawdown_pct\":0.18,\"bear_regime_cash_floor_pct\":0.50,\"vol_scale_cap\":2.0,\"vol_scale_floor\":0.5},\"sweep_params\":{\"N_sleeves\":[1,2,3],\"stop_pct\":[-0.05,-0.07,-0.10],\"target_pct\":[0.15,0.20,0.25],\"momentum_lookback_days\":[126,189,252],\"vol_lookback_days\":[10,20,40]},\"benchmark\":\"SPY\",\"benchmark_comparison_mode\":\"total_return\",\"era_mode\":\"manual\",\"era_ids\":[\"bull_2016_2018\",\"vol_spike_2018\",\"bull_2019\",\"covid_crash_2020\",\"recovery_bull_2020_2021\",\"rate_hike_bear_2022\",\"recovery_2023\",\"ai_bull_2024\",\"tariff_vol_2025\"],\"required_data\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"core\":true,\"notes\":\"All signals (momentum, vol scaling, regime filter via SPY) are derived from daily OHLCV. Single feed covers all requirements.\"}],\"evidence_thresholds\":{\"minimum_trade_count\":40,\"minimum_sharpe\":0.6,\"minimum_win_rate\":0.45,\"maximum_drawdown\":0.20,\"minimum_alpha_vs_spy_annualized\":0.03},\"acceptance_criteria\":{\"promote_if\":\"Sharpe >= 0.6 AND alpha_vs_SPY >= 3% annualized AND max_drawdown <= 20% AND trade_count >= 40 across full window\",\"investigate_if\":\"Sharpe between 0.4 and 0.6 OR alpha between 0% and 3% — review era breakdown before deciding\",\"reject_if\":\"Sharpe < 0.4 OR max_drawdown > 20% OR trade_count < 40\"},\"decisive_verdict_rules\":[\"PROMOTE if Sharpe >= 0.6, annualized alpha vs SPY >= 3%, max drawdown <= 20%, and trade count >= 40 across the full backtest window\",\"INVESTIGATE if Sharpe is 0.4–0.6 or alpha is 0–3% — break down by era and sleeve before deciding\",\"REJECT if Sharpe < 0.4, max drawdown exceeds 20%, or fewer than 40 trades are generated\",\"SLEEVE_REVIEW if any single sleeve contributes more than 70% of all trades — check for concentration and re-examine sleeve selection criteria\"],\"implementation_notes\":\"This is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve.\",\"promotion_target\":\"paper_trading_then_live\",\"experiment_plan\":{\"objective\":\"Validate that the multi-sleeve rotation logic produces a measurable improvement in era robustness and risk-adjusted returns versus the single-sleeve anchor strategy and SPY, using only OHLCV-derived signals across a multi-era backtest window.\",\"benchmark\":\"SPY total return\",\"anchor_comparison\":\"Regime-Aware Momentum Frozen Reference Paper v1 (anchor sleeve: AVGO, NVDA, AAPL, LLY, META, COS) — used as secondary benchmark to confirm the expansion adds value.\",\"windows\":[{\"label\":\"full_backtest\",\"start\":\"2016-01-04\",\"end\":\"2025-12-31\",\"purpose\":\"Primary evidence window — covers multiple bull, bear, and vol-spike eras\"},{\"label\":\"oos_holdout\",\"start\":\"2024-01-01\",\"end\":\"2025-12-31\",\"purpose\":\"Out-of-sample holdout — not used for parameter selection\"},{\"label\":\"recent_live_overlap\",\"start\":\"2025-01-01\",\"end\":\"2026-04-30\",\"purpose\":\"Overlap with live anchor strategy tape for plumbing and signal parity checks\"}],\"eras\":[{\"id\":\"bull_2016_2018\",\"start\":\"2016-01-04\",\"end\":\"2018-09-28\"},{\"id\":\"vol_spike_2018\",\"start\":\"2018-10-01\",\"end\":\"2018-12-31\"},{\"id\":\"bull_2019\",\"start\":\"2019-01-02\",\"end\":\"2019-12-31\"},{\"id\":\"covid_crash_2020\",\"start\":\"2020-02-19\",\"end\":\"2020-04-30\"},{\"id\":\"recovery_bull_2020_2021\",\"start\":\"2020-05-01\",\"end\":\"2021-12-31\"},{\"id\":\"rate_hike_bear_2022\",\"start\":\"2022-01-03\",\"end\":\"2022-12-30\"},{\"id\":\"recovery_2023\",\"start\":\"2023-01-03\",\"end\":\"2023-12-29\"},{\"id\":\"ai_bull_2024\",\"start\":\"2024-01-02\",\"end\":\"2024-12-31\"},{\"id\":\"tariff_vol_2025\",\"start\":\"2025-01-02\",\"end\":\"2025-12-31\"}],\"evidence_thresholds\":{\"minimum_trade_count\":40,\"minimum_sharpe\":0.6,\"minimum_win_rate\":0.45,\"maximum_drawdown\":0.20,\"minimum_alpha_vs_spy_annualized\":0.03},\"verdict_rules\":[\"PROMOTE if Sharpe >= 0.6, annualized alpha vs SPY >= 3%, max drawdown <= 20%, and trade count >= 40 across the full window\",\"INVESTIGATE if Sharpe is 0.4–0.6 or alpha is 0–3% — break down by era and sleeve before deciding\",\"REJECT if Sharpe < 0.4, max drawdown exceeds 20%, or fewer than 40 trades are generated\",\"SLEEVE_REVIEW if any single sleeve contributes more than 70% of all trades\"],\"known_limitations\":[\"COS (Canadian Oil Sands) is in the anchor sleeve but may not have clean Alpaca OHLCV history back to 2016 — flag and substitute if needed.\",\"Sleeve composition for v1 is hand-curated; a systematic selection algorithm is deferred to v2. Results may reflect selection bias in the proposed sleeves.\",\"No exotic data dependencies — all signals are OHLCV-derived, so this is a true historical backtest, not a plumbing-only run.\",\"Weekly rebalance frequency means trade count scales with number of active sleeves and regime conditions; 40-trade floor should be easily met across a 9-year window but verify per-sleeve counts.\",\"BRK.B ticker in mega_cap_value sleeve — confirm Alpaca OHLCV coverage back to 2016 at implementation time.\",\"Sweep over 5 parameters (N_sleeves, stop, target, momentum lookback, vol lookback) creates 3x3x3x3x3=243 combinations; recommend a coarse grid first, then refine around promising clusters to limit overfitting risk.\"],\"first_run_type\":\"full_historical_backtest\",\"plumbing_note\":\"All signals are derivable from alpaca_equity_ohlcv (AVAILABLE, 2016-present). No seeded or current-only data dependencies. The first run is a genuine historical backtest, not a plumbing-only proof run.\"}}",
+    "raw_assessment_json": "{\"overall_status\":\"PASS\",\"requirements\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"status\":\"AVAILABLE\",\"core\":true,\"notes\":\"All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline.\"}],\"gaps\":[{\"capability_id\":\"fundamentals_basic\",\"status\":\"PARTIAL\",\"core\":false,\"notes\":\"Current-snapshot market cap and ADV are available via Alpaca asset metadata and can be used for initial sleeve construction liquidity checks (ADV > $200M filter). Not point-in-time, so historical sleeve rebalancing based on fundamentals is not supported. Deferred to v2 sleeve-selection algorithm. Not a blocker for v1.\"}],\"verdict\":\"PASS — all core signal, entry, and exit logic is derivable from alpaca_equity_ohlcv (AVAILABLE, 2016-present). No exotic data dependencies. The strategy is ready for a full historical backtest across the proposed 2016–2025 window. One non-core gap noted: point-in-time fundamentals for systematic sleeve selection are not available, but v1 uses hand-curated fixed sleeves so this is not a blocker. COS Alpaca coverage should be verified at implementation time.\"}",
+    "raw_proposal": {
+      "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the anchor strategy. Compute SPY 50-day SMA and 200-day SMA. Bull regime: SPY close > SPY 50d SMA > SPY 200d SMA. Bear regime: SPY close < SPY 50d SMA. Neutral: otherwise.\",\"inputs\":[\"SPY daily OHLCV\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"momentum_score\":{\"description\":\"For each stock in each sleeve, compute 12-1 month momentum (252-day trailing return minus most recent 21-day return, i.e. skip-month momentum). Rank stocks within each sleeve by momentum score.\",\"inputs\":[\"daily close prices\"],\"derived_from\":\"alpaca_equity_ohlcv\"},\"sleeve_momentum_score\":{\"description\":\"Aggregate sleeve-level momentum as the equal-weighted average of the top-3 momentum scores within the sleeve. Use this to rank sleeves against each other for capital allocation.\",\"derived_from\":\"alpaca_equity_ohlcv\"},\"volatility_scaling\":{\"description\":\"Compute 20-day realized volatility per stock. Scale position size inversely proportional to realized vol, capped at 2x and floored at 0.5x the equal-weight baseline.\",\"derived_from\":\"alpaca_equity_ohlcv\"}}",
+      "entry_rules": "{\"regime_gate\":\"Only enter new positions when SPY regime is Bull or Neutral. In Bear regime, hold cash or existing positions with tightened stops; do not open new longs.\",\"sleeve_selection\":\"At each weekly rebalance, rank all sleeves by sleeve_momentum_score. Allocate capital to the top-N sleeves (default N=2 for initial test; sweep N=1,2,3). Within each selected sleeve, go long the top-3 momentum-ranked stocks.\",\"position_sizing\":\"Equal-weight capital across selected sleeves, then vol-scale within each sleeve. Total portfolio exposure capped at 100% long (no leverage in v1).\",\"rebalance_frequency\":\"Weekly (every Monday open, or next trading day if holiday).\"}",
+      "exit_rules": "{\"stop_loss\":\"Per-position stop at -7% from entry price (sweep: -5%, -7%, -10%).\",\"profit_target\":\"Per-position target at +20% from entry price (sweep: +15%, +20%, +25%).\",\"regime_exit\":\"If SPY regime flips to Bear, reduce all positions to 50% within one session; full exit if Bear persists for 3 consecutive sessions.\",\"momentum_exit\":\"At weekly rebalance, exit any position whose stock has dropped out of the top-3 momentum rank within its sleeve and replace with the new top-3.\",\"sleeve_rotation_exit\":\"At weekly rebalance, exit all positions in a sleeve that has dropped out of the top-N selection.\"}",
+      "risk_model": "{\"max_single_position_pct\":0.2,\"max_sleeve_exposure_pct\":0.55,\"max_portfolio_drawdown_pct\":0.18,\"bear_regime_cash_floor_pct\":0.5,\"vol_scale_cap\":2,\"vol_scale_floor\":0.5}",
+      "universe": "{\"type\":\"fixed_multi_sleeve\",\"sleeves\":[{\"id\":\"anchor\",\"tickers\":[\"AVGO\",\"NVDA\",\"AAPL\",\"LLY\",\"META\",\"COS\"],\"description\":\"Original live sleeve — anchor template for fidelity checks\"},{\"id\":\"mega_cap_value\",\"tickers\":[\"MSFT\",\"GOOGL\",\"AMZN\",\"BRK.B\",\"JPM\",\"UNH\"],\"description\":\"Mega-cap diversified value/growth — lower beta, defensive rotation candidate\"},{\"id\":\"high_beta_growth\",\"tickers\":[\"TSLA\",\"AMD\",\"MSTR\",\"PLTR\",\"CRWD\",\"SMCI\"],\"description\":\"High-beta growth — expected to outperform in risk-on regimes\"},{\"id\":\"defensive_dividend\",\"tickers\":[\"JNJ\",\"PG\",\"KO\",\"XOM\",\"NEE\",\"VZ\"],\"description\":\"Defensive dividend payers — expected to outperform in risk-off / contraction regimes\"},{\"id\":\"financials_industrials\",\"tickers\":[\"GS\",\"BAC\",\"CAT\",\"HON\",\"DE\",\"RTX\"],\"description\":\"Financials and industrials — cyclical rotation candidate\"}],\"selection_rationale\":\"Each sleeve of six is chosen to be internally coherent: similar liquidity tier (ADV > $200M), same broad regime affinity, and sufficient OHLCV history back to 2016. COS (Canadian Oil Sands) is retained in the anchor sleeve for fidelity but noted as a lower-liquidity outlier; new sleeves use US-listed names only for execution simplicity.\"}",
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "experiment_plan": {
+        "benchmark": {
+          "symbol": "SPY total return",
+          "comparison_mode": "both"
+        },
+        "windows": {
+          "requested_start": "2026-02-01",
+          "requested_end": "2026-05-02",
+          "fresh_data_required_from": null
+        },
+        "runnable_eras": [
+          {
+            "era_id": "recent_default",
+            "label": "Recent default window",
+            "date_range": {
+              "start": "2026-02-01",
+              "end": "2026-05-02"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": "Talon did not specify runnable eras; server supplied a recent default window for review."
+          }
+        ],
+        "eras": {
+          "mode": "single",
+          "required_era_ids": [
+            "recent_default"
+          ]
+        },
+        "evidence_thresholds": {
+          "minimum_trade_count": 40,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "known_limitations": [
+          "COS (Canadian Oil Sands) is in the anchor sleeve but may not have clean Alpaca OHLCV history back to 2016 — flag and substitute if needed.",
+          "Sleeve composition for v1 is hand-curated; a systematic selection algorithm is deferred to v2. Results may reflect selection bias in the proposed sleeves.",
+          "No exotic data dependencies — all signals are OHLCV-derived, so this is a true historical backtest, not a plumbing-only run.",
+          "Weekly rebalance frequency means trade count scales with number of active sleeves and regime conditions; 40-trade floor should be easily met across a 9-year window but verify per-sleeve counts.",
+          "BRK.B ticker in mega_cap_value sleeve — confirm Alpaca OHLCV coverage back to 2016 at implementation time.",
+          "Sweep over 5 parameters (N_sleeves, stop, target, momentum lookback, vol lookback) creates 3x3x3x3x3=243 combinations; recommend a coarse grid first, then refine around promising clusters to limit overfitting risk."
+        ]
+      },
+      "benchmark": "SPY",
+      "acceptance_criteria": {
+        "min_sharpe": 1,
+        "max_drawdown_pct": 20,
+        "min_hit_rate_pct": 45,
+        "other": null
+      },
+      "sweep_params": "{\"N_sleeves\":[1,2,3],\"stop_pct\":[-0.05,-0.07,-0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[126,189,252],\"vol_lookback_days\":[10,20,40]}",
+      "implementation_notes": "This is a v1 multi-sleeve expansion of the anchor Regime-Aware Momentum strategy. COS is a Canadian-listed name and may require a separate data pull or FX adjustment; flag at implementation time. Sleeve composition should be reviewed quarterly and a formal sleeve-selection algorithm (e.g., factor-screen on momentum quality, liquidity, and regime beta) is deferred to v2. The sweep over N_sleeves, stop, target, and lookback parameters should be run before any live promotion to avoid overfitting to the anchor sleeve."
+    },
+    "raw_assessment": {
+      "verdict": "WARN",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "core": true,
+          "status": "AVAILABLE",
+          "matched_capability": "alpaca_equity_ohlcv",
+          "notes": "All signals required by this strategy — daily close prices for momentum scoring (12-1 month skip-month momentum), 20-day realized volatility, SPY regime filter (50d/200d SMA), and volume for liquidity checks — are derivable from this single OHLCV feed. Coverage from 2016-present covers the full proposed backtest window. Wired into the Lab pipeline."
+        }
+      ],
+      "blocking_summary": null,
+      "suggested_action": null,
+      "warnings": []
+    }
+  }
+}
