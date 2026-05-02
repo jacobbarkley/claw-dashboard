@@ -38,6 +38,7 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
   const [applying, setApplying] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pollRetryNonce, setPollRetryNonce] = useState(0)
   const startedRef = useRef(false)
 
   const startJob = useCallback(async () => {
@@ -94,10 +95,11 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
         setJob(payload.job)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Builder polling failed")
+        setPollRetryNonce(n => n + 1)
       }
     }, POLL_INTERVAL_MS)
     return () => window.clearTimeout(handle)
-  }, [job])
+  }, [job, pollRetryNonce])
 
   const onCancel = async () => {
     if (!job || TERMINAL_STATES.has(job.state) || cancelling) return
@@ -280,6 +282,10 @@ function BuilderJobBody({
   onCancel: () => void
   onRetry: () => void
 }) {
+  if (job.builder_state?.input_state === "AWAITING_CLARIFICATION") {
+    return <BuilderClarificationCard job={job} />
+  }
+
   switch (job.state) {
     case "QUEUED":
       return (
@@ -332,9 +338,6 @@ function BuilderJobBody({
       return <BuilderFailedCard job={job} onRetry={onRetry} />
     case "CANCELLED":
       return <BuilderCancelledCard onRetry={onRetry} />
-  }
-  if (job.builder_state?.input_state === "AWAITING_CLARIFICATION") {
-    return <BuilderClarificationCard job={job} />
   }
   return null
 }
