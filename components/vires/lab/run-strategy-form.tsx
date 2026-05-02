@@ -235,9 +235,9 @@ export function RunStrategyForm({
       if (!reqRes.ok || !reqPayload.ok) {
         setSubmitState("error")
         setResponse(reqPayload)
+        const detail = reqPayload.error ?? `HTTP ${reqRes.status}`
         setErrorMessage(
-          reqPayload.error ??
-            `Idea created (${ideaId}), but campaign request failed (HTTP ${reqRes.status}). The orphan idea can be deleted from the ideas list.`,
+          `Idea created (${ideaId}), but campaign request failed (${detail}). The orphan idea can be deleted from the ideas list.`,
         )
         return
       }
