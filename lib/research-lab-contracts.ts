@@ -33,7 +33,11 @@ export type IdeaSource = "CONVERSATION" | "MANUAL" | "IMPORTED"
 
 export type StrategyRefKind = "NONE" | "SPEC_PENDING" | "REGISTERED"
 
-export type SpecAuthoringMode = "AI_DRAFTED" | "OPERATOR_DRAFTED"
+export type SpecAuthoringMode =
+  | "AI_DRAFTED"
+  | "OPERATOR_DRAFTED"
+  | "MANUAL"
+  | "AI_ASSISTED"
 
 export type StrategySpecState =
   | "DRAFTING"
@@ -79,6 +83,33 @@ export type TalonDraftJobErrorCode =
   | "DATA_CATALOG_MISSING"
   | "WORKER_TIMEOUT"
   | "INTERNAL_ERROR"
+
+export type BuilderMode = "beginner" | "intermediate" | "advanced"
+
+export type BuilderInputState =
+  | "DRAFT_INCOMPLETE"
+  | "DRAFT_READY_TO_SUBMIT"
+  | "AWAITING_CLARIFICATION"
+  | "PROPOSAL_READY"
+  | "PROPOSAL_APPLIED"
+
+export type BuilderFieldSource =
+  | "operator"
+  | "talon"
+  | "default"
+  | "validator"
+  | "reference"
+  | "imported"
+
+export type BuilderClarificationState =
+  | "OPEN"
+  | "ANSWERED"
+  | "SUPERSEDED"
+
+export type AuthoringMode =
+  | "MANUAL"
+  | "AI_ASSISTED"
+  | "AI_DRAFTED"
 
 // Phase 1a/1b allowed job states. CANCELLED is reserved but not exercised
 // until Phase 1c.
@@ -403,6 +434,72 @@ export interface TalonDraftJobAssessment {
   suggested_action?: string
 }
 
+export interface BuilderFieldMeta {
+  source: BuilderFieldSource
+  locked: boolean
+  visible_in_modes: BuilderMode[]
+  updated_at: string
+  updated_by?: string | null
+  talon_event_id?: string | null
+  operator_confirmed?: boolean
+}
+
+export interface BuilderValidationIssue {
+  field_id: string
+  severity: ExperimentPlanIssueSeverity
+  code: string
+  message: string
+  suggested_action?: string | null
+}
+
+export interface BuilderClarification {
+  question_id: string
+  question_text: string
+  field_hint: string
+  state: BuilderClarificationState
+  asked_at: string
+  answered_at?: string | null
+  answer_text?: string | null
+}
+
+export interface BuilderStateV1 {
+  schema_version: "research_lab.builder_state.v1"
+  mode: BuilderMode
+  input_state: BuilderInputState
+  created_at: string
+  updated_at: string
+  fields: {
+    title: string
+    thesis: string
+    sleeve: ResearchSleeve
+    reference_strategies?: ReferenceStrategy[] | null
+    tags?: string[] | null
+    universe?: Record<string, unknown> | null
+    stop_pct?: number | null
+    target_pct?: number | null
+    benchmark?: string | null
+    benchmark_comparison_mode?: BenchmarkComparisonMode | null
+    era_mode?: ExperimentEraMode | null
+    era_ids?: string[] | null
+    signal_logic?: string | null
+    entry_rules?: string | null
+    exit_rules?: string | null
+    risk_model?: Record<string, unknown> | null
+    sweep_params?: Record<string, unknown> | null
+    required_data?: string[] | null
+    evidence_thresholds?: ExperimentPlanEvidenceThresholds | null
+    decisive_verdict_rules?: ExperimentPlanDecisiveVerdictRules | null
+    implementation_notes?: string | null
+    promotion_target?: IdeaPromotionTarget | null
+  }
+  field_meta: Record<string, BuilderFieldMeta>
+  validation_issues: BuilderValidationIssue[]
+  open_questions: BuilderClarification[]
+  current_draft?: StrategySpecV1 | null
+  current_assessment?: TalonDraftJobAssessment | null
+  current_authoring_mode?: AuthoringMode | null
+}
+
 export interface TalonDraftJobV1 extends ScopeTriple {
   schema_version: "research_lab.talon_draft_job.v1"
   job_id: string
@@ -422,6 +519,11 @@ export interface TalonDraftJobV1 extends ScopeTriple {
   cancelled_by?: string | null
   cancelled_at?: string | null
   model_calls?: TalonDraftJobModelCall[]
+  /**
+   * Unified Spec Builder input/proposal state. Optional during the bridge
+   * period while older durable draft jobs still operate from raw idea context.
+   */
+  builder_state?: BuilderStateV1 | null
 }
 
 /** In-memory adapter shape used while v1 YAML and v2 YAML coexist. */
