@@ -1,0 +1,380 @@
+{
+  "schema_version": "research_lab.talon_draft_job_record.v1",
+  "recorded_at": "2026-05-02T20:09:19.430Z",
+  "job": {
+    "schema_version": "research_lab.talon_draft_job.v1",
+    "job_id": "talon_01KQN4SV1K8VA2C7VPBT8VA2C7",
+    "idea_id": "idea_01KQN4RX2HS8SFZWSGA9S8SFZW",
+    "user_id": "jacob",
+    "account_id": "paper_main",
+    "strategy_group_id": "default",
+    "created_at": "2026-05-02T20:06:42.994Z",
+    "updated_at": "2026-05-02T20:09:19.430Z",
+    "state": "FAILED",
+    "current_step": null,
+    "steps_completed": [
+      "load_context",
+      "draft_strategy_core",
+      "repair",
+      "data_readiness",
+      "validate_schema"
+    ],
+    "repair_attempts": 2,
+    "intent_message": null,
+    "proposal": null,
+    "assessment": null,
+    "validity_issues": [
+      {
+        "field_id": "windows.requested_start",
+        "severity": "error",
+        "message": "Requested start must be an ISO date."
+      },
+      {
+        "field_id": "windows.requested_end",
+        "severity": "error",
+        "message": "Requested end must be an ISO date."
+      },
+      {
+        "field_id": "decisive_verdict_rules.pass",
+        "severity": "error",
+        "message": "Pass rule is required."
+      },
+      {
+        "field_id": "decisive_verdict_rules.inconclusive",
+        "severity": "error",
+        "message": "Inconclusive rule is required."
+      },
+      {
+        "field_id": "decisive_verdict_rules.fail",
+        "severity": "error",
+        "message": "Fail rule is required."
+      }
+    ],
+    "error": "Experiment plan is not valid: windows.requested_start: Requested start must be an ISO date.; windows.requested_end: Requested end must be an ISO date.; decisive_verdict_rules.pass: Pass rule is required.; decisive_verdict_rules.inconclusive: Inconclusive rule is required.; decisive_verdict_rules.fail: Fail rule is required.",
+    "error_code": "VALIDATION_EXHAUSTED",
+    "model_calls": [
+      {
+        "step": "repair",
+        "attempt": 2,
+        "model": "claude-sonnet-4-6",
+        "latency_ms": 44631,
+        "tokens_in": 5386,
+        "tokens_out": 2495,
+        "finish_reason": "stop"
+      }
+    ],
+    "builder_state": {
+      "schema_version": "research_lab.builder_state.v1",
+      "mode": "intermediate",
+      "input_state": "DRAFT_READY_TO_SUBMIT",
+      "created_at": "2026-05-02T20:06:42.994Z",
+      "updated_at": "2026-05-02T20:06:42.994Z",
+      "fields": {
+        "title": "SPY-gated large-cap momo, 6-name sleeve",
+        "thesis": "Within a SPY uptrend, large-cap names showing 20d momentum + clean breakouts hold for 5–15 days. Tighten on regime flip.",
+        "sleeve": "STOCKS",
+        "reference_strategies": [],
+        "tags": [],
+        "universe": null,
+        "stop_pct": null,
+        "target_pct": null,
+        "benchmark": null,
+        "benchmark_comparison_mode": null,
+        "era_mode": null,
+        "era_ids": [],
+        "signal_logic": null,
+        "entry_rules": null,
+        "exit_rules": null,
+        "risk_model": null,
+        "sweep_params": null,
+        "required_data": [],
+        "evidence_thresholds": null,
+        "decisive_verdict_rules": null,
+        "implementation_notes": null,
+        "promotion_target": null
+      },
+      "field_meta": {
+        "title": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "thesis": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "sleeve": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "reference_strategies": {
+          "source": "reference",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "tags": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "universe": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "stop_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "target_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark_comparison_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_ids": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "signal_logic": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "entry_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "exit_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "risk_model": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "sweep_params": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "required_data": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "evidence_thresholds": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "decisive_verdict_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "implementation_notes": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "promotion_target": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-02T20:06:42.994Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        }
+      },
+      "validation_issues": [],
+      "open_questions": [],
+      "current_draft": null,
+      "current_assessment": null,
+      "current_authoring_mode": null
+    }
+  }
+}
