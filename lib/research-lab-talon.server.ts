@@ -104,19 +104,22 @@ const proposalStrict = z.object({
   implementation_notes: optionalTextFromDescriptionSchema,
 })
 
-const assessmentStrict = z.object({
+const assessmentStrict = z.preprocess(normalizeAssessmentInput, z.object({
   verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
   requirements: z.array(z.object({
-    requested: z.string().min(1),
+    requested: textFromDescriptionSchema.pipe(z.string().min(1)),
     core: z.boolean().optional().nullable(),
-    status: requirementStatusSchema.optional().nullable(),
-    matched_capability: z.string().optional().nullable(),
-    notes: z.string().optional().nullable(),
+    status: z.preprocess(
+      value => stringEnumOrDefault(value, ["AVAILABLE", "PARTIAL", "MISSING"], "MISSING"),
+      requirementStatusSchema.optional().nullable(),
+    ),
+    matched_capability: optionalTextFromDescriptionSchema,
+    notes: optionalTextFromDescriptionSchema,
   })).min(1),
-  blocking_summary: z.string().optional().nullable(),
-  suggested_action: z.string().optional().nullable(),
-  warnings: z.array(z.string()).optional().default([]),
-})
+  blocking_summary: optionalTextFromDescriptionSchema,
+  suggested_action: optionalTextFromDescriptionSchema,
+  warnings: z.preprocess(value => stringArrayFromUnknown(value), z.array(z.string()).optional().default([])),
+}))
 
 // Draft endpoint produces JSON strings on every call. Keeping the provider
 // grammar this small avoids Anthropic's compiled-grammar ceiling while our
@@ -566,6 +569,34 @@ function normalizeVerdictRules(input: unknown): Record<string, unknown> {
   }
 }
 
+function normalizeAssessmentInput(input: unknown): Record<string, unknown> {
+  const raw = recordFromUnknown(input)
+  return {
+    verdict: stringEnumOrDefault(raw.verdict, ["PASS", "WARN", "BLOCKED"], "WARN"),
+    requirements: arrayFromUnknown(raw.requirements ?? raw.data_requirements).map(item => {
+      const requirement = recordFromUnknown(item)
+      return {
+        requested:
+          requirement.requested ??
+          requirement.requirement ??
+          requirement.name ??
+          requirement.capability ??
+          requirement.matched_capability,
+        core: booleanOrNull(requirement.core),
+        status: requirement.status,
+        matched_capability:
+          requirement.matched_capability ??
+          requirement.capability_id ??
+          requirement.source,
+        notes: requirement.notes ?? requirement.reason ?? requirement.purpose,
+      }
+    }),
+    blocking_summary: raw.blocking_summary,
+    suggested_action: raw.suggested_action,
+    warnings: raw.warnings,
+  }
+}
+
 function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>, fieldName: string): T {
   if (typeof raw !== "string" || !raw.trim()) {
     throw new Error(`${fieldName} must be a non-empty JSON string`)
@@ -585,7 +616,7 @@ function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>,
       .slice(0, 6)
       .map(issue => `${issue.path.join(".") || fieldName}: ${issue.message}`)
       .join("; ")
-    throw new Error(`${fieldName} did not match Talon's expected proposal shape: ${issues}`)
+    throw new Error(`${fieldName} did not match Talon's expected JSON shape: ${issues}`)
   }
   return result.data
 }
@@ -601,7 +632,15 @@ function descriptionStringFromUnknown(value: unknown): string {
       raw.text ??
       raw.value ??
       raw.symbol ??
-      raw.benchmark
+      raw.benchmark ??
+      raw.name ??
+      raw.requested ??
+      raw.requirement ??
+      raw.capability ??
+      raw.capability_id ??
+      raw.matched_capability ??
+      raw.display_name ??
+      raw.category
     if (typeof description === "string") return description.trim()
     if (typeof description === "number" && Number.isFinite(description)) return String(description)
     const serialized = JSON.stringify(raw)
@@ -641,6 +680,16 @@ function nullableStringFromUnknown(input: unknown): string | null {
   return value || null
 }
 
+function booleanOrNull(input: unknown): boolean | null {
+  if (typeof input === "boolean") return input
+  if (typeof input === "string") {
+    const normalized = input.trim().toLowerCase()
+    if (normalized === "true" || normalized === "yes" || normalized === "1") return true
+    if (normalized === "false" || normalized === "no" || normalized === "0") return false
+  }
+  return null
+}
+
 function numberFromUnknown(input: unknown, fallback: number): number {
   const value = typeof input === "number" ? input : Number(input)
   return Number.isFinite(value) ? value : fallback
@@ -652,7 +701,8 @@ function stringEnumOrDefault<T extends string>(
   fallback: T,
 ): T {
   const value = typeof input === "string" ? input.trim() : ""
-  return allowed.includes(value as T) ? value as T : fallback
+  const match = allowed.find(option => option.toLowerCase() === value.toLowerCase())
+  return match ?? fallback
 }
 
 function dedupeStrings(values: string[]): string[] {
