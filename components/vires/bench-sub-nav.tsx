@@ -8,6 +8,9 @@
 // Sub-nav hides in nested views (passport, run) so the back affordance on
 // those pages doesn't compete with a tab bar.
 //
+// When the lab redesign flag is on, the `Lab` tab drops out — Lab is
+// reached via the portal banner under the bench hero, not a tab.
+//
 // Route truth > localStorage. The URL IS the active-tab state, so reload /
 // share / deep-link all behave naturally.
 
@@ -16,7 +19,7 @@ import { usePathname } from "next/navigation"
 
 type TabKey = "home" | "campaigns" | "lab"
 
-const TABS: Array<{ href: string; key: TabKey; label: string }> = [
+const ALL_TABS: Array<{ href: string; key: TabKey; label: string }> = [
   { href: "/vires/bench",           key: "home",      label: "Home"      },
   { href: "/vires/bench/campaigns", key: "campaigns", label: "Campaigns" },
   { href: "/vires/bench/lab",       key: "lab",       label: "Lab"       },
@@ -35,10 +38,15 @@ function resolveActive(pathname: string): TabKey | null {
   return null
 }
 
-export function ViresBenchSubNav() {
+export function ViresBenchSubNav({ labRedesign = false }: { labRedesign?: boolean }) {
   const pathname = usePathname() ?? "/vires/bench"
   const active = resolveActive(pathname)
   if (!active) return null
+
+  // When the redesign is on, the Lab tab is dropped — Lab opens via the
+  // portal banner. Active=lab still resolves so deep-links into /lab keep
+  // the sub-nav rendered with the parent Home/Campaigns tabs visible.
+  const tabs = labRedesign ? ALL_TABS.filter(t => t.key !== "lab") : ALL_TABS
 
   return (
     <div
@@ -50,7 +58,7 @@ export function ViresBenchSubNav() {
         gap: 6,
       }}
     >
-      {TABS.map(t => {
+      {tabs.map(t => {
         const isActive = active === t.key
         return (
           <Link
