@@ -1,0 +1,31 @@
+schema_version: research_lab.idea.v2
+idea_id: idea_01KQN7X6F0D2PSB0TYHRD2PSB0
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+title: Frozen Six Rotation
+thesis: >-
+  The thesis is to expand upon the currently deployed live autonomous strategy for stocks: 
+  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with
+  flexibility in mind for continuous improvements, but with the addition of many different groups of
+  6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different
+  sleeves. We need to keep in mind what this original group has in common to maintain fidelity
+  between the 6 chosen stocks but this can increase our era robustness as certain groups may perform
+  better under different market regimes. We will need to expand further on how to select stocks for
+  the new groups but I’m curious to see what talon can produce from the beginning.
+sleeve: STOCKS
+tags:
+  - momentum
+params: {}
+reference_strategies: []
+strategy_ref:
+  kind: NONE
+  active_spec_id: null
+  pending_spec_id: null
+  strategy_id: null
+  preset_id: null
+status: DRAFT
+needs_spec: true
+created_at: '2026-05-02T21:00:58.720Z'
+created_by: jacob
+source: MANUAL
