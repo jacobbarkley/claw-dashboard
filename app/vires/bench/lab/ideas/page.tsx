@@ -3,7 +3,11 @@ import Link from "next/link"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
 import { LabSleeveFilter } from "@/components/vires/lab/lab-sleeve-filter"
+import { LabIdeasRedesigned, type IdeaCard } from "@/components/vires/lab/lab-ideas-redesigned"
+import { labRedesignEnabled } from "@/lib/feature-flags.server"
 import { loadIdeas } from "@/lib/research-lab-ideas.server"
+import { deriveIdeaStage } from "@/lib/research-lab-stage"
+import { loadCampaignsIndex } from "@/lib/vires-campaigns.server"
 
 export const metadata = {
   title: "Vires Capital — Lab · Ideas",
@@ -33,8 +37,38 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default async function ViresLabIdeasPage() {
   const ideas = await loadIdeas()
-  // Newest first
   ideas.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+
+  if (labRedesignEnabled()) {
+    const campaignsIndex = await loadCampaignsIndex()
+    const labCampaignIds = new Set(
+      (campaignsIndex?.registry?.campaigns ?? [])
+        .map(c => c.campaign_id)
+        .filter((id): id is string => typeof id === "string" && id.startsWith("lab_")),
+    )
+    const cards: IdeaCard[] = ideas
+      .filter(i => i.status !== "RETIRED")
+      .map(idea => ({
+        idea_id: idea.idea_id,
+        title: idea.title,
+        thesis: idea.thesis,
+        sleeve: idea.sleeve,
+        status: idea.status,
+        strategy_id: idea.strategy_id,
+        code_pending: idea.code_pending === true,
+        created_at: idea.created_at ?? null,
+        stage: deriveIdeaStage(idea, {
+          hasCampaign: labCampaignIds.has(`lab_${idea.idea_id}`),
+        }),
+      }))
+    return (
+      <>
+        <LabSubNav redesign />
+        <LabSleeveFilter />
+        <LabIdeasRedesigned ideas={cards} />
+      </>
+    )
+  }
 
   return (
     <>

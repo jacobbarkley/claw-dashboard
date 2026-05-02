@@ -5,20 +5,31 @@ import { usePathname } from "next/navigation"
 
 // Sub-navigation inside /vires/bench/lab. Mirrors the Bench sub-nav pattern so
 // the visual rhythm stays consistent.
+//
+// `redesign` flips the tab set + label casing to the 2026-04-22 lab redesign:
+// `Desk | Ideas | Jobs` (Reports retired, folded into Desk's Recently Landed
+// rail). Off by default so the legacy chrome keeps working until the flag.
 
-const TABS: Array<{ href: string; label: string }> = [
+const LEGACY_TABS: Array<{ href: string; label: string }> = [
   { href: "/vires/bench/lab",         label: "home"    },
   { href: "/vires/bench/lab/ideas",   label: "ideas"   },
   { href: "/vires/bench/lab/jobs",    label: "jobs"    },
   { href: "/vires/bench/lab/reports", label: "reports" },
 ]
 
-export function LabSubNav() {
+const REDESIGN_TABS: Array<{ href: string; label: string }> = [
+  { href: "/vires/bench/lab",       label: "Desk"   },
+  { href: "/vires/bench/lab/ideas", label: "Ideas"  },
+  { href: "/vires/bench/lab/jobs",  label: "Jobs"   },
+]
+
+export function LabSubNav({ redesign = false }: { redesign?: boolean }) {
   const pathname = usePathname() ?? "/vires/bench/lab"
+  const tabs = redesign ? REDESIGN_TABS : LEGACY_TABS
   const activeHref =
     pathname === "/vires/bench/lab"
       ? "/vires/bench/lab"
-      : TABS.find(t => t.href !== "/vires/bench/lab" && pathname.startsWith(t.href))?.href ?? "/vires/bench/lab"
+      : tabs.find(t => t.href !== "/vires/bench/lab" && pathname.startsWith(t.href))?.href ?? "/vires/bench/lab"
 
   return (
     <div
@@ -34,7 +45,7 @@ export function LabSubNav() {
         borderRadius: 3,
       }}
     >
-      {TABS.map(t => {
+      {tabs.map(t => {
         const active = activeHref === t.href
         return (
           <Link

@@ -2,7 +2,10 @@ import Link from "next/link"
 
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell } from "@/components/vires/lab/phase-zero-shell"
+import { LabSleeveFilter } from "@/components/vires/lab/lab-sleeve-filter"
+import { LabDeskClient } from "@/components/vires/lab/lab-desk-client"
 import { JobsLiveSummary } from "@/components/vires/lab/jobs-live-summary"
+import { labRedesignEnabled } from "@/lib/feature-flags.server"
 
 export const metadata = {
   title: "Vires Capital — Lab",
@@ -17,6 +20,16 @@ const ENTRY_POINT_LINK_STYLE: React.CSSProperties = {
 }
 
 export default function ViresLabHomePage() {
+  if (labRedesignEnabled()) {
+    return (
+      <>
+        <LabSubNav redesign />
+        <LabSleeveFilter />
+        <LabDeskClient />
+      </>
+    )
+  }
+
   return (
     <>
       <LabSubNav />
