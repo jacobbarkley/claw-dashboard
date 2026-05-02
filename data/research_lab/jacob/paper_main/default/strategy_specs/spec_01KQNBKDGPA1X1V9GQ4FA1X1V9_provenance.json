@@ -1,0 +1,491 @@
+{
+  "schema_version": "research_lab.spec_provenance.v1",
+  "spec_id": "spec_01KQNBKDGPA1X1V9GQ4FA1X1V9",
+  "generated_at": "2026-05-02T22:16:18.524Z",
+  "applied_at": "2026-05-02T22:16:18.524Z",
+  "applied_by": "jacob",
+  "talon_job_id": "talon_01KQNBFDY1FK5Q5JJ4G3FK5Q5J",
+  "data_readiness": {
+    "verdict": "WARN",
+    "catalog_version": "2026-04-30.2",
+    "requirements": [
+      {
+        "requested": "alpaca_equity_ohlcv",
+        "status": "AVAILABLE",
+        "source": "alpaca_equity_ohlcv",
+        "notes": "All signals (momentum, volume confirmation, regime filter via SPY SMA) are derivable from daily OHLCV bars. Coverage from 2016-present covers both the primary (2022-2025) and secondary (2020-2021) backtest windows. All proposed tickers are standard US large-caps available on Alpaca. COS requires operator verification — if it is a TSX-listed ticker it will not be available on Alpaca and should be substituted."
+      }
+    ],
+    "warnings": [
+      "COS in the original sleeve may refer to a TSX-listed ticker (Canadian Oil Sands or similar). Operator should confirm Alpaca availability before job submission. If unavailable, substitute with a US-listed equivalent (e.g., CVX or XOM, though those appear in the energy sleeve).",
+      "Sleeve composition is static in v1. Dynamic sleeve selection from a broader screened universe is deferred to v2 and is not a data blocker for this spec."
+    ]
+  },
+  "builder_state": {
+    "schema_version": "research_lab.builder_state.v1",
+    "mode": "beginner",
+    "input_state": "PROPOSAL_APPLIED",
+    "created_at": "2026-05-02T22:03:21.920Z",
+    "updated_at": "2026-05-02T22:16:18.524Z",
+    "fields": {
+      "title": "Frozen Six Rotation",
+      "thesis": "The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.",
+      "sleeve": "STOCKS",
+      "reference_strategies": [],
+      "tags": [
+        "momentum"
+      ],
+      "universe": null,
+      "stop_pct": null,
+      "target_pct": null,
+      "benchmark": "{\"ticker\":\"SPY\",\"comparison_mode\":\"total_return\"}",
+      "benchmark_comparison_mode": "both",
+      "era_mode": "single",
+      "era_ids": [
+        "recent_default"
+      ],
+      "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the parent Regime-Aware Momentum strategy. Compute SPY 50-day and 200-day simple moving averages. Bull regime: SPY close > SMA50 > SMA200. Bear regime: SPY close < SMA50. Neutral: otherwise.\",\"features\":[\"SPY_SMA50\",\"SPY_SMA200\",\"SPY_close\"]},\"momentum_signal\":{\"description\":\"For each stock in each sleeve, compute 20-day and 60-day trailing return momentum scores. Rank stocks within each sleeve by composite momentum score (equal-weight of 20d and 60d returns). Select top-N (default N=3) within each sleeve for entry consideration.\",\"features\":[\"trailing_return_20d\",\"trailing_return_60d\",\"momentum_rank_within_sleeve\"]},\"volume_confirmation\":{\"description\":\"Require entry-day volume >= 1.0x the stock's 20-day average daily volume to confirm momentum signal.\",\"features\":[\"volume\",\"ADV_20d\"]}}",
+      "entry_rules": "{\"conditions\":[\"Regime filter is Bull or Neutral (no new entries in Bear regime)\",\"Stock ranks in top 3 by composite momentum within its sleeve\",\"Entry-day volume >= 1.0x ADV_20d\",\"No existing open position in the same ticker\"],\"execution\":\"Market-on-open next day after signal fires\",\"position_sizing\":\"Equal-weight within active sleeve; max 1/6 of sleeve capital per position. Total capital split equally across active sleeves (operator to configure number of active sleeves at runtime).\"}",
+      "exit_rules": "{\"stop_loss\":\"7% trailing stop from entry price (mirroring parent strategy default; sweep candidate)\",\"profit_target\":\"20% from entry price (sweep candidate)\",\"regime_exit\":\"Exit all positions in a sleeve if regime flips to Bear\",\"momentum_exit\":\"Exit if stock falls out of top 3 momentum rank within sleeve on two consecutive daily closes\",\"time_exit\":\"Maximum hold of 60 calendar days\"}",
+      "risk_model": {
+        "description": "{\"max_open_positions_per_sleeve\":3,\"max_sleeve_allocation\":\"Equal fractional split of total capital across enabled sleeves\",\"bear_regime_cash\":\"Move sleeve capital to cash when regime = Bear\",\"correlation_note\":\"Sleeves are designed to be sector-diverse; no explicit cross-sleeve correlation cap in v1 but operator should monitor drawdown across sleeves in correlated sell-offs.\"}"
+      },
+      "sweep_params": {
+        "description": "{\"stop_pct\":[0.05,0.07,0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[20,40,60],\"top_n_per_sleeve\":[2,3],\"sleeves_active\":[\"sleeve_original\",\"sleeve_mega_tech\",\"sleeve_energy_infra\",\"sleeve_financials\",\"sleeve_healthcare\"]}"
+      },
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "evidence_thresholds": {
+        "minimum_trade_count": 30,
+        "minimum_evaluated_trading_days": 20
+      },
+      "decisive_verdict_rules": {
+        "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+        "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+        "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+      },
+      "implementation_notes": "Data-readiness warnings:\n- COS in the original sleeve may refer to a TSX-listed ticker (Canadian Oil Sands or similar). Operator should confirm Alpaca availability before job submission. If unavailable, substitute with a US-listed equivalent (e.g., CVX or XOM, though those appear in the energy sleeve).\n- Sleeve composition is static in v1. Dynamic sleeve selection from a broader screened universe is deferred to v2 and is not a data blocker for this spec.\n\nThis strategy is a multi-sleeve extension of the live Regime-Aware Momentum Frozen Reference Paper v1. The original sleeve (AVGO, NVDA, AAPL, LLY, META, COS) is preserved as-is and serves as the live reference. New sleeves are added in parallel. Sleeve composition is frozen in v1; dynamic sleeve selection (e.g., screening from a broader universe) is deferred to v2. The operator should confirm whether all new tickers are tradeable on Alpaca before promotion. COS should be verified for Alpaca availability as it may be a TSX-listed ticker.",
+      "promotion_target": null
+    },
+    "field_meta": {
+      "title": {
+        "source": "operator",
+        "locked": true,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": true
+      },
+      "thesis": {
+        "source": "operator",
+        "locked": true,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": true
+      },
+      "sleeve": {
+        "source": "operator",
+        "locked": true,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": true
+      },
+      "reference_strategies": {
+        "source": "reference",
+        "locked": true,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "tags": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "universe": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "stop_pct": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "target_pct": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "benchmark": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "benchmark_comparison_mode": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "era_mode": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "era_ids": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "signal_logic": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "entry_rules": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "exit_rules": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "risk_model": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "sweep_params": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "required_data": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "evidence_thresholds": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "decisive_verdict_rules": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "implementation_notes": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      },
+      "promotion_target": {
+        "source": "operator",
+        "locked": false,
+        "visible_in_modes": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ],
+        "updated_at": "2026-05-02T22:03:21.920Z",
+        "updated_by": "jacob",
+        "talon_event_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "validation_issues": [
+      {
+        "field_id": "runnable_eras.recent_default.status",
+        "severity": "warn",
+        "code": "EXPERIMENT_PLAN_WARN",
+        "message": "Selected era Recent default window has incomplete data.",
+        "suggested_action": null
+      }
+    ],
+    "open_questions": [],
+    "current_draft": {
+      "schema_version": "research_lab.strategy_spec.v1",
+      "spec_id": "spec_01KQNBKDGPA1X1V9GQ4FA1X1V9",
+      "spec_version": 1,
+      "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+      "user_id": "jacob",
+      "account_id": "paper_main",
+      "strategy_group_id": "default",
+      "created_at": "2026-05-02T22:05:32.566Z",
+      "authoring_mode": "AI_ASSISTED",
+      "authored_by": "jacob",
+      "state": "DRAFTING",
+      "signal_logic": "{\"regime_filter\":{\"description\":\"SPY-based regime gate identical to the parent Regime-Aware Momentum strategy. Compute SPY 50-day and 200-day simple moving averages. Bull regime: SPY close > SMA50 > SMA200. Bear regime: SPY close < SMA50. Neutral: otherwise.\",\"features\":[\"SPY_SMA50\",\"SPY_SMA200\",\"SPY_close\"]},\"momentum_signal\":{\"description\":\"For each stock in each sleeve, compute 20-day and 60-day trailing return momentum scores. Rank stocks within each sleeve by composite momentum score (equal-weight of 20d and 60d returns). Select top-N (default N=3) within each sleeve for entry consideration.\",\"features\":[\"trailing_return_20d\",\"trailing_return_60d\",\"momentum_rank_within_sleeve\"]},\"volume_confirmation\":{\"description\":\"Require entry-day volume >= 1.0x the stock's 20-day average daily volume to confirm momentum signal.\",\"features\":[\"volume\",\"ADV_20d\"]}}",
+      "universe": {
+        "description": "{\"type\":\"multi_sleeve_fixed\",\"sleeves\":[{\"id\":\"sleeve_original\",\"label\":\"Original Tech-Bio\",\"tickers\":[\"AVGO\",\"NVDA\",\"AAPL\",\"LLY\",\"META\",\"COS\"],\"notes\":\"Live deployed sleeve. Included as reference and benchmark anchor.\"},{\"id\":\"sleeve_mega_tech\",\"label\":\"Mega-Cap Software & Cloud\",\"tickers\":[\"MSFT\",\"GOOGL\",\"AMZN\",\"CRM\",\"ADBE\",\"NOW\"],\"notes\":\"Large-cap software and cloud leaders with strong momentum histories.\"},{\"id\":\"sleeve_energy_infra\",\"label\":\"Energy & Infrastructure\",\"tickers\":[\"XOM\",\"CVX\",\"NEE\",\"SLB\",\"EOG\",\"PSX\"],\"notes\":\"Energy majors and infrastructure; tends to outperform in inflationary/commodity regimes.\"},{\"id\":\"sleeve_financials\",\"label\":\"Financials & Payments\",\"tickers\":[\"JPM\",\"GS\",\"V\",\"MA\",\"BLK\",\"AXP\"],\"notes\":\"Large-cap financials and payment networks; regime-sensitive to rate cycles.\"},{\"id\":\"sleeve_healthcare\",\"label\":\"Healthcare & Biotech\",\"tickers\":[\"UNH\",\"JNJ\",\"ABBV\",\"MRK\",\"TMO\",\"DHR\"],\"notes\":\"Defensive healthcare plus high-growth biotech; diversifies from tech-heavy original.\"}],\"selection_criteria_notes\":\"Each sleeve of six is chosen to share: (1) large-cap status (>$50B market cap at selection), (2) high average daily volume (>$500M ADV), (3) sector leadership, (4) demonstrated multi-year momentum profiles. Sleeve composition is frozen at spec time; a future v2 will introduce dynamic sleeve selection rules.\"}"
+      },
+      "entry_rules": "{\"conditions\":[\"Regime filter is Bull or Neutral (no new entries in Bear regime)\",\"Stock ranks in top 3 by composite momentum within its sleeve\",\"Entry-day volume >= 1.0x ADV_20d\",\"No existing open position in the same ticker\"],\"execution\":\"Market-on-open next day after signal fires\",\"position_sizing\":\"Equal-weight within active sleeve; max 1/6 of sleeve capital per position. Total capital split equally across active sleeves (operator to configure number of active sleeves at runtime).\"}",
+      "exit_rules": "{\"stop_loss\":\"7% trailing stop from entry price (mirroring parent strategy default; sweep candidate)\",\"profit_target\":\"20% from entry price (sweep candidate)\",\"regime_exit\":\"Exit all positions in a sleeve if regime flips to Bear\",\"momentum_exit\":\"Exit if stock falls out of top 3 momentum rank within sleeve on two consecutive daily closes\",\"time_exit\":\"Maximum hold of 60 calendar days\"}",
+      "risk_model": {
+        "description": "{\"max_open_positions_per_sleeve\":3,\"max_sleeve_allocation\":\"Equal fractional split of total capital across enabled sleeves\",\"bear_regime_cash\":\"Move sleeve capital to cash when regime = Bear\",\"correlation_note\":\"Sleeves are designed to be sector-diverse; no explicit cross-sleeve correlation cap in v1 but operator should monitor drawdown across sleeves in correlated sell-offs.\"}"
+      },
+      "sweep_params": {
+        "description": "{\"stop_pct\":[0.05,0.07,0.1],\"target_pct\":[0.15,0.2,0.25],\"momentum_lookback_days\":[20,40,60],\"top_n_per_sleeve\":[2,3],\"sleeves_active\":[\"sleeve_original\",\"sleeve_mega_tech\",\"sleeve_energy_infra\",\"sleeve_financials\",\"sleeve_healthcare\"]}"
+      },
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "benchmark": "{\"ticker\":\"SPY\",\"comparison_mode\":\"total_return\"}",
+      "acceptance_criteria": {
+        "min_sharpe": 1,
+        "max_drawdown": 20,
+        "min_hit_rate": 45
+      },
+      "experiment_plan": {
+        "schema_version": "research_lab.experiment_plan.v1",
+        "spec_id": "spec_01KQNBKDGPA1X1V9GQ4FA1X1V9",
+        "idea_id": "idea_01KQN7X6F0D2PSB0TYHRD2PSB0",
+        "is_valid": true,
+        "validity_reasons": [
+          {
+            "field_id": "runnable_eras.recent_default.status",
+            "severity": "warn",
+            "message": "Selected era Recent default window has incomplete data."
+          }
+        ],
+        "benchmark": {
+          "symbol": "SPY",
+          "comparison_mode": "both"
+        },
+        "windows": {
+          "requested_start": "2026-02-01",
+          "requested_end": "2026-05-02",
+          "fresh_data_required_from": null
+        },
+        "runnable_eras": [
+          {
+            "era_id": "recent_default",
+            "label": "Recent default window",
+            "date_range": {
+              "start": "2026-02-01",
+              "end": "2026-05-02"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": "Talon did not specify runnable eras; server supplied a recent default window for review."
+          }
+        ],
+        "eras": {
+          "mode": "single",
+          "required_era_ids": [
+            "recent_default"
+          ]
+        },
+        "data_requirements": [
+          {
+            "capability_id": "alpaca_equity_ohlcv",
+            "required": true,
+            "status": "AVAILABLE",
+            "status_at_draft": "AVAILABLE",
+            "purpose": "alpaca_equity_ohlcv"
+          }
+        ],
+        "evidence_thresholds": {
+          "minimum_trade_count": 30,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "known_limitations": [
+          "COS (Costco or Canadian Oil Sands depending on exchange) must be verified as Alpaca-tradeable. If COS is a TSX ticker it will not be available; operator should substitute or confirm.",
+          "Sleeve composition is frozen at spec time and not dynamically optimized — this is intentional for v1 but limits adaptability to structural market changes.",
+          "The original sleeve is live and its backtest is already known-good; the experiment here primarily validates the new sleeves and the rotation framework.",
+          "No exotic data dependencies — all signals are OHLCV-derived, so data plumbing is straightforward and the first run is a genuine historical edge test, not a plumbing-only run.",
+          "Equal capital split across sleeves means underperforming sleeves drag returns; v2 should consider regime-conditional sleeve weighting.",
+          "Out-of-sample window (2020-2021) includes COVID crash which may produce anomalous regime-filter behavior due to speed of drawdown and recovery."
+        ]
+      },
+      "candidate_strategy_family": null,
+      "implementation_notes": "Data-readiness warnings:\n- COS in the original sleeve may refer to a TSX-listed ticker (Canadian Oil Sands or similar). Operator should confirm Alpaca availability before job submission. If unavailable, substitute with a US-listed equivalent (e.g., CVX or XOM, though those appear in the energy sleeve).\n- Sleeve composition is static in v1. Dynamic sleeve selection from a broader screened universe is deferred to v2 and is not a data blocker for this spec.\n\nThis strategy is a multi-sleeve extension of the live Regime-Aware Momentum Frozen Reference Paper v1. The original sleeve (AVGO, NVDA, AAPL, LLY, META, COS) is preserved as-is and serves as the live reference. New sleeves are added in parallel. Sleeve composition is frozen in v1; dynamic sleeve selection (e.g., screening from a broader universe) is deferred to v2. The operator should confirm whether all new tickers are tradeable on Alpaca before promotion. COS should be verified for Alpaca availability as it may be a TSX-listed ticker.",
+      "parent_spec_id": null,
+      "registered_strategy_id": null
+    },
+    "current_assessment": {
+      "verdict": "WARN",
+      "catalog_version": "2026-04-30.2",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "status": "AVAILABLE",
+          "source": "alpaca_equity_ohlcv",
+          "notes": "All signals (momentum, volume confirmation, regime filter via SPY SMA) are derivable from daily OHLCV bars. Coverage from 2016-present covers both the primary (2022-2025) and secondary (2020-2021) backtest windows. All proposed tickers are standard US large-caps available on Alpaca. COS requires operator verification — if it is a TSX-listed ticker it will not be available on Alpaca and should be substituted."
+        }
+      ],
+      "warnings": [
+        "COS in the original sleeve may refer to a TSX-listed ticker (Canadian Oil Sands or similar). Operator should confirm Alpaca availability before job submission. If unavailable, substitute with a US-listed equivalent (e.g., CVX or XOM, though those appear in the energy sleeve).",
+        "Sleeve composition is static in v1. Dynamic sleeve selection from a broader screened universe is deferred to v2 and is not a data blocker for this spec."
+      ]
+    },
+    "current_authoring_mode": "AI_ASSISTED"
+  },
+  "model_calls": [
+    {
+      "step": "repair",
+      "attempt": 1,
+      "model": "claude-sonnet-4-6",
+      "latency_ms": 57116,
+      "tokens_in": 5648,
+      "tokens_out": 3144,
+      "finish_reason": "stop"
+    }
+  ]
+}
