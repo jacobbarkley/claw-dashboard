@@ -15,3 +15,7 @@ function isTruthy(value: string | undefined): boolean {
 export function specAuthoringEnabled(): boolean {
   return isTruthy(process.env.VIRES_LAB_SPEC_AUTHORING)
 }
+
+export function unifiedBuilderEnabled(): boolean {
+  return isTruthy(process.env.VIRES_LAB_UNIFIED_BUILDER)
+}
