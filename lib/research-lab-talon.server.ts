@@ -115,7 +115,7 @@ const assessmentStrict = z.preprocess(normalizeAssessmentInput, z.object({
     ),
     matched_capability: optionalTextFromDescriptionSchema,
     notes: optionalTextFromDescriptionSchema,
-  })).min(1),
+  })).default([]),
   blocking_summary: optionalTextFromDescriptionSchema,
   suggested_action: optionalTextFromDescriptionSchema,
   warnings: z.preprocess(value => stringArrayFromUnknown(value), z.array(z.string()).optional().default([])),
@@ -573,15 +573,22 @@ function normalizeAssessmentInput(input: unknown): Record<string, unknown> {
   const raw = recordFromUnknown(input)
   return {
     verdict: stringEnumOrDefault(raw.verdict, ["PASS", "WARN", "BLOCKED"], "WARN"),
-    requirements: arrayFromUnknown(raw.requirements ?? raw.data_requirements).map(item => {
+    requirements: arrayOrSingleFromUnknown(
+      raw.requirements ?? raw.data_requirements ?? raw.required_data,
+    ).map(item => {
       const requirement = recordFromUnknown(item)
+      const itemText = descriptionStringFromUnknown(item)
       return {
-        requested:
+        requested: (
           requirement.requested ??
           requirement.requirement ??
           requirement.name ??
           requirement.capability ??
-          requirement.matched_capability,
+          requirement.matched_capability ??
+          requirement.capability_id ??
+          itemText
+        ) ||
+          "unspecified data requirement",
         core: booleanOrNull(requirement.core),
         status: requirement.status,
         matched_capability:
@@ -624,6 +631,13 @@ function parseJsonField<T>(raw: string | null | undefined, schema: z.ZodType<T>,
 function descriptionStringFromUnknown(value: unknown): string {
   if (typeof value === "string") return value.trim()
   if (typeof value === "number" && Number.isFinite(value)) return String(value)
+  if (Array.isArray(value)) {
+    const text = value
+      .map(item => descriptionStringFromUnknown(item))
+      .filter(Boolean)
+      .join(", ")
+    return text || (value.length > 0 ? JSON.stringify(value) : "")
+  }
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const raw = value as Record<string, unknown>
     const description =
@@ -657,6 +671,12 @@ function recordFromUnknown(input: unknown): Record<string, unknown> {
 
 function arrayFromUnknown(input: unknown): unknown[] {
   return Array.isArray(input) ? input : []
+}
+
+function arrayOrSingleFromUnknown(input: unknown): unknown[] {
+  if (Array.isArray(input)) return input
+  if (input == null) return []
+  return [input]
 }
 
 function stringArrayFromUnknown(input: unknown): string[] {

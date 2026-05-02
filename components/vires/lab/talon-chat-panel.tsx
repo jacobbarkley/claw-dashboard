@@ -440,6 +440,12 @@ export function TalonChatPanel({
     }
     return null
   })()
+  const showDraftQuickAction =
+    isOperatorDrafted &&
+    conversation.length > 0 &&
+    latestApplyableIdx === null &&
+    !busy &&
+    applyingIdx === null
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
@@ -571,7 +577,55 @@ export function TalonChatPanel({
             fontSize: 11.5,
           }}
         >
-          {error}
+          <div>{error}</div>
+          {isOperatorDrafted && (
+            <div style={{ marginTop: 6, color: "var(--vr-cream-dim)", fontSize: 11 }}>
+              Apply appears only after Talon returns a proposed spec. This error happened before a proposal was available.
+            </div>
+          )}
+        </div>
+      )}
+
+      {showDraftQuickAction && (
+        <div
+          style={{
+            padding: "8px 10px",
+            border: "1px solid var(--vr-gold-line)",
+            borderRadius: 3,
+            background: "var(--vr-gold-soft)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--vr-cream-dim)",
+              lineHeight: 1.45,
+              fontStyle: "italic",
+              fontFamily: "var(--ff-serif)",
+            }}
+          >
+            No applyable proposal yet. Ask Talon for the full draft again, or keep writing a tighter instruction below.
+          </div>
+          <button
+            type="button"
+            onClick={() => void onSend(OPERATOR_DRAFT_PROMPT)}
+            style={{
+              alignSelf: "flex-start",
+              padding: "7px 11px",
+              fontSize: 10.5,
+              fontFamily: "var(--ff-mono)",
+              background: "var(--vr-gold-soft)",
+              border: "1px solid var(--vr-gold-line)",
+              color: "var(--vr-gold)",
+              borderRadius: 3,
+              cursor: "pointer",
+            }}
+          >
+            Retry full draft with Talon
+          </button>
         </div>
       )}
 
