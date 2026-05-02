@@ -35,7 +35,12 @@ export const VALID_SPEC_STATES: StrategySpecState[] = [
   "SUPERSEDED",
 ]
 
-export const VALID_AUTHORING_MODES: SpecAuthoringMode[] = ["AI_DRAFTED", "OPERATOR_DRAFTED"]
+export const VALID_AUTHORING_MODES: SpecAuthoringMode[] = [
+  "AI_DRAFTED",
+  "OPERATOR_DRAFTED",
+  "MANUAL",
+  "AI_ASSISTED",
+]
 export const CRUD_WRITABLE_SPEC_STATES: StrategySpecState[] = [
   "DRAFTING",
   "AWAITING_APPROVAL",

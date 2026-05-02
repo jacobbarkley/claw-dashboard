@@ -25,6 +25,7 @@ interface DraftJobStartBody {
   idea_id?: unknown
   scope?: unknown
   intent_message?: unknown
+  builder_state?: unknown
 }
 
 export async function POST(req: NextRequest) {
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       scope,
       ideaId,
       intentMessage,
+      builderStateInput: body.builder_state,
     })
 
     if (!reused) {
