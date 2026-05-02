@@ -482,9 +482,9 @@ export function formatCatalogForPrompt(catalog: DataCapabilityCatalogV1): string
 function normalizeAcceptanceCriteriaInput(input: unknown): Record<string, unknown> {
   const raw = recordFromUnknown(input)
   return {
-    min_sharpe: numberFromUnknown(raw.min_sharpe, 1),
-    max_drawdown_pct: numberFromUnknown(raw.max_drawdown_pct ?? raw.max_drawdown, 20),
-    min_hit_rate_pct: numberFromUnknown(raw.min_hit_rate_pct ?? raw.min_hit_rate, 45),
+    min_sharpe: boundedNumberFromUnknown(raw.min_sharpe, 1, 0, 10),
+    max_drawdown_pct: boundedNumberFromUnknown(raw.max_drawdown_pct ?? raw.max_drawdown, 20, 0, 100),
+    min_hit_rate_pct: boundedNumberFromUnknown(raw.min_hit_rate_pct ?? raw.min_hit_rate, 45, 0, 100),
     other: nullableStringFromUnknown(raw.other),
   }
 }
@@ -783,6 +783,12 @@ function booleanOrNull(input: unknown): boolean | null {
 function numberFromUnknown(input: unknown, fallback: number): number {
   const value = typeof input === "number" ? input : Number(input)
   return Number.isFinite(value) ? value : fallback
+}
+
+function boundedNumberFromUnknown(input: unknown, fallback: number, min: number, max: number): number {
+  const value = numberFromUnknown(input, fallback)
+  if (value < min || value > max) return fallback
+  return value
 }
 
 function stringEnumOrDefault<T extends string>(

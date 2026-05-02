@@ -46,6 +46,8 @@ import {
   parseDraftGeneratedOutput,
   specProvenanceRelpath,
   type ParsedDraftGeneratedOutput,
+  type TalonAssessment,
+  type TalonProposal,
 } from "@/lib/research-lab-talon.server"
 
 import {
@@ -976,7 +978,14 @@ export async function runTalonDraftJob(jobId: string, scope: ScopeTriple): Promi
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error)
         if (attempt < MAX_REPAIR_ATTEMPTS) continue
-        throw new DraftJobFailure("VALIDATION_EXHAUSTED", lastError)
+        if (!isSchemaShapeError(lastError)) {
+          throw new DraftJobFailure("VALIDATION_EXHAUSTED", lastError)
+        }
+        talonOutput = buildServerScaffoldDraftOutput({
+          idea,
+          reason: lastError,
+        })
+        rawCompletion = null
       }
 
       job = await transition(job, store, { state: "RUNNING", current_step: "data_readiness" })
@@ -1054,6 +1063,128 @@ export async function runTalonDraftJob(jobId: string, scope: ScopeTriple): Promi
       validity_issues: failure.validityIssues.length ? failure.validityIssues : current.validity_issues ?? null,
     })
     await persistFailedJob(failed, store)
+  }
+}
+
+function isSchemaShapeError(message: string): boolean {
+  return (
+    message.includes("did not match Talon's expected JSON shape") ||
+    message.includes("must be a non-empty JSON string") ||
+    message.includes("Invalid input")
+  )
+}
+
+function buildServerScaffoldDraftOutput({
+  idea,
+  reason,
+}: {
+  idea: IdeaArtifact
+  reason: string
+}): ParsedDraftGeneratedOutput {
+  const benchmark = defaultBenchmarkForSleeve(idea.sleeve)
+  const requiredData = defaultRequiredDataForSleeve(idea.sleeve)
+  const window = defaultRecentWindow()
+  const limitation = `Server scaffolded this draft because Talon returned an invalid JSON shape: ${reason}`
+  const proposal: TalonProposal = {
+    signal_logic: [
+      `Starting point for "${idea.title}".`,
+      idea.thesis,
+      "Codex should translate this thesis into testable signal code after the operator reviews and tightens the draft.",
+    ].join(" "),
+    entry_rules: "Enter positions only when the thesis signal is active, liquidity is acceptable, and the configured universe member passes the benchmark/regime filter.",
+    exit_rules: "Exit positions when the thesis signal fails, the benchmark/regime filter flips, the holding window expires, or the risk guard is breached.",
+    risk_model: "Use small equal-weight positions, cap concentration per name, and block deployment until the experiment plan produces enough trades for a decisive verdict.",
+    universe: defaultUniverseForSleeve(idea.sleeve),
+    required_data: requiredData,
+    experiment_plan: {
+      benchmark: {
+        symbol: benchmark,
+        comparison_mode: "both",
+      },
+      windows: {
+        requested_start: window.start,
+        requested_end: window.end,
+        fresh_data_required_from: null,
+      },
+      runnable_eras: [{
+        era_id: "recent_default",
+        label: "Recent default window",
+        date_range: window,
+        status: "INCOMPLETE_DATA",
+        reason: "Server scaffolded a recent review window because Talon did not return a schema-valid experiment plan.",
+      }],
+      eras: {
+        mode: "single",
+        required_era_ids: ["recent_default"],
+      },
+      evidence_thresholds: {
+        minimum_trade_count: 5,
+        minimum_evaluated_trading_days: 20,
+      },
+      decisive_verdict_rules: {
+        pass: "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+        inconclusive: "Inconclusive if trade count, evaluated days, or runnable-era coverage is below the evidence threshold.",
+        fail: "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met.",
+      },
+      known_limitations: [limitation],
+    },
+    benchmark,
+    acceptance_criteria: {
+      min_sharpe: 1,
+      max_drawdown_pct: 20,
+      min_hit_rate_pct: 45,
+      other: "Operator should tighten these acceptance criteria before approval.",
+    },
+    candidate_strategy_family: null,
+    sweep_params: "Start with a narrow smoke sweep; expand only after the first run shows enough trade count and clean data coverage.",
+    implementation_notes: limitation,
+  }
+  const assessment: TalonAssessment = {
+    verdict: "WARN",
+    requirements: requiredData.map(capabilityId => ({
+      requested: capabilityId,
+      core: true,
+      status: "PARTIAL",
+      matched_capability: capabilityId,
+      notes: "Server scaffold default; operator should confirm the data dependency before approval.",
+    })),
+    blocking_summary: null,
+    suggested_action: "Review and tighten the scaffolded spec instead of trusting it as a finished Talon draft.",
+    warnings: [limitation],
+  }
+  return {
+    proposal,
+    assessment,
+    raw_proposal_json: JSON.stringify(proposal),
+    raw_assessment_json: JSON.stringify(assessment),
+  }
+}
+
+function defaultBenchmarkForSleeve(sleeve: IdeaArtifact["sleeve"]): string {
+  if (sleeve === "CRYPTO") return "BTC"
+  if (sleeve === "OPTIONS") return "SPY"
+  return "SPY"
+}
+
+function defaultRequiredDataForSleeve(sleeve: IdeaArtifact["sleeve"]): string[] {
+  if (sleeve === "CRYPTO") return ["alpaca_crypto_ohlcv"]
+  if (sleeve === "OPTIONS") return ["alpaca_options_chain"]
+  return ["alpaca_equity_ohlcv"]
+}
+
+function defaultUniverseForSleeve(sleeve: IdeaArtifact["sleeve"]): string {
+  if (sleeve === "CRYPTO") return "Configured crypto universe with liquid BTC/ETH pairs first."
+  if (sleeve === "OPTIONS") return "Configured options universe on liquid underlyings with supported chain data."
+  return "Configured large-cap U.S. equity universe with liquid Alpaca-tradable names."
+}
+
+function defaultRecentWindow(): { start: string; end: string } {
+  const end = new Date()
+  const start = new Date(end)
+  start.setUTCDate(start.getUTCDate() - 90)
+  return {
+    start: start.toISOString().slice(0, 10),
+    end: end.toISOString().slice(0, 10),
   }
 }
 
