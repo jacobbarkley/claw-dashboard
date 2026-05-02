@@ -1,6 +1,7 @@
 import { promises as fs } from "fs"
 import path from "path"
 import { ViresBenchView } from "@/components/vires/bench-view"
+import { labRedesignEnabled } from "@/lib/feature-flags.server"
 import { loadBenchIndexWithViresContracts } from "@/lib/vires-bench"
 import { loadCampaignsIndex } from "@/lib/vires-campaigns.server"
 
@@ -37,5 +38,12 @@ export default async function ViresBenchPage() {
     getOperator(),
     getCampaignCount(),
   ])
-  return <ViresBenchView benchData={benchData} operator={operator} campaignCount={campaignCount} />
+  return (
+    <ViresBenchView
+      benchData={benchData}
+      operator={operator}
+      campaignCount={campaignCount}
+      labRedesign={labRedesignEnabled()}
+    />
+  )
 }

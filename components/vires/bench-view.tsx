@@ -12,6 +12,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { AnimatedNumber, InfoPop, SectionHeader, SleeveChip, StatusPill, fmtPct, type Sleeve } from "./shared"
 import { SLEEVE_FILTERS, SleeveFilterBar, type SleeveFilter } from "./campaigns-shared"
+import { LabPortalVault } from "./lab/lab-portal-vault"
 
 // ─── Types — narrow on purpose ──────────────────────────────────────────────
 
@@ -283,10 +284,12 @@ export function ViresBenchView({
   benchData: initialBench,
   operator: initialOperator,
   campaignCount = 0,
+  labRedesign = false,
 }: {
   benchData: BenchData | null
   operator: OperatorBundle | null
   campaignCount?: number
+  labRedesign?: boolean
 }) {
   const [liveBenchData, setLiveBenchData] = useState<BenchData | null>(initialBench)
   const [liveOperator, setLiveOperator] = useState<OperatorBundle | null>(initialOperator)
@@ -420,6 +423,8 @@ export function ViresBenchView({
         promotedCount={promotedCount}
         campaignCount={campaignCount}
       />
+
+      {labRedesign && <LabPortalVault />}
 
       <SectionHeader
         eyebrow="Promoted"

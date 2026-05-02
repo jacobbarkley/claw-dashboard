@@ -19,3 +19,7 @@ export function specAuthoringEnabled(): boolean {
 export function unifiedBuilderEnabled(): boolean {
   return isTruthy(process.env.VIRES_LAB_UNIFIED_BUILDER)
 }
+
+export function labRedesignEnabled(): boolean {
+  return isTruthy(process.env.VIRES_LAB_REDESIGN)
+}
