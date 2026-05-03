@@ -8,7 +8,7 @@ strategy_group_id: default
 created_at: '2026-05-03T17:14:33.520Z'
 authoring_mode: AI_ASSISTED
 authored_by: jacob
-state: AWAITING_APPROVAL
+state: APPROVED
 signal_logic: >-
   IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date
   shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged
@@ -166,3 +166,6 @@ implementation_notes: >-
   listings is uncertain. This is the primary data quality risk for the strategy.
 parent_spec_id: null
 registered_strategy_id: null
+approved_at: '2026-05-03T17:16:36.142Z'
+approved_by: jacob
+preset_id: null
