@@ -139,14 +139,13 @@ export function LabIdeaDetailRedesigned({
               style={{
                 fontSize: 9,
                 letterSpacing: "0.14em",
-                color: "var(--vr-gold)",
-                border: "1px solid var(--vr-gold-line)",
-                background: "var(--vr-gold-soft)",
+                color: "var(--vr-cream-mute)",
+                border: "1px solid var(--vr-line)",
                 padding: "2px 7px",
                 borderRadius: 2,
               }}
             >
-              Code pending
+              Awaiting implementation
             </span>
           )}
           <span className="t-mono" style={{ fontSize: 10, color: "var(--vr-cream-faint)" }}>
@@ -627,16 +626,15 @@ function BenchJobStepBody({ idea, hasCampaign }: { idea: IdeaArtifact; hasCampai
             lineHeight: 1.45,
           }}
         >
-          No executable strategy for this idea yet
+          Implementation pending
         </div>
         <div
           className="t-read"
           style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--vr-cream-dim)" }}
         >
-          This idea was captured before any code was written. It can&apos;t be submitted to
-          the lab until the strategy is implemented and registered under a real{" "}
-          <span className="t-mono">strategy_id</span>. Once that lands, the
-          submit action will re-enable here.
+          Campaign submission opens once the strategy is implemented and
+          registered under a <span className="t-mono">strategy_id</span>. Use
+          the Build step to advance.
         </div>
         <IdeaJobsRail ideaId={idea.idea_id} />
       </div>
