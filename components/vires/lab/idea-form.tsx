@@ -128,50 +128,6 @@ export function IdeaForm({
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Draft-with-Talon — full-card golden button. Disabled until V1. */}
-      <button
-        type="button"
-        disabled
-        title="Coming in V1"
-        style={{
-          width: "100%",
-          padding: "26px 20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          background:
-            "linear-gradient(135deg, rgba(200,169,104,0.14), rgba(200,169,104,0.05))",
-          border: "1px solid rgba(200,169,104,0.45)",
-          borderRadius: 4,
-          cursor: "not-allowed",
-          fontFamily: "inherit",
-          color: "var(--vr-gold)",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--ff-serif)",
-            fontSize: 22,
-            letterSpacing: "0.01em",
-            lineHeight: 1.1,
-          }}
-        >
-          Draft with Talon
-        </span>
-        <span
-          className="t-eyebrow"
-          style={{
-            fontSize: 9,
-            letterSpacing: "0.2em",
-            color: "var(--vr-cream-faint)",
-          }}
-        >
-          Coming in V1
-        </span>
-      </button>
-
       <div className="vr-card" style={{ padding: "16px 16px 18px" }}>
         <FormRow label="Title">
           <input

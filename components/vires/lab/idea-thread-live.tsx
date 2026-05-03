@@ -527,7 +527,7 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
 
   const talonLabel =
     props.unifiedBuilderEnabled
-      ? "Open builder"
+      ? "Build with Talon"
       : busy === "talon"
       ? draftJob?.state === "REPAIRING"
         ? "Repairing draft…"
@@ -538,22 +538,22 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
   const talonInFlight = draftJob != null && !TALON_TERMINAL_STATES.has(draftJob.state)
   const showLegacyTalonInFlight = talonInFlight && !props.unifiedBuilderEnabled
   const talonSubtitle = props.unifiedBuilderEnabled
-    ? "Use the unified builder for Talon drafting, validation, review, and Apply."
+    ? "Choose optional parent strategies for Talon to reference, then draft and apply one reviewed StrategySpec."
     : draftJob && !TALON_TERMINAL_STATES.has(draftJob.state)
       ? `Job ${draftJob.job_id} · ${draftJob.steps_completed.length} steps complete. This can keep running while you wait.`
       : "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
 
   return (
     <div className="vr-card" style={panel}>
-      <div style={panelTitle}>Sketch the strategy</div>
+      <div style={panelTitle}>{props.unifiedBuilderEnabled ? "Build the strategy" : "Sketch the strategy"}</div>
       <div style={panelBody}>
-        Talon can draft a starting point from your thesis, or you can write the
-        spec yourself. Either way you review and approve before Codex starts
-        implementing.
+        {props.unifiedBuilderEnabled
+          ? "This idea becomes new strategy work. Reference strategies are parent context for Talon, not a separate execution lane."
+          : "Talon can draft a starting point from your thesis, or you can write the spec yourself. Either way you review and approve before Codex starts implementing."}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <ActionRow
-          title="Draft with Talon"
+          title={props.unifiedBuilderEnabled ? "Build with Talon" : "Draft with Talon"}
           subtitle={talonSubtitle}
           ctaLabel={talonLabel}
           ctaTone="primary"
@@ -569,14 +569,16 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
             Cancel Talon draft
           </button>
         )}
-        <ActionRow
-          title="Author the spec yourself"
-          subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
-          ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
-          ctaTone="muted"
-          onClick={onAuthor}
-          disabled={busy !== null}
-        />
+        {!props.unifiedBuilderEnabled && (
+          <ActionRow
+            title="Author the spec yourself"
+            subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
+            ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
+            ctaTone="muted"
+            onClick={onAuthor}
+            disabled={busy !== null}
+          />
+        )}
       </div>
       {error && <ErrorLine message={error} />}
     </div>
