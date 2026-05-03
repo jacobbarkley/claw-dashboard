@@ -783,6 +783,7 @@ function AwaitingImplBody(props: IdeaThreadProps) {
           ? "This implementation was cancelled. Re-spec the idea or revisit the approval."
           : "Codex is generating the strategy module from this spec. Tests run as part of the same step."}
       </div>
+      <QueueMetaGrid queue={queue} />
       {queue.implementation_commit && (
         <div className="t-mono" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>
           implementation_commit · {queue.implementation_commit}
@@ -790,6 +791,55 @@ function AwaitingImplBody(props: IdeaThreadProps) {
       )}
     </div>
   )
+}
+
+function QueueMetaGrid({ queue }: { queue: SpecImplementationQueueV1 }) {
+  const rows = [
+    ["queue", queue.queue_entry_id],
+    ["attempts", String(queue.attempts)],
+    ["queued", formatDateTime(queue.queued_at)],
+    queue.claimed_by ? ["claimed_by", queue.claimed_by] : null,
+    queue.claimed_at ? ["claimed", formatDateTime(queue.claimed_at)] : null,
+    queue.implementation_started_at ? ["started", formatDateTime(queue.implementation_started_at)] : null,
+    queue.implementation_finished_at ? ["finished", formatDateTime(queue.implementation_finished_at)] : null,
+    queue.registered_strategy_id ? ["strategy", queue.registered_strategy_id] : null,
+    queue.preset_id ? ["preset", queue.preset_id] : null,
+  ].filter((row): row is [string, string] => row != null)
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "auto minmax(0, 1fr)",
+        columnGap: 10,
+        rowGap: 4,
+        marginTop: 12,
+        marginBottom: queue.implementation_commit ? 10 : 0,
+        fontSize: 10.5,
+        fontFamily: "var(--ff-mono)",
+        color: "var(--vr-cream-mute)",
+      }}
+    >
+      {rows.map(([label, value]) => (
+        <FragmentRow key={label} label={label} value={value} />
+      ))}
+    </div>
+  )
+}
+
+function FragmentRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <span>{label}</span>
+      <span style={{ color: "var(--vr-cream)", overflowWrap: "anywhere" }}>{value}</span>
+    </>
+  )
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
 }
 
 // ─── Steps 5/6/7 ───────────────────────────────────────────────────────────

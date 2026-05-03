@@ -5,6 +5,7 @@ import Link from "next/link"
 import { IdeaEditForm } from "@/components/vires/lab/idea-edit-form"
 import type { StrategyOption } from "@/components/vires/lab/idea-form"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
+import { strategyReferenceModelEnabled } from "@/lib/feature-flags.server"
 import type { ResearchSleeve } from "@/lib/research-lab-contracts"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
@@ -100,6 +101,7 @@ export default async function ViresLabEditIdeaPage({
   }
 
   const strategyOptions = await loadPresetIndex()
+  const referenceModel = strategyReferenceModelEnabled()
 
   return (
     <>
@@ -131,7 +133,11 @@ export default async function ViresLabEditIdeaPage({
         </p>
       </div>
       <div style={{ padding: "0 20px 120px", maxWidth: 640, margin: "0 auto" }}>
-        <IdeaEditForm idea={idea} strategyOptions={strategyOptions} />
+        <IdeaEditForm
+          idea={idea}
+          strategyOptions={strategyOptions}
+          referenceModelEnabled={referenceModel}
+        />
       </div>
     </>
   )
