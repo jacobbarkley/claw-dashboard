@@ -12,6 +12,73 @@ const ERA_MODES = new Set<ExperimentEraMode>(["single", "multi"])
 const ERA_STATUSES = new Set<RunnableEraStatus>(["AVAILABLE", "INCOMPLETE_DATA", "UNAVAILABLE"])
 const DATA_STATUSES = new Set<ExperimentDataRequirementStatus>(["AVAILABLE", "PARTIAL", "MISSING"])
 
+interface DraftExperimentPlanTemplateOptions {
+  specId: string
+  ideaId: string
+  benchmarkSymbol?: string | null
+  requestedStart?: string | null
+  requestedEnd?: string | null
+}
+
+export function createDraftExperimentPlanTemplate({
+  specId,
+  ideaId,
+  benchmarkSymbol,
+  requestedStart,
+  requestedEnd,
+}: DraftExperimentPlanTemplateOptions): ExperimentPlanV1 {
+  const end = normalizeIsoDate(requestedEnd) ?? isoDate(new Date())
+  const defaultStart = defaultExperimentStartDate(end)
+  const startCandidate = normalizeIsoDate(requestedStart)
+  const start = startCandidate && isoDateOnOrBefore(startCandidate, end) ? startCandidate : defaultStart
+
+  return withComputedExperimentPlanValidity({
+    schema_version: "research_lab.experiment_plan.v1",
+    spec_id: specId,
+    idea_id: ideaId,
+    is_valid: false,
+    validity_reasons: [],
+    benchmark: {
+      symbol: normalizeBenchmarkSymbol(benchmarkSymbol),
+      comparison_mode: "both",
+    },
+    windows: {
+      requested_start: start,
+      requested_end: end,
+      fresh_data_required_from: null,
+    },
+    runnable_eras: [
+      {
+        era_id: "requested_window",
+        label: "Requested window",
+        date_range: {
+          start,
+          end,
+        },
+        status: "AVAILABLE",
+        reason: null,
+      },
+    ],
+    eras: {
+      mode: "single",
+      required_era_ids: [],
+    },
+    data_requirements: [],
+    evidence_thresholds: {
+      minimum_trade_count: 5,
+      minimum_evaluated_trading_days: 20,
+    },
+    decisive_verdict_rules: {
+      pass: "Pass only if the strategy beats the benchmark on both absolute and deployment-matched comparisons with enough trades to trust the read.",
+      inconclusive: "Mark inconclusive when sample size, era coverage, or data completeness is too thin for a decisive verdict.",
+      fail: "Fail when the strategy underperforms the benchmark, breaches drawdown expectations, or cannot be evaluated from available data.",
+    },
+    known_limitations: [
+      "Operator draft seed; confirm windows, data requirements, and era coverage before approval.",
+    ],
+  })
+}
+
 export function normalizeExperimentPlan(input: unknown): ExperimentPlanV1 | null {
   if (!input || typeof input !== "object" || Array.isArray(input)) return null
   const raw = input as Record<string, unknown>
@@ -295,6 +362,32 @@ function parseIsoDate(input: string | null | undefined): number | null {
   if (!input || !/^\d{4}-\d{2}-\d{2}$/.test(input)) return null
   const ts = Date.parse(`${input}T00:00:00.000Z`)
   return Number.isFinite(ts) ? ts : null
+}
+
+function normalizeIsoDate(input: string | null | undefined): string | null {
+  if (typeof input !== "string") return null
+  const trimmed = input.trim()
+  return parseIsoDate(trimmed) ? trimmed : null
+}
+
+function isoDateOnOrBefore(left: string, right: string): boolean {
+  const leftTs = parseIsoDate(left)
+  const rightTs = parseIsoDate(right)
+  return leftTs !== null && rightTs !== null && leftTs <= rightTs
+}
+
+function defaultExperimentStartDate(endIso: string): string {
+  const end = new Date(`${endIso}T00:00:00.000Z`)
+  return isoDate(new Date(Date.UTC(end.getUTCFullYear() - 1, end.getUTCMonth(), end.getUTCDate())))
+}
+
+function isoDate(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function normalizeBenchmarkSymbol(input: string | null | undefined): string {
+  const symbol = typeof input === "string" ? input.trim().toUpperCase() : ""
+  return symbol || "SPY"
 }
 
 function record(input: unknown): Record<string, unknown> {

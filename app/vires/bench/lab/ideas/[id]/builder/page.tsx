@@ -3,9 +3,11 @@ import { notFound } from "next/navigation"
 
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell } from "@/components/vires/lab/phase-zero-shell"
+import type { StrategyOption } from "@/components/vires/lab/idea-form"
 import { UnifiedBuilderClient } from "@/components/vires/lab/unified-builder-client"
 import { unifiedBuilderEnabled } from "@/lib/feature-flags.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { loadPresetIndex } from "@/lib/research-lab-presets.server"
 
 export const metadata = {
   title: "Vires Capital — Lab · Builder",
@@ -55,10 +57,23 @@ export default async function ViresLabIdeaBuilderPage({
     )
   }
 
+  const strategyOptions = await loadStrategyOptions()
+
   return (
     <>
       <LabSubNav />
-      <UnifiedBuilderClient idea={idea} />
+      <UnifiedBuilderClient idea={idea} strategyOptions={strategyOptions} />
     </>
   )
+}
+
+async function loadStrategyOptions(): Promise<StrategyOption[]> {
+  const index = await loadPresetIndex()
+  return (index?.presets ?? []).map(entry => ({
+    strategy_id: entry.strategy_id,
+    strategy_family: entry.strategy_family,
+    display_name: entry.display_name,
+    sleeve: entry.sleeve,
+    preset_id: entry.preset_id,
+  }))
 }

@@ -308,7 +308,7 @@ function normalizeReferenceStrategies(input: unknown): IdeaArtifact["reference_s
       delta_note: nullableStringFromUnknown(raw.delta_note),
     }]
   })
-  return refs.length ? refs.slice(0, 2) : null
+  return refs.slice(0, 2)
 }
 
 export async function createOrReuseTalonDraftJob({
@@ -926,7 +926,10 @@ export async function runTalonDraftJob(jobId: string, scope: ScopeTriple): Promi
     }
 
     const lessons = await formatTalonLessonsForPrompt()
-    const referenceContext = await formatReferenceStrategiesForPrompt(idea.reference_strategies)
+    const builderReferences = job.builder_state?.fields.reference_strategies
+    const referenceContext = await formatReferenceStrategiesForPrompt(
+      Array.isArray(builderReferences) ? builderReferences : idea.reference_strategies,
+    )
     let lastError: string | null = null
     let lastIssues: ExperimentPlanValidityIssue[] = []
 

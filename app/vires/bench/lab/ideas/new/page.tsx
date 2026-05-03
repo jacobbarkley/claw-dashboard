@@ -3,6 +3,7 @@ import path from "path"
 
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { IdeaForm, type StrategyOption } from "@/components/vires/lab/idea-form"
+import { strategyReferenceModelEnabled } from "@/lib/feature-flags.server"
 import type { ResearchSleeve } from "@/lib/research-lab-contracts"
 
 export const metadata = {
@@ -45,6 +46,7 @@ async function loadPresetIndex(): Promise<StrategyOption[]> {
 
 export default async function ViresLabNewIdeaPage() {
   const strategyOptions = await loadPresetIndex()
+  const referenceModel = strategyReferenceModelEnabled()
 
   return (
     <>
@@ -76,12 +78,13 @@ export default async function ViresLabNewIdeaPage() {
             color: "var(--vr-cream-mute)",
           }}
         >
-          Save a thesis against a registered strategy. DRAFT stays quiet; READY makes the idea
-          eligible for jobs and autopilot pickup.
+          {referenceModel
+            ? "Save a thesis as new strategy work. Optional references give Talon and Codex a parent strategy to start from."
+            : "Save a thesis against a registered strategy. DRAFT stays quiet; READY makes the idea eligible for jobs and autopilot pickup."}
         </p>
       </div>
       <div style={{ padding: "0 20px 120px", maxWidth: 640, margin: "0 auto" }}>
-        <IdeaForm strategyOptions={strategyOptions} />
+        <IdeaForm strategyOptions={strategyOptions} referenceModelEnabled={referenceModel} />
       </div>
     </>
   )

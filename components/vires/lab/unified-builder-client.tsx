@@ -2,9 +2,10 @@
 
 // Unified Spec Builder v2 — first UI slice (beginner mode only).
 //
-// Boots a Talon Draft v2 job for the idea, polls for live state, and exposes
-// the Apply boundary on READY/WARN. Job state is authoritative — every render
-// reads from the most recent poll, no optimistic local copies.
+// Lets the operator choose optional reference strategies, then boots a Talon
+// Draft v2 job for the idea, polls for live state, and exposes the Apply
+// boundary on READY/WARN. Job state is authoritative — every render reads from
+// the most recent poll, no optimistic local copies.
 //
 // Deferred: advanced/intermediate field surfacing, draft editing, chat polish.
 
@@ -14,8 +15,11 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import type {
   IdeaArtifact,
+  ReferenceStrategy,
   TalonDraftJobV1,
 } from "@/lib/research-lab-contracts"
+
+import { ReferenceStrategyPicker, type StrategyOption } from "./idea-form"
 
 const TERMINAL_STATES = new Set<TalonDraftJobV1["state"]>([
   "READY",
@@ -29,12 +33,16 @@ const POLL_INTERVAL_MS = 2000
 
 interface UnifiedBuilderClientProps {
   idea: IdeaArtifact
+  strategyOptions: StrategyOption[]
 }
 
-export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
+export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderClientProps) {
   const router = useRouter()
   const [job, setJob] = useState<TalonDraftJobV1 | null>(null)
-  const [starting, setStarting] = useState(true)
+  const [referenceStrategies, setReferenceStrategies] = useState<ReferenceStrategy[]>(
+    idea.reference_strategies ?? [],
+  )
+  const [starting, setStarting] = useState(false)
   const [applying, setApplying] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +60,16 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea_id: idea.idea_id,
-          builder_state: { mode: "beginner" },
+          builder_state: {
+            mode: "beginner",
+            fields: {
+              title: idea.title,
+              thesis: idea.thesis,
+              sleeve: idea.sleeve,
+              tags: idea.tags ?? [],
+              reference_strategies: referenceStrategies,
+            },
+          },
         }),
       })
       const payload = (await res.json().catch(() => ({}))) as {
@@ -70,9 +87,7 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
     } finally {
       setStarting(false)
     }
-  }, [idea.idea_id])
-
-  useEffect(() => { startJob() }, [startJob])
+  }, [idea.idea_id, idea.sleeve, idea.tags, idea.thesis, idea.title, referenceStrategies])
 
   // Poll while the job is in an active state. State flips to terminal on the
   // next poll if the worker stalls; the server-side stuck-job sweep promotes
@@ -185,6 +200,15 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
 
       {error && <BuilderErrorCard message={error} onDismiss={() => setError(null)} />}
 
+      {!job && !starting && (
+        <BuilderStartCard
+          strategyOptions={strategyOptions}
+          referenceStrategies={referenceStrategies}
+          onReferenceStrategiesChange={setReferenceStrategies}
+          onStart={startJob}
+        />
+      )}
+
       {starting && !job && <BuilderStatusCard label="Starting" body="Spinning up Talon for this idea." />}
 
       {job && (
@@ -197,6 +221,38 @@ export function UnifiedBuilderClient({ idea }: UnifiedBuilderClientProps) {
           onRetry={onRetry}
         />
       )}
+    </div>
+  )
+}
+
+function BuilderStartCard({
+  strategyOptions,
+  referenceStrategies,
+  onReferenceStrategiesChange,
+  onStart,
+}: {
+  strategyOptions: StrategyOption[]
+  referenceStrategies: ReferenceStrategy[]
+  onReferenceStrategiesChange: (next: ReferenceStrategy[]) => void
+  onStart: () => void
+}) {
+  return (
+    <div className="vr-card" style={cardStyle}>
+      <div className="t-eyebrow" style={{ ...eyebrowStyle, color: "var(--vr-gold)" }}>
+        Build with Talon
+      </div>
+      <div style={bodyStyle}>
+        Pick any parent strategies Talon should study, then start the draft. References
+        are context only; this remains new strategy work.
+      </div>
+      <ReferenceStrategyPicker
+        options={strategyOptions}
+        value={referenceStrategies}
+        onChange={onReferenceStrategiesChange}
+      />
+      <button type="button" onClick={onStart} style={primaryButton}>
+        Build with Talon
+      </button>
     </div>
   )
 }

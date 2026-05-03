@@ -527,7 +527,7 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
 
   const talonLabel =
     props.unifiedBuilderEnabled
-      ? "Open builder"
+      ? "Build with Talon"
       : busy === "talon"
       ? draftJob?.state === "REPAIRING"
         ? "Repairing draft…"
@@ -538,22 +538,22 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
   const talonInFlight = draftJob != null && !TALON_TERMINAL_STATES.has(draftJob.state)
   const showLegacyTalonInFlight = talonInFlight && !props.unifiedBuilderEnabled
   const talonSubtitle = props.unifiedBuilderEnabled
-    ? "Use the unified builder for Talon drafting, validation, review, and Apply."
+    ? "Choose optional parent strategies for Talon to reference, then draft and apply one reviewed StrategySpec."
     : draftJob && !TALON_TERMINAL_STATES.has(draftJob.state)
       ? `Job ${draftJob.job_id} · ${draftJob.steps_completed.length} steps complete. This can keep running while you wait.`
       : "Talon reads your thesis, checks the data catalog, and produces an editable spec. You review before Codex implements."
 
   return (
     <div className="vr-card" style={panel}>
-      <div style={panelTitle}>Sketch the strategy</div>
+      <div style={panelTitle}>{props.unifiedBuilderEnabled ? "Build the strategy" : "Sketch the strategy"}</div>
       <div style={panelBody}>
-        Talon can draft a starting point from your thesis, or you can write the
-        spec yourself. Either way you review and approve before Codex starts
-        implementing.
+        {props.unifiedBuilderEnabled
+          ? "This idea becomes new strategy work. Reference strategies are parent context for Talon, not a separate execution lane."
+          : "Talon can draft a starting point from your thesis, or you can write the spec yourself. Either way you review and approve before Codex starts implementing."}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <ActionRow
-          title="Draft with Talon"
+          title={props.unifiedBuilderEnabled ? "Build with Talon" : "Draft with Talon"}
           subtitle={talonSubtitle}
           ctaLabel={talonLabel}
           ctaTone="primary"
@@ -569,14 +569,16 @@ function AwaitingSpecBody(props: IdeaThreadProps) {
             Cancel Talon draft
           </button>
         )}
-        <ActionRow
-          title="Author the spec yourself"
-          subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
-          ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
-          ctaTone="muted"
-          onClick={onAuthor}
-          disabled={busy !== null}
-        />
+        {!props.unifiedBuilderEnabled && (
+          <ActionRow
+            title="Author the spec yourself"
+            subtitle="Open a blank spec. Fill in signal logic, universe, entry / exit rules, and acceptance criteria — submit when it reads like a real strategy."
+            ctaLabel={busy === "author" ? "Opening…" : "Author spec"}
+            ctaTone="muted"
+            onClick={onAuthor}
+            disabled={busy !== null}
+          />
+        )}
       </div>
       {error && <ErrorLine message={error} />}
     </div>
@@ -783,6 +785,7 @@ function AwaitingImplBody(props: IdeaThreadProps) {
           ? "This implementation was cancelled. Re-spec the idea or revisit the approval."
           : "Codex is generating the strategy module from this spec. Tests run as part of the same step."}
       </div>
+      <QueueMetaGrid queue={queue} />
       {queue.implementation_commit && (
         <div className="t-mono" style={{ fontSize: 11, color: "var(--vr-cream-mute)" }}>
           implementation_commit · {queue.implementation_commit}
@@ -790,6 +793,55 @@ function AwaitingImplBody(props: IdeaThreadProps) {
       )}
     </div>
   )
+}
+
+function QueueMetaGrid({ queue }: { queue: SpecImplementationQueueV1 }) {
+  const rows = [
+    ["queue", queue.queue_entry_id],
+    ["attempts", String(queue.attempts)],
+    ["queued", formatDateTime(queue.queued_at)],
+    queue.claimed_by ? ["claimed_by", queue.claimed_by] : null,
+    queue.claimed_at ? ["claimed", formatDateTime(queue.claimed_at)] : null,
+    queue.implementation_started_at ? ["started", formatDateTime(queue.implementation_started_at)] : null,
+    queue.implementation_finished_at ? ["finished", formatDateTime(queue.implementation_finished_at)] : null,
+    queue.registered_strategy_id ? ["strategy", queue.registered_strategy_id] : null,
+    queue.preset_id ? ["preset", queue.preset_id] : null,
+  ].filter((row): row is [string, string] => row != null)
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "auto minmax(0, 1fr)",
+        columnGap: 10,
+        rowGap: 4,
+        marginTop: 12,
+        marginBottom: queue.implementation_commit ? 10 : 0,
+        fontSize: 10.5,
+        fontFamily: "var(--ff-mono)",
+        color: "var(--vr-cream-mute)",
+      }}
+    >
+      {rows.map(([label, value]) => (
+        <FragmentRow key={label} label={label} value={value} />
+      ))}
+    </div>
+  )
+}
+
+function FragmentRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <span>{label}</span>
+      <span style={{ color: "var(--vr-cream)", overflowWrap: "anywhere" }}>{value}</span>
+    </>
+  )
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString()
 }
 
 // ─── Steps 5/6/7 ───────────────────────────────────────────────────────────

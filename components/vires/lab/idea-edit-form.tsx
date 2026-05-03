@@ -8,13 +8,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-import type { IdeaArtifact, ResearchSleeve } from "@/lib/research-lab-contracts"
+import type { IdeaArtifact, ReferenceStrategy, ResearchSleeve } from "@/lib/research-lab-contracts"
 
-import type { StrategyOption } from "./idea-form"
+import { ReferenceStrategyPicker, type StrategyOption } from "./idea-form"
 
 interface Props {
   idea: IdeaArtifact
   strategyOptions: StrategyOption[]
+  referenceModelEnabled?: boolean
 }
 
 interface ParamsSpec {
@@ -34,20 +35,24 @@ function readSpec(params: Record<string, unknown>): ParamsSpec {
   }
 }
 
-export function IdeaEditForm({ idea, strategyOptions }: Props) {
+export function IdeaEditForm({ idea, strategyOptions, referenceModelEnabled = false }: Props) {
   const router = useRouter()
 
   const initialSpec = readSpec(idea.params)
+  const useReferenceModel = referenceModelEnabled && idea.strategy_ref.kind !== "REGISTERED"
 
   const [title, setTitle]               = useState(idea.title)
   const [thesis, setThesis]             = useState(idea.thesis)
   const [sleeve, setSleeve]             = useState<ResearchSleeve>(idea.sleeve)
-  const [codePending, setCodePending]   = useState(idea.code_pending === true)
+  const [codePending, setCodePending]   = useState(useReferenceModel || idea.code_pending === true)
   const [strategyId, setStrategyId]     = useState(idea.strategy_id || "")
   const [tags, setTags]                 = useState((idea.tags ?? []).join(", "))
   const [dataSources, setDataSources]   = useState(initialSpec.data_sources ?? "")
   const [signalFilters, setSignalFilters] = useState(initialSpec.signal_filters ?? "")
   const [exitRules, setExitRules]       = useState(initialSpec.exit_rules ?? "")
+  const [referenceStrategies, setReferenceStrategies] = useState<ReferenceStrategy[]>(
+    idea.reference_strategies ?? [],
+  )
 
   const [busy, setBusy]                 = useState(false)
   const [saved, setSaved]               = useState(false)
@@ -58,6 +63,7 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
 
   const onSleeveChange = (next: ResearchSleeve) => {
     setSleeve(next)
+    if (useReferenceModel) return
     if (codePending) return
     // If the current strategy isn't valid for the new sleeve, reset to
     // the first one available. Operator can still tweak after.
@@ -72,7 +78,7 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
     !busy &&
     title.trim().length > 0 &&
     thesis.trim().length > 0 &&
-    (codePending || strategyId.length > 0)
+    (useReferenceModel || codePending || strategyId.length > 0)
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,14 +99,15 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
         title: title.trim(),
         thesis: thesis.trim(),
         sleeve,
-        code_pending: codePending,
+        code_pending: useReferenceModel || codePending,
         // Backend clears strategy_id and strategy_family when code_pending
         // is true; we send them explicitly so a stale family from the
         // previous registered strategy doesn't survive the toggle.
-        strategy_id: codePending ? "" : strategyId,
-        strategy_family: codePending ? "" : (selectedStrategy?.strategy_family ?? ""),
+        strategy_id: useReferenceModel || codePending ? "" : strategyId,
+        strategy_family: useReferenceModel || codePending ? "" : (selectedStrategy?.strategy_family ?? ""),
         tags: parsedTags,
         params: Object.keys(spec).length > 0 ? { spec } : {},
+        ...(useReferenceModel && { reference_strategies: referenceStrategies }),
       }
 
       const res = await fetch(`/api/research/ideas/${encodeURIComponent(idea.idea_id)}`, {
@@ -205,23 +212,63 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
           </div>
         </FormRow>
 
-        <FormRow label="Strategy mode">
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <ChipToggle
-              label="Use registered strategy"
-              active={!codePending}
-              onClick={() => setCodePending(false)}
-            />
-            <ChipToggle
-              label="+ New strategy (code pending)"
-              active={codePending}
-              onClick={() => setCodePending(true)}
-            />
-          </div>
-        </FormRow>
+        {useReferenceModel ? (
+          <>
+            <FormRow label="Reference strategies">
+              <ReferenceStrategyPicker
+                options={strategyOptions}
+                value={referenceStrategies}
+                onChange={setReferenceStrategies}
+              />
+            </FormRow>
+            <FormRow label="Implementation">
+              <div
+                style={{
+                  padding: "10px 12px",
+                  border: "1px solid var(--vr-gold-line)",
+                  borderLeft: "2px solid var(--vr-gold)",
+                  background: "rgba(200,169,104,0.06)",
+                  borderRadius: 3,
+                  fontSize: 11.5,
+                  lineHeight: 1.55,
+                  color: "var(--vr-cream-dim)",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "var(--ff-serif)",
+                    fontStyle: "italic",
+                    fontSize: 13,
+                    color: "var(--vr-gold)",
+                    marginBottom: 6,
+                  }}
+                >
+                  New strategy work
+                </div>
+                References seed Talon and Codex with parent context. This idea still waits
+                for its own strategy code before it can run.
+              </div>
+            </FormRow>
+          </>
+        ) : (
+          <>
+            <FormRow label="Strategy mode">
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <ChipToggle
+                  label="Use registered strategy"
+                  active={!codePending}
+                  onClick={() => setCodePending(false)}
+                />
+                <ChipToggle
+                  label="+ New strategy (code pending)"
+                  active={codePending}
+                  onClick={() => setCodePending(true)}
+                />
+              </div>
+            </FormRow>
 
-        {codePending ? (
-          <FormRow label="Code-pending capture">
+            {codePending ? (
+              <FormRow label="Code-pending capture">
             <div
               style={{
                 padding: "10px 12px",
@@ -248,53 +295,55 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
               Saving with code-pending clears <span style={{ fontFamily: "var(--ff-mono)" }}>strategy_id</span>.
               The idea stays in DRAFT until a real strategy module is implemented and registered.
             </div>
-          </FormRow>
-        ) : (
-          <FormRow label="Strategy">
-            <select
-              value={strategyId}
-              onChange={e => setStrategyId(e.target.value)}
-              style={inputStyle}
-              disabled={strategiesForSleeve.length === 0}
-            >
-              {strategiesForSleeve.length === 0 && <option value="">None available</option>}
-              {strategiesForSleeve.map(s => (
-                <option key={s.strategy_id} value={s.strategy_id}>
-                  {s.display_name} · {s.strategy_id}
-                </option>
-              ))}
-            </select>
-            <div
-              style={{
-                marginTop: 5,
-                fontSize: 10.5,
-                color: "var(--vr-cream-faint)",
-                fontStyle: "italic",
-                fontFamily: "var(--ff-serif)",
-                lineHeight: 1.5,
-              }}
-            >
-              If none of these match the thesis, switch to{" "}
-              <button
-                type="button"
-                onClick={() => setCodePending(true)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  color: "var(--vr-gold)",
-                  fontStyle: "italic",
-                  fontFamily: "var(--ff-serif)",
-                  fontSize: "inherit",
-                  cursor: "pointer",
-                  textDecoration: "underline",
-                }}
-              >
-                code pending
-              </button>{" "}
-              instead of forcing a fit.
-            </div>
-          </FormRow>
+              </FormRow>
+            ) : (
+              <FormRow label="Strategy">
+                <select
+                  value={strategyId}
+                  onChange={e => setStrategyId(e.target.value)}
+                  style={inputStyle}
+                  disabled={strategiesForSleeve.length === 0}
+                >
+                  {strategiesForSleeve.length === 0 && <option value="">None available</option>}
+                  {strategiesForSleeve.map(s => (
+                    <option key={s.strategy_id} value={s.strategy_id}>
+                      {s.display_name} · {s.strategy_id}
+                    </option>
+                  ))}
+                </select>
+                <div
+                  style={{
+                    marginTop: 5,
+                    fontSize: 10.5,
+                    color: "var(--vr-cream-faint)",
+                    fontStyle: "italic",
+                    fontFamily: "var(--ff-serif)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  If none of these match the thesis, switch to{" "}
+                  <button
+                    type="button"
+                    onClick={() => setCodePending(true)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      color: "var(--vr-gold)",
+                      fontStyle: "italic",
+                      fontFamily: "var(--ff-serif)",
+                      fontSize: "inherit",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    code pending
+                  </button>{" "}
+                  instead of forcing a fit.
+                </div>
+              </FormRow>
+            )}
+          </>
         )}
 
         <FormRow label="Tags (comma-separated)">
@@ -334,7 +383,7 @@ export function IdeaEditForm({ idea, strategyOptions }: Props) {
               lineHeight: 1.5,
             }}
           >
-            Optional. Sketch what's in your head — Talon or Codex turns it into real strategy code later.
+            Optional. Sketch what&apos;s in your head — Talon or Codex turns it into real strategy code later.
           </div>
           <FormRow label="Data sources">
             <textarea
