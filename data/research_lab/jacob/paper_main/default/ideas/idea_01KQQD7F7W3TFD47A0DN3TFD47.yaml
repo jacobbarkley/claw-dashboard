@@ -1,0 +1,25 @@
+schema_version: research_lab.idea.v2
+idea_id: idea_01KQQD7F7W3TFD47A0DN3TFD47
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+title: Anniversary Idea
+thesis: >-
+  We buy stocks that are currently having their birthday. If the company IPO'd on 05/03/1993 we will
+  buy it on 05/03 of the present year.
+sleeve: STOCKS
+tags:
+  - Test
+params: {}
+reference_strategies: []
+strategy_ref:
+  kind: NONE
+  active_spec_id: null
+  pending_spec_id: null
+  strategy_id: null
+  preset_id: null
+status: DRAFT
+needs_spec: true
+created_at: '2026-05-03T17:12:27.132Z'
+created_by: jacob
+source: MANUAL
