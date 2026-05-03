@@ -10,7 +10,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import type {
   IdeaArtifact,
@@ -395,6 +395,17 @@ function BuilderProposalCard({
   const accentLine = tone === "ready" ? "rgba(104,200,142,0.42)" : "var(--vr-gold-line)"
   const accentSoft = tone === "ready" ? "rgba(104,200,142,0.06)" : "var(--vr-gold-soft)"
 
+  const warnings = tone === "warn" ? assessment?.warnings ?? [] : []
+  // Reset acknowledgment when the warning set changes (e.g., new draft).
+  // OpenClaw flag 5: WARN-state proposals must require explicit acknowledgment.
+  const warningsKey = useMemo(() => warnings.join("|"), [warnings])
+  const [warnAcknowledged, setWarnAcknowledged] = useState(false)
+  useEffect(() => {
+    setWarnAcknowledged(false)
+  }, [warningsKey])
+
+  const applyDisabled = applying || (tone === "warn" && warnings.length > 0 && !warnAcknowledged)
+
   return (
     <div
       className="vr-card"
@@ -428,7 +439,7 @@ function BuilderProposalCard({
         </div>
       )}
 
-      {tone === "warn" && assessment?.warnings && assessment.warnings.length > 0 && (
+      {tone === "warn" && warnings.length > 0 && (
         <ul
           style={{
             margin: 0,
@@ -441,21 +452,51 @@ function BuilderProposalCard({
             lineHeight: 1.5,
           }}
         >
-          {assessment.warnings.map((w, i) => (
+          {warnings.map((w, i) => (
             <li key={i}>{w}</li>
           ))}
         </ul>
       )}
 
+      {tone === "warn" && warnings.length > 0 && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8,
+            fontSize: 11.5,
+            color: "var(--vr-cream)",
+            lineHeight: 1.4,
+            cursor: "pointer",
+            userSelect: "none",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={warnAcknowledged}
+            onChange={event => setWarnAcknowledged(event.target.checked)}
+            disabled={applying}
+            style={{
+              marginTop: 2,
+              accentColor: "var(--vr-gold)",
+              cursor: applying ? "default" : "pointer",
+            }}
+          />
+          <span>I&rsquo;ve reviewed the warnings above.</span>
+        </label>
+      )}
+
       <button
         type="button"
         onClick={onApply}
-        disabled={applying}
+        disabled={applyDisabled}
         style={{
           ...primaryButton,
           color: accent,
           borderColor: accentLine,
           background: accentSoft,
+          opacity: applyDisabled && !applying ? 0.5 : 1,
+          cursor: applyDisabled ? "default" : "pointer",
         }}
       >
         {applying ? "Applying…" : "Apply proposal"}
