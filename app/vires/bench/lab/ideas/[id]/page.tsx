@@ -2,19 +2,25 @@ import Link from "next/link"
 
 import { IdeaStatusControl } from "@/components/vires/lab/idea-status-control"
 import { IdeaThreadLive } from "@/components/vires/lab/idea-thread-live"
+import { LabIdeaDetailRedesigned } from "@/components/vires/lab/lab-idea-detail-redesigned"
 import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
-import { specAuthoringEnabled, unifiedBuilderEnabled } from "@/lib/feature-flags.server"
+import {
+  labRedesignEnabled,
+  specAuthoringEnabled,
+  unifiedBuilderEnabled,
+} from "@/lib/feature-flags.server"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
 import type {
   IdeaArtifact,
   SpecImplementationQueueV1,
   StrategySpecV1,
 } from "@/lib/research-lab-contracts"
-import { loadIdeaById } from "@/lib/research-lab-ideas.server"
+import { loadIdeaById, loadIdeas } from "@/lib/research-lab-ideas.server"
 import { loadSpecImplementationQueueEntry } from "@/lib/research-lab-queue.server"
 import { loadStrategySpecsForIdea } from "@/lib/research-lab-specs.server"
-import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
+import { deriveIdeaStage } from "@/lib/research-lab-stage"
+import { hasLabCampaignForIdea, loadCampaignsIndex } from "@/lib/vires-campaigns.server"
 
 export const metadata = {
   title: "Vires Capital — Lab · Idea",
@@ -88,6 +94,41 @@ export default async function ViresLabIdeaDetailPage({
             Back to ideas
           </Link>
         </LabPhaseZeroShell>
+      </>
+    )
+  }
+
+  if (labRedesignEnabled()) {
+    const stage = deriveIdeaStage(idea, { hasCampaign: labCampaignExists })
+    const activeSpec = activeSpecFromList(idea, strategySpecs)
+    const [allIdeas, campaignsIndex] = await Promise.all([loadIdeas(), loadCampaignsIndex()])
+    const labCampaignIds = new Set(
+      (campaignsIndex?.registry?.campaigns ?? [])
+        .map(c => c.campaign_id)
+        .filter((cid): cid is string => typeof cid === "string" && cid.startsWith("lab_")),
+    )
+    const neighborhood = allIdeas
+      .filter(i => i.sleeve === idea.sleeve && i.idea_id !== idea.idea_id && i.status !== "RETIRED")
+      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))
+      .slice(0, 5)
+      .map(i => ({
+        idea_id: i.idea_id,
+        title: i.title,
+        sleeve: i.sleeve,
+        status: i.status,
+        stage: deriveIdeaStage(i, { hasCampaign: labCampaignIds.has(`lab_${i.idea_id}`) }),
+      }))
+    return (
+      <>
+        <LabSubNav />
+        <LabIdeaDetailRedesigned
+          idea={idea}
+          stage={stage}
+          activeSpec={activeSpec}
+          strategySpecs={strategySpecs}
+          hasCampaign={labCampaignExists}
+          neighborhood={neighborhood}
+        />
       </>
     )
   }
@@ -664,6 +705,22 @@ function SpecRow({ label, value, last = false }: { label: string; value: string;
       </div>
     </div>
   )
+}
+
+function activeSpecFromList(
+  idea: IdeaArtifact,
+  specs: StrategySpecV1[],
+): StrategySpecV1 | null {
+  const specId = idea.strategy_ref?.active_spec_id
+  if (!specId) {
+    // No active id — fall back to the most recent spec if any. The
+    // redesigned timeline still wants something to render in the Spec
+    // step body when one exists in any state.
+    return specs.length > 0
+      ? [...specs].sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))[0] ?? null
+      : null
+  }
+  return specs.find(s => s.spec_id === specId) ?? null
 }
 
 async function loadThreadDataForIdea(
