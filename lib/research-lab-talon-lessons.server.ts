@@ -3,39 +3,137 @@ import path from "path"
 
 import yaml from "js-yaml"
 
-import { readDashboardFileText } from "@/lib/github-multi-file-commit.server"
+import {
+  commitDashboardFiles,
+  readDashboardFileText,
+  type MultiFileCommitResult,
+} from "@/lib/github-multi-file-commit.server"
 
-interface LessonFile {
+export interface TalonStrategyLesson {
+  schema_version?: "research_lab.talon_strategy_lesson.v1"
+  lesson_id?: string
+  title?: string
+  summary?: string
+  source?: Record<string, unknown> | null
+  prompt_rules?: string[]
+  created_at?: string
+  created_by?: string
+}
+
+export interface TalonExemplar {
+  schema_version?: "research_lab.talon_exemplar.v1"
+  exemplar_id?: string
   title?: string
   summary?: string
   prompt_rules?: string[]
 }
 
-interface ExemplarFile {
-  title?: string
-  summary?: string
-  prompt_rules?: string[]
-}
-
-interface TalonContextIndex {
+export interface TalonContextIndex {
+  schema_version?: "research_lab.talon_context_index.v1"
   lesson_files?: string[]
   exemplar_files?: string[]
 }
 
+export interface TalonPromptContext {
+  index: TalonContextIndex | null
+  lessons: TalonStrategyLesson[]
+  exemplars: TalonExemplar[]
+  formatted_prompt: string
+}
+
+export interface CreateTalonStrategyLessonInput {
+  lessonId?: string | null
+  title: string
+  summary: string
+  promptRules: string[]
+  source?: Record<string, unknown> | null
+  createdBy?: string | null
+}
+
+export interface CreateTalonStrategyLessonResult extends MultiFileCommitResult {
+  lesson: TalonStrategyLesson
+  relpath: string
+  index: TalonContextIndex
+}
+
 const LESSON_ROOT = path.join(process.cwd(), "data", "research_lab", "talon")
 const INDEX_RELPATH = "data/research_lab/talon/_index.json"
+const STRATEGY_LESSON_DIR = "data/research_lab/talon/strategy_lessons"
 
-export async function formatTalonLessonsForPrompt(): Promise<string> {
+export async function loadTalonPromptContext(): Promise<TalonPromptContext> {
   const index = await readContextIndex()
   const [lessons, exemplars] = index
     ? await Promise.all([
-        readIndexedYamlFiles<LessonFile>(index.lesson_files ?? []),
-        readIndexedYamlFiles<ExemplarFile>(index.exemplar_files ?? []),
+        readIndexedYamlFiles<TalonStrategyLesson>(index.lesson_files ?? []),
+        readIndexedYamlFiles<TalonExemplar>(index.exemplar_files ?? []),
       ])
     : await Promise.all([
-        readYamlDirectory<LessonFile>(path.join(LESSON_ROOT, "strategy_lessons")),
-        readYamlDirectory<ExemplarFile>(path.join(LESSON_ROOT, "exemplars")),
+        readYamlDirectory<TalonStrategyLesson>(path.join(LESSON_ROOT, "strategy_lessons")),
+        readYamlDirectory<TalonExemplar>(path.join(LESSON_ROOT, "exemplars")),
       ])
+  return {
+    index,
+    lessons,
+    exemplars,
+    formatted_prompt: formatPromptContext(lessons, exemplars),
+  }
+}
+
+export async function formatTalonLessonsForPrompt(): Promise<string> {
+  const context = await loadTalonPromptContext()
+  return context.formatted_prompt
+}
+
+export async function createTalonStrategyLesson({
+  lessonId,
+  title,
+  summary,
+  promptRules,
+  source = null,
+  createdBy = "jacob",
+}: CreateTalonStrategyLessonInput): Promise<CreateTalonStrategyLessonResult> {
+  const now = new Date().toISOString()
+  const id = normalizeLessonId(lessonId) ?? buildLessonId(title, now)
+  const relpath = `${STRATEGY_LESSON_DIR}/${id}.yaml`
+  const index = normalizeIndex(await readContextIndex())
+  const nextIndex: TalonContextIndex = {
+    ...index,
+    schema_version: "research_lab.talon_context_index.v1",
+    lesson_files: appendUnique(index.lesson_files ?? [], relpath),
+    exemplar_files: index.exemplar_files ?? [],
+  }
+  const lesson: TalonStrategyLesson = {
+    schema_version: "research_lab.talon_strategy_lesson.v1",
+    lesson_id: id,
+    title,
+    source,
+    summary,
+    prompt_rules: promptRules,
+    created_at: now,
+    created_by: createdBy ?? "jacob",
+  }
+  const persisted = await commitDashboardFiles({
+    message: `research lab: record Talon lesson ${id}`,
+    files: [
+      {
+        relpath,
+        content: `${yaml.dump(lesson, { noRefs: true, lineWidth: 100 })}`,
+      },
+      {
+        relpath: INDEX_RELPATH,
+        content: `${JSON.stringify(nextIndex, null, 2)}\n`,
+      },
+    ],
+  })
+  return {
+    ...persisted,
+    lesson,
+    relpath,
+    index: nextIndex,
+  }
+}
+
+function formatPromptContext(lessons: TalonStrategyLesson[], exemplars: TalonExemplar[]): string {
   const lines: string[] = []
   if (lessons.length) {
     lines.push("Durable Talon strategy lessons:")
@@ -52,6 +150,37 @@ export async function formatTalonLessonsForPrompt(): Promise<string> {
     }
   }
   return lines.join("\n")
+}
+
+function normalizeIndex(index: TalonContextIndex | null): TalonContextIndex {
+  return {
+    schema_version: "research_lab.talon_context_index.v1",
+    lesson_files: index?.lesson_files ?? [],
+    exemplar_files: index?.exemplar_files ?? [],
+  }
+}
+
+function appendUnique(values: string[], next: string): string[] {
+  return values.includes(next) ? values : [...values, next]
+}
+
+function normalizeLessonId(input: string | null | undefined): string | null {
+  if (!input) return null
+  const normalized = safeSlug(input)
+  return normalized || null
+}
+
+function buildLessonId(title: string, now: string): string {
+  const stamp = now.replace(/\D/g, "").slice(0, 14)
+  return `${safeSlug(title).slice(0, 64) || "talon_lesson"}_${stamp}`
+}
+
+function safeSlug(input: string): string {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
 }
 
 async function readContextIndex(): Promise<TalonContextIndex | null> {

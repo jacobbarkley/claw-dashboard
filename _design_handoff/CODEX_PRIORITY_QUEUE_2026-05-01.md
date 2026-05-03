@@ -4,6 +4,40 @@
 **Status:** Living queue. Update as new build lessons surface.
 **Standing review rule:** Codex should continue spawning Claude-style review/audit passes for meaningful backend or contract work before finalizing, especially around Talon, StrategySpec, worker queues, promotion, and multi-tenant boundaries.
 
+## Progress Reconciliation - 2026-05-02
+
+The queue below is now partially landed:
+
+- Items 1-2 are implemented enough for the first production slice: Unified
+  Builder contract types, `builder_state`, durable Talon draft jobs, polling,
+  cancellation, clarification answers, draft patching, Apply, persisted
+  provenance, and beginner-mode UI exist on disk.
+- Item 3 remains a bridge/stability rule; no major new current work expected.
+- Item 4 now has a dashboard-side flag slice:
+  `VIRES_LAB_STRATEGY_REFERENCES` exposes reference-strategy selection on
+  idea create/edit for non-registered ideas. New flagged ideas write as new
+  code work with optional 0-2 parent references; existing registered ideas are
+  left alone.
+- Item 5 is landed on the trading-bot side: `reference_strategies` and
+  builder-state references are accepted by the Pydantic models and dashboard
+  spec reader tests cover `experiment_plan` compatibility.
+- Item 6 is already implemented at `/vires/bench/lab/run-strategy`.
+
+Item 7 is now partially advanced: approved specs already create implementation
+queue artifacts, and this reconciliation slice added a lifecycle endpoint for
+`claim`, `start`, and `finish` plus richer queue metadata in the idea thread.
+Remaining item-7 work is worker/drain automation and any operator-facing list
+view Jacob wants beyond the per-idea thread. Item 8 is now landed for new
+operator/manual spec drafts: the server seeds a valid-ish experiment-plan
+template instead of persisting `experiment_plan: null`.
+
+Item 9 is now partially advanced: Talon already injects indexed strategy
+lessons/exemplars into the durable draft prompt, and this slice added
+`/api/research/specs/talon-context` so an operator or worker can inspect the
+loaded prompt context and record a new durable lesson after a failed/repaired
+run. Remaining item-9 work is an automatic failed-run miner or a richer UI
+for turning job outcomes into lessons.
+
 ## Active Queue
 
 1. **Unified Spec Builder v2 contract + UX slice** — collapse "AI-made" vs "operator-authored" into one guided builder: structured choices, bounded dropdowns, plain-language notes, Talon clarification, deterministic validation, and a final normalized StrategySpec + ExperimentPlan.
@@ -30,7 +64,10 @@
 
 ## Current Top Item
 
-Move **Unified Spec Builder v2 contract + UX slice** to the top. This is intentionally a short alignment/design slice before heavy implementation: it defines what the durable Talon job must carry, what the operator chooses directly, what Talon clarifies, and what the backend validates. Durable jobs remain the product-quality execution path, but they should be built around this builder contract rather than around the brittle "raw thesis → perfect spec" shape.
+Move **Experiment-plan contract polish** to the top now that operator-drafted
+specs seed experiment-plan templates and Talon has an indexed lesson capture
+surface. The next slice should tighten era selection, evidence thresholds,
+decisive verdict rules, and submit/approve validation placement.
 
 ## Builder Mode Direction
 

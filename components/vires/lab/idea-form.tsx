@@ -1,12 +1,8 @@
 "use client"
 
-// V0 manual idea authoring form. Guardrails per spec §12 + Codex's
-// idea-factory notes:
-//   - strategy_id is a dropdown sourced from the preset index — no
-//     freeform "make up a strategy" authoring.
-//   - promotion_target is optional; honest about that.
-//   - Talon-driven drafting is V1 and intentionally stubbed here as a
-//     disabled button with a tooltip.
+// Idea capture form. In the reference-model path, a saved idea is new
+// strategy work by default; selected registered strategies are lineage
+// and Talon/Codex context, not the execution target.
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -14,6 +10,7 @@ import { useRouter } from "next/navigation"
 import type {
   IdeaPromotionTarget,
   IdeaStatus,
+  ReferenceStrategy,
   ResearchSleeve,
 } from "@/lib/research-lab-contracts"
 
@@ -25,7 +22,13 @@ export interface StrategyOption {
   preset_id: string
 }
 
-export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[] }) {
+export function IdeaForm({
+  strategyOptions,
+  referenceModelEnabled = false,
+}: {
+  strategyOptions: StrategyOption[]
+  referenceModelEnabled?: boolean
+}) {
   const router = useRouter()
 
   const [title, setTitle] = useState("")
@@ -48,6 +51,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
   const [dataSources, setDataSources] = useState("")
   const [signalFilters, setSignalFilters] = useState("")
   const [exitRules, setExitRules] = useState("")
+  const [referenceStrategies, setReferenceStrategies] = useState<ReferenceStrategy[]>([])
   const [promoteToCampaign, setPromoteToCampaign] = useState(false)
   const [promotionTarget, setPromotionTarget] = useState<IdeaPromotionTarget | null>(null)
   const [assignSlotOpen, setAssignSlotOpen] = useState(false)
@@ -59,6 +63,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
 
   const onSleeveChange = (next: ResearchSleeve) => {
     setSleeve(next)
+    if (referenceModelEnabled) return
     // Reset strategy to the first one available for the new sleeve.
     const firstForSleeve = strategyOptions.find(s => s.sleeve === next)
     setStrategyId(firstForSleeve?.strategy_id ?? "")
@@ -67,7 +72,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
   const canSubmit =
     title.trim().length > 0 &&
     thesis.trim().length > 0 &&
-    (codePending || strategyId.length > 0) &&
+    (referenceModelEnabled || codePending || strategyId.length > 0) &&
     submitState !== "submitting"
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,16 +95,18 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         sleeve,
         // Route honors code_pending and ignores strategy_id when set;
         // we still include it so the audit shape is unambiguous.
-        strategy_id: codePending ? "" : strategyId,
-        status: codePending ? "DRAFT" : status,
+        strategy_id: referenceModelEnabled || codePending ? "" : strategyId,
+        status: referenceModelEnabled || codePending ? "DRAFT" : status,
         source: "MANUAL",
-        ...(codePending && { code_pending: true }),
-        ...(!codePending &&
+        ...((referenceModelEnabled || codePending) && { code_pending: true }),
+        ...(referenceModelEnabled &&
+          referenceStrategies.length > 0 && { reference_strategies: referenceStrategies }),
+        ...(!referenceModelEnabled && !codePending &&
           selectedStrategy?.strategy_family && { strategy_family: selectedStrategy.strategy_family }),
         ...(parsedTags.length > 0 && { tags: parsedTags }),
         ...(Object.keys(spec).length > 0 && { params: { spec } }),
-        ...(!codePending && promoteToCampaign && { promote_to_campaign: true }),
-        ...(!codePending && promotionTarget && { promotion_target: promotionTarget }),
+        ...(!referenceModelEnabled && !codePending && promoteToCampaign && { promote_to_campaign: true }),
+        ...(!referenceModelEnabled && !codePending && promotionTarget && { promotion_target: promotionTarget }),
       }
       const res = await fetch("/api/research/ideas", {
         method: "POST",
@@ -121,50 +128,6 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* Draft-with-Talon — full-card golden button. Disabled until V1. */}
-      <button
-        type="button"
-        disabled
-        title="Coming in V1"
-        style={{
-          width: "100%",
-          padding: "26px 20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          background:
-            "linear-gradient(135deg, rgba(200,169,104,0.14), rgba(200,169,104,0.05))",
-          border: "1px solid rgba(200,169,104,0.45)",
-          borderRadius: 4,
-          cursor: "not-allowed",
-          fontFamily: "inherit",
-          color: "var(--vr-gold)",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--ff-serif)",
-            fontSize: 22,
-            letterSpacing: "0.01em",
-            lineHeight: 1.1,
-          }}
-        >
-          Draft with Talon
-        </span>
-        <span
-          className="t-eyebrow"
-          style={{
-            fontSize: 9,
-            letterSpacing: "0.2em",
-            color: "var(--vr-cream-faint)",
-          }}
-        >
-          Coming in V1
-        </span>
-      </button>
-
       <div className="vr-card" style={{ padding: "16px 16px 18px" }}>
         <FormRow label="Title">
           <input
@@ -195,11 +158,11 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
                 label={s.charAt(0) + s.slice(1).toLowerCase()}
                 active={sleeve === s}
                 onClick={() => onSleeveChange(s)}
-                disabled={!strategyOptions.some(o => o.sleeve === s)}
+                disabled={!referenceModelEnabled && !strategyOptions.some(o => o.sleeve === s)}
               />
             ))}
           </div>
-          {!strategyOptions.some(o => o.sleeve === sleeve) && (
+          {!referenceModelEnabled && !strategyOptions.some(o => o.sleeve === sleeve) && (
             <div
               style={{
                 marginTop: 6,
@@ -212,23 +175,62 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
           )}
         </FormRow>
 
-        <FormRow label="Strategy mode">
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <ChipToggle
-              label="Use registered strategy"
-              active={!codePending}
-              onClick={() => setCodePending(false)}
-            />
-            <ChipToggle
-              label="+ New strategy (code pending)"
-              active={codePending}
-              onClick={() => setCodePending(true)}
-            />
-          </div>
-        </FormRow>
+        {referenceModelEnabled ? (
+          <>
+            <FormRow label="Reference strategies">
+              <ReferenceStrategyPicker
+                options={strategyOptions}
+                value={referenceStrategies}
+                onChange={setReferenceStrategies}
+              />
+            </FormRow>
+            <FormRow label="Implementation">
+              <div
+                style={{
+                  padding: "10px 12px",
+                  border: "1px solid var(--vr-gold-line)",
+                  borderLeft: "2px solid var(--vr-gold)",
+                  background: "rgba(200,169,104,0.06)",
+                  borderRadius: 3,
+                  fontSize: 11.5,
+                  lineHeight: 1.55,
+                  color: "var(--vr-cream-dim)",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: "var(--ff-serif)",
+                    fontSize: 13,
+                    color: "var(--vr-gold)",
+                    marginBottom: 6,
+                  }}
+                >
+                  New strategy work
+                </div>
+                Saved as a new code path. References are lineage and drafting context;
+                they do not route execution to an existing strategy.
+              </div>
+            </FormRow>
+          </>
+        ) : (
+          <>
+            <FormRow label="Strategy mode">
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <ChipToggle
+                  label="Use registered strategy"
+                  active={!codePending}
+                  onClick={() => setCodePending(false)}
+                />
+                <ChipToggle
+                  label="+ New strategy (code pending)"
+                  active={codePending}
+                  onClick={() => setCodePending(true)}
+                />
+              </div>
+            </FormRow>
 
-        {codePending ? (
-          <FormRow label="Code-pending capture">
+            {codePending ? (
+              <FormRow label="Code-pending capture">
             <div
               style={{
                 padding: "10px 12px",
@@ -254,23 +256,25 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
               Saved as thesis only. Can&apos;t submit to the lab until Codex (or Talon V1)
               implements the strategy. Status stays DRAFT; promotion fields are hidden.
             </div>
-          </FormRow>
-        ) : (
-          <FormRow label="Strategy">
-            <select
-              value={strategyId}
-              onChange={e => setStrategyId(e.target.value)}
-              style={inputStyle}
-              disabled={strategiesForSleeve.length === 0}
-            >
-              {strategiesForSleeve.length === 0 && <option value="">None available</option>}
-              {strategiesForSleeve.map(s => (
-                <option key={s.strategy_id} value={s.strategy_id}>
-                  {s.display_name} · {s.strategy_id}
-                </option>
-              ))}
-            </select>
-          </FormRow>
+              </FormRow>
+            ) : (
+              <FormRow label="Strategy">
+                <select
+                  value={strategyId}
+                  onChange={e => setStrategyId(e.target.value)}
+                  style={inputStyle}
+                  disabled={strategiesForSleeve.length === 0}
+                >
+                  {strategiesForSleeve.length === 0 && <option value="">None available</option>}
+                  {strategiesForSleeve.map(s => (
+                    <option key={s.strategy_id} value={s.strategy_id}>
+                      {s.display_name} · {s.strategy_id}
+                    </option>
+                  ))}
+                </select>
+              </FormRow>
+            )}
+          </>
         )}
 
         <FormRow label="Tags (comma-separated, optional)">
@@ -357,7 +361,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
           )}
         </div>
 
-        {!codePending && (
+        {!referenceModelEnabled && !codePending && (
         <FormRow label="Status">
           <div style={{ display: "flex", gap: 6 }}>
             {(["DRAFT", "READY"] as IdeaStatus[]).map(s => (
@@ -372,7 +376,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         </FormRow>
         )}
 
-        {!codePending && (
+        {!referenceModelEnabled && !codePending && (
         <FormRow label="Campaign on first run">
           <label
             style={{
@@ -395,7 +399,7 @@ export function IdeaForm({ strategyOptions }: { strategyOptions: StrategyOption[
         </FormRow>
         )}
 
-        {!codePending && (
+        {!referenceModelEnabled && !codePending && (
         <FormRow label="Promotion slot (optional)">
           {promotionTarget ? (
             <PromotionTargetDisplay
@@ -532,6 +536,151 @@ function ChipToggle({
     >
       {label}
     </button>
+  )
+}
+
+export function ReferenceStrategyPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: StrategyOption[]
+  value: ReferenceStrategy[]
+  onChange: (next: ReferenceStrategy[]) => void
+}) {
+  const selected = new Set(value.map(ref => ref.strategy_id))
+  const available = options.filter(option => !selected.has(option.strategy_id))
+  const canAdd = value.length < 2 && available.length > 0
+
+  const addReference = (strategyId: string) => {
+    if (!strategyId || selected.has(strategyId) || value.length >= 2) return
+    onChange([...value, { strategy_id: strategyId, delta_note: null }])
+  }
+
+  const updateDelta = (strategyId: string, delta: string) => {
+    onChange(
+      value.map(ref =>
+        ref.strategy_id === strategyId
+          ? { ...ref, delta_note: delta.trim().length > 0 ? delta : null }
+          : ref,
+      ),
+    )
+  }
+
+  const removeReference = (strategyId: string) => {
+    onChange(value.filter(ref => ref.strategy_id !== strategyId))
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {value.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {value.map(ref => {
+            const option = options.find(o => o.strategy_id === ref.strategy_id)
+            return (
+              <div
+                key={ref.strategy_id}
+                style={{
+                  padding: "10px 12px",
+                  border: "1px solid var(--vr-line)",
+                  borderRadius: 3,
+                  background: "rgba(241,236,224,0.02)",
+                }}
+              >
+                <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontFamily: "var(--ff-serif)",
+                        fontSize: 13,
+                        color: "var(--vr-cream)",
+                        lineHeight: 1.3,
+                      }}
+                    >
+                      {option?.display_name ?? ref.strategy_id}
+                    </div>
+                    <div
+                      className="t-eyebrow"
+                      style={{
+                        marginTop: 3,
+                        fontSize: 8.5,
+                        letterSpacing: "0.13em",
+                        color: "var(--vr-cream-faint)",
+                      }}
+                    >
+                      {option?.sleeve ?? "UNKNOWN"} / {ref.strategy_id}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeReference(ref.strategy_id)}
+                    aria-label={`Remove ${ref.strategy_id}`}
+                    style={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: 3,
+                      border: "1px solid var(--vr-line)",
+                      background: "transparent",
+                      color: "var(--vr-cream-mute)",
+                      cursor: "pointer",
+                      fontFamily: "var(--ff-mono)",
+                    }}
+                  >
+                    x
+                  </button>
+                </div>
+                <textarea
+                  value={ref.delta_note ?? ""}
+                  onChange={e => updateDelta(ref.strategy_id, e.target.value)}
+                  placeholder="Delta note: what changes from this parent?"
+                  rows={2}
+                  maxLength={280}
+                  style={{
+                    ...inputStyle,
+                    marginTop: 9,
+                    resize: "vertical",
+                    fontFamily: "inherit",
+                  }}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <select
+        value=""
+        onChange={e => {
+          addReference(e.target.value)
+          e.currentTarget.value = ""
+        }}
+        disabled={!canAdd}
+        style={inputStyle}
+      >
+        <option value="">
+          {canAdd ? "Add reference strategy..." : "Reference limit reached"}
+        </option>
+        {available.map(option => (
+          <option key={option.strategy_id} value={option.strategy_id}>
+            {option.display_name} / {option.strategy_id}
+          </option>
+        ))}
+      </select>
+
+      {value.length === 0 && (
+        <div
+          style={{
+            fontSize: 10.5,
+            color: "var(--vr-cream-faint)",
+            lineHeight: 1.5,
+            fontStyle: "italic",
+            fontFamily: "var(--ff-serif)",
+          }}
+        >
+          Blank-slate idea. Talon will not inherit a parent strategy unless you add one.
+        </div>
+      )}
+    </div>
   )
 }
 

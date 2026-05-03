@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import type { IdeaArtifact, ScopeTriple, StrategySpecV1 } from "@/lib/research-lab-contracts"
 import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
+import { createDraftExperimentPlanTemplate } from "@/lib/research-lab-experiment-plan"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import {
   loadStrategySpecById,
@@ -110,6 +111,23 @@ export async function POST(req: NextRequest) {
     if (initialState === "REJECTED") {
       throw new Error("New strategy specs cannot start in REJECTED state")
     }
+    const authoringMode = parseAuthoringMode(body.authoring_mode, "OPERATOR_DRAFTED")
+    const benchmark = optionalString(body.benchmark)
+    const providedExperimentPlan = normalizeStrategySpecPatchExperimentPlan(body.experiment_plan, {
+      specId,
+      ideaId,
+    })
+    const seedOperatorPlan =
+      authoringMode === "OPERATOR_DRAFTED" || authoringMode === "MANUAL"
+    const experimentPlan =
+      providedExperimentPlan ??
+      (seedOperatorPlan
+        ? createDraftExperimentPlanTemplate({
+            specId,
+            ideaId,
+            benchmarkSymbol: benchmark,
+          })
+        : null)
     spec = {
       schema_version: "research_lab.strategy_spec.v1",
       spec_id: specId,
@@ -119,7 +137,7 @@ export async function POST(req: NextRequest) {
       account_id: scope.account_id,
       strategy_group_id: scope.strategy_group_id,
       created_at: new Date().toISOString(),
-      authoring_mode: parseAuthoringMode(body.authoring_mode, "OPERATOR_DRAFTED"),
+      authoring_mode: authoringMode,
       authored_by: requiredString(body.authored_by ?? "jacob", "authored_by"),
       state: initialState,
       signal_logic: requiredString(body.signal_logic, "signal_logic"),
@@ -129,12 +147,9 @@ export async function POST(req: NextRequest) {
       risk_model: recordOrEmpty(body.risk_model),
       sweep_params: recordOrEmpty(body.sweep_params),
       required_data: stringListOrEmpty(body.required_data),
-      benchmark: optionalString(body.benchmark),
+      benchmark,
       acceptance_criteria: recordOrEmpty(body.acceptance_criteria),
-      experiment_plan: normalizeStrategySpecPatchExperimentPlan(body.experiment_plan, {
-        specId,
-        ideaId,
-      }),
+      experiment_plan: experimentPlan,
       candidate_strategy_family: optionalString(body.candidate_strategy_family),
       implementation_notes: optionalString(body.implementation_notes),
       parent_spec_id: optionalString(body.parent_spec_id),
