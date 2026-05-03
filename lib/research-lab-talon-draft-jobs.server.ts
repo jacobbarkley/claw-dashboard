@@ -52,6 +52,7 @@ import {
 } from "@/lib/research-lab-talon.server"
 
 import {
+  canTransitionSpec,
   ideaArtifactToYaml,
   ideaRepoRelpath,
   linkIdeaToSpec,
@@ -629,9 +630,15 @@ export async function applyTalonDraftJob({
   }
   const spec = job.builder_state?.current_draft ?? job.proposal
   if (!spec) throw httpError(409, "Talon draft job has no proposal to apply.")
+  const targetState = "AWAITING_APPROVAL" as const
+  const transition = canTransitionSpec(spec.state, targetState)
+  if (!transition.ok) {
+    throw httpError(409, transition.error, { spec_id: spec.spec_id, current_state: spec.state })
+  }
   const specToApply: StrategySpecV1 = {
     ...spec,
     authoring_mode: job.builder_state?.current_authoring_mode ?? spec.authoring_mode,
+    state: targetState,
   }
   validateStrategySpec(specToApply)
   const planValidity = validateExperimentPlan(specToApply.experiment_plan)
