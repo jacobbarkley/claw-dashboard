@@ -38,10 +38,12 @@ interface UnifiedBuilderClientProps {
 
 export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderClientProps) {
   const router = useRouter()
+  const originalReferenceIdsRef = useRef((idea.reference_strategies ?? []).map(ref => ref.strategy_id))
   const [job, setJob] = useState<TalonDraftJobV1 | null>(null)
   const [referenceStrategies, setReferenceStrategies] = useState<ReferenceStrategy[]>(
     idea.reference_strategies ?? [],
   )
+  const [intentMessage, setIntentMessage] = useState("")
   const [starting, setStarting] = useState(false)
   const [applying, setApplying] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -60,6 +62,7 @@ export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderCl
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           idea_id: idea.idea_id,
+          intent_message: intentMessage.trim() || null,
           builder_state: {
             mode: "beginner",
             fields: {
@@ -87,7 +90,7 @@ export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderCl
     } finally {
       setStarting(false)
     }
-  }, [idea.idea_id, idea.sleeve, idea.tags, idea.thesis, idea.title, referenceStrategies])
+  }, [idea.idea_id, idea.sleeve, idea.tags, idea.thesis, idea.title, intentMessage, referenceStrategies])
 
   // Poll while the job is in an active state. State flips to terminal on the
   // next poll if the worker stalls; the server-side stuck-job sweep promotes
@@ -204,7 +207,10 @@ export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderCl
         <BuilderStartCard
           strategyOptions={strategyOptions}
           referenceStrategies={referenceStrategies}
+          originalReferenceIds={originalReferenceIdsRef.current}
+          intentMessage={intentMessage}
           onReferenceStrategiesChange={setReferenceStrategies}
+          onIntentMessageChange={setIntentMessage}
           onStart={startJob}
         />
       )}
@@ -228,12 +234,18 @@ export function UnifiedBuilderClient({ idea, strategyOptions }: UnifiedBuilderCl
 function BuilderStartCard({
   strategyOptions,
   referenceStrategies,
+  originalReferenceIds,
+  intentMessage,
   onReferenceStrategiesChange,
+  onIntentMessageChange,
   onStart,
 }: {
   strategyOptions: StrategyOption[]
   referenceStrategies: ReferenceStrategy[]
+  originalReferenceIds: string[]
+  intentMessage: string
   onReferenceStrategiesChange: (next: ReferenceStrategy[]) => void
+  onIntentMessageChange: (next: string) => void
   onStart: () => void
 }) {
   return (
@@ -242,14 +254,31 @@ function BuilderStartCard({
         Build with Talon
       </div>
       <div style={bodyStyle}>
-        Pick any parent strategies Talon should study, then start the draft. References
-        are context only; this remains new strategy work.
+        Talon will use the saved reference notes as context. Add or remove references
+        only if this draft needs a different read before it starts.
       </div>
       <ReferenceStrategyPicker
         options={strategyOptions}
         value={referenceStrategies}
         onChange={onReferenceStrategiesChange}
+        readOnlyStrategyIds={originalReferenceIds}
+        editableNoteLabel="New reference note"
+        editableNotePlaceholder="Optional: what should Talon notice about this added reference?"
+        emptyText="No references selected for this draft. Talon will work from the idea thesis alone."
       />
+      <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="t-eyebrow" style={{ ...eyebrowStyle, fontSize: 8.5 }}>
+          Additions or refinements for Talon
+        </span>
+        <textarea
+          value={intentMessage}
+          onChange={e => onIntentMessageChange(e.target.value)}
+          placeholder="Optional: anything new since you saved the idea?"
+          rows={3}
+          maxLength={600}
+          style={builderTextareaStyle}
+        />
+      </label>
       <button type="button" onClick={onStart} style={primaryButton}>
         Build with Talon
       </button>
@@ -689,6 +718,18 @@ const bodyStyle: React.CSSProperties = {
   fontSize: 12.5,
   color: "var(--vr-cream)",
   lineHeight: 1.55,
+}
+
+const builderTextareaStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "8px 10px",
+  border: "1px solid var(--vr-line)",
+  borderRadius: 3,
+  background: "var(--vr-ink)",
+  color: "var(--vr-cream)",
+  fontFamily: "inherit",
+  fontSize: 12.5,
+  resize: "vertical",
 }
 
 const ghostButton: React.CSSProperties = {

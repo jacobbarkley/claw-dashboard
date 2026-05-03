@@ -543,12 +543,21 @@ export function ReferenceStrategyPicker({
   options,
   value,
   onChange,
+  readOnlyStrategyIds = [],
+  editableNoteLabel = "Delta note",
+  editableNotePlaceholder = "Delta note: what changes from this parent?",
+  emptyText = "Blank-slate idea. Talon will not inherit a parent strategy unless you add one.",
 }: {
   options: StrategyOption[]
   value: ReferenceStrategy[]
   onChange: (next: ReferenceStrategy[]) => void
+  readOnlyStrategyIds?: string[]
+  editableNoteLabel?: string
+  editableNotePlaceholder?: string
+  emptyText?: string
 }) {
   const selected = new Set(value.map(ref => ref.strategy_id))
+  const readOnlySelected = new Set(readOnlyStrategyIds)
   const available = options.filter(option => !selected.has(option.strategy_id))
   const canAdd = value.length < 2 && available.length > 0
 
@@ -577,6 +586,7 @@ export function ReferenceStrategyPicker({
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {value.map(ref => {
             const option = options.find(o => o.strategy_id === ref.strategy_id)
+            const readOnly = readOnlySelected.has(ref.strategy_id)
             return (
               <div
                 key={ref.strategy_id}
@@ -629,19 +639,64 @@ export function ReferenceStrategyPicker({
                     x
                   </button>
                 </div>
-                <textarea
-                  value={ref.delta_note ?? ""}
-                  onChange={e => updateDelta(ref.strategy_id, e.target.value)}
-                  placeholder="Delta note: what changes from this parent?"
-                  rows={2}
-                  maxLength={280}
-                  style={{
-                    ...inputStyle,
-                    marginTop: 9,
-                    resize: "vertical",
-                    fontFamily: "inherit",
-                  }}
-                />
+                {readOnly ? (
+                  <div
+                    style={{
+                      marginTop: 9,
+                      padding: "8px 10px",
+                      border: "1px solid var(--vr-line)",
+                      borderRadius: 3,
+                      background: "rgba(241,236,224,0.018)",
+                    }}
+                  >
+                    <div
+                      className="t-eyebrow"
+                      style={{
+                        fontSize: 8.5,
+                        letterSpacing: "0.13em",
+                        color: "var(--vr-cream-faint)",
+                        marginBottom: 4,
+                      }}
+                    >
+                      Saved delta
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 11.5,
+                        lineHeight: 1.45,
+                        color: ref.delta_note ? "var(--vr-cream-dim)" : "var(--vr-cream-faint)",
+                        fontStyle: ref.delta_note ? "normal" : "italic",
+                      }}
+                    >
+                      {ref.delta_note || "No delta note saved on the idea."}
+                    </div>
+                  </div>
+                ) : (
+                  <label style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 9 }}>
+                    <span
+                      className="t-eyebrow"
+                      style={{
+                        fontSize: 8.5,
+                        letterSpacing: "0.13em",
+                        color: "var(--vr-cream-faint)",
+                      }}
+                    >
+                      {editableNoteLabel}
+                    </span>
+                    <textarea
+                      value={ref.delta_note ?? ""}
+                      onChange={e => updateDelta(ref.strategy_id, e.target.value)}
+                      placeholder={editableNotePlaceholder}
+                      rows={2}
+                      maxLength={280}
+                      style={{
+                        ...inputStyle,
+                        resize: "vertical",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </label>
+                )}
               </div>
             )
           })}
@@ -677,7 +732,7 @@ export function ReferenceStrategyPicker({
             fontFamily: "var(--ff-serif)",
           }}
         >
-          Blank-slate idea. Talon will not inherit a parent strategy unless you add one.
+          {emptyText}
         </div>
       )}
     </div>
