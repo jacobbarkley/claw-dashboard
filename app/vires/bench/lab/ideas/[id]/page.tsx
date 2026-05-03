@@ -101,7 +101,13 @@ export default async function ViresLabIdeaDetailPage({
   if (labRedesignEnabled()) {
     const stage = deriveIdeaStage(idea, { hasCampaign: labCampaignExists })
     const activeSpec = activeSpecFromList(idea, strategySpecs)
-    const [allIdeas, campaignsIndex] = await Promise.all([loadIdeas(), loadCampaignsIndex()])
+    const [allIdeas, campaignsIndex, activeQueueEntry] = await Promise.all([
+      loadIdeas(),
+      loadCampaignsIndex(),
+      activeSpec
+        ? loadSpecImplementationQueueEntry(activeSpec.spec_id, PHASE_1_DEFAULT_SCOPE)
+        : Promise.resolve(null),
+    ])
     const labCampaignIds = new Set(
       (campaignsIndex?.registry?.campaigns ?? [])
         .map(c => c.campaign_id)
@@ -125,6 +131,7 @@ export default async function ViresLabIdeaDetailPage({
           idea={idea}
           stage={stage}
           activeSpec={activeSpec}
+          activeQueueEntry={activeQueueEntry}
           strategySpecs={strategySpecs}
           hasCampaign={labCampaignExists}
           neighborhood={neighborhood}
