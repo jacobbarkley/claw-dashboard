@@ -9,8 +9,8 @@
 // (including legacy strategy_id/code_pending toggles) and persists clean
 // idea.v2 YAML so existing shells keep working during the migration.
 //
-// Persistence mirrors the POST route: GitHub Contents API when
-// GITHUB_TOKEN is set, local FS otherwise (dev path).
+// Persistence mirrors the POST route through the shared dashboard artifact
+// commit helper so preview deployments write to their active branch.
 
 import { promises as fs } from "fs"
 import path from "path"
@@ -27,6 +27,7 @@ import type {
   StrategyRefV2,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import { commitDashboardFiles, dashboardArtifactBranch } from "@/lib/github-multi-file-commit.server"
 import { ideaPath, loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { normalizeReferenceStrategies } from "@/lib/research-lab-strategy-references.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
@@ -182,65 +183,18 @@ function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
   return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }
 
-async function persistLocal(
+async function persistIdea(
   idea: IdeaArtifact,
   scope: ScopeTriple,
-): Promise<{ mode: "local"; file: string; commit_sha: null }> {
-  const absolutePath = ideaPath(idea.idea_id, scope)
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 }))
-  return { mode: "local", file: ideaRelpath(scope, idea.idea_id), commit_sha: null }
-}
-
-async function persistGithub(
-  idea: IdeaArtifact,
-  scope: ScopeTriple,
-  token: string,
   commitMessage: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
+): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null; branch: string | null }> {
   const relpath = ideaRelpath(scope, idea.idea_id)
-
-  // GitHub Contents API requires the current file sha to update.
-  const getResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  })
-  if (!getResponse.ok) {
-    const detail = await getResponse.text()
-    throw new Error(`GitHub GET ${getResponse.status}: ${detail}`)
-  }
-  const existing = (await getResponse.json()) as { sha?: string }
-  if (!existing.sha) {
-    throw new Error("GitHub response missing file sha")
-  }
-
   const yamlText = yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 })
-  const content = Buffer.from(yamlText, "utf-8").toString("base64")
-  const putResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
-    body: JSON.stringify({
-      message: commitMessage,
-      content,
-      sha: existing.sha,
-    }),
+  const persisted = await commitDashboardFiles({
+    message: commitMessage,
+    files: [{ relpath, content: yamlText }],
   })
-  if (!putResponse.ok) {
-    const detail = await putResponse.text()
-    throw new Error(`GitHub PUT ${putResponse.status}: ${detail}`)
-  }
-  const payload = (await putResponse.json()) as {
-    commit?: { sha?: string }
-    content?: { sha?: string }
-  }
-  const commit_sha = payload.commit?.sha ?? payload.content?.sha ?? ""
-  return { mode: "github", file: relpath, commit_sha }
+  return { mode: persisted.mode, file: relpath, commit_sha: persisted.commit_sha, branch: persisted.branch }
 }
 
 function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
@@ -640,14 +594,9 @@ export async function PATCH(
   if (draftFieldsTouched.length > 0) changeNotes.push(`edit ${draftFieldsTouched.join("/")}`)
   const commitMessage = `research lab: ${changeNotes.join(" · ") || "update"} on ${updated.idea_id}`
 
-  let persisted:
-    | Awaited<ReturnType<typeof persistLocal>>
-    | Awaited<ReturnType<typeof persistGithub>>
+  let persisted: Awaited<ReturnType<typeof persistIdea>>
   try {
-    const token = process.env.GITHUB_TOKEN
-    persisted = token
-      ? await persistGithub(updated, scope, token, commitMessage)
-      : await persistLocal(updated, scope)
+    persisted = await persistIdea(updated, scope, commitMessage)
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown persistence failure"
     return NextResponse.json({ error: `Failed to persist idea: ${detail}` }, { status: 500 })
@@ -658,6 +607,7 @@ export async function PATCH(
     mode: persisted.mode,
     file: persisted.file,
     commit_sha: persisted.commit_sha,
+    branch: persisted.branch,
     idea: updated,
   })
 }
@@ -695,18 +645,23 @@ async function deleteGithub(
   scope: ScopeTriple,
   ideaId: string,
   token: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
+  branch: string,
+): Promise<{ mode: "github"; file: string; commit_sha: string; branch: string }> {
   const relpath = ideaRelpath(scope, ideaId)
+  const encodedRelpath = relpath.split("/").map(encodeURIComponent).join("/")
 
   // GitHub DELETE requires the current file sha.
-  const getResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
+  const getResponse = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodedRelpath}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
     },
-  })
+  )
   if (getResponse.status === 404) {
-    return { mode: "github", file: relpath, commit_sha: "" }
+    return { mode: "github", file: relpath, commit_sha: "", branch }
   }
   if (!getResponse.ok) {
     const detail = await getResponse.text()
@@ -717,7 +672,7 @@ async function deleteGithub(
     throw new Error("GitHub response missing file sha")
   }
 
-  const deleteResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
+  const deleteResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodedRelpath}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -727,6 +682,7 @@ async function deleteGithub(
     body: JSON.stringify({
       message: `research lab: delete idea ${ideaId}`,
       sha: existing.sha,
+      branch,
     }),
   })
   if (!deleteResponse.ok) {
@@ -734,7 +690,7 @@ async function deleteGithub(
     throw new Error(`GitHub DELETE ${deleteResponse.status}: ${detail}`)
   }
   const payload = (await deleteResponse.json()) as { commit?: { sha?: string } }
-  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? "" }
+  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? "", branch }
 }
 
 export async function DELETE(
@@ -812,9 +768,13 @@ export async function DELETE(
   let removed: Awaited<ReturnType<typeof deleteLocal>> | Awaited<ReturnType<typeof deleteGithub>>
   try {
     const token = process.env.GITHUB_TOKEN
-    removed = token
-      ? await deleteGithub(scope, ideaId, token)
-      : await deleteLocal(scope, ideaId)
+    if (token) {
+      removed = await deleteGithub(scope, ideaId, token, dashboardArtifactBranch())
+    } else if (process.env.VERCEL) {
+      throw new Error("GITHUB_TOKEN is required for dashboard artifact deletes on Vercel.")
+    } else {
+      removed = await deleteLocal(scope, ideaId)
+    }
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown deletion failure"
     return NextResponse.json({ error: `Failed to delete idea: ${detail}` }, { status: 500 })
@@ -825,5 +785,6 @@ export async function DELETE(
     mode: removed.mode,
     file: removed.file,
     commit_sha: removed.commit_sha,
+    branch: "branch" in removed ? removed.branch : null,
   })
 }

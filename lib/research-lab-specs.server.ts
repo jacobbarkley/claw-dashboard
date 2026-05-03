@@ -13,7 +13,7 @@ import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
 import type { ScopeTriple, StrategySpecV1 } from "./research-lab-contracts"
-import { readDashboardFileText } from "./github-multi-file-commit.server"
+import { readDashboardDirectory, readDashboardFileText } from "./github-multi-file-commit.server"
 
 const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
 const GITHUB_API = "https://api.github.com/repos/jacobbarkley/claw-dashboard/contents"
@@ -39,7 +39,11 @@ export function strategySpecPath(
 }
 
 export function strategySpecRepoRelpath(specId: string, scope: ScopeTriple): string {
-  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs/${specId}.yaml`
+  return `${strategySpecsRepoDirRelpath(scope)}/${specId}.yaml`
+}
+
+function strategySpecsRepoDirRelpath(scope: ScopeTriple): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs`
 }
 
 function normalizeStrategySpec(parsed: unknown): StrategySpecV1 | null {
@@ -117,6 +121,7 @@ export async function loadStrategySpecById(
   if (process.env.GITHUB_TOKEN) {
     const raw = await readDashboardFileText(strategySpecRepoRelpath(specId, scope))
     if (raw) return normalizeStrategySpec(yaml.load(raw))
+    return null
   }
   const local = await readYamlIfPresent(strategySpecPath(specId, scope))
   if (local) return local
@@ -126,6 +131,11 @@ export async function loadStrategySpecById(
 export async function loadStrategySpecs(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<StrategySpecV1[]> {
+  if (process.env.GITHUB_TOKEN) {
+    const githubSpecs = await fetchSpecsDirectoryFromGithub(scope)
+    if (githubSpecs) return githubSpecs
+  }
+
   const dir = strategySpecsDir(scope)
   let entries: string[]
   try {
@@ -146,7 +156,7 @@ export async function loadStrategySpecsForIdea(
 ): Promise<StrategySpecV1[]> {
   if (!ideaId || !SAFE_ID.test(ideaId)) return []
   const localSpecs = await loadStrategySpecs(scope)
-  const githubSpecs = await fetchSpecsDirectoryFromGithub(scope)
+  const githubSpecs = await fetchSpecsDirectoryFromGithub(scope) ?? []
   const specsById = new Map<string, StrategySpecV1>()
   for (const spec of [...localSpecs, ...githubSpecs]) specsById.set(spec.spec_id, spec)
   return [...specsById.values()]
@@ -157,8 +167,26 @@ export async function loadStrategySpecsForIdea(
     })
 }
 
-async function fetchSpecsDirectoryFromGithub(scope: ScopeTriple): Promise<StrategySpecV1[]> {
-  const dirRelpath = `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/strategy_specs`
+async function fetchSpecsDirectoryFromGithub(scope: ScopeTriple): Promise<StrategySpecV1[] | null> {
+  const dirRelpath = strategySpecsRepoDirRelpath(scope)
+  if (process.env.GITHUB_TOKEN) {
+    const entries = await readDashboardDirectory(dirRelpath)
+    if (!entries) return null
+    const yamlEntries = entries.filter(
+      entry =>
+        entry.type === "file" &&
+        (entry.name.endsWith(".yaml") || entry.name.endsWith(".yml")),
+    )
+    const specs = await Promise.all(
+      yamlEntries.map(async entry => {
+        const raw = await readDashboardFileText(entry.path)
+        if (!raw) return null
+        return normalizeStrategySpec(yaml.load(raw))
+      }),
+    )
+    return specs.filter((spec): spec is StrategySpecV1 => spec != null)
+  }
+
   try {
     const res = await fetch(`${GITHUB_API}/${dirRelpath}?ref=main`, { cache: "no-store" })
     if (!res.ok) return []
@@ -184,6 +212,6 @@ async function fetchSpecsDirectoryFromGithub(scope: ScopeTriple): Promise<Strate
     return specs.filter((spec): spec is StrategySpecV1 => spec != null)
   } catch (err) {
     console.error(`[research-lab-specs] github directory fallback failed for ${dirRelpath}:`, err)
-    return []
+    return null
   }
 }

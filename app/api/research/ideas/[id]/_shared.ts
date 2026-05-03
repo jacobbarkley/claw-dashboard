@@ -1,6 +1,3 @@
-import { promises as fs } from "fs"
-import path from "path"
-
 import yaml from "js-yaml"
 
 import type {
@@ -10,10 +7,8 @@ import type {
   ScopeTriple,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
-import { ideaPath } from "@/lib/research-lab-ideas.server"
+import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
 
-const GITHUB_REPO = "jacobbarkley/claw-dashboard"
-const GITHUB_API = "https://api.github.com"
 const SAFE_PATH_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
 
 export const OPERATOR_ALLOWED_TRANSITIONS: Record<IdeaStatus, IdeaStatus[]> = {
@@ -107,76 +102,21 @@ export async function persistIdeaArtifact(
   idea: IdeaArtifact,
   scope: ScopeTriple,
   commitMessage: string,
-): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null }> {
-  const token = process.env.GITHUB_TOKEN
-  return token
-    ? persistGithub(idea, scope, token, commitMessage)
-    : persistLocal(idea, scope)
-}
-
-async function persistLocal(
-  idea: IdeaArtifact,
-  scope: ScopeTriple,
-): Promise<{ mode: "local"; file: string; commit_sha: null }> {
-  const absolutePath = ideaPath(idea.idea_id, scope)
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 }))
-  return { mode: "local", file: ideaRelpath(scope, idea.idea_id), commit_sha: null }
-}
-
-async function persistGithub(
-  idea: IdeaArtifact,
-  scope: ScopeTriple,
-  token: string,
-  commitMessage: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
+): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null; branch: string | null }> {
   const relpath = ideaRelpath(scope, idea.idea_id)
-  const getResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-    },
-  })
-  if (!getResponse.ok) {
-    const detail = await getResponse.text()
-    throw new Error(`GitHub GET ${getResponse.status}: ${detail}`)
-  }
-  const existing = (await getResponse.json()) as { sha?: string }
-  if (!existing.sha) throw new Error("GitHub response missing file sha")
-
   const yamlText = yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 })
-  const content = Buffer.from(yamlText, "utf-8").toString("base64")
-  const putResponse = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
-    body: JSON.stringify({
-      message: commitMessage,
-      content,
-      sha: existing.sha,
-    }),
+  const persisted = await commitDashboardFiles({
+    message: commitMessage,
+    files: [{ relpath, content: yamlText }],
   })
-  if (!putResponse.ok) {
-    const detail = await putResponse.text()
-    throw new Error(`GitHub PUT ${putResponse.status}: ${detail}`)
-  }
-  const payload = (await putResponse.json()) as {
-    commit?: { sha?: string }
-    content?: { sha?: string }
-  }
-  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? payload.content?.sha ?? "" }
+  return { mode: persisted.mode, file: relpath, commit_sha: persisted.commit_sha, branch: persisted.branch }
 }
 
 function stripViewFields(idea: IdeaArtifact): Record<string, unknown> {
-  const {
-    schema: _schema,
-    strategy_id: _strategyId,
-    strategy_family: _strategyFamily,
-    code_pending: _codePending,
-    ...persisted
-  } = idea as IdeaArtifact & { schema?: unknown }
+  const persisted = { ...idea } as Record<string, unknown>
+  delete persisted.schema
+  delete persisted.strategy_id
+  delete persisted.strategy_family
+  delete persisted.code_pending
   return persisted
 }

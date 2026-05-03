@@ -10,6 +10,11 @@ import path from "path"
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
 const GITHUB_API = "https://api.github.com"
 const DEFAULT_BRANCH = "main"
+const BRANCH_OVERRIDE_KEYS = [
+  "DASHBOARD_ARTIFACT_BRANCH",
+  "DASHBOARD_MUTATION_BRANCH",
+  "GITHUB_BRANCH",
+] as const
 
 export interface MultiFileCommitWrite {
   relpath: string
@@ -20,35 +25,76 @@ export interface MultiFileCommitResult {
   mode: "github" | "local"
   commit_sha: string | null
   files: string[]
+  branch: string | null
+}
+
+export interface DashboardDirectoryEntry {
+  name: string
+  path: string
+  type: "file" | "dir" | string
+}
+
+export function dashboardArtifactBranch(): string {
+  for (const key of BRANCH_OVERRIDE_KEYS) {
+    const value = process.env[key]?.trim()
+    if (value) return normalizeBranch(value, key)
+  }
+
+  const vercelRef = process.env.VERCEL_GIT_COMMIT_REF?.trim()
+  if (vercelRef) return normalizeBranch(vercelRef, "VERCEL_GIT_COMMIT_REF")
+
+  if (process.env.VERCEL && process.env.VERCEL_ENV !== "production") {
+    throw new Error(
+      "VERCEL_GIT_COMMIT_REF is required for preview dashboard artifact writes. " +
+        "Refusing to fall back to main from a preview deployment.",
+    )
+  }
+
+  return DEFAULT_BRANCH
 }
 
 export async function commitDashboardFiles({
   files,
   message,
-  branch = DEFAULT_BRANCH,
+  branch = dashboardArtifactBranch(),
 }: {
   files: MultiFileCommitWrite[]
   message: string
   branch?: string
 }): Promise<MultiFileCommitResult> {
   if (files.length === 0) {
-    return { mode: "local", commit_sha: null, files: [] }
+    return { mode: "local", commit_sha: null, files: [], branch: null }
   }
+  const targetBranch = normalizeBranch(branch, "branch")
   const token = process.env.GITHUB_TOKEN
-  return token
-    ? commitGithubFiles({ files, message, branch, token })
-    : writeLocalFiles(files)
+  if (token) return commitGithubFiles({ files, message, branch: targetBranch, token })
+  if (process.env.VERCEL) {
+    throw new Error("GITHUB_TOKEN is required for dashboard artifact writes on Vercel.")
+  }
+  return writeLocalFiles(files)
 }
 
-export async function readDashboardFileText(relpath: string): Promise<string | null> {
+export async function readDashboardFileText(
+  relpath: string,
+  branch = dashboardArtifactBranch(),
+): Promise<string | null> {
   const token = process.env.GITHUB_TOKEN
-  if (token) return readGithubFileText(relpath, token)
+  if (token) return readGithubFileText(relpath, token, normalizeBranch(branch, "branch"))
   try {
     return await fs.readFile(resolveRepoPath(relpath), "utf-8")
   } catch (err) {
     if ((err as NodeJS.ErrnoException)?.code === "ENOENT") return null
     throw err
   }
+}
+
+export async function readDashboardDirectory(
+  relpath: string,
+  branch = dashboardArtifactBranch(),
+): Promise<DashboardDirectoryEntry[] | null> {
+  const token = process.env.GITHUB_TOKEN
+  if (!token) return null
+  return readGithubDirectory(relpath, token, normalizeBranch(branch, "branch"))
 }
 
 async function writeLocalFiles(files: MultiFileCommitWrite[]): Promise<MultiFileCommitResult> {
@@ -92,7 +138,7 @@ async function writeLocalFiles(files: MultiFileCommitWrite[]): Promise<MultiFile
     await Promise.allSettled(writes.map(write => fs.unlink(write.tempPath)))
     throw err
   }
-  return { mode: "local", commit_sha: null, files: files.map(file => file.relpath) }
+  return { mode: "local", commit_sha: null, files: files.map(file => file.relpath), branch: null }
 }
 
 function resolveRepoPath(relpath: string): string {
@@ -116,7 +162,7 @@ async function commitGithubFiles({
   token: string
 }): Promise<MultiFileCommitResult> {
   const ref = await githubJson<{ object?: { sha?: string } }>(
-    `/git/ref/heads/${encodeURIComponent(branch)}`,
+    `/git/ref/heads/${encodePathSegments(branch)}`,
     token,
   )
   const baseCommitSha = ref.object?.sha
@@ -179,7 +225,7 @@ async function commitGithubFiles({
   if (!commit.sha) throw new Error("GitHub commit response missing sha")
 
   await githubJson(
-    `/git/refs/heads/${encodeURIComponent(branch)}`,
+    `/git/refs/heads/${encodePathSegments(branch)}`,
     token,
     {
       method: "PATCH",
@@ -194,23 +240,79 @@ async function commitGithubFiles({
     mode: "github",
     commit_sha: commit.sha,
     files: files.map(file => file.relpath),
+    branch,
   }
 }
 
-async function readGithubFileText(relpath: string, token: string): Promise<string | null> {
-  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}?ref=${DEFAULT_BRANCH}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github.raw",
+async function readGithubFileText(relpath: string, token: string, branch: string): Promise<string | null> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodePathSegments(relpath)}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.raw",
+      },
+      cache: "no-store",
     },
-    cache: "no-store",
-  })
+  )
   if (response.status === 404) return null
   if (!response.ok) {
     const detail = await response.text()
     throw new Error(`GitHub raw GET ${response.status}: ${detail}`)
   }
   return response.text()
+}
+
+async function readGithubDirectory(
+  relpath: string,
+  token: string,
+  branch: string,
+): Promise<DashboardDirectoryEntry[] | null> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodePathSegments(relpath)}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
+      cache: "no-store",
+    },
+  )
+  if (response.status === 404) return null
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`GitHub directory GET ${response.status}: ${detail}`)
+  }
+  const payload = (await response.json()) as unknown
+  if (!Array.isArray(payload)) return null
+  return payload
+    .map(entry => entry as Partial<DashboardDirectoryEntry>)
+    .filter((entry): entry is DashboardDirectoryEntry =>
+      typeof entry.name === "string" &&
+      typeof entry.path === "string" &&
+      typeof entry.type === "string",
+    )
+}
+
+function normalizeBranch(value: string, label: string): string {
+  const branch = value.trim()
+  if (
+    !branch ||
+    branch.startsWith("/") ||
+    branch.endsWith("/") ||
+    branch.includes("//") ||
+    branch.includes("..") ||
+    branch.includes("@{") ||
+    branch.endsWith(".lock") ||
+    !/^[A-Za-z0-9._/-]+$/.test(branch)
+  ) {
+    throw new Error(`${label} must be a safe git branch name`)
+  }
+  return branch
+}
+
+function encodePathSegments(value: string): string {
+  return value.split("/").map(encodeURIComponent).join("/")
 }
 
 async function githubJson<T>(

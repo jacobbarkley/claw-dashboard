@@ -11,7 +11,8 @@
 //     "Assign promotion slot" action is the alternative assignment path.
 //   - The route only persists the artifact. No auto-submit of jobs.
 //
-// Local-FS fallback kicks in when GITHUB_TOKEN isn't set (dev path).
+// Local-FS fallback is local-dev only. Vercel writes must commit through
+// GitHub to the active deployment branch.
 
 import { randomBytes } from "crypto"
 import { promises as fs } from "fs"
@@ -29,12 +30,11 @@ import type {
   StrategyRefV2,
 } from "@/lib/research-lab-contracts"
 import { PHASE_1_DEFAULT_SCOPE } from "@/lib/research-lab-contracts"
+import { commitDashboardFiles } from "@/lib/github-multi-file-commit.server"
 import {
   normalizeReferenceStrategies,
 } from "@/lib/research-lab-strategy-references.server"
 
-const GITHUB_REPO = "jacobbarkley/claw-dashboard"
-const GITHUB_API = "https://api.github.com"
 const SAFE_PATH_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/
 
 // ─── ULID-ish id generator (same shape as campaign-request route) ──────
@@ -161,45 +161,21 @@ function ideaRelpath(scope: ScopeTriple, ideaId: string): string {
   return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
 }
 
-async function persistLocal(
+async function persistIdea(
   idea: IdeaArtifact,
   relpath: string,
-): Promise<{ mode: "local"; file: string; commit_sha: null }> {
-  const absolutePath = path.join(process.cwd(), relpath)
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 }))
-  return { mode: "local", file: relpath, commit_sha: null }
-}
-
-async function persistGithub(
-  idea: IdeaArtifact,
-  relpath: string,
-  token: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
+): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null; branch: string | null }> {
   const yamlText = yaml.dump(stripViewFields(idea), { noRefs: true, lineWidth: 100 })
-  const content = Buffer.from(yamlText, "utf-8").toString("base64")
-  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
-    body: JSON.stringify({
-      message: `research lab: save idea ${idea.idea_id}`,
-      content,
-    }),
+  const persisted = await commitDashboardFiles({
+    message: `research lab: save idea ${idea.idea_id}`,
+    files: [{ relpath, content: yamlText }],
   })
-  if (!response.ok) {
-    const detail = await response.text()
-    throw new Error(`GitHub API ${response.status}: ${detail}`)
+  return {
+    mode: persisted.mode,
+    file: relpath,
+    commit_sha: persisted.commit_sha,
+    branch: persisted.branch,
   }
-  const payload = (await response.json()) as {
-    commit?: { sha?: string }
-    content?: { sha?: string }
-  }
-  const commit_sha = payload.commit?.sha ?? payload.content?.sha ?? ""
-  return { mode: "github", file: relpath, commit_sha }
 }
 
 function hasMeaningfulSpecSeed(params: Record<string, unknown>): boolean {
@@ -402,12 +378,9 @@ export async function POST(req: NextRequest) {
   }
 
   const relpath = ideaRelpath(scope, ideaId)
-  let persisted:
-    | Awaited<ReturnType<typeof persistLocal>>
-    | Awaited<ReturnType<typeof persistGithub>>
+  let persisted: Awaited<ReturnType<typeof persistIdea>>
   try {
-    const token = process.env.GITHUB_TOKEN
-    persisted = token ? await persistGithub(idea, relpath, token) : await persistLocal(idea, relpath)
+    persisted = await persistIdea(idea, relpath)
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Unknown persistence failure"
     return NextResponse.json({ error: `Failed to persist idea: ${detail}` }, { status: 500 })
@@ -418,6 +391,7 @@ export async function POST(req: NextRequest) {
     mode: persisted.mode,
     file: persisted.file,
     commit_sha: persisted.commit_sha,
+    branch: persisted.branch,
     idea,
   })
 }

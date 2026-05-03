@@ -1,6 +1,5 @@
 import { randomBytes } from "crypto"
 import { promises as fs } from "fs"
-import path from "path"
 
 import yaml from "js-yaml"
 
@@ -18,6 +17,7 @@ import {
   validateExperimentPlan,
   withComputedExperimentPlanValidity,
 } from "@/lib/research-lab-experiment-plan"
+import { commitDashboardFiles, dashboardArtifactBranch } from "@/lib/github-multi-file-commit.server"
 import { strategySpecPath, strategySpecRepoRelpath } from "@/lib/research-lab-specs.server"
 
 const GITHUB_REPO = "jacobbarkley/claw-dashboard"
@@ -269,78 +269,45 @@ export async function persistStrategySpecArtifact(
   spec: StrategySpecV1,
   scope: ScopeTriple,
   commitMessage: string,
-): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null }> {
+): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null; branch: string | null }> {
   validateStrategySpec(spec)
-  const token = process.env.GITHUB_TOKEN
-  return token
-    ? persistGithub(spec, scope, token, commitMessage)
-    : persistLocal(spec, scope)
+  const relpath = strategySpecRepoRelpath(spec.spec_id, scope)
+  const persisted = await commitDashboardFiles({
+    message: commitMessage,
+    files: [{ relpath, content: strategySpecToYaml(spec) }],
+  })
+  return { mode: persisted.mode, file: relpath, commit_sha: persisted.commit_sha, branch: persisted.branch }
 }
 
 export async function deleteStrategySpecArtifact(
   spec: StrategySpecV1,
   scope: ScopeTriple,
   commitMessage: string,
-): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null }> {
+): Promise<{ mode: "local" | "github"; file: string; commit_sha: string | null; branch: string | null }> {
   if (spec.state !== "DRAFTING") {
     throw new Error("Only DRAFTING strategy specs can be deleted.")
   }
   const token = process.env.GITHUB_TOKEN
-  return token
-    ? deleteGithub(spec, scope, token, commitMessage)
-    : deleteLocal(spec, scope)
-}
-
-async function persistLocal(
-  spec: StrategySpecV1,
-  scope: ScopeTriple,
-): Promise<{ mode: "local"; file: string; commit_sha: null }> {
-  const absolutePath = strategySpecPath(spec.spec_id, scope)
-  await fs.mkdir(path.dirname(absolutePath), { recursive: true })
-  await fs.writeFile(absolutePath, yaml.dump(stripSchemaAlias(spec), { noRefs: true, lineWidth: 100 }))
-  return { mode: "local", file: strategySpecRepoRelpath(spec.spec_id, scope), commit_sha: null }
-}
-
-async function persistGithub(
-  spec: StrategySpecV1,
-  scope: ScopeTriple,
-  token: string,
-  commitMessage: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
-  const relpath = strategySpecRepoRelpath(spec.spec_id, scope)
-  const existingSha = await githubFileSha(relpath, token)
-  const yamlText = strategySpecToYaml(spec)
-  const content = Buffer.from(yamlText, "utf-8").toString("base64")
-  const body: Record<string, unknown> = { message: commitMessage, content }
-  if (existingSha) body.sha = existingSha
-  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      Accept: "application/vnd.github+json",
-    },
-    body: JSON.stringify(body),
-  })
-  if (!response.ok) {
-    const detail = await response.text()
-    throw new Error(`GitHub PUT ${response.status}: ${detail}`)
+  if (token) {
+    return deleteGithub(spec, scope, token, commitMessage, dashboardArtifactBranch())
   }
-  const payload = (await response.json()) as { commit?: { sha?: string }; content?: { sha?: string } }
-  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? payload.content?.sha ?? "" }
+  if (process.env.VERCEL) {
+    throw new Error("GITHUB_TOKEN is required for dashboard artifact deletes on Vercel.")
+  }
+  return deleteLocal(spec, scope)
 }
 
 async function deleteLocal(
   spec: StrategySpecV1,
   scope: ScopeTriple,
-): Promise<{ mode: "local"; file: string; commit_sha: null }> {
+): Promise<{ mode: "local"; file: string; commit_sha: null; branch: null }> {
   const absolutePath = strategySpecPath(spec.spec_id, scope)
   try {
     await fs.unlink(absolutePath)
   } catch (err) {
     if ((err as NodeJS.ErrnoException)?.code !== "ENOENT") throw err
   }
-  return { mode: "local", file: strategySpecRepoRelpath(spec.spec_id, scope), commit_sha: null }
+  return { mode: "local", file: strategySpecRepoRelpath(spec.spec_id, scope), commit_sha: null, branch: null }
 }
 
 async function deleteGithub(
@@ -348,34 +315,38 @@ async function deleteGithub(
   scope: ScopeTriple,
   token: string,
   commitMessage: string,
-): Promise<{ mode: "github"; file: string; commit_sha: string }> {
+  branch: string,
+): Promise<{ mode: "github"; file: string; commit_sha: string; branch: string }> {
   const relpath = strategySpecRepoRelpath(spec.spec_id, scope)
-  const existingSha = await githubFileSha(relpath, token)
+  const existingSha = await githubFileSha(relpath, token, branch)
   if (!existingSha) throw new Error(`GitHub file not found: ${relpath}`)
-  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
+  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodePathSegments(relpath)}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/vnd.github+json",
     },
-    body: JSON.stringify({ message: commitMessage, sha: existingSha }),
+    body: JSON.stringify({ message: commitMessage, sha: existingSha, branch }),
   })
   if (!response.ok) {
     const detail = await response.text()
     throw new Error(`GitHub DELETE ${response.status}: ${detail}`)
   }
   const payload = (await response.json()) as { commit?: { sha?: string } }
-  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? "" }
+  return { mode: "github", file: relpath, commit_sha: payload.commit?.sha ?? "", branch }
 }
 
-async function githubFileSha(relpath: string, token: string): Promise<string | null> {
-  const response = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${relpath}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
+async function githubFileSha(relpath: string, token: string, branch: string): Promise<string | null> {
+  const response = await fetch(
+    `${GITHUB_API}/repos/${GITHUB_REPO}/contents/${encodePathSegments(relpath)}?ref=${encodeURIComponent(branch)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github+json",
+      },
     },
-  })
+  )
   if (response.status === 404) return null
   if (!response.ok) {
     const detail = await response.text()
@@ -383,6 +354,10 @@ async function githubFileSha(relpath: string, token: string): Promise<string | n
   }
   const payload = (await response.json()) as { sha?: string }
   return payload.sha ?? null
+}
+
+function encodePathSegments(value: string): string {
+  return value.split("/").map(encodeURIComponent).join("/")
 }
 
 function stripSchemaAlias(spec: StrategySpecV1): Record<string, unknown> {

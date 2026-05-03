@@ -26,7 +26,7 @@ import yaml from "js-yaml"
 
 import { PHASE_1_DEFAULT_SCOPE } from "./research-lab-contracts"
 import type { IdeaArtifact, IdeaV1, IdeaV2, ScopeTriple, StrategyRefV2 } from "./research-lab-contracts"
-import { readDashboardFileText } from "./github-multi-file-commit.server"
+import { readDashboardDirectory, readDashboardFileText } from "./github-multi-file-commit.server"
 
 const GITHUB_RAW = "https://raw.githubusercontent.com/jacobbarkley/claw-dashboard/main"
 const PRESET_INDEX_PATH = path.join(process.cwd(), "data", "research_lab", "presets", "_index.json")
@@ -155,7 +155,11 @@ async function readYamlIfPresent(absPath: string): Promise<IdeaArtifact | null> 
 }
 
 function ideaRepoRelpath(ideaId: string, scope: ScopeTriple): string {
-  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas/${ideaId}.yaml`
+  return `${ideasRepoDirRelpath(scope)}/${ideaId}.yaml`
+}
+
+function ideasRepoDirRelpath(scope: ScopeTriple): string {
+  return `data/research_lab/${scope.user_id}/${scope.account_id}/${scope.strategy_group_id}/ideas`
 }
 
 async function fetchYamlFromGithub(
@@ -183,6 +187,7 @@ export async function loadIdeaById(
   if (process.env.GITHUB_TOKEN) {
     const raw = await readDashboardFileText(ideaRepoRelpath(ideaId, scope))
     if (raw) return normalizeIdeaArtifact(yaml.load(raw), await strategyFamilyById())
+    return null
   }
   const local = await readYamlIfPresent(ideaPath(ideaId, scope))
   if (local) return local
@@ -195,6 +200,11 @@ export async function loadIdeaById(
 export async function loadIdeas(
   scope: ScopeTriple = PHASE_1_DEFAULT_SCOPE,
 ): Promise<IdeaArtifact[]> {
+  if (process.env.GITHUB_TOKEN) {
+    const githubIdeas = await fetchIdeasDirectoryFromGithub(scope)
+    if (githubIdeas) return githubIdeas
+  }
+
   const dir = ideasDir(scope)
   let entries: string[]
   try {
@@ -209,4 +219,22 @@ export async function loadIdeas(
     yamlFiles.map(f => readYamlIfPresent(path.join(dir, f))),
   )
   return ideas.filter((i): i is IdeaArtifact => i != null)
+}
+
+async function fetchIdeasDirectoryFromGithub(scope: ScopeTriple): Promise<IdeaArtifact[] | null> {
+  const entries = await readDashboardDirectory(ideasRepoDirRelpath(scope))
+  if (!entries) return null
+  const yamlEntries = entries.filter(
+    entry =>
+      entry.type === "file" &&
+      (entry.name.endsWith(".yaml") || entry.name.endsWith(".yml")),
+  )
+  const ideas = await Promise.all(
+    yamlEntries.map(async entry => {
+      const raw = await readDashboardFileText(entry.path)
+      if (!raw) return null
+      return normalizeIdeaArtifact(yaml.load(raw), await strategyFamilyById())
+    }),
+  )
+  return ideas.filter((idea): idea is IdeaArtifact => idea != null)
 }
