@@ -8,6 +8,7 @@ import Link from "next/link"
 
 import type {
   IdeaArtifact,
+  SpecImplementationQueueV1,
   StrategySpecV1,
 } from "@/lib/research-lab-contracts"
 import {
@@ -18,8 +19,10 @@ import {
   type IdeaStage,
 } from "@/lib/research-lab-stage"
 
+import { BuildStepBody } from "./build-step-body"
 import { IdeaJobsRail } from "./idea-jobs-rail"
 import { IdeaStatusControl } from "./idea-status-control"
+import { MarkRegisteredForm } from "./mark-registered-form"
 
 const SLEEVE_COLOR: Record<string, string> = {
   STOCKS: "var(--vr-sleeve-stocks)",
@@ -40,6 +43,7 @@ interface LabIdeaDetailRedesignedProps {
   idea: IdeaArtifact
   stage: IdeaStage
   activeSpec: StrategySpecV1 | null
+  activeQueueEntry: SpecImplementationQueueV1 | null
   strategySpecs: StrategySpecV1[]
   hasCampaign: boolean
   neighborhood: Array<{ idea_id: string; title: string; sleeve: string; stage: IdeaStage; status: string }>
@@ -52,6 +56,7 @@ export function LabIdeaDetailRedesigned({
   idea,
   stage,
   activeSpec,
+  activeQueueEntry,
   strategySpecs,
   hasCampaign,
   neighborhood,
@@ -200,13 +205,11 @@ export function LabIdeaDetailRedesigned({
         </ThreadStep>
 
         <ThreadStep idx={2} activeIdx={idx} label="Build" meta={buildMeta(stage)}>
-          <div
-            className="t-read"
-            style={{ fontSize: 12, color: "var(--vr-cream-dim)", lineHeight: 1.55 }}
-          >
-            Codex picks up the approved spec, scaffolds the strategy module, registers it under
-            a real <span className="t-mono">strategy_id</span>, and adds tests.
-          </div>
+          <BuildStepBody
+            idea={idea}
+            activeSpec={activeSpec}
+            activeQueueEntry={activeQueueEntry}
+          />
         </ThreadStep>
 
         <ThreadStep idx={3} activeIdx={idx} label="Bench Job" meta={null}>
@@ -347,7 +350,7 @@ export function LabIdeaDetailRedesigned({
         </section>
       )}
 
-      <DetailsDisclosure idea={idea} strategySpecs={strategySpecs} />
+      <DetailsDisclosure idea={idea} strategySpecs={strategySpecs} activeSpec={activeSpec} />
     </div>
   )
 }
@@ -673,9 +676,11 @@ function BenchJobStepBody({ idea, hasCampaign }: { idea: IdeaArtifact; hasCampai
 function DetailsDisclosure({
   idea,
   strategySpecs,
+  activeSpec,
 }: {
   idea: IdeaArtifact
   strategySpecs: StrategySpecV1[]
+  activeSpec: StrategySpecV1 | null
 }) {
   const hasParams = idea.params && Object.keys(idea.params).length > 0
   const hasSpecs = strategySpecs.length > 0
@@ -791,6 +796,14 @@ function DetailsDisclosure({
               >
                 {JSON.stringify(idea.params, null, 2)}
               </pre>
+            </div>
+          </DetailsSection>
+        )}
+
+        {activeSpec && activeSpec.state !== "DRAFTING" && activeSpec.state !== "REGISTERED" && (
+          <DetailsSection label="Admin · mark code as registered">
+            <div className="vr-card" style={{ padding: "12px 14px" }}>
+              <MarkRegisteredForm activeSpec={activeSpec} />
             </div>
           </DetailsSection>
         )}
