@@ -1,0 +1,168 @@
+schema_version: research_lab.strategy_spec.v1
+spec_id: spec_01KQQDBANGXNV2YM8KGKXNV2YM
+spec_version: 1
+idea_id: idea_01KQQD7F7W3TFD47A0DN3TFD47
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+created_at: '2026-05-03T17:14:33.520Z'
+authoring_mode: AI_ASSISTED
+authored_by: jacob
+state: AWAITING_APPROVAL
+signal_logic: >-
+  IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date
+  shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged
+  as 'anniversary candidates' for that session.
+universe:
+  description: US-listed equities with a known IPO date on record, filtered for basic liquidity.
+entry_rules: >-
+  {"trigger":"Signal fires at market open on the anniversary trading day. If the anniversary date
+  falls on a weekend or holiday, the signal fires on the next valid trading
+  day.","order_type":"market_on_open","position_sizing":"Equal-weight across all anniversary
+  candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days
+  with few candidates.","confirmation_filter":"None required for baseline test. Optional v2 filter:
+  require 20-day average daily volume > 500,000 shares to exclude illiquid
+  names.","max_concurrent_positions":20,"notes":"On days with zero anniversary candidates, no trades
+  are placed. On days with many candidates, the equal-weight cap applies."}
+exit_rules: >-
+  {"primary_exit":"Close position at end of the same trading day (intraday hold). The anniversary
+  effect, if real, is expected to be a single-session
+  phenomenon.","stop_loss_pct":5,"target_pct":null,"hold_period":"1 trading day (same-session
+  close)","notes":"A 5% intraday stop is included as a risk guardrail. No profit target is set for
+  the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day
+  hold to check if any effect persists."}
+risk_model:
+  description: >-
+    {"position_limit_pct":5,"max_portfolio_heat_pct":25,"stop_loss_pct":5,"target_pct":null,"max_drawdown_abort_pct":15,"sizing_method":"equal_weight","notes":"Because
+    anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The
+    25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries.
+    The 15% portfolio drawdown abort is a circuit breaker for the backtest engine."}
+sweep_params: {}
+required_data:
+  - alpaca_equity_ohlcv
+  - fundamentals_basic
+benchmark: SPY
+acceptance_criteria:
+  min_sharpe: 0.3
+  max_drawdown: 15
+  min_hit_rate: 50
+  other: >-
+    Minimum 50 completed round-trip trades required before any acceptance or rejection verdict is
+    rendered. If trade count is below 50, the result is inconclusive and the universe must be
+    expanded.
+experiment_plan:
+  schema_version: research_lab.experiment_plan.v1
+  spec_id: spec_01KQQDBANGXNV2YM8KGKXNV2YM
+  idea_id: idea_01KQQD7F7W3TFD47A0DN3TFD47
+  is_valid: true
+  validity_reasons:
+    - field_id: runnable_eras.era_1.status
+      severity: warn
+      message: Selected era era_1 has incomplete data.
+    - field_id: runnable_eras.era_2.status
+      severity: warn
+      message: Selected era era_2 has incomplete data.
+    - field_id: runnable_eras.era_3.status
+      severity: warn
+      message: Selected era era_3 has incomplete data.
+    - field_id: data_requirements[1].status
+      severity: warn
+      message: fundamentals_basic is only partially available.
+  benchmark:
+    symbol: SPY
+    comparison_mode: both
+  windows:
+    requested_start: '2026-02-02'
+    requested_end: '2026-05-03'
+    fresh_data_required_from: null
+  runnable_eras:
+    - era_id: era_1
+      label: era_1
+      date_range:
+        start: '2026-02-02'
+        end: '2026-05-03'
+      status: INCOMPLETE_DATA
+      reason: null
+    - era_id: era_2
+      label: era_2
+      date_range:
+        start: '2026-02-02'
+        end: '2026-05-03'
+      status: INCOMPLETE_DATA
+      reason: null
+    - era_id: era_3
+      label: era_3
+      date_range:
+        start: '2026-02-02'
+        end: '2026-05-03'
+      status: INCOMPLETE_DATA
+      reason: null
+  eras:
+    mode: multi
+    required_era_ids:
+      - era_1
+      - era_2
+      - era_3
+  data_requirements:
+    - capability_id: alpaca_equity_ohlcv
+      required: true
+      status: AVAILABLE
+      status_at_draft: AVAILABLE
+      purpose: alpaca_equity_ohlcv
+    - capability_id: fundamentals_basic
+      required: true
+      status: PARTIAL
+      status_at_draft: PARTIAL
+      purpose: fundamentals_basic
+  evidence_thresholds:
+    minimum_trade_count: 50
+    minimum_evaluated_trading_days: 20
+  decisive_verdict_rules:
+    pass: >-
+      Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days
+      thresholds.
+    inconclusive: >-
+      Trade count < 50 after running the full primary window. Expand universe to all
+      Alpaca-tradeable US equities and re-run before rendering a verdict.
+    fail: >-
+      Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are
+      met.
+  known_limitations:
+    - >-
+      CRITICAL — IPO date metadata: fundamentals_basic provides only a current snapshot via Alpaca
+      asset metadata. It is NOT point-in-time. Survivorship bias is present: tickers that were
+      acquired, delisted, or went private will be missing from the universe. This is a structural
+      limitation of the current data catalog.
+    - >-
+      IPO date accuracy: For many tickers, especially those that listed via SPAC, direct listing, or
+      spin-off, the 'IPO date' in metadata may reflect the listing date rather than the original
+      offering date. The anniversary signal may fire on the wrong date for these names.
+    - >-
+      Trade count uncertainty: The actual number of anniversary matches per year depends entirely on
+      how many tickers in the chosen universe have IPO dates that fall on trading days and are
+      accurately recorded. This cannot be confirmed without running the data pull.
+    - >-
+      Same-day liquidity: The strategy enters and exits on the same day. For smaller names in the
+      universe, same-day fills at open and close may carry meaningful slippage not captured in OHLCV
+      backtest.
+    - >-
+      Operator context: The operator has stated this is a functional/plumbing test, not a live
+      trading candidate. The experiment plan is drafted in good faith to validate the mechanics, but
+      the thesis has no established academic or practitioner precedent and should be treated as
+      exploratory.
+    - >-
+      No historical fundamentals: fundamentals_basic is a current snapshot only. Historical
+      point-in-time IPO dates are not available via a wired catalog connector. The backtest will use
+      today's metadata applied backward, which is a form of look-ahead for any ticker whose listing
+      status changed.
+candidate_strategy_family: null
+implementation_notes: >-
+  Data-readiness warnings:
+
+  - fundamentals_basic: PARTIAL (fundamentals_basic) - IPO date is the core signal input.
+  fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV,
+  listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or
+  SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct
+  listings is uncertain. This is the primary data quality risk for the strategy.
+parent_spec_id: null
+registered_strategy_id: null

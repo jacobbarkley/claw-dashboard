@@ -1,6 +1,6 @@
 {
   "schema_version": "research_lab.talon_draft_job_record.v1",
-  "recorded_at": "2026-05-03T17:14:33.522Z",
+  "recorded_at": "2026-05-03T17:15:55.278Z",
   "job": {
     "schema_version": "research_lab.talon_draft_job.v1",
     "job_id": "talon_01KQQD9FZQYZKSG3D223YZKSG3",
@@ -9,14 +9,15 @@
     "account_id": "paper_main",
     "strategy_group_id": "default",
     "created_at": "2026-05-03T17:13:33.430Z",
-    "updated_at": "2026-05-03T17:14:33.522Z",
+    "updated_at": "2026-05-03T17:15:55.278Z",
     "state": "WARN",
-    "current_step": "persist",
+    "current_step": null,
     "steps_completed": [
       "load_context",
       "draft_strategy_core",
       "data_readiness",
-      "validate_schema"
+      "validate_schema",
+      "persist"
     ],
     "repair_attempts": 0,
     "intent_message": "This isn't a real idea, I'm simply doing a functional test of the product but I want you to play along with it anyways just to fill it out and see what kind of results we get. Thank you",
@@ -29,9 +30,9 @@
       "account_id": "paper_main",
       "strategy_group_id": "default",
       "created_at": "2026-05-03T17:14:33.520Z",
-      "authoring_mode": "AI_DRAFTED",
+      "authoring_mode": "AI_ASSISTED",
       "authored_by": "jacob",
-      "state": "DRAFTING",
+      "state": "AWAITING_APPROVAL",
       "signal_logic": "IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.",
       "universe": {
         "description": "US-listed equities with a known IPO date on record, filtered for basic liquidity."
@@ -227,9 +228,9 @@
     "builder_state": {
       "schema_version": "research_lab.builder_state.v1",
       "mode": "beginner",
-      "input_state": "PROPOSAL_READY",
+      "input_state": "PROPOSAL_APPLIED",
       "created_at": "2026-05-03T17:13:33.430Z",
-      "updated_at": "2026-05-03T17:14:33.522Z",
+      "updated_at": "2026-05-03T17:15:55.278Z",
       "fields": {
         "title": "Anniversary Idea",
         "thesis": "We buy stocks that are currently having their birthday. If the company IPO'd on 05/03/1993 we will buy it on 05/03 of the present year.",
@@ -589,9 +590,9 @@
         "account_id": "paper_main",
         "strategy_group_id": "default",
         "created_at": "2026-05-03T17:14:33.520Z",
-        "authoring_mode": "AI_DRAFTED",
+        "authoring_mode": "AI_ASSISTED",
         "authored_by": "jacob",
-        "state": "DRAFTING",
+        "state": "AWAITING_APPROVAL",
         "signal_logic": "IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.",
         "universe": {
           "description": "US-listed equities with a known IPO date on record, filtered for basic liquidity."
@@ -755,10 +756,9 @@
   "provenance": {
     "schema_version": "research_lab.spec_provenance.v1",
     "spec_id": "spec_01KQQDBANGXNV2YM8KGKXNV2YM",
-    "generated_at": "2026-05-03T17:14:33.522Z",
-    "model": "claude-sonnet-4-6",
-    "catalog_version": "2026-04-30.2",
-    "prompt_version": "talon_spec_drafting.v2",
+    "generated_at": "2026-05-03T17:15:55.278Z",
+    "applied_at": "2026-05-03T17:15:55.278Z",
+    "applied_by": "jacob",
     "talon_job_id": "talon_01KQQD9FZQYZKSG3D223YZKSG3",
     "data_readiness": {
       "verdict": "WARN",
@@ -781,70 +781,42 @@
         "fundamentals_basic: PARTIAL (fundamentals_basic) - IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy."
       ]
     },
-    "prompt": "You are Talon's durable spec-drafting worker inside the Vires Research Lab.\nReturn only the structured object requested by the schema. Do not invent backtest results.\nThe structured object has two string fields: proposal_json and assessment_json.\nEach field must be valid JSON text, not markdown, not fenced code, and not comments.\nproposal_json contract:\n- proposal_json is not the full persisted StrategySpecV1. It is the Talon proposal payload that the server wraps into StrategySpecV1.\n- Include these top-level fields exactly: signal_logic, entry_rules, exit_rules, risk_model, universe, required_data, experiment_plan, benchmark, acceptance_criteria.\n- benchmark must be a string symbol such as \"SPY\".\n- acceptance_criteria must be an object with numeric min_sharpe, max_drawdown_pct, and min_hit_rate_pct; optional other may be a string or null.\n- experiment_plan must include benchmark, windows, runnable_eras, eras, evidence_thresholds, decisive_verdict_rules, and known_limitations.\n- experiment_plan.benchmark must be an object such as {\"symbol\":\"SPY\",\"comparison_mode\":\"both\"}.\n- Do not include wrapper fields that the server supplies, such as schema_version, spec_id, idea_id, created_at, state, authoring_mode, or registered_strategy_id.\nassessment_json must JSON.stringify the complete data-readiness assessment.\n\nYour task has two parts:\n1. Draft a StrategySpecV1 starting point for the operator to review.\n2. Draft its experiment_plan: how the strategy will be judged before implementation.\n3. Assess whether every data dependency is actually available in the catalog.\n4. If reference strategies are supplied, use them as parent/context for NEW code and honor the operator's delta notes. Do not simply route the idea to a parent strategy.\n\nExperiment-plan rules:\n- The plan is part of the spec. Do not omit it.\n- Use ISO dates for windows. If the idea does not specify dates, choose a recent executable window and state limitations.\n- evidence_thresholds must be numeric. minimum_trade_count defaults to at least 5 for exploratory stock ideas unless the thesis justifies a higher floor.\n- data_requirements are resolved by the server from your assessment; in experiment_plan focus on benchmark, windows, eras, thresholds, verdict rules, and limitations.\n- If a strategy depends on seeded/current-only data, put that in known_limitations and make the plan clear that the first run validates plumbing, not historical edge.\n\nDurable Talon strategy lessons:\n- Ape Wisdom seeded-attention is proof plumbing unless historical attention exists: The first Ape Wisdom run proved the idea-to-job loop, but it did not prove a historical edge. The strategy used a 2026-04-14 seeded attention artifact, so only post-seed tape was honestly tradeable and the run produced one ASML trade.\n  - If an idea depends on seeded/current-only data, label the first run as a plumbing/proof run unless historical data exists.\n  - Separate config window, fresh usable tape, tradeable window, benchmark window, evaluated trading days, and trade count in the experiment plan.\n  - Do not imply a strategy is judgeable when expected trades are below the readiness floor.\n  - Ask for a broader universe, longer executable window, or missing historical connector when the plan cannot meet minimum evidence thresholds.\n  - Put seeded-data limitations in experiment_plan.known_limitations.\n\nKnown-good / known-bad exemplars:\n- Known-good regime-aware momentum template: Jacob and Codex previously found a regime-aware momentum pattern that beat SPY by roughly ten percentage points. Treat it as the first known-good template: simple OHLCV-derived momentum, explicit SPY benchmark, bounded stop/target sweeps, enough trades to judge, and clear readiness gates.\n  - Prefer simple, testable signal logic over clever data dependencies when the idea does not require exotic data.\n  - Include benchmark, eras/windows, trade-count floor, drawdown cap, and decisive verdict rules with the strategy draft.\n  - Use available OHLCV-derived features as the baseline template before reaching for unavailable sentiment, macro, options, or on-chain data.\n  - If the operator asks for a novel data source, first check whether an available proxy can honestly test the thesis.\n\nUnified builder state:\n{\n  \"mode\": \"beginner\",\n  \"fields\": {\n    \"title\": \"Anniversary Idea\",\n    \"thesis\": \"We buy stocks that are currently having their birthday. If the company IPO'd on 05/03/1993 we will buy it on 05/03 of the present year.\",\n    \"sleeve\": \"STOCKS\",\n    \"reference_strategies\": [],\n    \"tags\": [\n      \"Test\"\n    ],\n    \"universe\": null,\n    \"stop_pct\": null,\n    \"target_pct\": null,\n    \"benchmark\": null,\n    \"benchmark_comparison_mode\": null,\n    \"era_mode\": null,\n    \"era_ids\": [],\n    \"signal_logic\": null,\n    \"entry_rules\": null,\n    \"exit_rules\": null,\n    \"risk_model\": null,\n    \"sweep_params\": null,\n    \"required_data\": [],\n    \"evidence_thresholds\": null,\n    \"decisive_verdict_rules\": null,\n    \"implementation_notes\": null,\n    \"promotion_target\": null\n  },\n  \"field_meta\": {\n    \"title\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"thesis\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"sleeve\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"reference_strategies\": {\n      \"source\": \"reference\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"tags\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"universe\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"stop_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"target_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark_comparison_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_ids\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"signal_logic\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"entry_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"exit_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"risk_model\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"sweep_params\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"required_data\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"evidence_thresholds\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"decisive_verdict_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"implementation_notes\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"promotion_target\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T17:13:33.430Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    }\n  },\n  \"validation_issues\": [],\n  \"answered_questions\": []\n}\nLocked-field rules:\n- Any field with field_meta.locked=true is an operator decision. Do not contradict it.\n- Fill missing fields only. If a locked field makes the strategy impossible, surface that honestly in limitations or data readiness.\n- If the mode is advanced, avoid interrupting with inline clarifications unless the draft cannot proceed.\n\nData readiness rules:\n- PASS only when every core requirement maps to AVAILABLE.\n- WARN when requirements map to PARTIAL, or when a non-core nice-to-have is missing.\n- BLOCKED when any core signal, entry rule, or exit rule requires missing data.\n- When unsure whether data is core, treat it as core.\n- Thin theses are allowed. Unavailable data is not allowed.\n\nRequirement-emission rules (avoid false BLOCKEDs):\n- One capability per underlying feed. If a signal is derivable from OHLCV (volume, ADV, returns, momentum, moving averages, RSI, realized vol, mean reversion), list `alpaca_equity_ohlcv` (or the relevant OHLCV capability) once. Do NOT emit each derived metric as a separate `assessment.requirements` row.\n- When a catalog capability is the proxy for a thesis-mentioned source (e.g. apewisdom_top100 covers WSB / X / Twitter / StockTwits attention), list ONLY the proxy. Do not also list the upstream source names — that produces duplicate MISSING rows for data that's already covered.\n- If you must mention a thesis source that the actual spec does not depend on (incidental flavor, replaced by a proxy, deferred to v2), set `core: false` on that requirement OR omit it entirely. The verdict floor treats `core` as true by default; an unset `core` on a MISSING row will escalate to BLOCKED, even if your `notes` say it's non-core.\n\nIdea sleeve: STOCKS\nIdea title: Anniversary Idea\nIdea thesis: We buy stocks that are currently having their birthday. If the company IPO'd on 05/03/1993 we will buy it on 05/03 of the present year.\nOperator intent message: This isn't a real idea, I'm simply doing a functional test of the product but I want you to play along with it anyways just to fill it out and see what kind of results we get. Thank you\n\nReference-strategy context:\nReference strategies: none. Treat this as a blank-slate strategy idea.\n\nData capability catalog (2026-04-30.2):\n- alpaca_equity_ohlcv: Price OHLCV; AVAILABLE; sleeves=STOCKS; coverage=2016-present notes=Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research. Covers any signal derivable from OHLCV bars: open/high/low/close, volume, average daily volume (ADV), trailing returns, momentum, moving averages, RSI, realized volatility, mean reversion bands. Strategies should list this capability_id once for the underlying feed and not emit each derived metric as a separate data requirement.\n- alpaca_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2024-10-23-present notes=BTC and ETH only via Alpaca. ~1.5 years of history — sufficient for execution and recent-regime work, insufficient for multi-era analysis. Use ccxt_binance_crypto_ohlcv for longer history (research-only, no execution coupling).\n- ccxt_binance_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2017-present (BTC); shorter for alts notes=Public Binance OHLCV pulled via ccxt for research backtests only. NOT wired into the executor — execution stays on Alpaca. Operator-pulled: no live connector, scripted backfills.\n- alpaca_options_chain: Options chain; PARTIAL; sleeves=OPTIONS; coverage=live snapshot only notes=Live chain via Alpaca. NOT historical: no point-in-time reconstruction for backtests. Strategies that depend on historical chain state need a separate provider before they can be Lab-tested.\n- iv_surface_constructed: Implied vol surface; UNAVAILABLE; sleeves=OPTIONS; notes=Would require historical chain history we don't have. No connector and no construction pipeline. Strategies depending on IV surface skew/term structure should BLOCK.\n- wikipedia_pageviews: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2016-present (research backfills) notes=Wikimedia REST API is freely accessible; research backfill scripts exist. No production connector wired into the Lab pipeline yet — operator-driven pulls. Don't claim AVAILABLE until a daily-update connector lands.\n- gdelt_full: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2015-present (research backfills) notes=GDELT API is free; backfill scripts exist. No daily-update connector wired into the Lab. Same status caveat as wikipedia_pageviews.\n- google_trends: Attention proxies; UNAVAILABLE; sleeves=STOCKS, CRYPTO; notes=No wired connector. Sample-rate noise + rate limiting on the public endpoint make it a v2-or-later candidate.\n- apewisdom_top100: Sentiment; AVAILABLE; sleeves=STOCKS; coverage=2024-present (continuous) notes=Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. THIS IS THE PROXY for r/wallstreetbets, X/Twitter trending tickers, StockTwits, Reddit investing subs, and adjacent retail communities — Ape Wisdom aggregates these into one feed. If a thesis mentions 'WSB / Reddit / X / Twitter / StockTwits / retail buzz / social trending' as a signal, list apewisdom_top100 once and do NOT emit those underlying source names as separate requirements. Raw per-thread velocity is not exposed; only the aggregate rank + mention ratio.\n- reddit_wsb_velocity: Sentiment; UNAVAILABLE; sleeves=STOCKS; notes=Raw r/wallstreetbets per-thread velocity is NOT pulled separately. Use apewisdom_top100 for the aggregated signal. Strategies that genuinely require sub-Ape-Wisdom granularity should BLOCK.\n- fundamentals_basic: Fundamentals; PARTIAL; sleeves=STOCKS; coverage=current snapshot only notes=Market cap + average daily volume reachable via Alpaca asset metadata. Not point-in-time. Strategies needing historical fundamentals (P/E, EPS surprise, balance-sheet items) are NOT covered.\n- crypto_onchain: Crypto on-chain; UNAVAILABLE; sleeves=CRYPTO; notes=No on-chain connector (Glassnode, Dune, etc.). Strategies referencing whale flows, exchange reserves, miner behavior, or staking metrics should BLOCK.\n- macro_fred_subset: Macro; UNAVAILABLE; sleeves=STOCKS, CRYPTO, OPTIONS; notes=FRED series are operator-curated as needed for one-off research; no Lab-wired connector. Strategies depending on macro inputs (fed funds path, CPI surprises, yield curve shape) should BLOCK until a connector lands.",
-    "raw_completion": "{\"proposal_json\":\"{\\\"signal_logic\\\":{\\\"description\\\":\\\"IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.\\\",\\\"primary_signal\\\":\\\"ipo_anniversary_match\\\",\\\"signal_construction\\\":\\\"For each ticker in the universe, extract the IPO date from the fundamentals/metadata feed. Compute MM-DD of the IPO date. On each trading day, flag any ticker where IPO_month == current_month AND IPO_day == current_day. Signal fires once per year per ticker.\\\",\\\"signal_type\\\":\\\"calendar_event\\\",\\\"notes\\\":\\\"This is a pure calendar-based signal with no price conditioning. The thesis is that IPO anniversaries may attract retail attention, media coverage, or institutional rebalancing on the anniversary date. No directional filter is applied at signal generation — entry rules handle sizing and confirmation.\\\"},\\\"entry_rules\\\":{\\\"trigger\\\":\\\"Signal fires at market open on the anniversary trading day. If the anniversary date falls on a weekend or holiday, the signal fires on the next valid trading day.\\\",\\\"order_type\\\":\\\"market_on_open\\\",\\\"position_sizing\\\":\\\"Equal-weight across all anniversary candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days with few candidates.\\\",\\\"confirmation_filter\\\":\\\"None required for baseline test. Optional v2 filter: require 20-day average daily volume > 500,000 shares to exclude illiquid names.\\\",\\\"max_concurrent_positions\\\":20,\\\"notes\\\":\\\"On days with zero anniversary candidates, no trades are placed. On days with many candidates, the equal-weight cap applies.\\\"},\\\"exit_rules\\\":{\\\"primary_exit\\\":\\\"Close position at end of the same trading day (intraday hold). The anniversary effect, if real, is expected to be a single-session phenomenon.\\\",\\\"stop_loss_pct\\\":5,\\\"target_pct\\\":null,\\\"hold_period\\\":\\\"1 trading day (same-session close)\\\",\\\"notes\\\":\\\"A 5% intraday stop is included as a risk guardrail. No profit target is set for the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day hold to check if any effect persists.\\\"},\\\"risk_model\\\":{\\\"position_limit_pct\\\":5,\\\"max_portfolio_heat_pct\\\":25,\\\"stop_loss_pct\\\":5,\\\"target_pct\\\":null,\\\"max_drawdown_abort_pct\\\":15,\\\"sizing_method\\\":\\\"equal_weight\\\",\\\"notes\\\":\\\"Because anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The 25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries. The 15% portfolio drawdown abort is a circuit breaker for the backtest engine.\\\"},\\\"universe\\\":{\\\"description\\\":\\\"US-listed equities with a known IPO date on record, filtered for basic liquidity.\\\",\\\"base_universe\\\":\\\"S&P 500 constituents plus Russell 1000 as a starting pool (~1,000 tickers). This ensures IPO dates are well-documented and liquidity is sufficient for same-day execution.\\\",\\\"liquidity_filter\\\":\\\"Average daily volume > 200,000 shares (trailing 20 days)\\\",\\\"price_filter\\\":\\\"Close price > $5 to exclude micro-caps and penny stocks\\\",\\\"ipo_date_requirement\\\":\\\"Ticker must have a documented IPO date in the metadata feed. Tickers with missing or ambiguous IPO dates are excluded.\\\",\\\"notes\\\":\\\"A broader universe (e.g., all Alpaca-tradeable US equities) would increase trade count significantly but introduces data-quality risk around IPO date accuracy for smaller names. Recommend starting with S&P 500 + Russell 1000 and expanding in v2.\\\"},\\\"required_data\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"purpose\\\":\\\"Daily OHLCV bars for entry/exit pricing, volume filters, and return calculation\\\",\\\"core\\\":true},{\\\"capability_id\\\":\\\"fundamentals_basic\\\",\\\"purpose\\\":\\\"IPO date and market-cap metadata needed to identify anniversary candidates and apply liquidity filters\\\",\\\"core\\\":true}],\\\"experiment_plan\\\":{\\\"benchmark\\\":{\\\"symbol\\\":\\\"SPY\\\",\\\"comparison_mode\\\":\\\"both\\\"},\\\"windows\\\":[{\\\"label\\\":\\\"primary_backtest\\\",\\\"start\\\":\\\"2016-01-01\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"notes\\\":\\\"10-year window covering multiple market regimes. Alpaca OHLCV available from 2016-present. IPO date metadata availability is the binding constraint — see limitations.\\\"},{\\\"label\\\":\\\"recent_regime\\\",\\\"start\\\":\\\"2022-01-01\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"notes\\\":\\\"Post-rate-hike regime. Useful for checking if the effect degrades in a risk-off environment.\\\"},{\\\"label\\\":\\\"plumbing_validation\\\",\\\"start\\\":\\\"2025-01-01\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"notes\\\":\\\"Single-year run to validate that the IPO-date lookup, anniversary matching, and same-day entry/exit mechanics are wired correctly before committing to the full window.\\\"}],\\\"runnable_eras\\\":[\\\"primary_backtest\\\",\\\"recent_regime\\\",\\\"plumbing_validation\\\"],\\\"eras\\\":[{\\\"era_id\\\":\\\"bull_2016_2019\\\",\\\"label\\\":\\\"Post-crisis bull market\\\",\\\"start\\\":\\\"2016-01-01\\\",\\\"end\\\":\\\"2019-12-31\\\"},{\\\"era_id\\\":\\\"covid_crash_recovery\\\",\\\"label\\\":\\\"COVID crash and recovery\\\",\\\"start\\\":\\\"2020-01-01\\\",\\\"end\\\":\\\"2021-12-31\\\"},{\\\"era_id\\\":\\\"rate_hike_bear\\\",\\\"label\\\":\\\"Rate-hike bear and recovery\\\",\\\"start\\\":\\\"2022-01-01\\\",\\\"end\\\":\\\"2023-12-31\\\"},{\\\"era_id\\\":\\\"recent_2024_2025\\\",\\\"label\\\":\\\"Recent tape\\\",\\\"start\\\":\\\"2024-01-01\\\",\\\"end\\\":\\\"2025-12-31\\\"}],\\\"evidence_thresholds\\\":{\\\"minimum_trade_count\\\":50,\\\"minimum_trade_count_rationale\\\":\\\"With ~1,000 tickers in the universe and 252 trading days per year, a 10-year window should yield hundreds of anniversary matches. A floor of 50 completed round-trips is the minimum to draw any statistical inference. If the universe is restricted and trade count falls below 50, expand the universe or extend the window.\\\",\\\"minimum_sharpe\\\":0.3,\\\"max_drawdown_pct\\\":15,\\\"min_hit_rate_pct\\\":50},\\\"decisive_verdict_rules\\\":{\\\"promote\\\":\\\"Trade count >= 50 AND Sharpe >= 0.5 AND max drawdown <= 10% AND hit rate >= 52% across the primary backtest window. Effect must be present in at least 2 of 4 eras.\\\",\\\"iterate\\\":\\\"Trade count >= 50 AND Sharpe between 0.3 and 0.5, OR hit rate between 50% and 52%. Consider adding a volume/momentum confirmation filter or extending hold period to 2-5 days.\\\",\\\"reject\\\":\\\"Trade count >= 50 AND Sharpe < 0.3 OR max drawdown > 15% OR hit rate < 48% consistently. Calendar effect not present.\\\",\\\"inconclusive\\\":\\\"Trade count < 50 after running the full primary window. Expand universe to all Alpaca-tradeable US equities and re-run before rendering a verdict.\\\"},\\\"known_limitations\\\":[\\\"CRITICAL — IPO date metadata: fundamentals_basic provides only a current snapshot via Alpaca asset metadata. It is NOT point-in-time. Survivorship bias is present: tickers that were acquired, delisted, or went private will be missing from the universe. This is a structural limitation of the current data catalog.\\\",\\\"IPO date accuracy: For many tickers, especially those that listed via SPAC, direct listing, or spin-off, the 'IPO date' in metadata may reflect the listing date rather than the original offering date. The anniversary signal may fire on the wrong date for these names.\\\",\\\"Trade count uncertainty: The actual number of anniversary matches per year depends entirely on how many tickers in the chosen universe have IPO dates that fall on trading days and are accurately recorded. This cannot be confirmed without running the data pull.\\\",\\\"Same-day liquidity: The strategy enters and exits on the same day. For smaller names in the universe, same-day fills at open and close may carry meaningful slippage not captured in OHLCV backtest.\\\",\\\"Operator context: The operator has stated this is a functional/plumbing test, not a live trading candidate. The experiment plan is drafted in good faith to validate the mechanics, but the thesis has no established academic or practitioner precedent and should be treated as exploratory.\\\",\\\"No historical fundamentals: fundamentals_basic is a current snapshot only. Historical point-in-time IPO dates are not available via a wired catalog connector. The backtest will use today's metadata applied backward, which is a form of look-ahead for any ticker whose listing status changed.\\\"]},\\\"acceptance_criteria\\\":{\\\"min_sharpe\\\":0.3,\\\"max_drawdown_pct\\\":15,\\\"min_hit_rate_pct\\\":50,\\\"other\\\":\\\"Minimum 50 completed round-trip trades required before any acceptance or rejection verdict is rendered. If trade count is below 50, the result is inconclusive and the universe must be expanded.\\\"},\\\"benchmark\\\":\\\"SPY\\\"}\",\"assessment_json\":\"{\\\"overall_status\\\":\\\"WARN\\\",\\\"summary\\\":\\\"The strategy's core price feed (alpaca_equity_ohlcv) is fully available. The critical dependency is fundamentals_basic for IPO date metadata, which is PARTIAL — it provides only a current snapshot, not a point-in-time historical record. This means the backtest will carry survivorship bias and potential look-ahead on IPO dates. The strategy is runnable as a plumbing and exploratory test, but results must be interpreted with caution. No BLOCKED conditions exist because the core signal is derivable from available data, but the PARTIAL status of fundamentals_basic is a material limitation that must be disclosed.\\\",\\\"requirements\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"status\\\":\\\"AVAILABLE\\\",\\\"core\\\":true,\\\"notes\\\":\\\"Daily OHLCV bars available from 2016-present via Alpaca. Covers entry/exit pricing, volume filters, return calculation, and all derived OHLCV metrics needed for the strategy.\\\"},{\\\"capability_id\\\":\\\"fundamentals_basic\\\",\\\"status\\\":\\\"PARTIAL\\\",\\\"core\\\":true,\\\"notes\\\":\\\"IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy.\\\"}],\\\"blocking_issues\\\":[],\\\"warnings\\\":[\\\"fundamentals_basic is PARTIAL (current snapshot only). The backtest will use today's IPO date metadata applied to historical dates, introducing survivorship bias and potential look-ahead for any ticker whose status changed over the backtest window.\\\",\\\"IPO date accuracy for SPAC listings, direct listings, and spin-offs may cause the anniversary signal to fire on incorrect dates for a subset of the universe.\\\",\\\"Trade count is uncertain until the data pull is executed. If fewer than 50 anniversary matches are found in the primary window, the experiment is inconclusive and the universe must be expanded.\\\",\\\"Operator has stated this is a functional test. Results should be treated as exploratory and not used to make live trading decisions.\\\"],\\\"recommendations\\\":[\\\"Run the plumbing_validation window (2025-01-01 to 2025-12-31) first to confirm that the IPO-date lookup, anniversary matching, and same-day entry/exit mechanics execute correctly.\\\",\\\"Log the number of anniversary candidates found per trading day during the plumbing run to estimate whether the full 10-year window will meet the 50-trade minimum.\\\",\\\"If trade count is insufficient with S&P 500 + Russell 1000, expand to all Alpaca-tradeable US equities with price > $5 and ADV > 200,000 shares.\\\",\\\"Consider a v2 that sources a dedicated IPO date database (e.g., a curated CSV of historical IPO dates) to replace the current-snapshot fundamentals_basic dependency and eliminate survivorship bias.\\\"],\\\"data_readiness_verdict\\\":\\\"WARN — runnable as a plumbing and exploratory test. Core price feed is available. IPO date metadata is current-snapshot only (PARTIAL), introducing survivorship bias. Backtest results are directionally informative but not statistically clean. Operator has confirmed this is a functional test; proceed with that framing.\\\"}\"}",
-    "raw_proposal_json": "{\"signal_logic\":{\"description\":\"IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.\",\"primary_signal\":\"ipo_anniversary_match\",\"signal_construction\":\"For each ticker in the universe, extract the IPO date from the fundamentals/metadata feed. Compute MM-DD of the IPO date. On each trading day, flag any ticker where IPO_month == current_month AND IPO_day == current_day. Signal fires once per year per ticker.\",\"signal_type\":\"calendar_event\",\"notes\":\"This is a pure calendar-based signal with no price conditioning. The thesis is that IPO anniversaries may attract retail attention, media coverage, or institutional rebalancing on the anniversary date. No directional filter is applied at signal generation — entry rules handle sizing and confirmation.\"},\"entry_rules\":{\"trigger\":\"Signal fires at market open on the anniversary trading day. If the anniversary date falls on a weekend or holiday, the signal fires on the next valid trading day.\",\"order_type\":\"market_on_open\",\"position_sizing\":\"Equal-weight across all anniversary candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days with few candidates.\",\"confirmation_filter\":\"None required for baseline test. Optional v2 filter: require 20-day average daily volume > 500,000 shares to exclude illiquid names.\",\"max_concurrent_positions\":20,\"notes\":\"On days with zero anniversary candidates, no trades are placed. On days with many candidates, the equal-weight cap applies.\"},\"exit_rules\":{\"primary_exit\":\"Close position at end of the same trading day (intraday hold). The anniversary effect, if real, is expected to be a single-session phenomenon.\",\"stop_loss_pct\":5,\"target_pct\":null,\"hold_period\":\"1 trading day (same-session close)\",\"notes\":\"A 5% intraday stop is included as a risk guardrail. No profit target is set for the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day hold to check if any effect persists.\"},\"risk_model\":{\"position_limit_pct\":5,\"max_portfolio_heat_pct\":25,\"stop_loss_pct\":5,\"target_pct\":null,\"max_drawdown_abort_pct\":15,\"sizing_method\":\"equal_weight\",\"notes\":\"Because anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The 25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries. The 15% portfolio drawdown abort is a circuit breaker for the backtest engine.\"},\"universe\":{\"description\":\"US-listed equities with a known IPO date on record, filtered for basic liquidity.\",\"base_universe\":\"S&P 500 constituents plus Russell 1000 as a starting pool (~1,000 tickers). This ensures IPO dates are well-documented and liquidity is sufficient for same-day execution.\",\"liquidity_filter\":\"Average daily volume > 200,000 shares (trailing 20 days)\",\"price_filter\":\"Close price > $5 to exclude micro-caps and penny stocks\",\"ipo_date_requirement\":\"Ticker must have a documented IPO date in the metadata feed. Tickers with missing or ambiguous IPO dates are excluded.\",\"notes\":\"A broader universe (e.g., all Alpaca-tradeable US equities) would increase trade count significantly but introduces data-quality risk around IPO date accuracy for smaller names. Recommend starting with S&P 500 + Russell 1000 and expanding in v2.\"},\"required_data\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"purpose\":\"Daily OHLCV bars for entry/exit pricing, volume filters, and return calculation\",\"core\":true},{\"capability_id\":\"fundamentals_basic\",\"purpose\":\"IPO date and market-cap metadata needed to identify anniversary candidates and apply liquidity filters\",\"core\":true}],\"experiment_plan\":{\"benchmark\":{\"symbol\":\"SPY\",\"comparison_mode\":\"both\"},\"windows\":[{\"label\":\"primary_backtest\",\"start\":\"2016-01-01\",\"end\":\"2025-12-31\",\"notes\":\"10-year window covering multiple market regimes. Alpaca OHLCV available from 2016-present. IPO date metadata availability is the binding constraint — see limitations.\"},{\"label\":\"recent_regime\",\"start\":\"2022-01-01\",\"end\":\"2025-12-31\",\"notes\":\"Post-rate-hike regime. Useful for checking if the effect degrades in a risk-off environment.\"},{\"label\":\"plumbing_validation\",\"start\":\"2025-01-01\",\"end\":\"2025-12-31\",\"notes\":\"Single-year run to validate that the IPO-date lookup, anniversary matching, and same-day entry/exit mechanics are wired correctly before committing to the full window.\"}],\"runnable_eras\":[\"primary_backtest\",\"recent_regime\",\"plumbing_validation\"],\"eras\":[{\"era_id\":\"bull_2016_2019\",\"label\":\"Post-crisis bull market\",\"start\":\"2016-01-01\",\"end\":\"2019-12-31\"},{\"era_id\":\"covid_crash_recovery\",\"label\":\"COVID crash and recovery\",\"start\":\"2020-01-01\",\"end\":\"2021-12-31\"},{\"era_id\":\"rate_hike_bear\",\"label\":\"Rate-hike bear and recovery\",\"start\":\"2022-01-01\",\"end\":\"2023-12-31\"},{\"era_id\":\"recent_2024_2025\",\"label\":\"Recent tape\",\"start\":\"2024-01-01\",\"end\":\"2025-12-31\"}],\"evidence_thresholds\":{\"minimum_trade_count\":50,\"minimum_trade_count_rationale\":\"With ~1,000 tickers in the universe and 252 trading days per year, a 10-year window should yield hundreds of anniversary matches. A floor of 50 completed round-trips is the minimum to draw any statistical inference. If the universe is restricted and trade count falls below 50, expand the universe or extend the window.\",\"minimum_sharpe\":0.3,\"max_drawdown_pct\":15,\"min_hit_rate_pct\":50},\"decisive_verdict_rules\":{\"promote\":\"Trade count >= 50 AND Sharpe >= 0.5 AND max drawdown <= 10% AND hit rate >= 52% across the primary backtest window. Effect must be present in at least 2 of 4 eras.\",\"iterate\":\"Trade count >= 50 AND Sharpe between 0.3 and 0.5, OR hit rate between 50% and 52%. Consider adding a volume/momentum confirmation filter or extending hold period to 2-5 days.\",\"reject\":\"Trade count >= 50 AND Sharpe < 0.3 OR max drawdown > 15% OR hit rate < 48% consistently. Calendar effect not present.\",\"inconclusive\":\"Trade count < 50 after running the full primary window. Expand universe to all Alpaca-tradeable US equities and re-run before rendering a verdict.\"},\"known_limitations\":[\"CRITICAL — IPO date metadata: fundamentals_basic provides only a current snapshot via Alpaca asset metadata. It is NOT point-in-time. Survivorship bias is present: tickers that were acquired, delisted, or went private will be missing from the universe. This is a structural limitation of the current data catalog.\",\"IPO date accuracy: For many tickers, especially those that listed via SPAC, direct listing, or spin-off, the 'IPO date' in metadata may reflect the listing date rather than the original offering date. The anniversary signal may fire on the wrong date for these names.\",\"Trade count uncertainty: The actual number of anniversary matches per year depends entirely on how many tickers in the chosen universe have IPO dates that fall on trading days and are accurately recorded. This cannot be confirmed without running the data pull.\",\"Same-day liquidity: The strategy enters and exits on the same day. For smaller names in the universe, same-day fills at open and close may carry meaningful slippage not captured in OHLCV backtest.\",\"Operator context: The operator has stated this is a functional/plumbing test, not a live trading candidate. The experiment plan is drafted in good faith to validate the mechanics, but the thesis has no established academic or practitioner precedent and should be treated as exploratory.\",\"No historical fundamentals: fundamentals_basic is a current snapshot only. Historical point-in-time IPO dates are not available via a wired catalog connector. The backtest will use today's metadata applied backward, which is a form of look-ahead for any ticker whose listing status changed.\"]},\"acceptance_criteria\":{\"min_sharpe\":0.3,\"max_drawdown_pct\":15,\"min_hit_rate_pct\":50,\"other\":\"Minimum 50 completed round-trip trades required before any acceptance or rejection verdict is rendered. If trade count is below 50, the result is inconclusive and the universe must be expanded.\"},\"benchmark\":\"SPY\"}",
-    "raw_assessment_json": "{\"overall_status\":\"WARN\",\"summary\":\"The strategy's core price feed (alpaca_equity_ohlcv) is fully available. The critical dependency is fundamentals_basic for IPO date metadata, which is PARTIAL — it provides only a current snapshot, not a point-in-time historical record. This means the backtest will carry survivorship bias and potential look-ahead on IPO dates. The strategy is runnable as a plumbing and exploratory test, but results must be interpreted with caution. No BLOCKED conditions exist because the core signal is derivable from available data, but the PARTIAL status of fundamentals_basic is a material limitation that must be disclosed.\",\"requirements\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"status\":\"AVAILABLE\",\"core\":true,\"notes\":\"Daily OHLCV bars available from 2016-present via Alpaca. Covers entry/exit pricing, volume filters, return calculation, and all derived OHLCV metrics needed for the strategy.\"},{\"capability_id\":\"fundamentals_basic\",\"status\":\"PARTIAL\",\"core\":true,\"notes\":\"IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy.\"}],\"blocking_issues\":[],\"warnings\":[\"fundamentals_basic is PARTIAL (current snapshot only). The backtest will use today's IPO date metadata applied to historical dates, introducing survivorship bias and potential look-ahead for any ticker whose status changed over the backtest window.\",\"IPO date accuracy for SPAC listings, direct listings, and spin-offs may cause the anniversary signal to fire on incorrect dates for a subset of the universe.\",\"Trade count is uncertain until the data pull is executed. If fewer than 50 anniversary matches are found in the primary window, the experiment is inconclusive and the universe must be expanded.\",\"Operator has stated this is a functional test. Results should be treated as exploratory and not used to make live trading decisions.\"],\"recommendations\":[\"Run the plumbing_validation window (2025-01-01 to 2025-12-31) first to confirm that the IPO-date lookup, anniversary matching, and same-day entry/exit mechanics execute correctly.\",\"Log the number of anniversary candidates found per trading day during the plumbing run to estimate whether the full 10-year window will meet the 50-trade minimum.\",\"If trade count is insufficient with S&P 500 + Russell 1000, expand to all Alpaca-tradeable US equities with price > $5 and ADV > 200,000 shares.\",\"Consider a v2 that sources a dedicated IPO date database (e.g., a curated CSV of historical IPO dates) to replace the current-snapshot fundamentals_basic dependency and eliminate survivorship bias.\"],\"data_readiness_verdict\":\"WARN — runnable as a plumbing and exploratory test. Core price feed is available. IPO date metadata is current-snapshot only (PARTIAL), introducing survivorship bias. Backtest results are directionally informative but not statistically clean. Operator has confirmed this is a functional test; proceed with that framing.\"}",
-    "raw_proposal": {
-      "signal_logic": "IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.",
-      "entry_rules": "{\"trigger\":\"Signal fires at market open on the anniversary trading day. If the anniversary date falls on a weekend or holiday, the signal fires on the next valid trading day.\",\"order_type\":\"market_on_open\",\"position_sizing\":\"Equal-weight across all anniversary candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days with few candidates.\",\"confirmation_filter\":\"None required for baseline test. Optional v2 filter: require 20-day average daily volume > 500,000 shares to exclude illiquid names.\",\"max_concurrent_positions\":20,\"notes\":\"On days with zero anniversary candidates, no trades are placed. On days with many candidates, the equal-weight cap applies.\"}",
-      "exit_rules": "{\"primary_exit\":\"Close position at end of the same trading day (intraday hold). The anniversary effect, if real, is expected to be a single-session phenomenon.\",\"stop_loss_pct\":5,\"target_pct\":null,\"hold_period\":\"1 trading day (same-session close)\",\"notes\":\"A 5% intraday stop is included as a risk guardrail. No profit target is set for the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day hold to check if any effect persists.\"}",
-      "risk_model": "{\"position_limit_pct\":5,\"max_portfolio_heat_pct\":25,\"stop_loss_pct\":5,\"target_pct\":null,\"max_drawdown_abort_pct\":15,\"sizing_method\":\"equal_weight\",\"notes\":\"Because anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The 25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries. The 15% portfolio drawdown abort is a circuit breaker for the backtest engine.\"}",
-      "universe": "US-listed equities with a known IPO date on record, filtered for basic liquidity.",
-      "required_data": [
-        "alpaca_equity_ohlcv",
-        "fundamentals_basic"
-      ],
-      "experiment_plan": {
-        "benchmark": {
-          "symbol": "SPY",
-          "comparison_mode": "both"
-        },
-        "windows": {
-          "requested_start": "2026-02-02",
-          "requested_end": "2026-05-03",
-          "fresh_data_required_from": null
-        },
-        "runnable_eras": [
-          {
-            "era_id": "era_1",
-            "label": "era_1",
-            "date_range": {
-              "start": "2026-02-02",
-              "end": "2026-05-03"
-            },
-            "status": "INCOMPLETE_DATA",
-            "reason": null
-          },
-          {
-            "era_id": "era_2",
-            "label": "era_2",
-            "date_range": {
-              "start": "2026-02-02",
-              "end": "2026-05-03"
-            },
-            "status": "INCOMPLETE_DATA",
-            "reason": null
-          },
-          {
-            "era_id": "era_3",
-            "label": "era_3",
-            "date_range": {
-              "start": "2026-02-02",
-              "end": "2026-05-03"
-            },
-            "status": "INCOMPLETE_DATA",
-            "reason": null
-          }
+    "builder_state": {
+      "schema_version": "research_lab.builder_state.v1",
+      "mode": "beginner",
+      "input_state": "PROPOSAL_APPLIED",
+      "created_at": "2026-05-03T17:13:33.430Z",
+      "updated_at": "2026-05-03T17:15:55.278Z",
+      "fields": {
+        "title": "Anniversary Idea",
+        "thesis": "We buy stocks that are currently having their birthday. If the company IPO'd on 05/03/1993 we will buy it on 05/03 of the present year.",
+        "sleeve": "STOCKS",
+        "reference_strategies": [],
+        "tags": [
+          "Test"
         ],
-        "eras": {
-          "mode": "multi",
-          "required_era_ids": [
-            "era_1",
-            "era_2",
-            "era_3"
-          ]
+        "universe": null,
+        "stop_pct": null,
+        "target_pct": null,
+        "benchmark": "SPY",
+        "benchmark_comparison_mode": "both",
+        "era_mode": "multi",
+        "era_ids": [
+          "era_1",
+          "era_2",
+          "era_3"
+        ],
+        "signal_logic": "IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.",
+        "entry_rules": "{\"trigger\":\"Signal fires at market open on the anniversary trading day. If the anniversary date falls on a weekend or holiday, the signal fires on the next valid trading day.\",\"order_type\":\"market_on_open\",\"position_sizing\":\"Equal-weight across all anniversary candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days with few candidates.\",\"confirmation_filter\":\"None required for baseline test. Optional v2 filter: require 20-day average daily volume > 500,000 shares to exclude illiquid names.\",\"max_concurrent_positions\":20,\"notes\":\"On days with zero anniversary candidates, no trades are placed. On days with many candidates, the equal-weight cap applies.\"}",
+        "exit_rules": "{\"primary_exit\":\"Close position at end of the same trading day (intraday hold). The anniversary effect, if real, is expected to be a single-session phenomenon.\",\"stop_loss_pct\":5,\"target_pct\":null,\"hold_period\":\"1 trading day (same-session close)\",\"notes\":\"A 5% intraday stop is included as a risk guardrail. No profit target is set for the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day hold to check if any effect persists.\"}",
+        "risk_model": {
+          "description": "{\"position_limit_pct\":5,\"max_portfolio_heat_pct\":25,\"stop_loss_pct\":5,\"target_pct\":null,\"max_drawdown_abort_pct\":15,\"sizing_method\":\"equal_weight\",\"notes\":\"Because anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The 25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries. The 15% portfolio drawdown abort is a circuit breaker for the backtest engine.\"}"
         },
+        "sweep_params": {},
+        "required_data": [
+          "alpaca_equity_ohlcv",
+          "fundamentals_basic"
+        ],
         "evidence_thresholds": {
           "minimum_trade_count": 50,
           "minimum_evaluated_trading_days": 20
@@ -854,51 +826,498 @@
           "inconclusive": "Trade count < 50 after running the full primary window. Expand universe to all Alpaca-tradeable US equities and re-run before rendering a verdict.",
           "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
         },
-        "known_limitations": [
-          "CRITICAL — IPO date metadata: fundamentals_basic provides only a current snapshot via Alpaca asset metadata. It is NOT point-in-time. Survivorship bias is present: tickers that were acquired, delisted, or went private will be missing from the universe. This is a structural limitation of the current data catalog.",
-          "IPO date accuracy: For many tickers, especially those that listed via SPAC, direct listing, or spin-off, the 'IPO date' in metadata may reflect the listing date rather than the original offering date. The anniversary signal may fire on the wrong date for these names.",
-          "Trade count uncertainty: The actual number of anniversary matches per year depends entirely on how many tickers in the chosen universe have IPO dates that fall on trading days and are accurately recorded. This cannot be confirmed without running the data pull.",
-          "Same-day liquidity: The strategy enters and exits on the same day. For smaller names in the universe, same-day fills at open and close may carry meaningful slippage not captured in OHLCV backtest.",
-          "Operator context: The operator has stated this is a functional/plumbing test, not a live trading candidate. The experiment plan is drafted in good faith to validate the mechanics, but the thesis has no established academic or practitioner precedent and should be treated as exploratory.",
-          "No historical fundamentals: fundamentals_basic is a current snapshot only. Historical point-in-time IPO dates are not available via a wired catalog connector. The backtest will use today's metadata applied backward, which is a form of look-ahead for any ticker whose listing status changed."
-        ]
+        "implementation_notes": "Data-readiness warnings:\n- fundamentals_basic: PARTIAL (fundamentals_basic) - IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy.",
+        "promotion_target": null
       },
-      "benchmark": "SPY",
-      "acceptance_criteria": {
-        "min_sharpe": 0.3,
-        "max_drawdown_pct": 15,
-        "min_hit_rate_pct": 50,
-        "other": "Minimum 50 completed round-trip trades required before any acceptance or rejection verdict is rendered. If trade count is below 50, the result is inconclusive and the universe must be expanded."
+      "field_meta": {
+        "title": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "thesis": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "sleeve": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "reference_strategies": {
+          "source": "reference",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "tags": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "universe": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "stop_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "target_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark_comparison_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_ids": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "signal_logic": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "entry_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "exit_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "risk_model": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "sweep_params": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "required_data": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "evidence_thresholds": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "decisive_verdict_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "implementation_notes": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "promotion_target": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T17:13:33.430Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        }
       },
-      "sweep_params": null,
-      "implementation_notes": null
-    },
-    "raw_assessment": {
-      "verdict": "WARN",
-      "requirements": [
+      "validation_issues": [
         {
-          "requested": "alpaca_equity_ohlcv",
-          "core": true,
-          "status": "AVAILABLE",
-          "matched_capability": "alpaca_equity_ohlcv",
-          "notes": "Daily OHLCV bars available from 2016-present via Alpaca. Covers entry/exit pricing, volume filters, return calculation, and all derived OHLCV metrics needed for the strategy."
+          "field_id": "runnable_eras.era_1.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era era_1 has incomplete data.",
+          "suggested_action": null
         },
         {
-          "requested": "fundamentals_basic",
-          "core": true,
-          "status": "PARTIAL",
-          "matched_capability": "fundamentals_basic",
-          "notes": "IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy."
+          "field_id": "runnable_eras.era_2.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era era_2 has incomplete data.",
+          "suggested_action": null
+        },
+        {
+          "field_id": "runnable_eras.era_3.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era era_3 has incomplete data.",
+          "suggested_action": null
+        },
+        {
+          "field_id": "data_requirements[1].status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "fundamentals_basic is only partially available.",
+          "suggested_action": null
         }
       ],
-      "blocking_summary": null,
-      "suggested_action": null,
-      "warnings": [
-        "fundamentals_basic is PARTIAL (current snapshot only). The backtest will use today's IPO date metadata applied to historical dates, introducing survivorship bias and potential look-ahead for any ticker whose status changed over the backtest window.",
-        "IPO date accuracy for SPAC listings, direct listings, and spin-offs may cause the anniversary signal to fire on incorrect dates for a subset of the universe.",
-        "Trade count is uncertain until the data pull is executed. If fewer than 50 anniversary matches are found in the primary window, the experiment is inconclusive and the universe must be expanded.",
-        "Operator has stated this is a functional test. Results should be treated as exploratory and not used to make live trading decisions."
-      ]
-    }
+      "open_questions": [],
+      "current_draft": {
+        "schema_version": "research_lab.strategy_spec.v1",
+        "spec_id": "spec_01KQQDBANGXNV2YM8KGKXNV2YM",
+        "spec_version": 1,
+        "idea_id": "idea_01KQQD7F7W3TFD47A0DN3TFD47",
+        "user_id": "jacob",
+        "account_id": "paper_main",
+        "strategy_group_id": "default",
+        "created_at": "2026-05-03T17:14:33.520Z",
+        "authoring_mode": "AI_ASSISTED",
+        "authored_by": "jacob",
+        "state": "AWAITING_APPROVAL",
+        "signal_logic": "IPO Anniversary Signal: On each trading day, identify all stocks in the universe whose IPO date shares the same month and day as the current calendar date (MM-DD match). These stocks are flagged as 'anniversary candidates' for that session.",
+        "universe": {
+          "description": "US-listed equities with a known IPO date on record, filtered for basic liquidity."
+        },
+        "entry_rules": "{\"trigger\":\"Signal fires at market open on the anniversary trading day. If the anniversary date falls on a weekend or holiday, the signal fires on the next valid trading day.\",\"order_type\":\"market_on_open\",\"position_sizing\":\"Equal-weight across all anniversary candidates on a given day. Maximum 5% of portfolio per position to prevent concentration on days with few candidates.\",\"confirmation_filter\":\"None required for baseline test. Optional v2 filter: require 20-day average daily volume > 500,000 shares to exclude illiquid names.\",\"max_concurrent_positions\":20,\"notes\":\"On days with zero anniversary candidates, no trades are placed. On days with many candidates, the equal-weight cap applies.\"}",
+        "exit_rules": "{\"primary_exit\":\"Close position at end of the same trading day (intraday hold). The anniversary effect, if real, is expected to be a single-session phenomenon.\",\"stop_loss_pct\":5,\"target_pct\":null,\"hold_period\":\"1 trading day (same-session close)\",\"notes\":\"A 5% intraday stop is included as a risk guardrail. No profit target is set for the baseline — the position exits at close regardless. A v2 variant could test a 2-day or 5-day hold to check if any effect persists.\"}",
+        "risk_model": {
+          "description": "{\"position_limit_pct\":5,\"max_portfolio_heat_pct\":25,\"stop_loss_pct\":5,\"target_pct\":null,\"max_drawdown_abort_pct\":15,\"sizing_method\":\"equal_weight\",\"notes\":\"Because anniversary candidates are sparse and calendar-driven, portfolio heat will typically be low. The 25% max heat cap prevents runaway exposure on rare days with many simultaneous anniversaries. The 15% portfolio drawdown abort is a circuit breaker for the backtest engine.\"}"
+        },
+        "sweep_params": {},
+        "required_data": [
+          "alpaca_equity_ohlcv",
+          "fundamentals_basic"
+        ],
+        "benchmark": "SPY",
+        "acceptance_criteria": {
+          "min_sharpe": 0.3,
+          "max_drawdown": 15,
+          "min_hit_rate": 50,
+          "other": "Minimum 50 completed round-trip trades required before any acceptance or rejection verdict is rendered. If trade count is below 50, the result is inconclusive and the universe must be expanded."
+        },
+        "experiment_plan": {
+          "schema_version": "research_lab.experiment_plan.v1",
+          "spec_id": "spec_01KQQDBANGXNV2YM8KGKXNV2YM",
+          "idea_id": "idea_01KQQD7F7W3TFD47A0DN3TFD47",
+          "is_valid": true,
+          "validity_reasons": [
+            {
+              "field_id": "runnable_eras.era_1.status",
+              "severity": "warn",
+              "message": "Selected era era_1 has incomplete data."
+            },
+            {
+              "field_id": "runnable_eras.era_2.status",
+              "severity": "warn",
+              "message": "Selected era era_2 has incomplete data."
+            },
+            {
+              "field_id": "runnable_eras.era_3.status",
+              "severity": "warn",
+              "message": "Selected era era_3 has incomplete data."
+            },
+            {
+              "field_id": "data_requirements[1].status",
+              "severity": "warn",
+              "message": "fundamentals_basic is only partially available."
+            }
+          ],
+          "benchmark": {
+            "symbol": "SPY",
+            "comparison_mode": "both"
+          },
+          "windows": {
+            "requested_start": "2026-02-02",
+            "requested_end": "2026-05-03",
+            "fresh_data_required_from": null
+          },
+          "runnable_eras": [
+            {
+              "era_id": "era_1",
+              "label": "era_1",
+              "date_range": {
+                "start": "2026-02-02",
+                "end": "2026-05-03"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": null
+            },
+            {
+              "era_id": "era_2",
+              "label": "era_2",
+              "date_range": {
+                "start": "2026-02-02",
+                "end": "2026-05-03"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": null
+            },
+            {
+              "era_id": "era_3",
+              "label": "era_3",
+              "date_range": {
+                "start": "2026-02-02",
+                "end": "2026-05-03"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": null
+            }
+          ],
+          "eras": {
+            "mode": "multi",
+            "required_era_ids": [
+              "era_1",
+              "era_2",
+              "era_3"
+            ]
+          },
+          "data_requirements": [
+            {
+              "capability_id": "alpaca_equity_ohlcv",
+              "required": true,
+              "status": "AVAILABLE",
+              "status_at_draft": "AVAILABLE",
+              "purpose": "alpaca_equity_ohlcv"
+            },
+            {
+              "capability_id": "fundamentals_basic",
+              "required": true,
+              "status": "PARTIAL",
+              "status_at_draft": "PARTIAL",
+              "purpose": "fundamentals_basic"
+            }
+          ],
+          "evidence_thresholds": {
+            "minimum_trade_count": 50,
+            "minimum_evaluated_trading_days": 20
+          },
+          "decisive_verdict_rules": {
+            "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+            "inconclusive": "Trade count < 50 after running the full primary window. Expand universe to all Alpaca-tradeable US equities and re-run before rendering a verdict.",
+            "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+          },
+          "known_limitations": [
+            "CRITICAL — IPO date metadata: fundamentals_basic provides only a current snapshot via Alpaca asset metadata. It is NOT point-in-time. Survivorship bias is present: tickers that were acquired, delisted, or went private will be missing from the universe. This is a structural limitation of the current data catalog.",
+            "IPO date accuracy: For many tickers, especially those that listed via SPAC, direct listing, or spin-off, the 'IPO date' in metadata may reflect the listing date rather than the original offering date. The anniversary signal may fire on the wrong date for these names.",
+            "Trade count uncertainty: The actual number of anniversary matches per year depends entirely on how many tickers in the chosen universe have IPO dates that fall on trading days and are accurately recorded. This cannot be confirmed without running the data pull.",
+            "Same-day liquidity: The strategy enters and exits on the same day. For smaller names in the universe, same-day fills at open and close may carry meaningful slippage not captured in OHLCV backtest.",
+            "Operator context: The operator has stated this is a functional/plumbing test, not a live trading candidate. The experiment plan is drafted in good faith to validate the mechanics, but the thesis has no established academic or practitioner precedent and should be treated as exploratory.",
+            "No historical fundamentals: fundamentals_basic is a current snapshot only. Historical point-in-time IPO dates are not available via a wired catalog connector. The backtest will use today's metadata applied backward, which is a form of look-ahead for any ticker whose listing status changed."
+          ]
+        },
+        "candidate_strategy_family": null,
+        "implementation_notes": "Data-readiness warnings:\n- fundamentals_basic: PARTIAL (fundamentals_basic) - IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy.",
+        "parent_spec_id": null,
+        "registered_strategy_id": null
+      },
+      "current_assessment": {
+        "verdict": "WARN",
+        "catalog_version": "2026-04-30.2",
+        "requirements": [
+          {
+            "requested": "alpaca_equity_ohlcv",
+            "status": "AVAILABLE",
+            "source": "alpaca_equity_ohlcv",
+            "notes": "Daily OHLCV bars available from 2016-present via Alpaca. Covers entry/exit pricing, volume filters, return calculation, and all derived OHLCV metrics needed for the strategy."
+          },
+          {
+            "requested": "fundamentals_basic",
+            "status": "PARTIAL",
+            "source": "fundamentals_basic",
+            "notes": "IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy."
+          }
+        ],
+        "warnings": [
+          "fundamentals_basic: PARTIAL (fundamentals_basic) - IPO date is the core signal input. fundamentals_basic provides current-snapshot metadata via Alpaca asset metadata (market cap, ADV, listing info). It is NOT point-in-time. Survivorship bias applies: delisted, acquired, or SPAC-converted tickers will be missing. Historical IPO date accuracy for spin-offs and direct listings is uncertain. This is the primary data quality risk for the strategy."
+        ]
+      },
+      "current_authoring_mode": "AI_ASSISTED"
+    },
+    "model_calls": [
+      {
+        "step": "draft_strategy_core",
+        "attempt": 0,
+        "model": "claude-sonnet-4-6",
+        "latency_ms": 59677,
+        "tokens_in": 5600,
+        "tokens_out": 3098,
+        "finish_reason": "stop"
+      }
+    ]
   }
 }
