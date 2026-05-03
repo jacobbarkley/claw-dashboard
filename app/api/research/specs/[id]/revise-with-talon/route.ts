@@ -33,6 +33,7 @@ import {
   formatCatalogForPrompt,
   includeProposalRequirements,
   parseReviseGeneratedOutput,
+  PROPOSAL_JSON_PROMPT_RULES,
   reviseGenerationSchema,
 } from "@/lib/research-lab-talon.server"
 
@@ -284,7 +285,7 @@ function buildPrompt({
     '- kind="clarification" + brief reply (under 3 sentences) when you need more info. No proposal/assessment.',
     '- kind="revision" + brief reply describing the CUMULATIVE state of the proposal (what spec+plan look like after Apply, not the delta) + complete proposal + assessment.',
     "- For kind=\"revision\", emit proposal_json and assessment_json as valid JSON strings. They must not be markdown, fenced code, or comments.",
-    "- proposal_json must JSON.stringify the complete StrategySpec proposal, including experiment_plan.",
+    PROPOSAL_JSON_PROMPT_RULES,
     "- assessment_json must JSON.stringify the complete data-readiness assessment.",
     "- For kind=\"clarification\", leave proposal_json and assessment_json null or omitted.",
     "- Keep replies short. Default to revising on concrete asks, one clarifying question on vague ones.",

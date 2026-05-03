@@ -53,6 +53,11 @@ const acceptanceCriteriaStrict = z.preprocess(
   }),
 )
 
+const benchmarkStrict = z.preprocess(
+  normalizeBenchmarkInput,
+  z.string().min(1),
+)
+
 const experimentPlanStrict = z.preprocess(normalizeExperimentPlanInput, z.object({
   benchmark: z.object({
     symbol: z.string(),
@@ -89,7 +94,7 @@ const experimentPlanStrict = z.preprocess(normalizeExperimentPlanInput, z.object
   known_limitations: z.array(z.string()),
 }))
 
-const proposalStrict = z.object({
+const proposalStrict = z.preprocess(normalizeProposalInput, z.object({
   signal_logic: textFromDescriptionSchema.pipe(z.string().min(40)),
   entry_rules: textFromDescriptionSchema.pipe(z.string().min(20)),
   exit_rules: textFromDescriptionSchema.pipe(z.string().min(20)),
@@ -97,12 +102,12 @@ const proposalStrict = z.object({
   universe: textFromDescriptionSchema.pipe(z.string().min(10)),
   required_data: requiredDataSchema,
   experiment_plan: experimentPlanStrict,
-  benchmark: textFromDescriptionSchema.pipe(z.string().min(1)),
+  benchmark: benchmarkStrict,
   acceptance_criteria: acceptanceCriteriaStrict,
   candidate_strategy_family: z.string().optional().nullable(),
   sweep_params: optionalTextFromDescriptionSchema,
   implementation_notes: optionalTextFromDescriptionSchema,
-})
+}))
 
 const assessmentStrict = z.preprocess(normalizeAssessmentInput, z.object({
   verdict: z.enum(["PASS", "WARN", "BLOCKED"]),
@@ -452,6 +457,17 @@ export function specProvenanceRelpath(specId: string, scope: ScopeTriple): strin
 
 // ─── Prompt fragments ──────────────────────────────────────────────────────
 
+export const PROPOSAL_JSON_PROMPT_RULES = [
+  "proposal_json contract:",
+  "- proposal_json is not the full persisted StrategySpecV1. It is the Talon proposal payload that the server wraps into StrategySpecV1.",
+  "- Include these top-level fields exactly: signal_logic, entry_rules, exit_rules, risk_model, universe, required_data, experiment_plan, benchmark, acceptance_criteria.",
+  "- benchmark must be a string symbol such as \"SPY\".",
+  "- acceptance_criteria must be an object with numeric min_sharpe, max_drawdown_pct, and min_hit_rate_pct; optional other may be a string or null.",
+  "- experiment_plan must include benchmark, windows, runnable_eras, eras, evidence_thresholds, decisive_verdict_rules, and known_limitations.",
+  "- experiment_plan.benchmark must be an object such as {\"symbol\":\"SPY\",\"comparison_mode\":\"both\"}.",
+  "- Do not include wrapper fields that the server supplies, such as schema_version, spec_id, idea_id, created_at, state, authoring_mode, or registered_strategy_id.",
+].join("\n")
+
 export const DATA_READINESS_PROMPT_RULES = [
   "Data readiness rules:",
   "- PASS only when every core requirement maps to AVAILABLE.",
@@ -479,14 +495,88 @@ export function formatCatalogForPrompt(catalog: DataCapabilityCatalogV1): string
 
 // ─── Internal helpers ──────────────────────────────────────────────────────
 
+function normalizeProposalInput(input: unknown): Record<string, unknown> {
+  const raw = recordFromUnknown(input)
+  const experimentPlan = recordFromUnknown(raw.experiment_plan ?? raw.experimentPlan)
+  const planBenchmark = recordFromUnknown(experimentPlan.benchmark)
+
+  return {
+    ...raw,
+    experiment_plan: experimentPlan,
+    benchmark: normalizeBenchmarkInput(
+      raw.benchmark ??
+        raw.benchmark_symbol ??
+        raw.benchmarkSymbol ??
+        planBenchmark.symbol ??
+        planBenchmark.benchmark ??
+        experimentPlan.benchmark_symbol,
+    ),
+    acceptance_criteria: normalizeAcceptanceCriteriaInput(
+      raw.acceptance_criteria ??
+        raw.acceptanceCriteria ??
+        raw.acceptance ??
+        raw.criteria ??
+        raw.thresholds ??
+        experimentPlan.acceptance_criteria,
+    ),
+    sweep_params: raw.sweep_params ?? raw.sweepParams ?? raw.sweep ?? null,
+    implementation_notes: raw.implementation_notes ?? raw.implementationNotes ?? raw.notes ?? null,
+  }
+}
+
 function normalizeAcceptanceCriteriaInput(input: unknown): Record<string, unknown> {
   const raw = recordFromUnknown(input)
+  const thresholds = recordFromUnknown(raw.thresholds ?? raw.evidence_thresholds)
   return {
-    min_sharpe: boundedNumberFromUnknown(raw.min_sharpe, 1, 0, 10),
-    max_drawdown_pct: boundedNumberFromUnknown(raw.max_drawdown_pct ?? raw.max_drawdown, 20, 0, 100),
-    min_hit_rate_pct: boundedNumberFromUnknown(raw.min_hit_rate_pct ?? raw.min_hit_rate, 45, 0, 100),
-    other: nullableStringFromUnknown(raw.other),
+    min_sharpe: boundedNumberFromUnknown(
+      raw.min_sharpe ??
+        raw.minimum_sharpe ??
+        raw.sharpe ??
+        raw.sharpe_ratio ??
+        thresholds.min_sharpe ??
+        thresholds.minimum_sharpe,
+      1,
+      0,
+      10,
+    ),
+    max_drawdown_pct: boundedNumberFromUnknown(
+      raw.max_drawdown_pct ??
+        raw.max_drawdown_percent ??
+        raw.max_drawdown ??
+        raw.maximum_drawdown_pct ??
+        raw.maximum_drawdown ??
+        raw.max_dd_pct ??
+        raw.max_dd ??
+        thresholds.max_drawdown_pct ??
+        thresholds.max_drawdown_percent ??
+        thresholds.max_drawdown,
+      20,
+      0,
+      100,
+    ),
+    min_hit_rate_pct: boundedNumberFromUnknown(
+      raw.min_hit_rate_pct ??
+        raw.min_hit_rate_percent ??
+        raw.min_hit_rate ??
+        raw.minimum_hit_rate_pct ??
+        raw.minimum_hit_rate ??
+        raw.min_win_rate_pct ??
+        raw.win_rate_pct ??
+        raw.hit_rate_pct ??
+        raw.hit_rate ??
+        thresholds.min_hit_rate_pct ??
+        thresholds.min_hit_rate,
+      45,
+      0,
+      100,
+    ),
+    other: nullableStringFromUnknown(raw.other ?? raw.notes ?? raw.description),
   }
+}
+
+function normalizeBenchmarkInput(input: unknown): string {
+  const text = descriptionStringFromUnknown(input).trim()
+  return (text || "SPY").toUpperCase()
 }
 
 function normalizeExperimentPlanInput(input: unknown): Record<string, unknown> {

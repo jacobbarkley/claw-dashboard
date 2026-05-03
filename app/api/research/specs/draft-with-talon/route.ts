@@ -21,6 +21,7 @@ import {
   formatCatalogForPrompt,
   includeProposalRequirements,
   parseDraftGeneratedOutput,
+  PROPOSAL_JSON_PROMPT_RULES,
   specProvenanceRelpath,
   type ParsedDraftGeneratedOutput,
 } from "@/lib/research-lab-talon.server"
@@ -287,7 +288,7 @@ function buildPrompt({
     "Return only the structured object requested by the schema. Do not invent backtest results.",
     "The structured object has two string fields: proposal_json and assessment_json.",
     "Each field must be valid JSON text, not markdown, not fenced code, and not comments.",
-    "proposal_json must JSON.stringify the complete StrategySpec proposal, including experiment_plan.",
+    PROPOSAL_JSON_PROMPT_RULES,
     "assessment_json must JSON.stringify the complete data-readiness assessment.",
     "",
     "Your task has two parts:",
