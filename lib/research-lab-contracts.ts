@@ -500,6 +500,516 @@ export interface BuilderStateV1 {
   current_authoring_mode?: AuthoringMode | null
 }
 
+// ─── strategy_authoring_packet.v1 ──────────────────────────────────────────
+
+export type StrategyAuthoringPacketStatus =
+  | "DRAFT"
+  | "REVIEW"
+  | "ADVERSARIAL"
+  | "APPROVED"
+  | "REJECTED"
+  | "ARCHIVED"
+
+export type StrategyAuthoringRenderMode = "BEGINNER" | "INTERMEDIATE" | "ADVANCED"
+export type FieldPresentation = "PRESENTED" | "HIDDEN" | "SUGGESTED" | "ACCEPTED"
+export type StrategyRelationshipKind = "ALONGSIDE" | "REPLACE" | "STANDALONE_TEST"
+export type StrategyRelationshipEvidenceBar = "STANDARD" | "ELEVATED"
+export type TradeHorizon = "INTRADAY" | "DAYS" | "WEEKS" | "MONTHS"
+export type CapitalTier = "TINY" | "SMALL" | "MEDIUM" | "LARGE" | "CUSTOM"
+export type AuthoringEdgeFamily =
+  | "MOMENTUM"
+  | "REVERSION"
+  | "BREAKOUT"
+  | "CATALYST"
+  | "SENTIMENT"
+  | "VOLATILITY"
+  | "HEDGE"
+  | "UNSURE"
+export type AuthoringUniverseShape = "FIXED_LIST" | "DYNAMIC_SCREEN" | "THEME_LEADERS" | "TALON_PROPOSES"
+export type RegimeExpectation = "MOST_CONDITIONS" | "CALM" | "VOLATILE" | "BULL" | "BEAR" | "UNSURE"
+export type ProvenanceSource =
+  | "USER"
+  | "REFERENCE"
+  | "PAPER"
+  | "CATALOG"
+  | "MARKET_PACKET"
+  | "TUNABLE_DEFAULT"
+  | "TALON_INFERENCE"
+export type ProvenanceConfidence = "HIGH" | "MEDIUM" | "LOW"
+export type DataReadinessOverallStatus = "READY" | "PARTIAL" | "BLOCKED"
+export type UniverseSpecType = "FIXED" | "DYNAMIC"
+export type EntryConditionOperator = "gte" | "lte" | "gt" | "lt" | "eq" | "between" | "in"
+export type AuthoringCompilerSupport = "SUPPORTED" | "NEEDS_MAPPING"
+export type PositionSizingMethod = "FIXED_PCT" | "RISK_BASED" | "EQUAL_WEIGHT" | "CUSTOM"
+export type CommissionModel = "FLAT" | "PER_SHARE" | "PER_CONTRACT" | "PCT_NOTIONAL"
+export type SweepMethod = "GRID" | "RANDOM" | "BAYESIAN" | "MANUAL"
+export type MultipleComparisonsMethod = "BONFERRONI" | "FDR_BH" | "BOOTSTRAP_REALITY_CHECK" | "NONE_V1_PLACEHOLDER"
+export type AdversarialReviewStatus = "PENDING" | "PASS" | "FAIL" | "CONDITIONAL"
+export type AdversarialCheckCategory =
+  | "LOOKAHEAD_BIAS"
+  | "SURVIVORSHIP_BIAS"
+  | "COST_UNDERESTIMATE"
+  | "BENCHMARK_CHEATING"
+  | "DATA_LEAKAGE"
+  | "CURRENT_REGIME_ONLY"
+  | "WEAK_KILL_CRITERIA"
+  | "OVERFITTING"
+  | "OTHER"
+export type AdversarialSeverity = "INFO" | "WARNING" | "CRITICAL"
+export type PortfolioFitStatus = "PENDING" | "ASSESSED" | "WAIVED"
+export type PortfolioFitDeferredUntil = "BEFORE_BENCH" | "PAPER_PROMOTION" | "LIVE_PROMOTION"
+export type ReasoningDepth = "STANDARD" | "EXTENDED"
+export type ImplementationPriority = "LOW" | "MEDIUM" | "HIGH"
+export type TrialLedgerReviewerOutcome = "PASS" | "FAIL" | "CONDITIONAL"
+export type TrialLedgerPromotionOutcome = "PROMOTED" | "REJECTED" | "PENDING"
+export type PacketCompileStatus = "PASS" | "BLOCKED" | "NEEDS_MAPPING"
+export type PacketCompileReasonCode =
+  | "BUDGET_EXCEEDED"
+  | "DATA_BLOCKED"
+  | "CUSTOM_MAPPING_REQUIRED"
+  | "INVALID_PACKET"
+  | "APPROVAL_REQUIRED"
+
+export interface AuthoringProvenance {
+  source: ProvenanceSource
+  confidence: ProvenanceConfidence
+  rationale: string
+  source_artifact_id?: string | null
+  operator_confirmed: boolean
+}
+
+export interface ProvenanceWrapped<T> {
+  value: T
+  provenance: AuthoringProvenance
+}
+
+export interface StrategyRelationship {
+  relationship: StrategyRelationshipKind
+  target_strategy_id?: string | null
+  evidence_bar_modifier: StrategyRelationshipEvidenceBar
+}
+
+export interface HistoricalWindow {
+  start_date: string
+  end_date: string
+  rationale: string
+  talon_tradeoff_notes: string
+}
+
+export interface StrategyAuthoringQuestionnaire {
+  render_mode: StrategyAuthoringRenderMode
+  pattern_description: string
+  sleeve: ResearchSleeve
+  trade_horizon: TradeHorizon
+  capital_tier: CapitalTier
+  capital_custom_usd?: number | null
+  strategy_relationship: StrategyRelationship
+  kill_criteria_user: string
+  edge_family: AuthoringEdgeFamily
+  prior_work_refs: string[]
+  changes_from_refs: string
+  universe_shape: AuthoringUniverseShape
+  universe_fixed_list?: string[] | null
+  regime_expectation: RegimeExpectation
+  universe_size_band: ProvenanceWrapped<string>
+  allowed_data_inputs: ProvenanceWrapped<string[]>
+  entry_confirmation: ProvenanceWrapped<string>
+  exit_logic: ProvenanceWrapped<string>
+  risk_profile: ProvenanceWrapped<string>
+  benchmark: ProvenanceWrapped<string>
+  era_validation_strategy: ProvenanceWrapped<string>
+  era_weighting: ProvenanceWrapped<string>
+  historical_window: ProvenanceWrapped<HistoricalWindow>
+  promotion_bar: ProvenanceWrapped<string>
+  talon_exclusions: ProvenanceWrapped<string>
+  field_presentations: Record<string, FieldPresentation>
+}
+
+export interface AssumptionItem {
+  field_path: string
+  assumption: string
+  provenance: AuthoringProvenance
+  risk_if_wrong: "LOW" | "MEDIUM" | "HIGH"
+  resolution_needed: boolean
+}
+
+export interface StrategyAuthoringAssumptions {
+  items: AssumptionItem[]
+}
+
+export interface StrategyAuthoringDataReadinessItem {
+  data_input_id: string
+  catalog_entry_id?: string | null
+  available: boolean
+  coverage_start?: string | null
+  coverage_end?: string | null
+  gaps: string[]
+  notes: string
+}
+
+export interface StrategyAuthoringDataReadiness {
+  overall_status: DataReadinessOverallStatus
+  items: StrategyAuthoringDataReadinessItem[]
+}
+
+export interface AuthoringEraDefinition {
+  era_id: string
+  label: string
+  start_date: string
+  end_date: string
+  regime_tags: string[]
+  rationale: string
+}
+
+export interface StrategyAuthoringEraBenchmarkPlan {
+  benchmark_id: string
+  benchmark_rationale: string
+  eras: AuthoringEraDefinition[]
+  era_weighting_method: ProvenanceWrapped<string>
+}
+
+export interface AuthoringUniverseSpec {
+  type: UniverseSpecType
+  symbols?: string[] | null
+  screen_criteria?: string | null
+  max_symbols: number
+  rebalance_frequency?: string | null
+}
+
+export interface AuthoringEntryCondition {
+  name: string
+  parameter: string
+  operator: EntryConditionOperator
+  threshold: number | number[] | string[]
+  data_input_id: string
+  compiler_support?: AuthoringCompilerSupport
+}
+
+export interface AuthoringEntryRules {
+  description: string
+  conditions: AuthoringEntryCondition[]
+  confirmation_required: boolean
+  confirmation_description?: string | null
+}
+
+export interface AuthoringTrailingStop {
+  enabled: boolean
+  trail_pct?: number | null
+  activation_pct?: number | null
+}
+
+export interface AuthoringCustomExit {
+  name: string
+  description: string
+  condition: string
+  compiler_support?: AuthoringCompilerSupport
+}
+
+export interface AuthoringExitRules {
+  stop_loss_pct?: number | null
+  target_pct?: number | null
+  time_stop_days?: number | null
+  trailing_stop?: AuthoringTrailingStop | null
+  custom_exits?: AuthoringCustomExit[] | null
+}
+
+export interface AuthoringPositionSizing {
+  method: PositionSizingMethod
+  base_size_pct?: number | null
+  max_positions: number
+  risk_per_trade_pct?: number | null
+  custom_description?: string | null
+}
+
+export interface AuthoringRiskLimits {
+  max_portfolio_drawdown_pct: number
+  max_single_position_loss_pct: number
+  max_correlated_exposure_pct?: number | null
+  max_sector_concentration_pct?: number | null
+  circuit_breaker_rules?: string | null
+}
+
+export interface AuthoringExecutionConstraints {
+  order_types: string[]
+  no_trade_zones?: string | null
+  slippage_assumption_bps: number
+  commission_model: CommissionModel
+  /** Unit depends on commission_model: flat USD, per-share USD, per-contract USD, or percent notional. */
+  commission_assumption_value: number
+}
+
+export interface StrategyAuthoringSpec {
+  strategy_family: string
+  strategy_name: string
+  strategy_id: ProvenanceWrapped<string>
+  sleeve: ResearchSleeve
+  universe: ProvenanceWrapped<AuthoringUniverseSpec>
+  entry_rules: ProvenanceWrapped<AuthoringEntryRules>
+  exit_rules: ProvenanceWrapped<AuthoringExitRules>
+  position_sizing: ProvenanceWrapped<AuthoringPositionSizing>
+  risk_limits: ProvenanceWrapped<AuthoringRiskLimits>
+  execution_constraints: ProvenanceWrapped<AuthoringExecutionConstraints>
+}
+
+export interface SweepParameter {
+  field_path: string
+  min: number
+  max: number
+  step?: number | null
+  values?: Array<number | string> | null
+  provenance: AuthoringProvenance
+}
+
+export interface StrategyAuthoringSweepBounds {
+  parameters: SweepParameter[]
+  max_total_variants: number
+  sweep_method: SweepMethod
+}
+
+export interface AuthoringBacktestThresholds {
+  min_trades: number
+  min_win_rate_pct: number
+  min_profit_factor: number
+  min_sharpe: number
+  max_drawdown_pct: number
+  min_profitable_fold_pct?: number | null
+  additional?: Record<string, number> | null
+}
+
+export interface CapitalTierModifier {
+  tier: Exclude<CapitalTier, "CUSTOM">
+  calendar_days_multiplier: number
+  closed_trades_multiplier: number
+  drawdown_tightening_pct?: number | null
+}
+
+export interface AuthoringPaperThresholds {
+  min_calendar_days: number
+  min_closed_trades: number
+  min_active_exposure_days: number
+  max_drawdown_pct: number
+  min_win_rate_pct: number
+  min_profit_factor: number
+  capital_tier_modifier: CapitalTierModifier
+}
+
+export interface AuthoringLiveThresholds extends AuthoringPaperThresholds {
+  max_single_loss_usd?: number | null
+}
+
+export interface StrategyAuthoringEvidenceThresholds {
+  backtest: AuthoringBacktestThresholds
+  paper: AuthoringPaperThresholds
+  live: AuthoringLiveThresholds
+}
+
+export interface TrialLedgerBudget {
+  max_variants: number
+  max_eras: number
+  max_bench_runs: number
+  estimated_compute_cost_usd?: number | null
+  rationale: string
+}
+
+export interface MultipleComparisonsPlan {
+  method: MultipleComparisonsMethod
+  effective_trials_estimate: number
+  adjusted_significance_level?: number | null
+  notes: string
+  full_implementation_target?: string | null
+}
+
+export interface AdversarialCheck {
+  category: AdversarialCheckCategory
+  passed: boolean
+  finding: string
+  severity: AdversarialSeverity
+  remediation?: string | null
+}
+
+export interface AdversarialReview {
+  status: AdversarialReviewStatus
+  reviewer_model_capabilities: ModelCapabilities
+  reviewer_model_actual?: string | null
+  review_timestamp?: string | null
+  required_categories: AdversarialCheckCategory[]
+  checks: AdversarialCheck[]
+  overall_notes?: string | null
+  conditions_for_pass?: string[] | null
+}
+
+export interface CorrelationAssessment {
+  method: string
+  max_acceptable_correlation: number
+  estimated_correlation?: number | null
+  notes: string
+}
+
+export interface JointDrawdownEstimate {
+  method: string
+  max_joint_drawdown_pct?: number | null
+  notes: string
+}
+
+export interface SleeveBudgetImpact {
+  sleeve: ResearchSleeve
+  current_sleeve_allocation_pct: number
+  proposed_addition_pct: number
+  resulting_sleeve_allocation_pct: number
+  within_limits: boolean
+}
+
+export interface PortfolioFit {
+  status: PortfolioFitStatus
+  deferred_until?: PortfolioFitDeferredUntil | null
+  existing_strategies: string[]
+  correlation_assessment?: CorrelationAssessment | null
+  joint_drawdown_estimate?: JointDrawdownEstimate | null
+  sleeve_budget_impact?: SleeveBudgetImpact | null
+  capital_capacity_notes?: string | null
+  marginal_value_notes?: string | null
+}
+
+export interface ModelCapabilities {
+  min_context_window_tokens: number
+  structured_output_required: boolean
+  reasoning_depth: ReasoningDepth
+  notes?: string | null
+}
+
+export interface ModelExecution {
+  required_capabilities: ModelCapabilities
+  actual_provider: string
+  actual_model_id: string
+  actual_response_id?: string | null
+  temperature: number
+  seed?: number | null
+  max_tokens?: number | null
+  timestamp: string
+}
+
+export interface ReproducibilityManifest {
+  synthesis_model: ModelExecution
+  questionnaire_model?: ModelExecution | null
+  adversarial_model?: ModelExecution | null
+  data_catalog_version: string
+  market_packet_id?: string | null
+  paper_index_version?: string | null
+  strategy_registry_commit: string
+  questionnaire_input_hash: string
+  prompt_version: string
+  questionnaire_schema_version: string
+  packet_contract_schema_version: "research_lab.strategy_authoring_packet.v1"
+  talon_orchestrator_version?: string | null
+}
+
+export interface BenchJobConfigPreview {
+  strategy_spec_hash: string
+  sweep_bounds_hash: string
+  era_plan_hash: string
+  target_bench_runner: string
+  estimated_runtime_minutes?: number | null
+}
+
+export interface ImplementationRequest {
+  requested_at: string
+  requested_by: string
+  packet_id: string
+  priority: ImplementationPriority
+  implementation_notes: string
+  bench_job_config?: BenchJobConfigPreview | null
+}
+
+export interface StrategyAuthoringPacketV1 {
+  schema_version: "research_lab.strategy_authoring_packet.v1"
+  packet_id: string
+  revised_from?: string | null
+  revision_index?: number | null
+  created_at: string
+  updated_at: string
+  status: StrategyAuthoringPacketStatus
+  questionnaire: StrategyAuthoringQuestionnaire
+  assumptions: StrategyAuthoringAssumptions
+  data_readiness: StrategyAuthoringDataReadiness
+  era_benchmark_plan: StrategyAuthoringEraBenchmarkPlan
+  strategy_spec: StrategyAuthoringSpec
+  sweep_bounds: StrategyAuthoringSweepBounds
+  evidence_thresholds: StrategyAuthoringEvidenceThresholds
+  trial_ledger_budget: TrialLedgerBudget
+  multiple_comparisons_plan: MultipleComparisonsPlan
+  adversarial_review: AdversarialReview
+  portfolio_fit: PortfolioFit
+  reproducibility_manifest: ReproducibilityManifest
+  implementation_request?: ImplementationRequest | null
+}
+
+export interface TrialLedgerBenchResult {
+  completed_at: string
+  total_trades: number
+  win_rate_pct: number
+  profit_factor: number
+  sharpe: number
+  sortino?: number | null
+  max_drawdown_pct: number
+  total_return_pct: number
+  benchmark_return_pct: number
+  excess_return_pct: number
+  passed_evidence_thresholds: boolean
+  notes?: string | null
+}
+
+export interface TrialLedgerEntryV1 {
+  schema_version: "research_lab.trial_ledger_entry.v1"
+  trial_id: string
+  packet_id: string
+  strategy_family: string
+  strategy_id: string
+  variant_index: number
+  era_id: string
+  created_at: string
+  bench_result?: TrialLedgerBenchResult | null
+  reviewer_outcome?: TrialLedgerReviewerOutcome | null
+  promotion_outcome?: TrialLedgerPromotionOutcome | null
+  failure_reason?: string | null
+  questionnaire_mapping?: string[] | null
+}
+
+export interface TrialLedgerConsumption {
+  variants_used: number
+  bench_runs_used: number
+  eras_used: number
+}
+
+export interface PacketSectionHashes {
+  questionnaire_hash: string
+  strategy_spec_hash: string
+  sweep_bounds_hash: string
+  era_plan_hash: string
+  packet_hash: string
+}
+
+export interface PacketCompileIssue {
+  code: PacketCompileReasonCode
+  message: string
+  field_path?: string | null
+}
+
+export interface PacketBenchConfigPreview extends BenchJobConfigPreview {
+  bench_config_id: string
+}
+
+export interface PacketCompileResultV1 {
+  schema_version: "research_lab.strategy_authoring_compile_result.v1"
+  packet_id: string
+  compiled_at: string
+  compile_status: PacketCompileStatus
+  issues: PacketCompileIssue[]
+  section_hashes: PacketSectionHashes
+  bench_config_id: string
+  planned_trial_ledger_entries: TrialLedgerEntryV1[]
+  bench_job_config_preview?: PacketBenchConfigPreview | null
+}
+
 export interface TalonDraftJobV1 extends ScopeTriple {
   schema_version: "research_lab.talon_draft_job.v1"
   job_id: string
