@@ -20,6 +20,14 @@ import type {
 const PRESETS_DIR = path.join(process.cwd(), "data", "research_lab", "presets")
 const INDEX_PATH = path.join(PRESETS_DIR, "_index.json")
 
+export interface PresetStrategyOption {
+  strategy_id: string
+  strategy_family: string
+  display_name: string
+  sleeve: ResearchSleeve
+  preset_id: string
+}
+
 async function readJsonIfPresent<T>(absPath: string): Promise<T | null> {
   try {
     const raw = await fs.readFile(absPath, "utf-8")
@@ -46,6 +54,25 @@ async function readYamlIfPresent<T>(absPath: string): Promise<T | null> {
 
 export async function loadPresetIndex(): Promise<PresetIndexV1 | null> {
   return readJsonIfPresent<PresetIndexV1>(INDEX_PATH)
+}
+
+export async function loadPresetStrategyOptions(): Promise<PresetStrategyOption[]> {
+  const index = await loadPresetIndex()
+  if (!index) return []
+  const opts: PresetStrategyOption[] = []
+  const seen = new Set<string>()
+  for (const preset of index.presets ?? []) {
+    if (!preset.strategy_id || seen.has(preset.strategy_id)) continue
+    seen.add(preset.strategy_id)
+    opts.push({
+      strategy_id: preset.strategy_id,
+      strategy_family: preset.strategy_family,
+      display_name: preset.display_name,
+      sleeve: normalizeSleeve(preset.sleeve),
+      preset_id: preset.preset_id,
+    })
+  }
+  return opts
 }
 
 export async function loadPresetById(presetId: string): Promise<PresetV1 | null> {
@@ -78,4 +105,12 @@ export async function loadPresetsForStrategy(
     }),
   )
   return presets.filter((p): p is PresetV1 => p != null)
+}
+
+function normalizeSleeve(value: unknown): ResearchSleeve {
+  const normalized = typeof value === "string" ? value.trim().toUpperCase() : ""
+  if (normalized === "CRYPTO" || normalized === "OPTIONS" || normalized === "STOCKS") {
+    return normalized
+  }
+  return "STOCKS"
 }

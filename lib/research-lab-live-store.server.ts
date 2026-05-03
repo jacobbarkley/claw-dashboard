@@ -13,9 +13,18 @@ export interface LiveStore {
   expire(key: string, seconds: number): Promise<void>
 }
 
+type MemoryEntry =
+  | { kind: "string"; value: string; expiresAt: number | null }
+  | { kind: "set"; value: Set<string>; expiresAt: number | null }
+
+type ResearchLabGlobal = typeof globalThis & {
+  __researchLabLiveStoreMemory?: Map<string, MemoryEntry>
+}
+
 export function getResearchLabLiveStore(): LiveStore | null {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
+  if (!url && !token && !process.env.VERCEL) return getInMemoryLiveStore()
   if (!url || !token) return null
   return {
     get: key => upstashCommand(url, token, ["GET", key]).then(value =>
@@ -33,6 +42,59 @@ export function getResearchLabLiveStore(): LiveStore | null {
     sadd: (key, member) => upstashCommand(url, token, ["SADD", key, member]).then(() => undefined),
     expire: (key, seconds) => upstashCommand(url, token, ["EXPIRE", key, seconds]).then(() => undefined),
   }
+}
+
+function getInMemoryLiveStore(): LiveStore {
+  const store = memoryStore()
+  return {
+    get: async key => {
+      const entry = readMemoryEntry(store, key)
+      return entry?.kind === "string" ? entry.value : null
+    },
+    set: async (key, value) => {
+      store.set(key, { kind: "string", value, expiresAt: null })
+    },
+    setNx: async (key, value, ttlSeconds) => {
+      if (readMemoryEntry(store, key)) return false
+      store.set(key, {
+        kind: "string",
+        value,
+        expiresAt: ttlSeconds ? Date.now() + ttlSeconds * 1000 : null,
+      })
+      return true
+    },
+    del: async key => {
+      store.delete(key)
+    },
+    sadd: async (key, member) => {
+      const existing = readMemoryEntry(store, key)
+      if (existing?.kind === "set") {
+        existing.value.add(member)
+        return
+      }
+      store.set(key, { kind: "set", value: new Set([member]), expiresAt: null })
+    },
+    expire: async (key, seconds) => {
+      const entry = readMemoryEntry(store, key)
+      if (entry) entry.expiresAt = Date.now() + seconds * 1000
+    },
+  }
+}
+
+function memoryStore(): Map<string, MemoryEntry> {
+  const target = globalThis as ResearchLabGlobal
+  target.__researchLabLiveStoreMemory ??= new Map<string, MemoryEntry>()
+  return target.__researchLabLiveStoreMemory
+}
+
+function readMemoryEntry(store: Map<string, MemoryEntry>, key: string): MemoryEntry | null {
+  const entry = store.get(key)
+  if (!entry) return null
+  if (entry.expiresAt != null && entry.expiresAt <= Date.now()) {
+    store.delete(key)
+    return null
+  }
+  return entry
 }
 
 async function upstashCommand(
