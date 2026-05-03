@@ -1,0 +1,800 @@
+{
+  "schema_version": "research_lab.talon_draft_job_record.v1",
+  "recorded_at": "2026-05-03T02:42:42.095Z",
+  "job": {
+    "schema_version": "research_lab.talon_draft_job.v1",
+    "job_id": "talon_01KQNVBX3JZ8H5V1Q4RKZ8H5V1",
+    "idea_id": "idea_01KQNVB9NZZDKDNWHZWYZDKDNW",
+    "user_id": "jacob",
+    "account_id": "paper_main",
+    "strategy_group_id": "default",
+    "created_at": "2026-05-03T02:41:03.601Z",
+    "updated_at": "2026-05-03T02:42:42.094Z",
+    "state": "WARN",
+    "current_step": "persist",
+    "steps_completed": [
+      "load_context",
+      "draft_strategy_core",
+      "data_readiness",
+      "validate_schema"
+    ],
+    "repair_attempts": 0,
+    "intent_message": null,
+    "proposal": {
+      "schema_version": "research_lab.strategy_spec.v1",
+      "spec_id": "spec_01KQNVEX9CJ1RWA909FDJ1RWA9",
+      "spec_version": 1,
+      "idea_id": "idea_01KQNVB9NZZDKDNWHZWYZDKDNW",
+      "user_id": "jacob",
+      "account_id": "paper_main",
+      "strategy_group_id": "default",
+      "created_at": "2026-05-03T02:42:42.093Z",
+      "authoring_mode": "AI_DRAFTED",
+      "authored_by": "jacob",
+      "state": "DRAFTING",
+      "signal_logic": "Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.",
+      "universe": {
+        "description": "Six initial sleeves of 6 stocks each, totaling up to 36 symbols. All symbols must be US-listed equities available on Alpaca with OHLCV history from at least 2020-01-01."
+      },
+      "entry_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.",
+      "exit_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.",
+      "risk_model": {
+        "description": "Per-sleeve risk isolation with portfolio-level concentration guard."
+      },
+      "sweep_params": {},
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "benchmark": "SPY",
+      "acceptance_criteria": {
+        "min_sharpe": 0.8,
+        "max_drawdown": 20,
+        "min_hit_rate": 50,
+        "other": "At least 4 of 6 sleeves must individually pass evidence thresholds. At least 2 non-original sleeves must show positive expectancy in at least one non-COVID-recovery era. No single sleeve may contribute more than 40% of total portfolio drawdown."
+      },
+      "experiment_plan": {
+        "schema_version": "research_lab.experiment_plan.v1",
+        "spec_id": "spec_01KQNVEX9CJ1RWA909FDJ1RWA9",
+        "idea_id": "idea_01KQNVB9NZZDKDNWHZWYZDKDNW",
+        "is_valid": true,
+        "validity_reasons": [
+          {
+            "field_id": "runnable_eras.era_1.status",
+            "severity": "warn",
+            "message": "Selected era era_1 has incomplete data."
+          },
+          {
+            "field_id": "runnable_eras.era_2.status",
+            "severity": "warn",
+            "message": "Selected era era_2 has incomplete data."
+          }
+        ],
+        "benchmark": {
+          "symbol": "SPY",
+          "comparison_mode": "both"
+        },
+        "windows": {
+          "requested_start": "2026-02-02",
+          "requested_end": "2026-05-03",
+          "fresh_data_required_from": null
+        },
+        "runnable_eras": [
+          {
+            "era_id": "era_1",
+            "label": "era_1",
+            "date_range": {
+              "start": "2026-02-02",
+              "end": "2026-05-03"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": null
+          },
+          {
+            "era_id": "era_2",
+            "label": "era_2",
+            "date_range": {
+              "start": "2026-02-02",
+              "end": "2026-05-03"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": null
+          }
+        ],
+        "eras": {
+          "mode": "multi",
+          "required_era_ids": [
+            "era_1",
+            "era_2"
+          ]
+        },
+        "data_requirements": [
+          {
+            "capability_id": "alpaca_equity_ohlcv",
+            "required": true,
+            "status": "AVAILABLE",
+            "status_at_draft": "AVAILABLE",
+            "purpose": "alpaca_equity_ohlcv"
+          }
+        ],
+        "evidence_thresholds": {
+          "minimum_trade_count": 5,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "{\"condition\":\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\"}",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "known_limitations": [
+          "Sleeve compositions (B through F) are Talon initial proposals and have not been operator-confirmed. Operator must review and approve symbol lists before promotion.",
+          "Sleeve selection methodology is qualitative in v1 (sector/theme coherence). A quantitative screening process (e.g., minimum ADV, correlation filter, momentum factor loading) is deferred to v2.",
+          "Capital allocation across sleeves is equal-weight in v1. Dynamic regime-based sleeve weighting is a v2 enhancement.",
+          "COIN and AFRM in sleeve_C (Financials) have shorter listing histories and higher volatility than the original sleeve members. They may produce fewer qualifying signals and should be monitored for volatility filter suppression.",
+          "SNOW and MDB in sleeve_B (Cloud SaaS) IPO'd in late 2020; pre-2021 history is thin. The era_covid_recovery era will have reduced data for these symbols.",
+          "Cross-sleeve concentration risk: in strong bull regimes, tech-adjacent sleeves (A, B, F) may all activate simultaneously, reducing diversification benefit. The concentration guard in the risk model partially mitigates this but does not eliminate it.",
+          "The phase1_short window (2026 tape) is a plumbing/signal-wiring check only. Expected trade count is low and no standalone edge conclusion should be drawn from it.",
+          "All data dependencies are OHLCV-only (alpaca_equity_ohlcv). No exotic data sources are required. This is a deliberate fidelity choice to maintain the proven signal logic of the parent strategy.",
+          "Future sleeve additions or substitutions should re-run the full experiment_plan before promotion."
+        ]
+      },
+      "candidate_strategy_family": null,
+      "implementation_notes": "Data-readiness warnings:\n- {\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}\n- {\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}\n- {\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}",
+      "parent_spec_id": null,
+      "registered_strategy_id": null
+    },
+    "assessment": {
+      "verdict": "WARN",
+      "catalog_version": "2026-04-30.2",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "status": "AVAILABLE",
+          "source": "alpaca_equity_ohlcv",
+          "notes": "Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker."
+        }
+      ],
+      "warnings": [
+        "{\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}",
+        "{\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}",
+        "{\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}"
+      ]
+    },
+    "validity_issues": [
+      {
+        "field_id": "runnable_eras.era_1.status",
+        "severity": "warn",
+        "message": "Selected era era_1 has incomplete data."
+      },
+      {
+        "field_id": "runnable_eras.era_2.status",
+        "severity": "warn",
+        "message": "Selected era era_2 has incomplete data."
+      }
+    ],
+    "error": null,
+    "error_code": null,
+    "model_calls": [
+      {
+        "step": "draft_strategy_core",
+        "attempt": 0,
+        "model": "claude-sonnet-4-6",
+        "latency_ms": 98074,
+        "tokens_in": 6632,
+        "tokens_out": 5262,
+        "finish_reason": "stop"
+      }
+    ],
+    "builder_state": {
+      "schema_version": "research_lab.builder_state.v1",
+      "mode": "beginner",
+      "input_state": "PROPOSAL_READY",
+      "created_at": "2026-05-03T02:41:03.601Z",
+      "updated_at": "2026-05-03T02:42:42.094Z",
+      "fields": {
+        "title": "Test x10",
+        "thesis": "The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.",
+        "sleeve": "STOCKS",
+        "reference_strategies": [
+          {
+            "strategy_id": "regime_aware_momentum",
+            "delta_note": "See Thesis for Deltas"
+          }
+        ],
+        "tags": [],
+        "universe": null,
+        "stop_pct": null,
+        "target_pct": null,
+        "benchmark": "SPY",
+        "benchmark_comparison_mode": "both",
+        "era_mode": "multi",
+        "era_ids": [
+          "era_1",
+          "era_2"
+        ],
+        "signal_logic": "Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.",
+        "entry_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.",
+        "exit_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.",
+        "risk_model": {
+          "description": "Per-sleeve risk isolation with portfolio-level concentration guard."
+        },
+        "sweep_params": {},
+        "required_data": [
+          "alpaca_equity_ohlcv"
+        ],
+        "evidence_thresholds": {
+          "minimum_trade_count": 5,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "{\"condition\":\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\"}",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "implementation_notes": "Data-readiness warnings:\n- {\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}\n- {\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}\n- {\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}",
+        "promotion_target": null
+      },
+      "field_meta": {
+        "title": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "thesis": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "sleeve": {
+          "source": "operator",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": true
+        },
+        "reference_strategies": {
+          "source": "reference",
+          "locked": true,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "tags": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "universe": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "stop_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "target_pct": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "benchmark_comparison_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_mode": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "era_ids": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "signal_logic": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "entry_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "exit_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "risk_model": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "sweep_params": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "required_data": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "evidence_thresholds": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "decisive_verdict_rules": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "implementation_notes": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        },
+        "promotion_target": {
+          "source": "operator",
+          "locked": false,
+          "visible_in_modes": [
+            "beginner",
+            "intermediate",
+            "advanced"
+          ],
+          "updated_at": "2026-05-03T02:41:03.601Z",
+          "updated_by": "jacob",
+          "talon_event_id": null,
+          "operator_confirmed": false
+        }
+      },
+      "validation_issues": [
+        {
+          "field_id": "runnable_eras.era_1.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era era_1 has incomplete data.",
+          "suggested_action": null
+        },
+        {
+          "field_id": "runnable_eras.era_2.status",
+          "severity": "warn",
+          "code": "EXPERIMENT_PLAN_WARN",
+          "message": "Selected era era_2 has incomplete data.",
+          "suggested_action": null
+        }
+      ],
+      "open_questions": [],
+      "current_draft": {
+        "schema_version": "research_lab.strategy_spec.v1",
+        "spec_id": "spec_01KQNVEX9CJ1RWA909FDJ1RWA9",
+        "spec_version": 1,
+        "idea_id": "idea_01KQNVB9NZZDKDNWHZWYZDKDNW",
+        "user_id": "jacob",
+        "account_id": "paper_main",
+        "strategy_group_id": "default",
+        "created_at": "2026-05-03T02:42:42.093Z",
+        "authoring_mode": "AI_DRAFTED",
+        "authored_by": "jacob",
+        "state": "DRAFTING",
+        "signal_logic": "Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.",
+        "universe": {
+          "description": "Six initial sleeves of 6 stocks each, totaling up to 36 symbols. All symbols must be US-listed equities available on Alpaca with OHLCV history from at least 2020-01-01."
+        },
+        "entry_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.",
+        "exit_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.",
+        "risk_model": {
+          "description": "Per-sleeve risk isolation with portfolio-level concentration guard."
+        },
+        "sweep_params": {},
+        "required_data": [
+          "alpaca_equity_ohlcv"
+        ],
+        "benchmark": "SPY",
+        "acceptance_criteria": {
+          "min_sharpe": 0.8,
+          "max_drawdown": 20,
+          "min_hit_rate": 50,
+          "other": "At least 4 of 6 sleeves must individually pass evidence thresholds. At least 2 non-original sleeves must show positive expectancy in at least one non-COVID-recovery era. No single sleeve may contribute more than 40% of total portfolio drawdown."
+        },
+        "experiment_plan": {
+          "schema_version": "research_lab.experiment_plan.v1",
+          "spec_id": "spec_01KQNVEX9CJ1RWA909FDJ1RWA9",
+          "idea_id": "idea_01KQNVB9NZZDKDNWHZWYZDKDNW",
+          "is_valid": true,
+          "validity_reasons": [
+            {
+              "field_id": "runnable_eras.era_1.status",
+              "severity": "warn",
+              "message": "Selected era era_1 has incomplete data."
+            },
+            {
+              "field_id": "runnable_eras.era_2.status",
+              "severity": "warn",
+              "message": "Selected era era_2 has incomplete data."
+            }
+          ],
+          "benchmark": {
+            "symbol": "SPY",
+            "comparison_mode": "both"
+          },
+          "windows": {
+            "requested_start": "2026-02-02",
+            "requested_end": "2026-05-03",
+            "fresh_data_required_from": null
+          },
+          "runnable_eras": [
+            {
+              "era_id": "era_1",
+              "label": "era_1",
+              "date_range": {
+                "start": "2026-02-02",
+                "end": "2026-05-03"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": null
+            },
+            {
+              "era_id": "era_2",
+              "label": "era_2",
+              "date_range": {
+                "start": "2026-02-02",
+                "end": "2026-05-03"
+              },
+              "status": "INCOMPLETE_DATA",
+              "reason": null
+            }
+          ],
+          "eras": {
+            "mode": "multi",
+            "required_era_ids": [
+              "era_1",
+              "era_2"
+            ]
+          },
+          "data_requirements": [
+            {
+              "capability_id": "alpaca_equity_ohlcv",
+              "required": true,
+              "status": "AVAILABLE",
+              "status_at_draft": "AVAILABLE",
+              "purpose": "alpaca_equity_ohlcv"
+            }
+          ],
+          "evidence_thresholds": {
+            "minimum_trade_count": 5,
+            "minimum_evaluated_trading_days": 20
+          },
+          "decisive_verdict_rules": {
+            "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+            "inconclusive": "{\"condition\":\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\"}",
+            "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+          },
+          "known_limitations": [
+            "Sleeve compositions (B through F) are Talon initial proposals and have not been operator-confirmed. Operator must review and approve symbol lists before promotion.",
+            "Sleeve selection methodology is qualitative in v1 (sector/theme coherence). A quantitative screening process (e.g., minimum ADV, correlation filter, momentum factor loading) is deferred to v2.",
+            "Capital allocation across sleeves is equal-weight in v1. Dynamic regime-based sleeve weighting is a v2 enhancement.",
+            "COIN and AFRM in sleeve_C (Financials) have shorter listing histories and higher volatility than the original sleeve members. They may produce fewer qualifying signals and should be monitored for volatility filter suppression.",
+            "SNOW and MDB in sleeve_B (Cloud SaaS) IPO'd in late 2020; pre-2021 history is thin. The era_covid_recovery era will have reduced data for these symbols.",
+            "Cross-sleeve concentration risk: in strong bull regimes, tech-adjacent sleeves (A, B, F) may all activate simultaneously, reducing diversification benefit. The concentration guard in the risk model partially mitigates this but does not eliminate it.",
+            "The phase1_short window (2026 tape) is a plumbing/signal-wiring check only. Expected trade count is low and no standalone edge conclusion should be drawn from it.",
+            "All data dependencies are OHLCV-only (alpaca_equity_ohlcv). No exotic data sources are required. This is a deliberate fidelity choice to maintain the proven signal logic of the parent strategy.",
+            "Future sleeve additions or substitutions should re-run the full experiment_plan before promotion."
+          ]
+        },
+        "candidate_strategy_family": null,
+        "implementation_notes": "Data-readiness warnings:\n- {\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}\n- {\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}\n- {\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}",
+        "parent_spec_id": null,
+        "registered_strategy_id": null
+      },
+      "current_assessment": {
+        "verdict": "WARN",
+        "catalog_version": "2026-04-30.2",
+        "requirements": [
+          {
+            "requested": "alpaca_equity_ohlcv",
+            "status": "AVAILABLE",
+            "source": "alpaca_equity_ohlcv",
+            "notes": "Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker."
+          }
+        ],
+        "warnings": [
+          "{\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}",
+          "{\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}",
+          "{\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}"
+        ]
+      },
+      "current_authoring_mode": "AI_ASSISTED"
+    }
+  },
+  "provenance": {
+    "schema_version": "research_lab.spec_provenance.v1",
+    "spec_id": "spec_01KQNVEX9CJ1RWA909FDJ1RWA9",
+    "generated_at": "2026-05-03T02:42:42.095Z",
+    "model": "claude-sonnet-4-6",
+    "catalog_version": "2026-04-30.2",
+    "prompt_version": "talon_spec_drafting.v2",
+    "talon_job_id": "talon_01KQNVBX3JZ8H5V1Q4RKZ8H5V1",
+    "data_readiness": {
+      "verdict": "WARN",
+      "catalog_version": "2026-04-30.2",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "status": "AVAILABLE",
+          "source": "alpaca_equity_ohlcv",
+          "notes": "Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker."
+        }
+      ],
+      "warnings": [
+        "{\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}",
+        "{\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}",
+        "{\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}"
+      ]
+    },
+    "prompt": "You are Talon's durable spec-drafting worker inside the Vires Research Lab.\nReturn only the structured object requested by the schema. Do not invent backtest results.\nThe structured object has two string fields: proposal_json and assessment_json.\nEach field must be valid JSON text, not markdown, not fenced code, and not comments.\nproposal_json contract:\n- proposal_json is not the full persisted StrategySpecV1. It is the Talon proposal payload that the server wraps into StrategySpecV1.\n- Include these top-level fields exactly: signal_logic, entry_rules, exit_rules, risk_model, universe, required_data, experiment_plan, benchmark, acceptance_criteria.\n- benchmark must be a string symbol such as \"SPY\".\n- acceptance_criteria must be an object with numeric min_sharpe, max_drawdown_pct, and min_hit_rate_pct; optional other may be a string or null.\n- experiment_plan must include benchmark, windows, runnable_eras, eras, evidence_thresholds, decisive_verdict_rules, and known_limitations.\n- experiment_plan.benchmark must be an object such as {\"symbol\":\"SPY\",\"comparison_mode\":\"both\"}.\n- Do not include wrapper fields that the server supplies, such as schema_version, spec_id, idea_id, created_at, state, authoring_mode, or registered_strategy_id.\nassessment_json must JSON.stringify the complete data-readiness assessment.\n\nYour task has two parts:\n1. Draft a StrategySpecV1 starting point for the operator to review.\n2. Draft its experiment_plan: how the strategy will be judged before implementation.\n3. Assess whether every data dependency is actually available in the catalog.\n4. If reference strategies are supplied, use them as parent/context for NEW code and honor the operator's delta notes. Do not simply route the idea to a parent strategy.\n\nExperiment-plan rules:\n- The plan is part of the spec. Do not omit it.\n- Use ISO dates for windows. If the idea does not specify dates, choose a recent executable window and state limitations.\n- evidence_thresholds must be numeric. minimum_trade_count defaults to at least 5 for exploratory stock ideas unless the thesis justifies a higher floor.\n- data_requirements are resolved by the server from your assessment; in experiment_plan focus on benchmark, windows, eras, thresholds, verdict rules, and limitations.\n- If a strategy depends on seeded/current-only data, put that in known_limitations and make the plan clear that the first run validates plumbing, not historical edge.\n\nDurable Talon strategy lessons:\n- Ape Wisdom seeded-attention is proof plumbing unless historical attention exists: The first Ape Wisdom run proved the idea-to-job loop, but it did not prove a historical edge. The strategy used a 2026-04-14 seeded attention artifact, so only post-seed tape was honestly tradeable and the run produced one ASML trade.\n  - If an idea depends on seeded/current-only data, label the first run as a plumbing/proof run unless historical data exists.\n  - Separate config window, fresh usable tape, tradeable window, benchmark window, evaluated trading days, and trade count in the experiment plan.\n  - Do not imply a strategy is judgeable when expected trades are below the readiness floor.\n  - Ask for a broader universe, longer executable window, or missing historical connector when the plan cannot meet minimum evidence thresholds.\n  - Put seeded-data limitations in experiment_plan.known_limitations.\n\nKnown-good / known-bad exemplars:\n- Known-good regime-aware momentum template: Jacob and Codex previously found a regime-aware momentum pattern that beat SPY by roughly ten percentage points. Treat it as the first known-good template: simple OHLCV-derived momentum, explicit SPY benchmark, bounded stop/target sweeps, enough trades to judge, and clear readiness gates.\n  - Prefer simple, testable signal logic over clever data dependencies when the idea does not require exotic data.\n  - Include benchmark, eras/windows, trade-count floor, drawdown cap, and decisive verdict rules with the strategy draft.\n  - Use available OHLCV-derived features as the baseline template before reaching for unavailable sentiment, macro, options, or on-chain data.\n  - If the operator asks for a novel data source, first check whether an available proxy can honestly test the thesis.\n\nUnified builder state:\n{\n  \"mode\": \"beginner\",\n  \"fields\": {\n    \"title\": \"Test x10\",\n    \"thesis\": \"The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.\",\n    \"sleeve\": \"STOCKS\",\n    \"reference_strategies\": [\n      {\n        \"strategy_id\": \"regime_aware_momentum\",\n        \"delta_note\": \"See Thesis for Deltas\"\n      }\n    ],\n    \"tags\": [],\n    \"universe\": null,\n    \"stop_pct\": null,\n    \"target_pct\": null,\n    \"benchmark\": null,\n    \"benchmark_comparison_mode\": null,\n    \"era_mode\": null,\n    \"era_ids\": [],\n    \"signal_logic\": null,\n    \"entry_rules\": null,\n    \"exit_rules\": null,\n    \"risk_model\": null,\n    \"sweep_params\": null,\n    \"required_data\": [],\n    \"evidence_thresholds\": null,\n    \"decisive_verdict_rules\": null,\n    \"implementation_notes\": null,\n    \"promotion_target\": null\n  },\n  \"field_meta\": {\n    \"title\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"thesis\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"sleeve\": {\n      \"source\": \"operator\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": true\n    },\n    \"reference_strategies\": {\n      \"source\": \"reference\",\n      \"locked\": true,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"tags\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"universe\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"stop_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"target_pct\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"benchmark_comparison_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_mode\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"era_ids\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"signal_logic\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"entry_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"exit_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"risk_model\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"sweep_params\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"required_data\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"evidence_thresholds\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"decisive_verdict_rules\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"implementation_notes\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    },\n    \"promotion_target\": {\n      \"source\": \"operator\",\n      \"locked\": false,\n      \"visible_in_modes\": [\n        \"beginner\",\n        \"intermediate\",\n        \"advanced\"\n      ],\n      \"updated_at\": \"2026-05-03T02:41:03.601Z\",\n      \"updated_by\": \"jacob\",\n      \"talon_event_id\": null,\n      \"operator_confirmed\": false\n    }\n  },\n  \"validation_issues\": [],\n  \"answered_questions\": []\n}\nLocked-field rules:\n- Any field with field_meta.locked=true is an operator decision. Do not contradict it.\n- Fill missing fields only. If a locked field makes the strategy impossible, surface that honestly in limitations or data readiness.\n- If the mode is advanced, avoid interrupting with inline clarifications unless the draft cannot proceed.\n\nData readiness rules:\n- PASS only when every core requirement maps to AVAILABLE.\n- WARN when requirements map to PARTIAL, or when a non-core nice-to-have is missing.\n- BLOCKED when any core signal, entry rule, or exit rule requires missing data.\n- When unsure whether data is core, treat it as core.\n- Thin theses are allowed. Unavailable data is not allowed.\n\nRequirement-emission rules (avoid false BLOCKEDs):\n- One capability per underlying feed. If a signal is derivable from OHLCV (volume, ADV, returns, momentum, moving averages, RSI, realized vol, mean reversion), list `alpaca_equity_ohlcv` (or the relevant OHLCV capability) once. Do NOT emit each derived metric as a separate `assessment.requirements` row.\n- When a catalog capability is the proxy for a thesis-mentioned source (e.g. apewisdom_top100 covers WSB / X / Twitter / StockTwits attention), list ONLY the proxy. Do not also list the upstream source names — that produces duplicate MISSING rows for data that's already covered.\n- If you must mention a thesis source that the actual spec does not depend on (incidental flavor, replaced by a proxy, deferred to v2), set `core: false` on that requirement OR omit it entirely. The verdict floor treats `core` as true by default; an unset `core` on a MISSING row will escalate to BLOCKED, even if your `notes` say it's non-core.\n\nIdea sleeve: STOCKS\nIdea title: Test x10\nIdea thesis: The thesis is to expand upon the currently deployed live autonomous strategy for stocks:  Regime-Aware Momentum Frozen Reference Paper v1. Talon needs to mimic that entire strategy, with flexibility in mind for continuous improvements, but with the addition of many different groups of 6 stocks. Current we only trade AVGO, NVDA, AAPL, LLY, META and COS, but we should seek different sleeves. We need to keep in mind what this original group has in common to maintain fidelity between the 6 chosen stocks but this can increase our era robustness as certain groups may perform better under different market regimes. We will need to expand further on how to select stocks for the new groups but I’m curious to see what talon can produce from the beginning.\n\nReference-strategy context:\nReference strategies are parent/context only. Draft NEW code for this idea; do not route to the parent strategy as-is.\n\nParent strategy: regime_aware_momentum\nOperator delta note: See Thesis for Deltas\nRegistry family: REGIME_AWARE_MOMENTUM\nSleeve: STOCKS\nKnown executable presets:\n- stocks.momentum.stop_target.v1: Phase 1a beachhead preset for the frozen regime-aware momentum winner. Re-open only the stop/target neighborhood around the current frozen reference while keeping the rest of the confirmation envelope stable.\n\n  source_registry_preset_id: frozen_confirmation\n  param_schema keys: stop_loss_pct, target_pct\n  base_experiment: {\"asset_class\":\"EQUITY\",\"benchmark_symbol\":\"SPY\",\"benchmark_comparison_mode\":\"both\",\"symbols\":[\"AAPL\",\"AVGO\",\"COST\",\"LLY\",\"META\",\"NVDA\"],\"train_window_days\":126,\"test_window_days\":21,\"step_size_days\":21,\"max_positions\":4,\"risk_pct_per_trade\":1,\"max_hold_days\":10,\"initial_capital_usd\":50000,\"slippage_bps\":5,\"fee_per_trade_usd\":0,\"minimum_trade_count\":30,\"minimum_profitable_fold_pct\":50,\"pass_max_drawdown_pct\":20,\"minimum_expectancy_decay_folds\":4,\"max_expectancy_decay_pct\":50,\"final_holdback_days\":42,\"inconclusive_follow_up_window_days\":14,\"strategy_params\":{\"lookback_days\":20,\"min_symbol_return_pct\":8,\"max_symbol_volatility_pct\":45,\"benchmark_trend_days\":50,\"benchmark_min_return_pct\":0,\"benc...\n- stocks.momentum.stop_target.short_window.v1: Short-window Research Lab preset for the frozen regime-aware momentum winner. Keeps the same six-name lineage and stop/target sweep surface, but compresses the walk-forward envelope enough to run honestly against the currently available post-2026-03-31 tape.\n\n  source_registry_preset_id: frozen_confirmation\n  param_schema keys: stop_loss_pct, target_pct\n  base_experiment: {\"asset_class\":\"EQUITY\",\"benchmark_symbol\":\"SPY\",\"benchmark_comparison_mode\":\"both\",\"symbols\":[\"AAPL\",\"AVGO\",\"COST\",\"LLY\",\"META\",\"NVDA\"],\"train_window_days\":42,\"test_window_days\":5,\"step_size_days\":2,\"max_positions\":4,\"risk_pct_per_trade\":1,\"max_hold_days\":10,\"initial_capital_usd\":50000,\"slippage_bps\":5,\"fee_per_trade_usd\":0,\"minimum_trade_count\":30,\"minimum_profitable_fold_pct\":50,\"pass_max_drawdown_pct\":20,\"minimum_expectancy_decay_folds\":4,\"max_expectancy_decay_pct\":50,\"final_holdback_days\":5,\"inconclusive_follow_up_window_days\":14,\"strategy_params\":{\"lookback_days\":20,\"min_symbol_return_pct\":8,\"max_symbol_volatility_pct\":45,\"benchmark_trend_days\":50,\"benchmark_min_return_pct\":0,\"benchmar...\n\nData capability catalog (2026-04-30.2):\n- alpaca_equity_ohlcv: Price OHLCV; AVAILABLE; sleeves=STOCKS; coverage=2016-present notes=Daily + intraday bars via Alpaca. Wired into the active strategy bank and the Lab pipeline. The default price feed for equities-sleeve research. Covers any signal derivable from OHLCV bars: open/high/low/close, volume, average daily volume (ADV), trailing returns, momentum, moving averages, RSI, realized volatility, mean reversion bands. Strategies should list this capability_id once for the underlying feed and not emit each derived metric as a separate data requirement.\n- alpaca_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2024-10-23-present notes=BTC and ETH only via Alpaca. ~1.5 years of history — sufficient for execution and recent-regime work, insufficient for multi-era analysis. Use ccxt_binance_crypto_ohlcv for longer history (research-only, no execution coupling).\n- ccxt_binance_crypto_ohlcv: Price OHLCV; PARTIAL; sleeves=CRYPTO; coverage=2017-present (BTC); shorter for alts notes=Public Binance OHLCV pulled via ccxt for research backtests only. NOT wired into the executor — execution stays on Alpaca. Operator-pulled: no live connector, scripted backfills.\n- alpaca_options_chain: Options chain; PARTIAL; sleeves=OPTIONS; coverage=live snapshot only notes=Live chain via Alpaca. NOT historical: no point-in-time reconstruction for backtests. Strategies that depend on historical chain state need a separate provider before they can be Lab-tested.\n- iv_surface_constructed: Implied vol surface; UNAVAILABLE; sleeves=OPTIONS; notes=Would require historical chain history we don't have. No connector and no construction pipeline. Strategies depending on IV surface skew/term structure should BLOCK.\n- wikipedia_pageviews: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2016-present (research backfills) notes=Wikimedia REST API is freely accessible; research backfill scripts exist. No production connector wired into the Lab pipeline yet — operator-driven pulls. Don't claim AVAILABLE until a daily-update connector lands.\n- gdelt_full: Attention proxies; PARTIAL; sleeves=STOCKS, CRYPTO; coverage=2015-present (research backfills) notes=GDELT API is free; backfill scripts exist. No daily-update connector wired into the Lab. Same status caveat as wikipedia_pageviews.\n- google_trends: Attention proxies; UNAVAILABLE; sleeves=STOCKS, CRYPTO; notes=No wired connector. Sample-rate noise + rate limiting on the public endpoint make it a v2-or-later candidate.\n- apewisdom_top100: Sentiment; AVAILABLE; sleeves=STOCKS; coverage=2024-present (continuous) notes=Top-100 retail-attention rank with mention/upvote ratios. Wired as the canonical retail-sentiment feed for stocks. THIS IS THE PROXY for r/wallstreetbets, X/Twitter trending tickers, StockTwits, Reddit investing subs, and adjacent retail communities — Ape Wisdom aggregates these into one feed. If a thesis mentions 'WSB / Reddit / X / Twitter / StockTwits / retail buzz / social trending' as a signal, list apewisdom_top100 once and do NOT emit those underlying source names as separate requirements. Raw per-thread velocity is not exposed; only the aggregate rank + mention ratio.\n- reddit_wsb_velocity: Sentiment; UNAVAILABLE; sleeves=STOCKS; notes=Raw r/wallstreetbets per-thread velocity is NOT pulled separately. Use apewisdom_top100 for the aggregated signal. Strategies that genuinely require sub-Ape-Wisdom granularity should BLOCK.\n- fundamentals_basic: Fundamentals; PARTIAL; sleeves=STOCKS; coverage=current snapshot only notes=Market cap + average daily volume reachable via Alpaca asset metadata. Not point-in-time. Strategies needing historical fundamentals (P/E, EPS surprise, balance-sheet items) are NOT covered.\n- crypto_onchain: Crypto on-chain; UNAVAILABLE; sleeves=CRYPTO; notes=No on-chain connector (Glassnode, Dune, etc.). Strategies referencing whale flows, exchange reserves, miner behavior, or staking metrics should BLOCK.\n- macro_fred_subset: Macro; UNAVAILABLE; sleeves=STOCKS, CRYPTO, OPTIONS; notes=FRED series are operator-curated as needed for one-off research; no Lab-wired connector. Strategies depending on macro inputs (fed funds path, CPI surprises, yield curve shape) should BLOCK until a connector lands.",
+    "raw_completion": "{\"proposal_json\":\"{\\\"signal_logic\\\":{\\\"description\\\":\\\"Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.\\\",\\\"regime_filter\\\":{\\\"indicator\\\":\\\"SPY_SMA\\\",\\\"benchmark_trend_days\\\":50,\\\"benchmark_min_return_pct\\\":0,\\\"condition\\\":\\\"SPY close must be above its benchmark_trend_days SMA for long entries to be valid\\\"},\\\"momentum_signal\\\":{\\\"lookback_days\\\":20,\\\"min_symbol_return_pct\\\":8,\\\"max_symbol_volatility_pct\\\":45,\\\"description\\\":\\\"Rank symbols within each sleeve by trailing lookback_days return. Qualify only those exceeding min_symbol_return_pct with realized volatility below max_symbol_volatility_pct.\\\"},\\\"sleeve_selection_criteria\\\":{\\\"description\\\":\\\"Each sleeve of 6 stocks must satisfy: (1) all members are US-listed equities with Alpaca OHLCV coverage back to at least 2020, (2) average daily volume > $50M per member to ensure liquidity, (3) members share a coherent theme — sector, sub-sector, or factor exposure — analogous to the original tech/pharma/semiconductor cluster, (4) cross-sleeve correlation is monitored so that active sleeves do not produce a de-facto single-sector concentration.\\\",\\\"initial_sleeves\\\":{\\\"sleeve_A_original\\\":{\\\"label\\\":\\\"Mega-Cap Tech & Semis (Original)\\\",\\\"symbols\\\":[\\\"AAPL\\\",\\\"AVGO\\\",\\\"COST\\\",\\\"LLY\\\",\\\"META\\\",\\\"NVDA\\\"]},\\\"sleeve_B_cloud_saas\\\":{\\\"label\\\":\\\"Cloud & Enterprise SaaS\\\",\\\"symbols\\\":[\\\"MSFT\\\",\\\"CRM\\\",\\\"NOW\\\",\\\"SNOW\\\",\\\"DDOG\\\",\\\"MDB\\\"]},\\\"sleeve_C_financials_growth\\\":{\\\"label\\\":\\\"High-Growth Financials & Payments\\\",\\\"symbols\\\":[\\\"V\\\",\\\"MA\\\",\\\"PYPL\\\",\\\"SQ\\\",\\\"COIN\\\",\\\"AFRM\\\"]},\\\"sleeve_D_energy_transition\\\":{\\\"label\\\":\\\"Energy Transition & Industrials\\\",\\\"symbols\\\":[\\\"NEE\\\",\\\"ENPH\\\",\\\"FSLR\\\",\\\"GE\\\",\\\"ETN\\\",\\\"PWR\\\"]},\\\"sleeve_E_healthcare_innovation\\\":{\\\"label\\\":\\\"Healthcare Innovation & Biotech\\\",\\\"symbols\\\":[\\\"UNH\\\",\\\"ISRG\\\",\\\"DXCM\\\",\\\"MRNA\\\",\\\"REGN\\\",\\\"VRTX\\\"]},\\\"sleeve_F_consumer_discretionary\\\":{\\\"label\\\":\\\"Consumer Discretionary & E-Commerce\\\",\\\"symbols\\\":[\\\"AMZN\\\",\\\"TSLA\\\",\\\"NKE\\\",\\\"LULU\\\",\\\"BKNG\\\",\\\"RCL\\\"]}},\\\"note\\\":\\\"Sleeve compositions are initial proposals for operator review. Operator should confirm or substitute symbols before promotion. Sleeve selection methodology (quantitative screening) is deferred to v2.\\\"}},\\\"entry_rules\\\":{\\\"description\\\":\\\"Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.\\\",\\\"conditions\\\":[\\\"SPY regime filter is ACTIVE (SPY close > SPY SMA[benchmark_trend_days])\\\",\\\"Symbol trailing return over lookback_days >= min_symbol_return_pct\\\",\\\"Symbol realized volatility over lookback_days <= max_symbol_volatility_pct\\\",\\\"Number of open positions across the sleeve < max_positions\\\",\\\"Entry is at next open after signal bar close\\\"],\\\"position_sizing\\\":{\\\"risk_pct_per_trade\\\":1,\\\"max_positions_per_sleeve\\\":4,\\\"capital_allocation\\\":\\\"Each sleeve receives an equal notional allocation from total capital. Active sleeves share capital proportionally if multiple sleeves are simultaneously active.\\\"},\\\"order_type\\\":\\\"Market on open (next bar)\\\"},\\\"exit_rules\\\":{\\\"description\\\":\\\"Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.\\\",\\\"stop_loss_pct\\\":7,\\\"target_pct\\\":14,\\\"max_hold_days\\\":10,\\\"additional_exits\\\":[\\\"Exit all positions in a sleeve immediately if SPY regime filter flips INACTIVE (SPY crosses below SMA[benchmark_trend_days])\\\",\\\"Exit on max_hold_days if neither stop nor target is reached\\\"],\\\"sweep_params\\\":{\\\"stop_loss_pct\\\":{\\\"min\\\":4,\\\"max\\\":10,\\\"step\\\":1},\\\"target_pct\\\":{\\\"min\\\":8,\\\"max\\\":20,\\\"step\\\":2},\\\"note\\\":\\\"Sweep surface mirrors the stocks.momentum.stop_target.v1 preset neighborhood. Each sleeve is swept independently in Phase 1; cross-sleeve joint optimization is deferred to v2.\\\"}},\\\"risk_model\\\":{\\\"description\\\":\\\"Per-sleeve risk isolation with portfolio-level concentration guard.\\\",\\\"per_sleeve\\\":{\\\"max_positions\\\":4,\\\"risk_pct_per_trade\\\":1,\\\"max_hold_days\\\":10},\\\"portfolio_level\\\":{\\\"max_active_sleeves\\\":6,\\\"cross_sleeve_concentration_check\\\":\\\"If more than 3 active sleeves share >50% sector overlap (GICS level 1), reduce max_positions in overlapping sleeves by 1 each.\\\",\\\"initial_capital_usd\\\":50000,\\\"slippage_bps\\\":5,\\\"fee_per_trade_usd\\\":0},\\\"regime_gate\\\":\\\"All sleeves respect the shared SPY regime filter. No sleeve enters new positions when SPY is below its trend SMA.\\\",\\\"note\\\":\\\"Capital allocation across sleeves is equal-weight at strategy start. Dynamic sleeve weighting based on regime performance is a v2 enhancement.\\\"},\\\"universe\\\":{\\\"description\\\":\\\"Six initial sleeves of 6 stocks each, totaling up to 36 symbols. All symbols must be US-listed equities available on Alpaca with OHLCV history from at least 2020-01-01.\\\",\\\"sleeves\\\":[{\\\"id\\\":\\\"sleeve_A\\\",\\\"label\\\":\\\"Mega-Cap Tech & Semis (Original)\\\",\\\"symbols\\\":[\\\"AAPL\\\",\\\"AVGO\\\",\\\"COST\\\",\\\"LLY\\\",\\\"META\\\",\\\"NVDA\\\"]},{\\\"id\\\":\\\"sleeve_B\\\",\\\"label\\\":\\\"Cloud & Enterprise SaaS\\\",\\\"symbols\\\":[\\\"MSFT\\\",\\\"CRM\\\",\\\"NOW\\\",\\\"SNOW\\\",\\\"DDOG\\\",\\\"MDB\\\"]},{\\\"id\\\":\\\"sleeve_C\\\",\\\"label\\\":\\\"High-Growth Financials & Payments\\\",\\\"symbols\\\":[\\\"V\\\",\\\"MA\\\",\\\"PYPL\\\",\\\"SQ\\\",\\\"COIN\\\",\\\"AFRM\\\"]},{\\\"id\\\":\\\"sleeve_D\\\",\\\"label\\\":\\\"Energy Transition & Industrials\\\",\\\"symbols\\\":[\\\"NEE\\\",\\\"ENPH\\\",\\\"FSLR\\\",\\\"GE\\\",\\\"ETN\\\",\\\"PWR\\\"]},{\\\"id\\\":\\\"sleeve_E\\\",\\\"label\\\":\\\"Healthcare Innovation & Biotech\\\",\\\"symbols\\\":[\\\"UNH\\\",\\\"ISRG\\\",\\\"DXCM\\\",\\\"MRNA\\\",\\\"REGN\\\",\\\"VRTX\\\"]},{\\\"id\\\":\\\"sleeve_F\\\",\\\"label\\\":\\\"Consumer Discretionary & E-Commerce\\\",\\\"symbols\\\":[\\\"AMZN\\\",\\\"TSLA\\\",\\\"NKE\\\",\\\"LULU\\\",\\\"BKNG\\\",\\\"RCL\\\"]}],\\\"benchmark\\\":\\\"SPY\\\",\\\"asset_class\\\":\\\"EQUITY\\\"},\\\"required_data\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"role\\\":\\\"primary_signal_and_execution\\\",\\\"core\\\":true,\\\"note\\\":\\\"All momentum signals, regime filter, volatility filter, and OHLCV-derived features for all 36 symbols plus SPY. Single feed covers all derived metrics.\\\"}],\\\"experiment_plan\\\":{\\\"benchmark\\\":{\\\"symbol\\\":\\\"SPY\\\",\\\"comparison_mode\\\":\\\"both\\\"},\\\"description\\\":\\\"Multi-sleeve expansion of the Regime-Aware Momentum strategy. Phase 1 validates that each new sleeve produces sufficient trades and passes the same evidence gates as the original sleeve. Phase 2 evaluates cross-sleeve portfolio behavior and regime-era robustness.\\\",\\\"windows\\\":[{\\\"id\\\":\\\"phase1_full\\\",\\\"label\\\":\\\"Phase 1 Full Walk-Forward (per sleeve)\\\",\\\"train_start\\\":\\\"2020-01-02\\\",\\\"train_end\\\":\\\"2023-12-31\\\",\\\"test_start\\\":\\\"2024-01-02\\\",\\\"test_end\\\":\\\"2025-12-31\\\",\\\"note\\\":\\\"Primary evaluation window. Sufficient history for multi-era coverage including COVID recovery, 2022 bear, 2023-2024 bull. Each sleeve evaluated independently.\\\",\\\"train_window_days\\\":126,\\\"test_window_days\\\":21,\\\"step_size_days\\\":21},{\\\"id\\\":\\\"phase1_short\\\",\\\"label\\\":\\\"Phase 1 Short Window (post-2026 tape validation)\\\",\\\"train_start\\\":\\\"2026-01-02\\\",\\\"train_end\\\":\\\"2026-03-28\\\",\\\"test_start\\\":\\\"2026-04-01\\\",\\\"test_end\\\":\\\"2026-05-02\\\",\\\"train_window_days\\\":42,\\\"test_window_days\\\":5,\\\"step_size_days\\\":2,\\\"note\\\":\\\"Mirrors the short-window preset for fresh tape validation. Low trade count expected — plumbing/signal-wiring check only, not a standalone evidence run.\\\"},{\\\"id\\\":\\\"phase2_portfolio\\\",\\\"label\\\":\\\"Phase 2 Cross-Sleeve Portfolio\\\",\\\"train_start\\\":\\\"2021-01-04\\\",\\\"train_end\\\":\\\"2024-06-28\\\",\\\"test_start\\\":\\\"2024-07-01\\\",\\\"test_end\\\":\\\"2025-12-31\\\",\\\"train_window_days\\\":126,\\\"test_window_days\\\":21,\\\"step_size_days\\\":21,\\\"note\\\":\\\"Evaluate all sleeves running simultaneously with shared capital and concentration guard. Assess diversification benefit vs. original single-sleeve.\\\"}],\\\"runnable_eras\\\":[\\\"2020-01-02 to 2025-12-31 (full history, all sleeves, Alpaca OHLCV available)\\\",\\\"2026-01-02 to present (fresh tape, short-window plumbing check)\\\"],\\\"eras\\\":[{\\\"id\\\":\\\"era_covid_recovery\\\",\\\"label\\\":\\\"COVID Recovery Bull\\\",\\\"start\\\":\\\"2020-04-01\\\",\\\"end\\\":\\\"2021-12-31\\\",\\\"regime\\\":\\\"strong_bull\\\",\\\"note\\\":\\\"High momentum, broad participation. Expect most sleeves to be active.\\\"},{\\\"id\\\":\\\"era_bear_2022\\\",\\\"label\\\":\\\"2022 Rate-Shock Bear\\\",\\\"start\\\":\\\"2022-01-03\\\",\\\"end\\\":\\\"2022-12-30\\\",\\\"regime\\\":\\\"bear\\\",\\\"note\\\":\\\"Regime filter should suppress most entries. Validate that sleeves with defensive characteristics (healthcare, energy) outperform tech sleeves.\\\"},{\\\"id\\\":\\\"era_recovery_2023\\\",\\\"label\\\":\\\"2023 Recovery & AI Bull\\\",\\\"start\\\":\\\"2023-01-03\\\",\\\"end\\\":\\\"2023-12-29\\\",\\\"regime\\\":\\\"bull\\\",\\\"note\\\":\\\"Strong tech/semis momentum. Original sleeve expected to lead; cloud/SaaS sleeve should also activate.\\\"},{\\\"id\\\":\\\"era_broadening_2024\\\",\\\"label\\\":\\\"2024 Broadening Rally\\\",\\\"start\\\":\\\"2024-01-02\\\",\\\"end\\\":\\\"2024-12-31\\\",\\\"regime\\\":\\\"mixed_bull\\\",\\\"note\\\":\\\"Rotation into financials, industrials, healthcare. Non-tech sleeves should show relative strength here, validating diversification thesis.\\\"},{\\\"id\\\":\\\"era_2025_volatility\\\",\\\"label\\\":\\\"2025 Macro Volatility\\\",\\\"start\\\":\\\"2025-01-02\\\",\\\"end\\\":\\\"2025-12-31\\\",\\\"regime\\\":\\\"volatile\\\",\\\"note\\\":\\\"Elevated macro uncertainty. Regime filter robustness test across all sleeves.\\\"}],\\\"evidence_thresholds\\\":{\\\"minimum_trade_count_per_sleeve\\\":30,\\\"minimum_trade_count_portfolio\\\":150,\\\"minimum_profitable_fold_pct\\\":50,\\\"pass_max_drawdown_pct\\\":20,\\\"minimum_expectancy_decay_folds\\\":4,\\\"max_expectancy_decay_pct\\\":50,\\\"final_holdback_days\\\":42,\\\"inconclusive_follow_up_window_days\\\":14,\\\"note\\\":\\\"Per-sleeve floor of 30 trades mirrors the original preset. Portfolio floor of 150 trades (5 sleeves x 30 minimum) ensures cross-sleeve conclusions are evidence-backed. Short-window phase1_short run is exempt from trade-count floor — it is a plumbing check.\\\"},\\\"decisive_verdict_rules\\\":{\\\"promote_to_paper\\\":{\\\"condition\\\":\\\"All of: (1) >= 4 of 6 sleeves individually meet minimum_trade_count_per_sleeve >= 30 and minimum_profitable_fold_pct >= 50 and drawdown <= 20%, (2) portfolio-level Sharpe >= 0.8 in phase2_portfolio test window, (3) at least 2 non-original sleeves show positive expectancy in era_broadening_2024 or era_recovery_2023, (4) no single sleeve contributes > 40% of total portfolio drawdown.\\\"},\\\"inconclusive\\\":{\\\"condition\\\":\\\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\\\"},\\\"reject\\\":{\\\"condition\\\":\\\"Portfolio drawdown > 20% in any era OR >= 3 sleeves fail minimum_profitable_fold_pct < 40% OR expectancy decays > max_expectancy_decay_pct in >= 3 sleeves across minimum_expectancy_decay_folds.\\\"},\\\"sleeve_level_reject\\\":{\\\"condition\\\":\\\"Individual sleeve drawdown > 25% or trade count < 15 in full window. Action: retire that sleeve and substitute; do not reject the whole strategy.\\\"}},\\\"known_limitations\\\":[\\\"Sleeve compositions (B through F) are Talon initial proposals and have not been operator-confirmed. Operator must review and approve symbol lists before promotion.\\\",\\\"Sleeve selection methodology is qualitative in v1 (sector/theme coherence). A quantitative screening process (e.g., minimum ADV, correlation filter, momentum factor loading) is deferred to v2.\\\",\\\"Capital allocation across sleeves is equal-weight in v1. Dynamic regime-based sleeve weighting is a v2 enhancement.\\\",\\\"COIN and AFRM in sleeve_C (Financials) have shorter listing histories and higher volatility than the original sleeve members. They may produce fewer qualifying signals and should be monitored for volatility filter suppression.\\\",\\\"SNOW and MDB in sleeve_B (Cloud SaaS) IPO'd in late 2020; pre-2021 history is thin. The era_covid_recovery era will have reduced data for these symbols.\\\",\\\"Cross-sleeve concentration risk: in strong bull regimes, tech-adjacent sleeves (A, B, F) may all activate simultaneously, reducing diversification benefit. The concentration guard in the risk model partially mitigates this but does not eliminate it.\\\",\\\"The phase1_short window (2026 tape) is a plumbing/signal-wiring check only. Expected trade count is low and no standalone edge conclusion should be drawn from it.\\\",\\\"All data dependencies are OHLCV-only (alpaca_equity_ohlcv). No exotic data sources are required. This is a deliberate fidelity choice to maintain the proven signal logic of the parent strategy.\\\",\\\"Future sleeve additions or substitutions should re-run the full experiment_plan before promotion.\\\"]},\\\"benchmark\\\":\\\"SPY\\\",\\\"acceptance_criteria\\\":{\\\"min_sharpe\\\":0.8,\\\"max_drawdown_pct\\\":20,\\\"min_hit_rate_pct\\\":50,\\\"other\\\":\\\"At least 4 of 6 sleeves must individually pass evidence thresholds. At least 2 non-original sleeves must show positive expectancy in at least one non-COVID-recovery era. No single sleeve may contribute more than 40% of total portfolio drawdown.\\\"}}\",\"assessment_json\":\"{\\\"overall_status\\\":\\\"PASS\\\",\\\"summary\\\":\\\"All core data requirements for the multi-sleeve Regime-Aware Momentum expansion are satisfied by alpaca_equity_ohlcv, which is AVAILABLE and covers all 36 proposed symbols plus SPY from 2016-present. No exotic data sources are required. The strategy is a deliberate OHLCV-only expansion of the proven parent strategy. Two minor warnings are noted regarding thin history for recently-listed symbols and the qualitative nature of v1 sleeve selection.\\\",\\\"requirements\\\":[{\\\"capability_id\\\":\\\"alpaca_equity_ohlcv\\\",\\\"role\\\":\\\"primary_signal_and_execution\\\",\\\"core\\\":true,\\\"status\\\":\\\"AVAILABLE\\\",\\\"coverage\\\":\\\"2016-present\\\",\\\"symbols_checked\\\":[\\\"AAPL\\\",\\\"AVGO\\\",\\\"COST\\\",\\\"LLY\\\",\\\"META\\\",\\\"NVDA\\\",\\\"MSFT\\\",\\\"CRM\\\",\\\"NOW\\\",\\\"SNOW\\\",\\\"DDOG\\\",\\\"MDB\\\",\\\"V\\\",\\\"MA\\\",\\\"PYPL\\\",\\\"SQ\\\",\\\"COIN\\\",\\\"AFRM\\\",\\\"NEE\\\",\\\"ENPH\\\",\\\"FSLR\\\",\\\"GE\\\",\\\"ETN\\\",\\\"PWR\\\",\\\"UNH\\\",\\\"ISRG\\\",\\\"DXCM\\\",\\\"MRNA\\\",\\\"REGN\\\",\\\"VRTX\\\",\\\"AMZN\\\",\\\"TSLA\\\",\\\"NKE\\\",\\\"LULU\\\",\\\"BKNG\\\",\\\"RCL\\\",\\\"SPY\\\"],\\\"notes\\\":\\\"Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker.\\\"}],\\\"warnings\\\":[{\\\"type\\\":\\\"thin_history\\\",\\\"severity\\\":\\\"WARN\\\",\\\"affected_symbols\\\":[\\\"SNOW\\\",\\\"COIN\\\",\\\"AFRM\\\"],\\\"detail\\\":\\\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\\\"},{\\\"type\\\":\\\"sleeve_selection_methodology\\\",\\\"severity\\\":\\\"WARN\\\",\\\"detail\\\":\\\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\\\"},{\\\"type\\\":\\\"concentration_risk\\\",\\\"severity\\\":\\\"WARN\\\",\\\"detail\\\":\\\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\\\"}],\\\"blockers\\\":[],\\\"deferred_to_v2\\\":[{\\\"capability\\\":\\\"quantitative_sleeve_screening\\\",\\\"description\\\":\\\"Systematic stock selection for sleeve membership using ADV thresholds, momentum factor loadings, intra-sleeve correlation filters, and regime-conditional performance attribution. Not required for v1 — qualitative selection is sufficient to test the multi-sleeve thesis.\\\"},{\\\"capability\\\":\\\"dynamic_sleeve_weighting\\\",\\\"description\\\":\\\"Regime-conditional capital allocation across sleeves (e.g., overweight defensive sleeves in bear regimes). Requires per-era performance history that v1 will generate.\\\"},{\\\"capability\\\":\\\"cross_sleeve_optimization\\\",\\\"description\\\":\\\"Joint stop/target sweep across all sleeves simultaneously. v1 sweeps each sleeve independently.\\\"}],\\\"data_readiness_verdict\\\":\\\"PASS — All core signal, entry, exit, and regime-filter data is available via alpaca_equity_ohlcv. Strategy can proceed to experiment execution. Operator sleeve confirmation recommended before promotion.\\\"}\"}",
+    "raw_proposal_json": "{\"signal_logic\":{\"description\":\"Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.\",\"regime_filter\":{\"indicator\":\"SPY_SMA\",\"benchmark_trend_days\":50,\"benchmark_min_return_pct\":0,\"condition\":\"SPY close must be above its benchmark_trend_days SMA for long entries to be valid\"},\"momentum_signal\":{\"lookback_days\":20,\"min_symbol_return_pct\":8,\"max_symbol_volatility_pct\":45,\"description\":\"Rank symbols within each sleeve by trailing lookback_days return. Qualify only those exceeding min_symbol_return_pct with realized volatility below max_symbol_volatility_pct.\"},\"sleeve_selection_criteria\":{\"description\":\"Each sleeve of 6 stocks must satisfy: (1) all members are US-listed equities with Alpaca OHLCV coverage back to at least 2020, (2) average daily volume > $50M per member to ensure liquidity, (3) members share a coherent theme — sector, sub-sector, or factor exposure — analogous to the original tech/pharma/semiconductor cluster, (4) cross-sleeve correlation is monitored so that active sleeves do not produce a de-facto single-sector concentration.\",\"initial_sleeves\":{\"sleeve_A_original\":{\"label\":\"Mega-Cap Tech & Semis (Original)\",\"symbols\":[\"AAPL\",\"AVGO\",\"COST\",\"LLY\",\"META\",\"NVDA\"]},\"sleeve_B_cloud_saas\":{\"label\":\"Cloud & Enterprise SaaS\",\"symbols\":[\"MSFT\",\"CRM\",\"NOW\",\"SNOW\",\"DDOG\",\"MDB\"]},\"sleeve_C_financials_growth\":{\"label\":\"High-Growth Financials & Payments\",\"symbols\":[\"V\",\"MA\",\"PYPL\",\"SQ\",\"COIN\",\"AFRM\"]},\"sleeve_D_energy_transition\":{\"label\":\"Energy Transition & Industrials\",\"symbols\":[\"NEE\",\"ENPH\",\"FSLR\",\"GE\",\"ETN\",\"PWR\"]},\"sleeve_E_healthcare_innovation\":{\"label\":\"Healthcare Innovation & Biotech\",\"symbols\":[\"UNH\",\"ISRG\",\"DXCM\",\"MRNA\",\"REGN\",\"VRTX\"]},\"sleeve_F_consumer_discretionary\":{\"label\":\"Consumer Discretionary & E-Commerce\",\"symbols\":[\"AMZN\",\"TSLA\",\"NKE\",\"LULU\",\"BKNG\",\"RCL\"]}},\"note\":\"Sleeve compositions are initial proposals for operator review. Operator should confirm or substitute symbols before promotion. Sleeve selection methodology (quantitative screening) is deferred to v2.\"}},\"entry_rules\":{\"description\":\"Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.\",\"conditions\":[\"SPY regime filter is ACTIVE (SPY close > SPY SMA[benchmark_trend_days])\",\"Symbol trailing return over lookback_days >= min_symbol_return_pct\",\"Symbol realized volatility over lookback_days <= max_symbol_volatility_pct\",\"Number of open positions across the sleeve < max_positions\",\"Entry is at next open after signal bar close\"],\"position_sizing\":{\"risk_pct_per_trade\":1,\"max_positions_per_sleeve\":4,\"capital_allocation\":\"Each sleeve receives an equal notional allocation from total capital. Active sleeves share capital proportionally if multiple sleeves are simultaneously active.\"},\"order_type\":\"Market on open (next bar)\"},\"exit_rules\":{\"description\":\"Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.\",\"stop_loss_pct\":7,\"target_pct\":14,\"max_hold_days\":10,\"additional_exits\":[\"Exit all positions in a sleeve immediately if SPY regime filter flips INACTIVE (SPY crosses below SMA[benchmark_trend_days])\",\"Exit on max_hold_days if neither stop nor target is reached\"],\"sweep_params\":{\"stop_loss_pct\":{\"min\":4,\"max\":10,\"step\":1},\"target_pct\":{\"min\":8,\"max\":20,\"step\":2},\"note\":\"Sweep surface mirrors the stocks.momentum.stop_target.v1 preset neighborhood. Each sleeve is swept independently in Phase 1; cross-sleeve joint optimization is deferred to v2.\"}},\"risk_model\":{\"description\":\"Per-sleeve risk isolation with portfolio-level concentration guard.\",\"per_sleeve\":{\"max_positions\":4,\"risk_pct_per_trade\":1,\"max_hold_days\":10},\"portfolio_level\":{\"max_active_sleeves\":6,\"cross_sleeve_concentration_check\":\"If more than 3 active sleeves share >50% sector overlap (GICS level 1), reduce max_positions in overlapping sleeves by 1 each.\",\"initial_capital_usd\":50000,\"slippage_bps\":5,\"fee_per_trade_usd\":0},\"regime_gate\":\"All sleeves respect the shared SPY regime filter. No sleeve enters new positions when SPY is below its trend SMA.\",\"note\":\"Capital allocation across sleeves is equal-weight at strategy start. Dynamic sleeve weighting based on regime performance is a v2 enhancement.\"},\"universe\":{\"description\":\"Six initial sleeves of 6 stocks each, totaling up to 36 symbols. All symbols must be US-listed equities available on Alpaca with OHLCV history from at least 2020-01-01.\",\"sleeves\":[{\"id\":\"sleeve_A\",\"label\":\"Mega-Cap Tech & Semis (Original)\",\"symbols\":[\"AAPL\",\"AVGO\",\"COST\",\"LLY\",\"META\",\"NVDA\"]},{\"id\":\"sleeve_B\",\"label\":\"Cloud & Enterprise SaaS\",\"symbols\":[\"MSFT\",\"CRM\",\"NOW\",\"SNOW\",\"DDOG\",\"MDB\"]},{\"id\":\"sleeve_C\",\"label\":\"High-Growth Financials & Payments\",\"symbols\":[\"V\",\"MA\",\"PYPL\",\"SQ\",\"COIN\",\"AFRM\"]},{\"id\":\"sleeve_D\",\"label\":\"Energy Transition & Industrials\",\"symbols\":[\"NEE\",\"ENPH\",\"FSLR\",\"GE\",\"ETN\",\"PWR\"]},{\"id\":\"sleeve_E\",\"label\":\"Healthcare Innovation & Biotech\",\"symbols\":[\"UNH\",\"ISRG\",\"DXCM\",\"MRNA\",\"REGN\",\"VRTX\"]},{\"id\":\"sleeve_F\",\"label\":\"Consumer Discretionary & E-Commerce\",\"symbols\":[\"AMZN\",\"TSLA\",\"NKE\",\"LULU\",\"BKNG\",\"RCL\"]}],\"benchmark\":\"SPY\",\"asset_class\":\"EQUITY\"},\"required_data\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"role\":\"primary_signal_and_execution\",\"core\":true,\"note\":\"All momentum signals, regime filter, volatility filter, and OHLCV-derived features for all 36 symbols plus SPY. Single feed covers all derived metrics.\"}],\"experiment_plan\":{\"benchmark\":{\"symbol\":\"SPY\",\"comparison_mode\":\"both\"},\"description\":\"Multi-sleeve expansion of the Regime-Aware Momentum strategy. Phase 1 validates that each new sleeve produces sufficient trades and passes the same evidence gates as the original sleeve. Phase 2 evaluates cross-sleeve portfolio behavior and regime-era robustness.\",\"windows\":[{\"id\":\"phase1_full\",\"label\":\"Phase 1 Full Walk-Forward (per sleeve)\",\"train_start\":\"2020-01-02\",\"train_end\":\"2023-12-31\",\"test_start\":\"2024-01-02\",\"test_end\":\"2025-12-31\",\"note\":\"Primary evaluation window. Sufficient history for multi-era coverage including COVID recovery, 2022 bear, 2023-2024 bull. Each sleeve evaluated independently.\",\"train_window_days\":126,\"test_window_days\":21,\"step_size_days\":21},{\"id\":\"phase1_short\",\"label\":\"Phase 1 Short Window (post-2026 tape validation)\",\"train_start\":\"2026-01-02\",\"train_end\":\"2026-03-28\",\"test_start\":\"2026-04-01\",\"test_end\":\"2026-05-02\",\"train_window_days\":42,\"test_window_days\":5,\"step_size_days\":2,\"note\":\"Mirrors the short-window preset for fresh tape validation. Low trade count expected — plumbing/signal-wiring check only, not a standalone evidence run.\"},{\"id\":\"phase2_portfolio\",\"label\":\"Phase 2 Cross-Sleeve Portfolio\",\"train_start\":\"2021-01-04\",\"train_end\":\"2024-06-28\",\"test_start\":\"2024-07-01\",\"test_end\":\"2025-12-31\",\"train_window_days\":126,\"test_window_days\":21,\"step_size_days\":21,\"note\":\"Evaluate all sleeves running simultaneously with shared capital and concentration guard. Assess diversification benefit vs. original single-sleeve.\"}],\"runnable_eras\":[\"2020-01-02 to 2025-12-31 (full history, all sleeves, Alpaca OHLCV available)\",\"2026-01-02 to present (fresh tape, short-window plumbing check)\"],\"eras\":[{\"id\":\"era_covid_recovery\",\"label\":\"COVID Recovery Bull\",\"start\":\"2020-04-01\",\"end\":\"2021-12-31\",\"regime\":\"strong_bull\",\"note\":\"High momentum, broad participation. Expect most sleeves to be active.\"},{\"id\":\"era_bear_2022\",\"label\":\"2022 Rate-Shock Bear\",\"start\":\"2022-01-03\",\"end\":\"2022-12-30\",\"regime\":\"bear\",\"note\":\"Regime filter should suppress most entries. Validate that sleeves with defensive characteristics (healthcare, energy) outperform tech sleeves.\"},{\"id\":\"era_recovery_2023\",\"label\":\"2023 Recovery & AI Bull\",\"start\":\"2023-01-03\",\"end\":\"2023-12-29\",\"regime\":\"bull\",\"note\":\"Strong tech/semis momentum. Original sleeve expected to lead; cloud/SaaS sleeve should also activate.\"},{\"id\":\"era_broadening_2024\",\"label\":\"2024 Broadening Rally\",\"start\":\"2024-01-02\",\"end\":\"2024-12-31\",\"regime\":\"mixed_bull\",\"note\":\"Rotation into financials, industrials, healthcare. Non-tech sleeves should show relative strength here, validating diversification thesis.\"},{\"id\":\"era_2025_volatility\",\"label\":\"2025 Macro Volatility\",\"start\":\"2025-01-02\",\"end\":\"2025-12-31\",\"regime\":\"volatile\",\"note\":\"Elevated macro uncertainty. Regime filter robustness test across all sleeves.\"}],\"evidence_thresholds\":{\"minimum_trade_count_per_sleeve\":30,\"minimum_trade_count_portfolio\":150,\"minimum_profitable_fold_pct\":50,\"pass_max_drawdown_pct\":20,\"minimum_expectancy_decay_folds\":4,\"max_expectancy_decay_pct\":50,\"final_holdback_days\":42,\"inconclusive_follow_up_window_days\":14,\"note\":\"Per-sleeve floor of 30 trades mirrors the original preset. Portfolio floor of 150 trades (5 sleeves x 30 minimum) ensures cross-sleeve conclusions are evidence-backed. Short-window phase1_short run is exempt from trade-count floor — it is a plumbing check.\"},\"decisive_verdict_rules\":{\"promote_to_paper\":{\"condition\":\"All of: (1) >= 4 of 6 sleeves individually meet minimum_trade_count_per_sleeve >= 30 and minimum_profitable_fold_pct >= 50 and drawdown <= 20%, (2) portfolio-level Sharpe >= 0.8 in phase2_portfolio test window, (3) at least 2 non-original sleeves show positive expectancy in era_broadening_2024 or era_recovery_2023, (4) no single sleeve contributes > 40% of total portfolio drawdown.\"},\"inconclusive\":{\"condition\":\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\"},\"reject\":{\"condition\":\"Portfolio drawdown > 20% in any era OR >= 3 sleeves fail minimum_profitable_fold_pct < 40% OR expectancy decays > max_expectancy_decay_pct in >= 3 sleeves across minimum_expectancy_decay_folds.\"},\"sleeve_level_reject\":{\"condition\":\"Individual sleeve drawdown > 25% or trade count < 15 in full window. Action: retire that sleeve and substitute; do not reject the whole strategy.\"}},\"known_limitations\":[\"Sleeve compositions (B through F) are Talon initial proposals and have not been operator-confirmed. Operator must review and approve symbol lists before promotion.\",\"Sleeve selection methodology is qualitative in v1 (sector/theme coherence). A quantitative screening process (e.g., minimum ADV, correlation filter, momentum factor loading) is deferred to v2.\",\"Capital allocation across sleeves is equal-weight in v1. Dynamic regime-based sleeve weighting is a v2 enhancement.\",\"COIN and AFRM in sleeve_C (Financials) have shorter listing histories and higher volatility than the original sleeve members. They may produce fewer qualifying signals and should be monitored for volatility filter suppression.\",\"SNOW and MDB in sleeve_B (Cloud SaaS) IPO'd in late 2020; pre-2021 history is thin. The era_covid_recovery era will have reduced data for these symbols.\",\"Cross-sleeve concentration risk: in strong bull regimes, tech-adjacent sleeves (A, B, F) may all activate simultaneously, reducing diversification benefit. The concentration guard in the risk model partially mitigates this but does not eliminate it.\",\"The phase1_short window (2026 tape) is a plumbing/signal-wiring check only. Expected trade count is low and no standalone edge conclusion should be drawn from it.\",\"All data dependencies are OHLCV-only (alpaca_equity_ohlcv). No exotic data sources are required. This is a deliberate fidelity choice to maintain the proven signal logic of the parent strategy.\",\"Future sleeve additions or substitutions should re-run the full experiment_plan before promotion.\"]},\"benchmark\":\"SPY\",\"acceptance_criteria\":{\"min_sharpe\":0.8,\"max_drawdown_pct\":20,\"min_hit_rate_pct\":50,\"other\":\"At least 4 of 6 sleeves must individually pass evidence thresholds. At least 2 non-original sleeves must show positive expectancy in at least one non-COVID-recovery era. No single sleeve may contribute more than 40% of total portfolio drawdown.\"}}",
+    "raw_assessment_json": "{\"overall_status\":\"PASS\",\"summary\":\"All core data requirements for the multi-sleeve Regime-Aware Momentum expansion are satisfied by alpaca_equity_ohlcv, which is AVAILABLE and covers all 36 proposed symbols plus SPY from 2016-present. No exotic data sources are required. The strategy is a deliberate OHLCV-only expansion of the proven parent strategy. Two minor warnings are noted regarding thin history for recently-listed symbols and the qualitative nature of v1 sleeve selection.\",\"requirements\":[{\"capability_id\":\"alpaca_equity_ohlcv\",\"role\":\"primary_signal_and_execution\",\"core\":true,\"status\":\"AVAILABLE\",\"coverage\":\"2016-present\",\"symbols_checked\":[\"AAPL\",\"AVGO\",\"COST\",\"LLY\",\"META\",\"NVDA\",\"MSFT\",\"CRM\",\"NOW\",\"SNOW\",\"DDOG\",\"MDB\",\"V\",\"MA\",\"PYPL\",\"SQ\",\"COIN\",\"AFRM\",\"NEE\",\"ENPH\",\"FSLR\",\"GE\",\"ETN\",\"PWR\",\"UNH\",\"ISRG\",\"DXCM\",\"MRNA\",\"REGN\",\"VRTX\",\"AMZN\",\"TSLA\",\"NKE\",\"LULU\",\"BKNG\",\"RCL\",\"SPY\"],\"notes\":\"Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker.\"}],\"warnings\":[{\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"},{\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"},{\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}],\"blockers\":[],\"deferred_to_v2\":[{\"capability\":\"quantitative_sleeve_screening\",\"description\":\"Systematic stock selection for sleeve membership using ADV thresholds, momentum factor loadings, intra-sleeve correlation filters, and regime-conditional performance attribution. Not required for v1 — qualitative selection is sufficient to test the multi-sleeve thesis.\"},{\"capability\":\"dynamic_sleeve_weighting\",\"description\":\"Regime-conditional capital allocation across sleeves (e.g., overweight defensive sleeves in bear regimes). Requires per-era performance history that v1 will generate.\"},{\"capability\":\"cross_sleeve_optimization\",\"description\":\"Joint stop/target sweep across all sleeves simultaneously. v1 sweeps each sleeve independently.\"}],\"data_readiness_verdict\":\"PASS — All core signal, entry, exit, and regime-filter data is available via alpaca_equity_ohlcv. Strategy can proceed to experiment execution. Operator sleeve confirmation recommended before promotion.\"}",
+    "raw_proposal": {
+      "signal_logic": "Regime-aware momentum applied across multiple sleeves of 6 stocks each. Each sleeve is selected to share internal coherence characteristics (sector homogeneity, liquidity tier, beta profile, or thematic linkage) similar to the original AVGO/NVDA/AAPL/LLY/META/COST group. Within each sleeve, the same momentum signal logic from the Regime-Aware Momentum Frozen Reference Paper v1 is applied: measure trailing return over a lookback window, filter by a volatility cap, and gate all entries on a benchmark trend filter (SPY above its N-day moving average). Regime detection uses SPY trend as the macro gate. Each sleeve operates as an independent sub-portfolio with its own position sizing, so regime-appropriate sleeves are active while others are suppressed.",
+      "entry_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 entry logic, applied per sleeve independently.",
+      "exit_rules": "Identical to the Regime-Aware Momentum Frozen Reference Paper v1 exit logic.",
+      "risk_model": "Per-sleeve risk isolation with portfolio-level concentration guard.",
+      "universe": "Six initial sleeves of 6 stocks each, totaling up to 36 symbols. All symbols must be US-listed equities available on Alpaca with OHLCV history from at least 2020-01-01.",
+      "required_data": [
+        "alpaca_equity_ohlcv"
+      ],
+      "experiment_plan": {
+        "benchmark": {
+          "symbol": "SPY",
+          "comparison_mode": "both"
+        },
+        "windows": {
+          "requested_start": "2026-02-02",
+          "requested_end": "2026-05-03",
+          "fresh_data_required_from": null
+        },
+        "runnable_eras": [
+          {
+            "era_id": "era_1",
+            "label": "era_1",
+            "date_range": {
+              "start": "2026-02-02",
+              "end": "2026-05-03"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": null
+          },
+          {
+            "era_id": "era_2",
+            "label": "era_2",
+            "date_range": {
+              "start": "2026-02-02",
+              "end": "2026-05-03"
+            },
+            "status": "INCOMPLETE_DATA",
+            "reason": null
+          }
+        ],
+        "eras": {
+          "mode": "multi",
+          "required_era_ids": [
+            "era_1",
+            "era_2"
+          ]
+        },
+        "evidence_thresholds": {
+          "minimum_trade_count": 5,
+          "minimum_evaluated_trading_days": 20
+        },
+        "decisive_verdict_rules": {
+          "pass": "Passes only if it beats the benchmark after meeting the minimum trade-count and evaluated-days thresholds.",
+          "inconclusive": "{\"condition\":\"Any sleeve produces < 30 trades in the full window OR profitable fold pct is between 40-50% for >= 2 sleeves. Action: extend test window by inconclusive_follow_up_window_days or substitute underperforming sleeve symbols.\"}",
+          "fail": "Fails if it underperforms the benchmark or breaches risk limits after evidence thresholds are met."
+        },
+        "known_limitations": [
+          "Sleeve compositions (B through F) are Talon initial proposals and have not been operator-confirmed. Operator must review and approve symbol lists before promotion.",
+          "Sleeve selection methodology is qualitative in v1 (sector/theme coherence). A quantitative screening process (e.g., minimum ADV, correlation filter, momentum factor loading) is deferred to v2.",
+          "Capital allocation across sleeves is equal-weight in v1. Dynamic regime-based sleeve weighting is a v2 enhancement.",
+          "COIN and AFRM in sleeve_C (Financials) have shorter listing histories and higher volatility than the original sleeve members. They may produce fewer qualifying signals and should be monitored for volatility filter suppression.",
+          "SNOW and MDB in sleeve_B (Cloud SaaS) IPO'd in late 2020; pre-2021 history is thin. The era_covid_recovery era will have reduced data for these symbols.",
+          "Cross-sleeve concentration risk: in strong bull regimes, tech-adjacent sleeves (A, B, F) may all activate simultaneously, reducing diversification benefit. The concentration guard in the risk model partially mitigates this but does not eliminate it.",
+          "The phase1_short window (2026 tape) is a plumbing/signal-wiring check only. Expected trade count is low and no standalone edge conclusion should be drawn from it.",
+          "All data dependencies are OHLCV-only (alpaca_equity_ohlcv). No exotic data sources are required. This is a deliberate fidelity choice to maintain the proven signal logic of the parent strategy.",
+          "Future sleeve additions or substitutions should re-run the full experiment_plan before promotion."
+        ]
+      },
+      "benchmark": "SPY",
+      "acceptance_criteria": {
+        "min_sharpe": 0.8,
+        "max_drawdown_pct": 20,
+        "min_hit_rate_pct": 50,
+        "other": "At least 4 of 6 sleeves must individually pass evidence thresholds. At least 2 non-original sleeves must show positive expectancy in at least one non-COVID-recovery era. No single sleeve may contribute more than 40% of total portfolio drawdown."
+      },
+      "sweep_params": null,
+      "implementation_notes": null
+    },
+    "raw_assessment": {
+      "verdict": "WARN",
+      "requirements": [
+        {
+          "requested": "alpaca_equity_ohlcv",
+          "core": true,
+          "status": "AVAILABLE",
+          "matched_capability": "alpaca_equity_ohlcv",
+          "notes": "Single feed covers all OHLCV-derived signals: trailing returns, momentum ranking, realized volatility, moving averages (SMA for regime filter), RSI, volume. All 36 proposed symbols plus SPY are US-listed equities available on Alpaca. SNOW (IPO Oct 2020), MDB (IPO Oct 2017), COIN (IPO Apr 2021), AFRM (IPO Jan 2021), DDOG (IPO Sep 2019) have shorter histories than the original sleeve members — pre-IPO bars will be absent, reducing era_covid_recovery coverage for these symbols. This is a known limitation, not a blocker."
+        }
+      ],
+      "blocking_summary": null,
+      "suggested_action": null,
+      "warnings": [
+        "{\"type\":\"thin_history\",\"severity\":\"WARN\",\"affected_symbols\":[\"SNOW\",\"COIN\",\"AFRM\"],\"detail\":\"These symbols IPO'd in 2020-2021. The era_covid_recovery era (2020-04-01 to 2021-12-31) will have partial or no data for these symbols. Trade count floors may be harder to meet for sleeve_B and sleeve_C in that era. Monitor signal suppression from volatility filter on COIN and AFRM.\"}",
+        "{\"type\":\"sleeve_selection_methodology\",\"severity\":\"WARN\",\"detail\":\"Sleeve compositions B through F are Talon initial proposals based on qualitative sector/theme coherence. No quantitative screening (ADV filter, correlation matrix, factor loading) has been applied in v1. Operator should review and confirm symbol lists. Quantitative sleeve selection is recommended for v2.\"}",
+        "{\"type\":\"concentration_risk\",\"severity\":\"WARN\",\"detail\":\"In strong bull regimes, sleeves A (Tech/Semis), B (Cloud SaaS), and F (Consumer/E-Commerce) may activate simultaneously with high cross-sleeve correlation, reducing diversification benefit. The risk model concentration guard partially mitigates this. Cross-sleeve correlation monitoring is recommended during paper trading.\"}"
+      ]
+    }
+  }
+}
