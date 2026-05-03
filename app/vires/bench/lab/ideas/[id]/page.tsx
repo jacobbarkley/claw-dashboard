@@ -128,6 +128,7 @@ export default async function ViresLabIdeaDetailPage({
           strategySpecs={strategySpecs}
           hasCampaign={labCampaignExists}
           neighborhood={neighborhood}
+          builderEnabled={builderEnabled}
         />
       </>
     )

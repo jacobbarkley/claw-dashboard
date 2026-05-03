@@ -43,6 +43,9 @@ interface LabIdeaDetailRedesignedProps {
   strategySpecs: StrategySpecV1[]
   hasCampaign: boolean
   neighborhood: Array<{ idea_id: string; title: string; sleeve: string; stage: IdeaStage; status: string }>
+  // When the unified builder feature flag is off the /builder route 404s,
+  // so the spec CTA falls back to the legacy /spec/edit form.
+  builderEnabled: boolean
 }
 
 export function LabIdeaDetailRedesigned({
@@ -52,6 +55,7 @@ export function LabIdeaDetailRedesigned({
   strategySpecs,
   hasCampaign,
   neighborhood,
+  builderEnabled,
 }: LabIdeaDetailRedesignedProps) {
   const idx = stageIndex(stage)
   const sleeveColor = SLEEVE_COLOR[idea.sleeve] ?? "var(--vr-cream-mute)"
@@ -193,7 +197,7 @@ export function LabIdeaDetailRedesigned({
         </ThreadStep>
 
         <ThreadStep idx={1} activeIdx={idx} label="Spec" meta={specMeta(activeSpec)}>
-          <SpecStepBody idea={idea} activeSpec={activeSpec} stage={stage} />
+          <SpecStepBody idea={idea} activeSpec={activeSpec} stage={stage} builderEnabled={builderEnabled} />
         </ThreadStep>
 
         <ThreadStep idx={2} activeIdx={idx} label="Build" meta={buildMeta(stage)}>
@@ -440,12 +444,16 @@ function SpecStepBody({
   idea,
   activeSpec,
   stage,
+  builderEnabled,
 }: {
   idea: IdeaArtifact
   activeSpec: StrategySpecV1 | null
   stage: IdeaStage
+  builderEnabled: boolean
 }) {
-  const builderHref = `/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/builder`
+  const builderHref = builderEnabled
+    ? `/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/builder`
+    : `/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/spec/edit`
   if (!activeSpec) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
