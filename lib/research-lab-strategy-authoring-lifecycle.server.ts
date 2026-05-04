@@ -146,6 +146,7 @@ export async function confirmPacketAssumption({
         matchCount += 1
         return {
           ...item,
+          resolution_needed: false,
           provenance: {
             ...item.provenance,
             rationale: appendSentence(
@@ -188,6 +189,10 @@ export async function transitionPacketStatus({
     ...packet,
     updated_at: now,
     status: nextStatus,
+  }
+
+  if (nextStatus === "ADVERSARIAL" || nextStatus === "APPROVED") {
+    assertReviewAssumptionsResolved(nextPacket)
   }
 
   if (nextStatus === "APPROVED") {
@@ -278,6 +283,23 @@ function validateStatusTransition(
   }
   if ((allowed[current] ?? []).includes(next)) return
   throw httpError(409, `Illegal StrategyAuthoringPacket transition: ${current} -> ${next}.`)
+}
+
+function assertReviewAssumptionsResolved(packet: StrategyAuthoringPacketV1) {
+  const unresolved = packet.assumptions.items
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => item.resolution_needed && !item.provenance.operator_confirmed)
+  if (unresolved.length === 0) return
+
+  throw httpError(422, "Resolve review-required packet assumptions before advancing this packet.", {
+    validation_issues: unresolved.map(({ item, index }) => ({
+      field_path: `assumptions.items.${index}`,
+      severity: "error",
+      code: "ASSUMPTION_REVIEW_REQUIRED",
+      message: `${item.field_path}: ${item.assumption}`,
+    })),
+    operator_hint: "Confirm, edit, or reject the review-required assumptions before moving this packet into adversarial review or approval.",
+  })
 }
 
 function assertValidForPersist(packet: StrategyAuthoringPacketV1) {

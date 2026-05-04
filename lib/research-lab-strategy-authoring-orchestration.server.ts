@@ -87,6 +87,15 @@ interface TalonSectionIssue {
   message: string
 }
 
+interface TalonSectionResult {
+  key: SynthesisSectionKey
+  value: unknown
+  rawJson: string
+  responseId: string | null
+  scaffolded: boolean
+  issues: TalonSectionIssue[]
+}
+
 const TALON_NUMERIC_FIELD_KEYS = new Set([
   "adjusted_significance_level",
   "base_size_pct",
@@ -599,7 +608,7 @@ export async function createStrategyAuthoringPacketWithTalon({
     failedPacketSummary,
   })
   const started = Date.now()
-  const staged = await synthesizePacketPayloadInSections({ model, prompt })
+  const staged = await synthesizePacketPayloadInSections({ model, prompt, idea, questionnaire })
   const modelExecution: ModelExecution = {
     required_capabilities: {
       min_context_window_tokens: 64000,
@@ -636,9 +645,13 @@ export async function createStrategyAuthoringPacketWithTalon({
 async function synthesizePacketPayloadInSections({
   model,
   prompt,
+  idea,
+  questionnaire,
 }: {
   model: string
   prompt: string
+  idea: IdeaArtifact
+  questionnaire: StrategyAuthoringQuestionnaire
 }): Promise<{
   payload: StrategyAuthoringSynthesisPayload
   rawPacketJson: string
@@ -647,17 +660,25 @@ async function synthesizePacketPayloadInSections({
   const sections = await mapWithConcurrency(
     TALON_SECTION_SPECS,
     TALON_SECTION_CONCURRENCY,
-    spec => generateTalonSection({ model, prompt, spec }),
+    spec => generateTalonSection({ model, prompt, spec, idea, questionnaire }),
   )
   const candidate = Object.fromEntries(
     sections.map(section => [section.key, section.value]),
-  )
+  ) as Record<SynthesisSectionKey, unknown>
+  const scaffoldedSections = sections.filter(section => section.scaffolded)
+  if (scaffoldedSections.length > 0) {
+    candidate.assumptions = mergeScaffoldWarnings(candidate.assumptions, scaffoldedSections)
+  }
   const payload = parseStrategyAuthoringSynthesisObject(candidate)
   return {
     payload,
     rawPacketJson: JSON.stringify({
       synthesis_mode: "sectioned",
       sections: Object.fromEntries(sections.map(section => [section.key, section.rawJson])),
+      scaffolded_sections: scaffoldedSections.map(section => section.key),
+      section_validation_issues: Object.fromEntries(
+        scaffoldedSections.map(section => [section.key, section.issues]),
+      ),
       payload,
     }, null, 2),
     responseIds: sections.map(section => section.responseId).filter((id): id is string => Boolean(id)),
@@ -668,19 +689,19 @@ async function generateTalonSection({
   model,
   prompt,
   spec,
+  idea,
+  questionnaire,
 }: {
   model: string
   prompt: string
   spec: TalonSectionSpec
-}): Promise<{
-  key: SynthesisSectionKey
-  value: unknown
-  rawJson: string
-  responseId: string | null
-}> {
+  idea: IdeaArtifact
+  questionnaire: StrategyAuthoringQuestionnaire
+}): Promise<TalonSectionResult> {
   let feedback: string | null = null
   let lastIssues: TalonSectionIssue[] = []
   let lastRawJson = ""
+  let lastResponseId: string | null = null
   for (let attempt = 1; attempt <= TALON_SECTION_ATTEMPTS; attempt += 1) {
     const result = await generateText({
       model: anthropic(model),
@@ -693,41 +714,339 @@ async function generateTalonSection({
       prompt: buildTalonSectionPrompt({ basePrompt: prompt, spec, attempt, feedback }),
     })
     lastRawJson = result.output.section_json
+    lastResponseId = responseIdFromResult(result)
     const parsed = parseTalonSectionJson(spec, result.output.section_json)
     if (parsed.ok) {
       return {
         key: spec.key,
         value: parsed.value,
         rawJson: result.output.section_json,
-        responseId: responseIdFromResult(result),
+        responseId: lastResponseId,
+        scaffolded: false,
+        issues: [],
       }
     }
     lastIssues = parsed.issues
     feedback = formatSectionValidationFeedback(lastIssues)
   }
 
-  const issueSummary = formatSectionValidationFeedback(lastIssues.slice(0, 6))
-  const error = new Error(
-    [
-      `Talon ${spec.label} section did not match the StrategyAuthoringPacketV1 synthesis contract.`,
-      issueSummary ? `Validation issues:\n${issueSummary}` : "",
-    ].filter(Boolean).join("\n"),
-  )
-  throw Object.assign(error, {
-    status: 422,
-    payload: {
-      error_code: "TALON_SECTION_VALIDATION",
-      route: "POST /api/research/strategy-authoring/packets",
-      source_file: "lib/research-lab-strategy-authoring-orchestration.server.ts",
-      source_function: "generateTalonSection",
-      section_key: spec.key,
-      section_label: spec.label,
-      attempts: TALON_SECTION_ATTEMPTS,
-      validation_issues: lastIssues,
-      raw_section_preview: lastRawJson.slice(0, 2000),
-      operator_hint: "Share this whole error payload with Codex; section_key and validation_issues point to the exact synthesis section and fields that failed.",
+  const scaffold = spec.schema.parse(scaffoldTalonSection(spec.key, { idea, questionnaire }))
+  return {
+    key: spec.key,
+    value: scaffold,
+    rawJson: lastRawJson,
+    responseId: lastResponseId,
+    scaffolded: true,
+    issues: lastIssues,
+  }
+}
+
+function mergeScaffoldWarnings(
+  assumptions: unknown,
+  scaffoldedSections: TalonSectionResult[],
+): StrategyAuthoringSynthesisPayload["assumptions"] {
+  const parsed = assumptionsSchema.safeParse(assumptions)
+  const baseItems = parsed.success ? parsed.data.items : []
+  return {
+    items: [
+      ...baseItems,
+      ...scaffoldedSections.map(section => scaffoldWarningAssumption(section)),
+    ],
+  }
+}
+
+function scaffoldWarningAssumption(section: TalonSectionResult): StrategyAuthoringSynthesisPayload["assumptions"]["items"][number] {
+  const issueSummary = formatSectionValidationFeedback(section.issues.slice(0, 6))
+  return {
+    field_path: section.key,
+    assumption: [
+      `Talon could not produce a contract-valid ${section.key} section after ${TALON_SECTION_ATTEMPTS} attempts.`,
+      "The server scaffolded a conservative placeholder so this packet can be reviewed instead of losing the operator's work.",
+    ].join(" "),
+    provenance: scaffoldProvenance(
+      [
+        "Server-generated scaffold from failed Talon section validation.",
+        issueSummary ? `Validation issues: ${issueSummary.replace(/\n/g, " ")}` : "",
+      ].filter(Boolean).join(" "),
+    ),
+    risk_if_wrong: "HIGH",
+    resolution_needed: true,
+  }
+}
+
+function scaffoldTalonSection<K extends SynthesisSectionKey>(
+  key: K,
+  context: {
+    idea: IdeaArtifact
+    questionnaire: StrategyAuthoringQuestionnaire
+  },
+): StrategyAuthoringSynthesisPayload[K] {
+  switch (key) {
+    case "assumptions":
+      return { items: [] } as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "era_benchmark_plan":
+      return scaffoldEraBenchmarkPlan(context.questionnaire) as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "strategy_spec":
+      return scaffoldStrategySpec(context.idea, context.questionnaire) as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "sweep_bounds":
+      return scaffoldSweepBounds() as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "evidence_thresholds":
+      return scaffoldEvidenceThresholds(context.questionnaire) as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "trial_ledger_budget":
+      return scaffoldTrialLedgerBudget() as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "multiple_comparisons_plan":
+      return scaffoldMultipleComparisonsPlan() as unknown as StrategyAuthoringSynthesisPayload[K]
+    case "portfolio_fit":
+      return scaffoldPortfolioFit(context.questionnaire) as unknown as StrategyAuthoringSynthesisPayload[K]
+    default:
+      return assertNever(key)
+  }
+}
+
+function scaffoldEraBenchmarkPlan(
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringSynthesisPayload["era_benchmark_plan"] {
+  const historicalWindow = questionnaire.historical_window.value
+  return {
+    benchmark_id: questionnaire.benchmark.value || defaultBenchmarkForSleeve(questionnaire.sleeve),
+    benchmark_rationale: "Scaffolded from the operator questionnaire because Talon returned an invalid era/benchmark section; review before adversarial submission.",
+    eras: [{
+      era_id: "questionnaire_window",
+      label: "Questionnaire historical window",
+      start_date: historicalWindow.start_date || "2018-01-01",
+      end_date: historicalWindow.end_date || new Date().toISOString().slice(0, 10),
+      regime_tags: ["operator_requested", "scaffolded"],
+      rationale: historicalWindow.rationale || "Scaffolded from the questionnaire historical window; operator review required.",
+    }],
+    era_weighting_method: wrappedScaffold(
+      questionnaire.era_weighting.value || "equal",
+      "Scaffolded from the questionnaire era weighting because Talon returned invalid section output.",
+    ),
+  }
+}
+
+function scaffoldStrategySpec(
+  idea: IdeaArtifact,
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringSynthesisPayload["strategy_spec"] {
+  const maxSymbols = maxSymbolsFromQuestionnaire(questionnaire)
+  const fixedSymbols = fixedUniverseSymbols(questionnaire)
+  const dataInputId = firstAllowedDataInput(questionnaire)
+  return {
+    strategy_family: `${questionnaire.edge_family.toLowerCase()}_${questionnaire.sleeve.toLowerCase()}`,
+    strategy_name: idea.title || "Talon scaffolded strategy",
+    strategy_id: wrappedScaffold(
+      safeStrategySlug(idea),
+      "Server-scaffolded slug proposal after Talon returned an invalid strategy specification; operator confirmation is required.",
+    ),
+    sleeve: questionnaire.sleeve,
+    universe: wrappedScaffold({
+      type: fixedSymbols.length > 0 ? "FIXED" : "DYNAMIC",
+      symbols: fixedSymbols.length > 0 ? fixedSymbols : null,
+      screen_criteria: fixedSymbols.length > 0
+        ? null
+        : questionnaire.universe_shape === "TALON_PROPOSES"
+          ? "Talon must propose a supported universe screen before implementation."
+          : questionnaire.universe_size_band.value,
+      max_symbols: maxSymbols,
+      rebalance_frequency: "per_bench_run",
+    }, "Conservative universe scaffold from questionnaire answers; operator review required."),
+    entry_rules: wrappedScaffold({
+      description: "Scaffolded entry logic because Talon returned invalid strategy rules; implementation must map or replace this before bench automation.",
+      conditions: dataInputId
+        ? [{
+            name: "Review-required signal placeholder",
+            parameter: "signal",
+            operator: "gte",
+            threshold: 1,
+            data_input_id: dataInputId,
+            compiler_support: "NEEDS_MAPPING",
+          }]
+        : [],
+      confirmation_required: true,
+      confirmation_description: "Entry rules were scaffolded by the server and require operator review.",
+    }, "Server scaffold; Talon output failed strategy specification validation."),
+    exit_rules: wrappedScaffold({
+      stop_loss_pct: null,
+      target_pct: null,
+      time_stop_days: null,
+      trailing_stop: { enabled: false, trail_pct: null, activation_pct: null },
+      custom_exits: [{
+        name: "Review-required exit placeholder",
+        description: "Exit logic must be confirmed or mapped before implementation.",
+        condition: questionnaire.exit_logic.value || "Operator review required.",
+        compiler_support: "NEEDS_MAPPING",
+      }],
+    }, "Server scaffold from questionnaire exit logic; operator review required."),
+    position_sizing: wrappedScaffold({
+      method: "EQUAL_WEIGHT",
+      base_size_pct: null,
+      max_positions: maxSymbols,
+      risk_per_trade_pct: null,
+      custom_description: "Equal-weight scaffold only; tune before implementation.",
+    }, "Server-scaffolded neutral sizing because Talon returned invalid strategy specification output."),
+    risk_limits: wrappedScaffold({
+      max_portfolio_drawdown_pct: questionnaire.capital_tier === "LARGE" ? 8 : 12,
+      max_single_position_loss_pct: 5,
+      max_correlated_exposure_pct: null,
+      max_sector_concentration_pct: null,
+      circuit_breaker_rules: "Scaffolded risk guard; operator review required before promotion.",
+    }, "Server-scaffolded conservative risk limits."),
+    execution_constraints: wrappedScaffold({
+      order_types: ["MARKET"],
+      no_trade_zones: null,
+      slippage_assumption_bps: questionnaire.sleeve === "OPTIONS" ? 25 : 10,
+      commission_model: questionnaire.sleeve === "OPTIONS" ? "PER_CONTRACT" : "FLAT",
+      commission_assumption_value: 0,
+    }, "Server-scaffolded execution assumptions; confirm cost model before bench handoff."),
+  }
+}
+
+function scaffoldSweepBounds(): StrategyAuthoringSynthesisPayload["sweep_bounds"] {
+  return {
+    parameters: [],
+    max_total_variants: 1,
+    sweep_method: "MANUAL",
+  }
+}
+
+function scaffoldEvidenceThresholds(
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringSynthesisPayload["evidence_thresholds"] {
+  const capitalTierModifier = {
+    tier: normalizeTalonCapitalTier(questionnaire.capital_tier),
+    calendar_days_multiplier: questionnaire.capital_tier === "LARGE" ? 1.5 : 1,
+    closed_trades_multiplier: questionnaire.capital_tier === "LARGE" ? 1.5 : 1,
+    drawdown_tightening_pct: questionnaire.capital_tier === "LARGE" ? 2 : null,
+  }
+  return {
+    backtest: {
+      min_trades: 30,
+      min_win_rate_pct: 50,
+      min_profit_factor: 1.1,
+      min_sharpe: 0.5,
+      max_drawdown_pct: 15,
+      min_profitable_fold_pct: null,
+      additional: null,
     },
-  })
+    paper: {
+      min_calendar_days: 30,
+      min_closed_trades: 10,
+      min_active_exposure_days: 10,
+      max_drawdown_pct: 10,
+      min_win_rate_pct: 50,
+      min_profit_factor: 1.1,
+      capital_tier_modifier: capitalTierModifier,
+    },
+    live: {
+      min_calendar_days: 60,
+      min_closed_trades: 20,
+      min_active_exposure_days: 20,
+      max_drawdown_pct: 8,
+      min_win_rate_pct: 50,
+      min_profit_factor: 1.15,
+      capital_tier_modifier: capitalTierModifier,
+      max_single_loss_usd: null,
+    },
+  }
+}
+
+function scaffoldTrialLedgerBudget(): StrategyAuthoringSynthesisPayload["trial_ledger_budget"] {
+  return {
+    max_variants: 1,
+    max_eras: 1,
+    max_bench_runs: 1,
+    estimated_compute_cost_usd: null,
+    rationale: "Server-scaffolded single-run budget after Talon returned invalid budget output; expand only after operator review.",
+  }
+}
+
+function scaffoldMultipleComparisonsPlan(): StrategyAuthoringSynthesisPayload["multiple_comparisons_plan"] {
+  return {
+    method: "NONE_V1_PLACEHOLDER",
+    effective_trials_estimate: 1,
+    adjusted_significance_level: null,
+    notes: "Server-scaffolded single-variant placeholder; compiler and trial ledger still enforce budget consumption.",
+    full_implementation_target: null,
+  }
+}
+
+function scaffoldPortfolioFit(
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringSynthesisPayload["portfolio_fit"] {
+  return {
+    status: "PENDING",
+    deferred_until: "PAPER_PROMOTION",
+    existing_strategies: questionnaire.strategy_relationship.target_strategy_id
+      ? [questionnaire.strategy_relationship.target_strategy_id]
+      : [],
+    correlation_assessment: null,
+    joint_drawdown_estimate: null,
+    sleeve_budget_impact: null,
+    capital_capacity_notes: "Server-scaffolded portfolio-fit placeholder; must be assessed before the deferred promotion deadline.",
+    marginal_value_notes: null,
+  }
+}
+
+function wrappedScaffold<T>(value: T, rationale: string): { value: T; provenance: z.infer<typeof provenanceSchema> } {
+  return { value, provenance: scaffoldProvenance(rationale) }
+}
+
+function scaffoldProvenance(rationale: string): z.infer<typeof provenanceSchema> {
+  return {
+    source: "TALON_INFERENCE",
+    confidence: "LOW",
+    rationale,
+    source_artifact_id: null,
+    operator_confirmed: false,
+  }
+}
+
+function defaultBenchmarkForSleeve(sleeve: StrategyAuthoringQuestionnaire["sleeve"]): string {
+  if (sleeve === "CRYPTO") return "BTC"
+  if (sleeve === "OPTIONS") return "SPY"
+  return "SPY"
+}
+
+function firstAllowedDataInput(questionnaire: StrategyAuthoringQuestionnaire): string | null {
+  return questionnaire.allowed_data_inputs.value.map(input => input.trim()).find(Boolean) ?? null
+}
+
+function fixedUniverseSymbols(questionnaire: StrategyAuthoringQuestionnaire): string[] {
+  return (questionnaire.universe_fixed_list ?? [])
+    .map(symbol => symbol.trim().toUpperCase())
+    .filter(Boolean)
+}
+
+function maxSymbolsFromQuestionnaire(questionnaire: StrategyAuthoringQuestionnaire): number {
+  const fixedSymbols = fixedUniverseSymbols(questionnaire)
+  if (fixedSymbols.length > 0) return clampPositiveInt(fixedSymbols.length, 1, 50)
+  const matches = questionnaire.universe_size_band.value.match(/\d+/g)?.map(Number).filter(Number.isFinite) ?? []
+  const parsed = matches.length > 0 ? Math.max(...matches) : 6
+  return clampPositiveInt(parsed, 1, 50)
+}
+
+function clampPositiveInt(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Math.round(value)))
+}
+
+function safeStrategySlug(idea: IdeaArtifact): string {
+  const candidate = slugify([idea.title, idea.idea_id].filter(Boolean).join(" "))
+  if (/^[A-Za-z0-9]/.test(candidate)) return candidate.slice(0, 128)
+  return `strategy_${slugify(idea.idea_id || "talon_packet")}`.slice(0, 128)
+}
+
+function slugify(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, "_")
+    .replace(/^[_.-]+|[_.-]+$/g, "")
+    || "talon_packet"
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled Talon section key: ${String(value)}`)
 }
 
 function parseTalonSectionJson(
