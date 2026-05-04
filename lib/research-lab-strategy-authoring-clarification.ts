@@ -1,117 +1,62 @@
-// Strategy Authoring clarification contract — frontend-side mirror of the
-// shape Codex committed to in the 2026-05-04 alignment thread. Codex owns
-// the canonical version; once the backend slice lands, these types should
-// be re-exported from research-lab-contracts.ts and this file deleted (or
-// left as a re-export so no callers need to change).
+// Strategy Authoring clarification — small re-export + UI helpers.
 //
-// Do not extend this contract here without coordinating — the frontend
-// mocks against this exact shape so the swap-in is mechanical.
+// Codex shipped the canonical contract in research-lab-contracts.ts
+// (07bcd7b1). This file used to mirror those types as a frontend mock;
+// the mirror is gone, only the mock factory + endpoint helpers remain
+// so the preview route still works end-to-end without backend.
 
 import type {
-  AuthoringProvenance,
+  ClarificationAnswer,
+  ClarificationAnswerAction,
+  ClarificationAnswerKind,
+  ClarificationBlockingPolicy,
+  ClarificationOption,
+  ClarificationProposedDefault,
+  ClarificationQuestion,
+  ClarificationRequest,
+  ClarificationRequestStatus,
+  ClarificationSeverity,
+  ProvenanceSource,
+  StrategyAuthoringContextPacket,
   StrategyAuthoringQuestionnaire,
+  StrategyAuthoringSectionKey,
 } from "./research-lab-contracts"
 
-export type ClarificationSeverity = "HIGH" | "MEDIUM" | "LOW"
-
-export type ClarificationAnswerKind =
-  | "FREE_TEXT"
-  | "SINGLE_CHOICE"
-  | "MULTI_CHOICE"
-  | "NUMBER"
-  | "RANGE"
-  | "BOOLEAN"
-
-export type ClarificationBlockingPolicy =
-  | "BLOCKS_SYNTHESIS"
-  | "CAN_USE_DEFAULT"
-  | "CAN_PROCEED_UNKNOWN"
-
-// section_key tracks which packet section a question informs. We use the
-// existing packet field names; new sections introduced after this slice
-// should be added here in lockstep.
-export type StrategyAuthoringSectionKey =
-  | "questionnaire"
-  | "assumptions"
-  | "data_readiness"
-  | "era_benchmark_plan"
-  | "strategy_spec"
-  | "sweep_bounds"
-  | "evidence_thresholds"
-  | "trial_ledger_budget"
-  | "multiple_comparisons_plan"
-  | "adversarial_review"
-  | "portfolio_fit"
-  | "reproducibility_manifest"
-
-export interface ClarificationOption {
-  label: string
-  value: unknown
-  description?: string
+export type {
+  ClarificationAnswer,
+  ClarificationAnswerAction,
+  ClarificationAnswerKind,
+  ClarificationBlockingPolicy,
+  ClarificationOption,
+  ClarificationProposedDefault,
+  ClarificationQuestion,
+  ClarificationRequest,
+  ClarificationRequestStatus,
+  ClarificationSeverity,
+  StrategyAuthoringSectionKey,
 }
 
-export interface ClarificationProposedDefault {
-  value: unknown
-  rationale: string
-  provenance_source: AuthoringProvenance["source"] extends infer S
-    ? S extends "TALON_INFERENCE" | "TUNABLE_DEFAULT" | "REFERENCE" | "CATALOG"
-      ? S
-      : never
-    : never
-}
-
-export interface ClarificationQuestion {
-  id: string
-  field_path: string
-  section_key: StrategyAuthoringSectionKey
-  question: string
-  why_it_matters: string
-  answer_kind: ClarificationAnswerKind
-  options?: ClarificationOption[]
-  proposed_default?: ClarificationProposedDefault | null
-  allow_unknown: boolean
-  severity: ClarificationSeverity
-  blocking_policy: ClarificationBlockingPolicy
-}
-
-export type ClarificationStatus = "NEEDS_CLARIFICATION" | "READY_FOR_SYNTHESIS"
-
-export interface ClarificationRequest {
-  request_id: string
-  status: ClarificationStatus
-  questions: ClarificationQuestion[]
-  can_proceed_without_answers: boolean
-  missing_context_summary: string[]
-}
-
-// Operator-side answer envelope, posted back to /clarify on the second leg.
-export type ClarificationAnswerStatus =
-  | "ANSWERED"
-  | "ACCEPTED_DEFAULT"
-  | "MARKED_UNKNOWN"
-
-export interface ClarificationAnswer {
-  question_id: string
-  status: ClarificationAnswerStatus
-  value?: unknown
+// Server-shape for /clarify responses. Matches the JSON wrapper produced
+// by app/api/research/strategy-authoring/packets/clarify/route.ts.
+export interface ClarifyResponseBody {
+  ok: boolean
+  status: ClarificationRequestStatus
+  clarification_request: ClarificationRequest
+  context_packet: StrategyAuthoringContextPacket
+  response_id: string | null
 }
 
 export interface ClarifyRequestBody {
   idea_id: string
+  scope: { user_id: string; account_id: string; strategy_group_id: string }
   questionnaire: StrategyAuthoringQuestionnaire
   clarification_answers?: ClarificationAnswer[]
-  request_id?: string
 }
 
-export interface ClarifyResponseBody {
-  status: ClarificationStatus
-  clarification_request: ClarificationRequest
-  context_summary: string[]
-}
-
-// Frontend-owned mock — used by the preview route until Codex's endpoint
-// lands. Returns a representative NEEDS_CLARIFICATION response covering
-// every answer_kind so the UI can be visually checked end-to-end.
+// Frontend-owned mock — used by the preview route to render the screen
+// without touching the live endpoint. Returns a representative
+// NEEDS_CLARIFICATION response covering every answer_kind so the UI
+// can be visually checked end-to-end.
 export function mockClarifyResponse(
   override?: Partial<ClarifyResponseBody>,
 ): ClarifyResponseBody {
@@ -130,12 +75,11 @@ export function mockClarifyResponse(
         { label: "Broad (50-200)", value: "50-200", description: "Screen-driven; needs strong filter" },
         { label: "Whole sleeve", value: "all", description: "Universe is the entire sleeve" },
       ],
-      proposed_default: {
-        value: "10-25",
-        rationale:
-          "Default for a momentum-family strategy at SMALL capital tier with no explicit universe constraint.",
-        provenance_source: "TUNABLE_DEFAULT",
-      },
+      proposed_default: defaultFor(
+        "10-25",
+        "Default for a momentum-family strategy at SMALL capital tier with no explicit universe constraint.",
+        "TUNABLE_DEFAULT",
+      ),
       allow_unknown: false,
       severity: "HIGH",
       blocking_policy: "BLOCKS_SYNTHESIS",
@@ -148,11 +92,12 @@ export function mockClarifyResponse(
       why_it_matters:
         "Era plan and adversarial review both depend on the benchmark. SPY is fine for broad-market stocks; sector strategies usually want a sector ETF.",
       answer_kind: "FREE_TEXT",
-      proposed_default: {
-        value: "SPY",
-        rationale: "Broad equity benchmark, default for STOCKS sleeve.",
-        provenance_source: "TUNABLE_DEFAULT",
-      },
+      options: [],
+      proposed_default: defaultFor(
+        "SPY",
+        "Broad equity benchmark, default for STOCKS sleeve.",
+        "TUNABLE_DEFAULT",
+      ),
       allow_unknown: false,
       severity: "HIGH",
       blocking_policy: "CAN_USE_DEFAULT",
@@ -165,11 +110,12 @@ export function mockClarifyResponse(
       why_it_matters:
         "Lower thresholds let small samples promote; higher thresholds slow learning. Default is per edge family + capital tier.",
       answer_kind: "NUMBER",
-      proposed_default: {
-        value: 30,
-        rationale: "Standard for momentum-family, MEDIUM capital tier.",
-        provenance_source: "TUNABLE_DEFAULT",
-      },
+      options: [],
+      proposed_default: defaultFor(
+        30,
+        "Standard for momentum-family, MEDIUM capital tier.",
+        "TUNABLE_DEFAULT",
+      ),
       allow_unknown: true,
       severity: "MEDIUM",
       blocking_policy: "CAN_USE_DEFAULT",
@@ -182,11 +128,12 @@ export function mockClarifyResponse(
       why_it_matters:
         "Window shapes which regimes the strategy must survive. Wider windows reduce overfit risk but trade specificity.",
       answer_kind: "RANGE",
-      proposed_default: {
-        value: { start: "2018-01-01", end: "2026-05-04" },
-        rationale: "Default authoring window for STOCKS.",
-        provenance_source: "TUNABLE_DEFAULT",
-      },
+      options: [],
+      proposed_default: defaultFor(
+        { start: "2018-01-01", end: "2026-05-04" },
+        "Default authoring window for STOCKS.",
+        "TUNABLE_DEFAULT",
+      ),
       allow_unknown: true,
       severity: "MEDIUM",
       blocking_policy: "CAN_USE_DEFAULT",
@@ -194,7 +141,7 @@ export function mockClarifyResponse(
     {
       id: "q_data_inputs",
       field_path: "questionnaire.allowed_data_inputs",
-      section_key: "data_readiness",
+      section_key: "strategy_spec",
       question: "Which data feeds is Talon allowed to use?",
       why_it_matters:
         "Talon will only consider strategies whose required feeds are in this list. Adding feeds beyond what's catalog-backed forces NEEDS_MAPPING.",
@@ -205,11 +152,11 @@ export function mockClarifyResponse(
         { label: "options_chain_snapshots", value: "options_chain_snapshots" },
         { label: "wikipedia_pageviews", value: "wikipedia_pageviews" },
       ],
-      proposed_default: {
-        value: ["alpaca_equity_daily_ohlcv"],
-        rationale: "Cheapest catalog default for STOCKS.",
-        provenance_source: "CATALOG",
-      },
+      proposed_default: defaultFor(
+        ["alpaca_equity_daily_ohlcv"],
+        "Cheapest catalog default for STOCKS.",
+        "CATALOG",
+      ),
       allow_unknown: false,
       severity: "MEDIUM",
       blocking_policy: "CAN_USE_DEFAULT",
@@ -222,11 +169,12 @@ export function mockClarifyResponse(
       why_it_matters:
         "Changes capital model, hedge logic, and downstream borrow availability checks. Default is false in PAPER tier.",
       answer_kind: "BOOLEAN",
-      proposed_default: {
-        value: false,
-        rationale: "Conservative default; can be toggled on later.",
-        provenance_source: "TUNABLE_DEFAULT",
-      },
+      options: [],
+      proposed_default: defaultFor(
+        false,
+        "Conservative default; can be toggled on later.",
+        "TUNABLE_DEFAULT",
+      ),
       allow_unknown: true,
       severity: "LOW",
       blocking_policy: "CAN_PROCEED_UNKNOWN",
@@ -234,6 +182,7 @@ export function mockClarifyResponse(
   ]
 
   const base: ClarifyResponseBody = {
+    ok: true,
     status: "NEEDS_CLARIFICATION",
     clarification_request: {
       request_id: "req_mock_01KQR_clarify_demo",
@@ -246,12 +195,49 @@ export function mockClarifyResponse(
         "No explicit short-side preference — assuming long-only.",
       ],
     },
-    context_summary: [
+    context_packet: mockContextPacket(),
+    response_id: null,
+  }
+  return { ...base, ...override }
+}
+
+function defaultFor(
+  value: unknown,
+  rationale: string,
+  source: ProvenanceSource,
+): ClarificationProposedDefault {
+  return { value, rationale, provenance_source: source }
+}
+
+function mockContextPacket(): StrategyAuthoringContextPacket {
+  // Minimal stub — preview route only consumes
+  // missing_context_candidates for now; the full shape is here so the
+  // type-check remains honest if other consumers pull from it later.
+  return {
+    schema_version: "research_lab.strategy_authoring_context_packet.v1",
+    generated_at: new Date().toISOString(),
+    idea: {
+      idea_id: "idea_mock_01KQR_demo",
+      title: "test x I I (mock)",
+      thesis: "Mock thesis used in the clarification preview.",
+      sleeve: "STOCKS",
+      tags: [],
+      reference_strategies: [],
+      created_by: "jacob",
+    },
+    questionnaire: {} as StrategyAuthoringQuestionnaire,
+    data_catalog: [],
+    talon_lessons: "(mock — no lessons file loaded)",
+    reference_context: "(mock — reference packet matched: regime_aware_momentum::stop_5_target_15)",
+    failed_packet_summary: "(mock — 3 prior overfitting incidents in momentum-on-stocks)",
+    missing_context_candidates: [
       "Reference packet matched: regime_aware_momentum::stop_5_target_15",
       "Capital tier inferred: SMALL (no override provided)",
       "Data catalog: 12 feeds available; 4 deemed relevant for this idea family",
-      "Failed-packet lessons applied: 3 prior overfitting incidents in momentum-on-stocks",
     ],
   }
-  return { ...base, ...override }
+}
+
+export function clarifyEndpointPath(): string {
+  return "/api/research/strategy-authoring/packets/clarify"
 }

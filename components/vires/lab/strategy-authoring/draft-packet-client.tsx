@@ -19,6 +19,8 @@ import type {
   AuthoringEdgeFamily,
   AuthoringUniverseShape,
   CapitalTier,
+  ClarificationAnswer,
+  ClarificationRequest,
   HistoricalWindow,
   IdeaArtifact,
   RegimeExpectation,
@@ -30,7 +32,12 @@ import type {
   StrategyRelationship,
   TradeHorizon,
 } from "@/lib/research-lab-contracts"
+import {
+  clarifyEndpointPath,
+  type ClarifyResponseBody,
+} from "@/lib/research-lab-strategy-authoring-clarification"
 
+import { ClarificationClient } from "./clarification-client"
 import { ModePill } from "./mode-pill"
 import { ProvenanceChip } from "./provenance-chip"
 
@@ -182,14 +189,31 @@ function defaultBenchmarkForSleeve(sleeve: ResearchSleeve): string {
   return "SPY"
 }
 
+// Phase state machine — drives which surface is rendered.
+//   FORM         questionnaire is open, no submit in flight
+//   FORM_BUSY    initial /clarify call in flight (form still visible)
+//   CLARIFYING   /clarify returned NEEDS_CLARIFICATION; render questions
+//   SYNTHESIZING POST /packets is running (clarification resolved)
+type Phase = "FORM" | "FORM_BUSY" | "CLARIFYING" | "SYNTHESIZING"
+
 export function DraftPacketClient({ idea, scope }: DraftPacketClientProps) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>(() => defaultState(idea))
   const [touchedWrapped, setTouchedWrapped] = useState<Set<WrappedKey>>(() => new Set())
-  const [busy, setBusy] = useState(false)
+  const [phase, setPhase] = useState<Phase>("FORM")
   const [error, setError] = useState<string | null>(null)
   const [showDefaults, setShowDefaults] = useState(true)
+  // Cached questionnaire from the moment the operator first clicked
+  // "Draft packet" — re-used on the second /clarify leg and on the
+  // final /packets call so a partial form edit during clarification
+  // can't desync the snapshot Talon already reasoned about.
+  const [submittedQuestionnaire, setSubmittedQuestionnaire] =
+    useState<StrategyAuthoringQuestionnaire | null>(null)
+  const [clarificationRequest, setClarificationRequest] =
+    useState<ClarificationRequest | null>(null)
+  const [contextSummary, setContextSummary] = useState<string[]>([])
 
+  const busy = phase !== "FORM"
   const overriddenCount = touchedWrapped.size
   const stillDefaultCount = WRAPPED_KEYS.length - overriddenCount
 
@@ -206,34 +230,124 @@ export function DraftPacketClient({ idea, scope }: DraftPacketClientProps) {
     })
   }
 
+  const callClarify = async (
+    questionnaire: StrategyAuthoringQuestionnaire,
+    answers?: ClarificationAnswer[],
+  ): Promise<ClarifyResponseBody> => {
+    const res = await fetch(clarifyEndpointPath(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scope,
+        idea_id: idea.idea_id,
+        questionnaire,
+        ...(answers ? { clarification_answers: answers } : {}),
+      }),
+    })
+    const payload = (await res.json().catch(() => ({}))) as ClarifyResponseBody & { error?: string }
+    if (!res.ok) throw new Error(payload.error ?? `Clarify failed (${res.status})`)
+    return payload
+  }
+
+  const callSynthesis = async (
+    questionnaire: StrategyAuthoringQuestionnaire,
+    request: ClarificationRequest | null,
+    answers: ClarificationAnswer[],
+  ): Promise<StrategyAuthoringPacketV1> => {
+    const res = await fetch("/api/research/strategy-authoring/packets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scope,
+        idea_id: idea.idea_id,
+        questionnaire,
+        ...(request ? { clarification_request: request } : {}),
+        ...(answers.length > 0 ? { clarification_answers: answers } : {}),
+      }),
+    })
+    const payload = (await res.json().catch(() => ({}))) as {
+      error?: string
+      packet?: StrategyAuthoringPacketV1
+    }
+    if (!res.ok) throw new Error(payload.error ?? `Create failed (${res.status})`)
+    if (!payload.packet) throw new Error("Server did not return a packet")
+    return payload.packet
+  }
+
   const submit = async () => {
     if (busy) return
-    setBusy(true)
+    setPhase("FORM_BUSY")
     setError(null)
     try {
       const questionnaire = buildQuestionnaire(form, touchedWrapped)
-      const res = await fetch("/api/research/strategy-authoring/packets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          scope,
-          idea_id: idea.idea_id,
-          questionnaire,
-        }),
-      })
-      const payload = (await res.json().catch(() => ({}))) as {
-        error?: string
-        packet?: StrategyAuthoringPacketV1
+      setSubmittedQuestionnaire(questionnaire)
+      const clarify = await callClarify(questionnaire)
+      setClarificationRequest(clarify.clarification_request)
+      setContextSummary(clarify.context_packet?.missing_context_candidates ?? [])
+      if (clarify.status === "READY_FOR_SYNTHESIS") {
+        // Talon found no blocking gaps — go straight to synthesis.
+        setPhase("SYNTHESIZING")
+        const packet = await callSynthesis(questionnaire, clarify.clarification_request, [])
+        router.push(
+          `/vires/bench/lab/strategy-authoring/packets/${encodeURIComponent(packet.packet_id)}`,
+        )
+        return
       }
-      if (!res.ok) throw new Error(payload.error ?? `Create failed (${res.status})`)
-      if (!payload.packet) throw new Error("Server did not return a packet")
+      // NEEDS_CLARIFICATION — render the clarification screen.
+      setPhase("CLARIFYING")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Clarify failed")
+      setPhase("FORM")
+    }
+  }
+
+  const submitClarificationAnswers = async (answers: ClarificationAnswer[]): Promise<void> => {
+    if (!submittedQuestionnaire) {
+      setError("Lost questionnaire snapshot — restart the form.")
+      setPhase("FORM")
+      return
+    }
+    // Re-confirm with /clarify so the server can either accept the
+    // answers or surface a follow-up question. A second
+    // NEEDS_CLARIFICATION response replaces the question set in place
+    // (the operator stays on this screen).
+    try {
+      const reconfirm = await callClarify(submittedQuestionnaire, answers)
+      if (reconfirm.status === "NEEDS_CLARIFICATION") {
+        setClarificationRequest(reconfirm.clarification_request)
+        setContextSummary(reconfirm.context_packet?.missing_context_candidates ?? [])
+        throw new Error(
+          "Talon needs more answers — review the updated questions and resubmit.",
+        )
+      }
+      setPhase("SYNTHESIZING")
+      const packet = await callSynthesis(
+        submittedQuestionnaire,
+        reconfirm.clarification_request,
+        answers,
+      )
       router.push(
-        `/vires/bench/lab/strategy-authoring/packets/${encodeURIComponent(payload.packet.packet_id)}`,
+        `/vires/bench/lab/strategy-authoring/packets/${encodeURIComponent(packet.packet_id)}`,
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Create failed")
-      setBusy(false)
+      // Re-throw so ClarificationClient can render the error inline
+      // and reset its own busy flag.
+      throw err instanceof Error ? err : new Error("Clarification submission failed")
     }
+  }
+
+  // Render the clarification screen instead of the form once Talon
+  // returns NEEDS_CLARIFICATION (or while synthesis is running, since
+  // the operator is past the form step).
+  if ((phase === "CLARIFYING" || phase === "SYNTHESIZING") && clarificationRequest) {
+    return (
+      <ClarificationClient
+        request={clarificationRequest}
+        contextSummary={contextSummary}
+        ideaTitle={idea.title}
+        onSubmitAnswers={submitClarificationAnswers}
+      />
+    )
   }
 
   return (
@@ -934,9 +1048,9 @@ function Footer({
         className="t-read"
         style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
       >
-        Submitting calls Talon to synthesize a Strategy Authoring Packet. The result is
-        persisted as DRAFT — you&apos;ll land on the packet detail screen to review assumptions
-        and walk it through review → adversarial → approve → bench handoff. {overriddenCount}{" "}
+        Submitting first asks Talon if it has enough context to synthesize. If there are
+        high-impact gaps (universe, benchmark, replacement intent, data inputs, etc.) you&apos;ll
+        be routed to a short clarification screen before the packet is drafted. {overriddenCount}{" "}
         of {WRAPPED_KEYS.length} defaultable fields will carry your overrides.
       </span>
       <button
@@ -952,7 +1066,7 @@ function Footer({
           alignSelf: "flex-start",
         }}
       >
-        {busy ? "Talon synthesizing…" : "Draft packet with Talon"}
+        {busy ? "Asking Talon…" : "Draft packet with Talon"}
       </button>
     </footer>
   )

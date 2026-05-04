@@ -75,7 +75,7 @@ export function ClarificationClient({
           if (!a || a.status === "UNANSWERED") return null
           return {
             question_id: q.id,
-            status: a.status,
+            action: a.status,
             value: a.value,
           }
         })

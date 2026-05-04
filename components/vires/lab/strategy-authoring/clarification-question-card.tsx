@@ -11,12 +11,17 @@
 // presentation + input wiring only.
 
 import type {
+  ClarificationAnswerAction,
   ClarificationAnswerKind,
-  ClarificationAnswerStatus,
   ClarificationOption,
   ClarificationQuestion,
   ClarificationSeverity,
 } from "@/lib/research-lab-strategy-authoring-clarification"
+
+// Local UI status — extends Codex's three-action contract with an
+// UNANSWERED state so the card can render before the operator picks
+// any action.
+export type QuestionAnswerUiStatus = ClarificationAnswerAction | "UNANSWERED"
 
 const SEVERITY_COLOR: Record<ClarificationSeverity, string> = {
   HIGH: "var(--vr-down)",
@@ -31,7 +36,7 @@ const SEVERITY_LABEL: Record<ClarificationSeverity, string> = {
 }
 
 export interface QuestionAnswerState {
-  status: ClarificationAnswerStatus | "UNANSWERED"
+  status: QuestionAnswerUiStatus
   value?: unknown
 }
 
@@ -124,7 +129,7 @@ export function ClarificationQuestionCard({
       <AnswerInput
         question={question}
         answer={answer}
-        onAnswer={value => onChange({ status: "ANSWERED", value })}
+        onAnswer={value => onChange({ status: "ANSWER", value })}
       />
 
       <ActionRow
@@ -132,11 +137,11 @@ export function ClarificationQuestionCard({
         answer={answer}
         onAcceptDefault={() =>
           onChange({
-            status: "ACCEPTED_DEFAULT",
+            status: "ACCEPT_DEFAULT",
             value: question.proposed_default?.value,
           })
         }
-        onMarkUnknown={() => onChange({ status: "MARKED_UNKNOWN" })}
+        onMarkUnknown={() => onChange({ status: "MARK_UNKNOWN" })}
         onClear={() => onChange({ status: "UNANSWERED" })}
       />
 
@@ -167,7 +172,7 @@ function AnswerInput({
   answer: QuestionAnswerState
   onAnswer: (value: unknown) => void
 }) {
-  const value = answer.status === "ANSWERED" ? answer.value : undefined
+  const value = answer.status === "ANSWER" ? answer.value : undefined
   return renderForKind(question.answer_kind, question.options, value, onAnswer)
 }
 
@@ -343,8 +348,8 @@ function ActionRow({
   onClear: () => void
 }) {
   const hasDefault = !!question.proposed_default
-  const acceptedDefault = answer.status === "ACCEPTED_DEFAULT"
-  const markedUnknown = answer.status === "MARKED_UNKNOWN"
+  const acceptedDefault = answer.status === "ACCEPT_DEFAULT"
+  const markedUnknown = answer.status === "MARK_UNKNOWN"
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
       {hasDefault && (
@@ -400,7 +405,7 @@ function ResolvedSummary({
   answer: QuestionAnswerState
   question: ClarificationQuestion
 }) {
-  if (answer.status === "ACCEPTED_DEFAULT") {
+  if (answer.status === "ACCEPT_DEFAULT") {
     return (
       <span
         className="t-read"
@@ -411,7 +416,7 @@ function ResolvedSummary({
       </span>
     )
   }
-  if (answer.status === "MARKED_UNKNOWN") {
+  if (answer.status === "MARK_UNKNOWN") {
     return (
       <span
         className="t-read"
@@ -426,7 +431,7 @@ function ResolvedSummary({
       </span>
     )
   }
-  if (answer.status === "ANSWERED") {
+  if (answer.status === "ANSWER") {
     return (
       <span
         className="t-read"

@@ -46,7 +46,7 @@ export default function PreviewClarificationPage() {
       </div>
       <ClarificationClient
         request={mock.clarification_request}
-        contextSummary={mock.context_summary}
+        contextSummary={mock.context_packet.missing_context_candidates}
         ideaTitle="test x I I (mock)"
         onSubmitAnswers={async answers => {
           alert(
