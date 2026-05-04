@@ -669,6 +669,7 @@ function buildPacketSynthesisPrompt({
     "- Keep sweep bounds tight. The trial budget must be internally consistent.",
     "- Respect post-mortem lessons from failed packets in the same edge family.",
     "- Counts, days, position limits, variants, and trial budgets must be positive integers. Percentages, costs, multipliers, and thresholds must be non-negative numbers unless the field is nullable.",
+    "- Include every property shown in the schema. Use null for nullable fields that do not apply; do not omit them.",
     "",
     "Return the structured object required by the provided schema with these top-level keys:",
     "assumptions, era_benchmark_plan, strategy_spec, sweep_bounds, evidence_thresholds, trial_ledger_budget, multiple_comparisons_plan, portfolio_fit.",
@@ -758,6 +759,9 @@ function sanitizeProviderJsonSchemaValue(value: unknown): unknown {
     }
     output[key] = sanitizeProviderJsonSchemaValue(child)
   }
+  if (isJsonSchemaProperties(output.properties)) {
+    output.required = Object.keys(output.properties)
+  }
   return output
 }
 
@@ -767,6 +771,10 @@ function sanitizeJsonSchemaType(value: unknown): unknown {
 
   const sanitized = value.map(item => item === "integer" ? "number" : item)
   return [...new Set(sanitized)]
+}
+
+function isJsonSchemaProperties(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
 }
 
 function responseIdFromResult(result: unknown): string | null {
