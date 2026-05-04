@@ -45,7 +45,7 @@ const TALON_ORCHESTRATOR_VERSION = "research_lab.talon_packet_orchestrator.v1"
 const DEFAULT_MODEL = "claude-sonnet-4-6"
 const DEFAULT_TEMPERATURE = 0.2
 const FAILED_PACKET_CONTEXT_LIMIT = 10
-const TALON_SECTION_ATTEMPTS = 2
+const TALON_SECTION_ATTEMPTS = 3
 const TALON_SECTION_CONCURRENCY = 2
 
 export interface TalonPacketSynthesisResult {
@@ -334,6 +334,7 @@ interface TalonSectionSpec<K extends SynthesisSectionKey = SynthesisSectionKey> 
   schema: z.ZodType<StrategyAuthoringSynthesisPayload[K]>
   shape: string
   guidance: string[]
+  example?: unknown
 }
 
 const talonSectionEnvelopeSchema = z.object({
@@ -360,6 +361,28 @@ const TALON_SECTION_SPECS = [
       "Choose eras that make the strategy honestly testable, including at least one recent or relevant validation window.",
       "Explain why the benchmark is fair for the sleeve and thesis.",
     ],
+    example: {
+      benchmark_id: "SPY",
+      benchmark_rationale: "SPY is the broad equity baseline for a stocks sleeve strategy.",
+      eras: [{
+        era_id: "recent_3y",
+        label: "Recent 3-year validation",
+        start_date: "2023-01-01",
+        end_date: "2026-05-04",
+        regime_tags: ["recent", "mixed_regime"],
+        rationale: "A recent window checks whether the strategy is still relevant before wider historical testing.",
+      }],
+      era_weighting_method: {
+        value: "equal",
+        provenance: {
+          source: "TALON_INFERENCE",
+          confidence: "MEDIUM",
+          rationale: "Equal weighting keeps the first benchmark plan simple until the operator overrides era emphasis.",
+          source_artifact_id: null,
+          operator_confirmed: false,
+        },
+      },
+    },
   },
   {
     key: "strategy_spec",
@@ -585,7 +608,13 @@ async function generateTalonSection({
     feedback = formatSectionValidationFeedback(lastIssues)
   }
 
-  const error = new Error(`Talon ${spec.label} section did not match the StrategyAuthoringPacketV1 synthesis contract.`)
+  const issueSummary = formatSectionValidationFeedback(lastIssues.slice(0, 6))
+  const error = new Error(
+    [
+      `Talon ${spec.label} section did not match the StrategyAuthoringPacketV1 synthesis contract.`,
+      issueSummary ? `Validation issues:\n${issueSummary}` : "",
+    ].filter(Boolean).join("\n"),
+  )
   throw Object.assign(error, {
     status: 422,
     payload: { validation_issues: lastIssues },
@@ -604,7 +633,7 @@ function parseTalonSectionJson(
 } {
   let json: unknown
   try {
-    json = JSON.parse(sectionJson)
+    json = JSON.parse(normalizeTalonSectionJson(sectionJson))
   } catch (error) {
     return {
       ok: false,
@@ -617,7 +646,8 @@ function parseTalonSectionJson(
     }
   }
 
-  const parsed = spec.schema.safeParse(json)
+  const sectionValue = unwrapTalonSectionValue(spec, json)
+  const parsed = spec.schema.safeParse(sectionValue)
   if (parsed.success) return { ok: true, value: parsed.data }
   return {
     ok: false,
@@ -628,6 +658,34 @@ function parseTalonSectionJson(
       message: issue.message,
     })),
   }
+}
+
+function normalizeTalonSectionJson(sectionJson: string): string {
+  const trimmed = sectionJson.trim()
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)
+  if (fenced) return fenced[1].trim()
+
+  const firstObject = trimmed.indexOf("{")
+  const lastObject = trimmed.lastIndexOf("}")
+  if (firstObject >= 0 && lastObject > firstObject) {
+    return trimmed.slice(firstObject, lastObject + 1)
+  }
+
+  const firstArray = trimmed.indexOf("[")
+  const lastArray = trimmed.lastIndexOf("]")
+  if (firstArray >= 0 && lastArray > firstArray) {
+    return trimmed.slice(firstArray, lastArray + 1)
+  }
+
+  return trimmed
+}
+
+function unwrapTalonSectionValue(spec: TalonSectionSpec, json: unknown): unknown {
+  if (!json || typeof json !== "object" || Array.isArray(json)) return json
+  const object = json as Record<string, unknown>
+  if (spec.key in object) return object[spec.key]
+  if ("section" in object && object.section === spec.key && "value" in object) return object.value
+  return json
 }
 
 function formatSectionValidationFeedback(
@@ -661,6 +719,7 @@ function buildTalonSectionPrompt({
     `Section key: ${spec.key}`,
     `Section shape: ${spec.shape}`,
     ...spec.guidance.map(line => `- ${line}`),
+    spec.example ? `Example section_json value:\n${JSON.stringify(spec.example, null, 2)}` : "",
     feedback ? `\nPrevious validation errors to fix:\n${feedback}` : "",
   ].filter(Boolean).join("\n")
 }
