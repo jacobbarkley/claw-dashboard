@@ -80,6 +80,13 @@ export interface CreateStrategyAuthoringPacketFromPayloadArgs extends CreateStra
 
 export type StrategyAuthoringSynthesisPayload = z.infer<typeof synthesisPayloadSchema>
 
+interface TalonSectionIssue {
+  field_path: string
+  severity: "error"
+  code: string
+  message: string
+}
+
 const provenanceSchema = z.object({
   source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
   confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
@@ -583,7 +590,8 @@ async function generateTalonSection({
   responseId: string | null
 }> {
   let feedback: string | null = null
-  let lastIssues: Array<{ field_path: string; severity: "error"; code: string; message: string }> = []
+  let lastIssues: TalonSectionIssue[] = []
+  let lastRawJson = ""
   for (let attempt = 1; attempt <= TALON_SECTION_ATTEMPTS; attempt += 1) {
     const result = await generateText({
       model: anthropic(model),
@@ -595,6 +603,7 @@ async function generateTalonSection({
       temperature: DEFAULT_TEMPERATURE,
       prompt: buildTalonSectionPrompt({ basePrompt: prompt, spec, attempt, feedback }),
     })
+    lastRawJson = result.output.section_json
     const parsed = parseTalonSectionJson(spec, result.output.section_json)
     if (parsed.ok) {
       return {
@@ -617,7 +626,18 @@ async function generateTalonSection({
   )
   throw Object.assign(error, {
     status: 422,
-    payload: { validation_issues: lastIssues },
+    payload: {
+      error_code: "TALON_SECTION_VALIDATION",
+      route: "POST /api/research/strategy-authoring/packets",
+      source_file: "lib/research-lab-strategy-authoring-orchestration.server.ts",
+      source_function: "generateTalonSection",
+      section_key: spec.key,
+      section_label: spec.label,
+      attempts: TALON_SECTION_ATTEMPTS,
+      validation_issues: lastIssues,
+      raw_section_preview: lastRawJson.slice(0, 2000),
+      operator_hint: "Share this whole error payload with Codex; section_key and validation_issues point to the exact synthesis section and fields that failed.",
+    },
   })
 }
 
@@ -629,7 +649,7 @@ function parseTalonSectionJson(
   value: unknown
 } | {
   ok: false
-  issues: Array<{ field_path: string; severity: "error"; code: string; message: string }>
+  issues: TalonSectionIssue[]
 } {
   let json: unknown
   try {

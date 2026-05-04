@@ -102,6 +102,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Invalid strategy authoring packet request",
+        debug: {
+          route: "POST /api/research/strategy-authoring/packets",
+          source_file: "app/api/research/strategy-authoring/packets/route.ts",
+          source_function: "POST",
+          upstream_source_file: typeof payload === "object" && payload && "source_file" in payload
+            ? (payload as { source_file?: unknown }).source_file
+            : null,
+          upstream_source_function: typeof payload === "object" && payload && "source_function" in payload
+            ? (payload as { source_function?: unknown }).source_function
+            : null,
+          section_key: typeof payload === "object" && payload && "section_key" in payload
+            ? (payload as { section_key?: unknown }).section_key
+            : null,
+          error_code: typeof payload === "object" && payload && "error_code" in payload
+            ? (payload as { error_code?: unknown }).error_code
+            : null,
+          hint: "Copy the full JSON response, not only the top-line error. The payload.validation_issues field contains exact failing paths when available.",
+        },
         ...(payload ? { payload } : {}),
       },
       { status },
