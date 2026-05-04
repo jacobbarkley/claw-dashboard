@@ -147,6 +147,35 @@ const TALON_INTEGER_FIELD_KEYS = new Set([
   "min_trades",
 ])
 
+const TALON_STRING_FIELD_KEYS = new Set([
+  "benchmark_id",
+  "benchmark_rationale",
+  "circuit_breaker_rules",
+  "condition",
+  "confirmation_description",
+  "custom_description",
+  "data_input_id",
+  "description",
+  "display_name",
+  "era_id",
+  "field_path",
+  "finding",
+  "full_implementation_target",
+  "label",
+  "marginal_value_notes",
+  "method",
+  "name",
+  "no_trade_zones",
+  "notes",
+  "parameter",
+  "rationale",
+  "rebalance_frequency",
+  "remediation",
+  "screen_criteria",
+  "strategy_family",
+  "strategy_name",
+])
+
 const provenanceSchema = z.object({
   source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
   confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
@@ -784,12 +813,75 @@ function normalizeTalonGeneratedValue(value: unknown): unknown {
       if (key === "capital_tier_modifier") {
         return [key, normalizeTalonCapitalTierModifier(child)]
       }
+      if (key === "operator" && typeof child === "string") {
+        return [key, normalizeTalonEntryOperator(child)]
+      }
+      if (key === "sleeve" && typeof child === "string") {
+        return [key, normalizeTalonSleeve(child)]
+      }
       if (TALON_NUMERIC_FIELD_KEYS.has(key) && typeof child === "string") {
         return [key, normalizeTalonNumber(key, child)]
+      }
+      if (TALON_STRING_FIELD_KEYS.has(key)) {
+        return [key, normalizeTalonString(key, child)]
       }
       return [key, normalizeTalonGeneratedValue(child)]
     }),
   )
+}
+
+function normalizeTalonString(key: string, value: unknown): string | null {
+  if (value == null) {
+    if (key === "screen_criteria" || key.endsWith("_notes") || key.endsWith("_description")) return null
+    return fallbackTalonString(key)
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim()
+    return trimmed || fallbackTalonString(key)
+  }
+  if (typeof value === "number" || typeof value === "boolean") return String(value)
+  if (typeof value === "object") {
+    const unwrapped = unwrapValueObject(value)
+    if (unwrapped !== value) return normalizeTalonString(key, unwrapped)
+    return JSON.stringify(value)
+  }
+  return fallbackTalonString(key)
+}
+
+function fallbackTalonString(key: string): string {
+  if (key === "strategy_family") return "Talon authored"
+  if (key === "strategy_name") return "Talon authored strategy"
+  if (key === "description") return "Talon provided no valid description; operator review is required."
+  if (key === "parameter") return "signal"
+  if (key === "name") return "Talon condition"
+  if (key === "data_input_id") return "price_ohlcv_daily"
+  if (key === "field_path") return "strategy_spec.entry_rules"
+  if (key === "benchmark_id") return "SPY"
+  if (key === "benchmark_rationale") return "Default broad-market benchmark; operator review is required."
+  if (key === "rationale") return "Talon did not provide a valid rationale; operator review is required."
+  if (key === "label") return "Talon-authored era"
+  if (key === "era_id") return "talon_era"
+  return "Operator review required"
+}
+
+function normalizeTalonEntryOperator(value: string): "gte" | "lte" | "gt" | "lt" | "eq" | "between" | "in" {
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, "_")
+  if (normalized === ">=" || normalized === "=>" || normalized === "at_least" || normalized === "greater_than_or_equal_to") return "gte"
+  if (normalized === "<=" || normalized === "=<" || normalized === "at_most" || normalized === "less_than_or_equal_to") return "lte"
+  if (normalized === ">" || normalized === "above" || normalized === "greater_than") return "gt"
+  if (normalized === "<" || normalized === "below" || normalized === "less_than") return "lt"
+  if (normalized === "=" || normalized === "==" || normalized === "equals" || normalized === "equal_to") return "eq"
+  if (normalized === "between" || normalized === "range") return "between"
+  if (normalized === "in" || normalized === "one_of") return "in"
+  return "gte"
+}
+
+function normalizeTalonSleeve(value: string): "STOCKS" | "CRYPTO" | "OPTIONS" {
+  const normalized = value.trim().toUpperCase().replace(/[\s-]+/g, "_")
+  if (normalized === "STOCKS" || normalized === "STOCK" || normalized === "EQUITY" || normalized === "EQUITIES") return "STOCKS"
+  if (normalized === "CRYPTO" || normalized === "CRYPTOCURRENCY" || normalized === "DIGITAL_ASSETS") return "CRYPTO"
+  if (normalized === "OPTIONS" || normalized === "OPTION") return "OPTIONS"
+  return "STOCKS"
 }
 
 function normalizeTalonNumber(key: string, value: string): number | string {
