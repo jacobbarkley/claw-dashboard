@@ -666,7 +666,7 @@ function parseTalonSectionJson(
     }
   }
 
-  const sectionValue = unwrapTalonSectionValue(spec, json)
+  const sectionValue = normalizeTalonGeneratedValue(unwrapTalonSectionValue(spec, json))
   const parsed = spec.schema.safeParse(sectionValue)
   if (parsed.success) return { ok: true, value: parsed.data }
   return {
@@ -706,6 +706,37 @@ function unwrapTalonSectionValue(spec: TalonSectionSpec, json: unknown): unknown
   if (spec.key in object) return object[spec.key]
   if ("section" in object && object.section === spec.key && "value" in object) return object.value
   return json
+}
+
+function normalizeTalonGeneratedValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeTalonGeneratedValue)
+  }
+  if (!value || typeof value !== "object") {
+    return value
+  }
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => {
+      if (key === "source" && typeof child === "string") {
+        return [key, normalizeTalonProvenanceSource(child)]
+      }
+      return [key, normalizeTalonGeneratedValue(child)]
+    }),
+  )
+}
+
+function normalizeTalonProvenanceSource(source: string): string {
+  const normalized = source.trim().toUpperCase().replace(/[\s-]+/g, "_")
+  if (normalized === "TALON" || normalized === "AI" || normalized === "MODEL" || normalized === "LLM") {
+    return "TALON_INFERENCE"
+  }
+  if (normalized === "OPERATOR" || normalized === "HUMAN") return "USER"
+  if (normalized === "REFERENCE_STRATEGY" || normalized === "REFERENCES") return "REFERENCE"
+  if (normalized === "DATA_CATALOG") return "CATALOG"
+  if (normalized === "MARKET" || normalized === "MARKET_DATA") return "MARKET_PACKET"
+  if (normalized === "DEFAULT" || normalized === "TUNABLE") return "TUNABLE_DEFAULT"
+  return normalized
 }
 
 function formatSectionValidationFeedback(
