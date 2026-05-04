@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "lab:packet-walkthrough": "node scripts/lab-packet-walkthrough.cjs mock",
+    "lab:packet-walkthrough:mock": "node scripts/lab-packet-walkthrough.cjs mock",
+    "lab:packet-walkthrough:live": "node scripts/lab-packet-walkthrough.cjs live",
     "start": "next start",
     "lint": "eslint",
     "prepare": "git config core.hooksPath .githooks || true"
