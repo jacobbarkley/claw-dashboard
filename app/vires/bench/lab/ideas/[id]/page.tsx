@@ -7,6 +7,7 @@ import { LabSubNav } from "@/components/vires/lab/lab-sub-nav"
 import { LabPhaseZeroShell, LabPhaseZeroSlot } from "@/components/vires/lab/phase-zero-shell"
 import {
   labRedesignEnabled,
+  packetAuthoringEnabled,
   specAuthoringEnabled,
   unifiedBuilderEnabled,
 } from "@/lib/feature-flags.server"
@@ -61,6 +62,7 @@ export default async function ViresLabIdeaDetailPage({
   const strategySpecs = idea ? await loadStrategySpecsForIdea(idea.idea_id) : []
   const threadEnabled = specAuthoringEnabled()
   const builderEnabled = unifiedBuilderEnabled()
+  const packetEnabled = packetAuthoringEnabled()
   const { activeSpec, pendingSpec, activeQueueEntry } = threadEnabled && idea
     ? await loadThreadDataForIdea(idea, strategySpecs)
     : { activeSpec: null, pendingSpec: null, activeQueueEntry: null }
@@ -304,6 +306,56 @@ export default async function ViresLabIdeaDetailPage({
               }}
             >
               Open →
+            </span>
+          </Link>
+        )}
+
+        {packetEnabled && (
+          <Link
+            href={`/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/draft-packet`}
+            className="vr-card"
+            style={{
+              padding: "14px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              textDecoration: "none",
+              color: "inherit",
+              borderLeft: "2px solid var(--vr-gold)",
+              background: "rgba(200,169,104,0.06)",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontFamily: "var(--ff-serif)",
+                  fontStyle: "italic",
+                  fontSize: 15,
+                  color: "var(--vr-cream)",
+                  lineHeight: 1.2,
+                }}
+              >
+                Draft Strategy Authoring Packet
+              </div>
+              <div style={{ marginTop: 3, fontSize: 11, color: "var(--vr-cream-mute)" }}>
+                Answer the questionnaire — Talon synthesizes a governed packet you can review,
+                approve, and hand off to the bench. Old idea→spec lane stays available below.
+              </div>
+            </div>
+            <span
+              style={{
+                fontFamily: "var(--ff-mono)",
+                fontSize: 11,
+                color: "var(--vr-gold)",
+                padding: "7px 14px",
+                border: "1px solid var(--vr-gold-line)",
+                borderRadius: 3,
+                background: "var(--vr-gold-soft)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Draft packet →
             </span>
           </Link>
         )}

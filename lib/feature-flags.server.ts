@@ -21,6 +21,13 @@ export function specAuthoringEnabled(): boolean {
   return isTruthy(process.env.VIRES_LAB_SPEC_AUTHORING)
 }
 
+// Strategy Authoring Packet flow (idea → questionnaire → Talon-synthesized
+// packet → review/approve → bench handoff). Off by default until the
+// preview walkthrough is green; old idea→spec lane stays recoverable.
+export function packetAuthoringEnabled(): boolean {
+  return isTruthy(process.env.VIRES_LAB_PACKET_AUTHORING)
+}
+
 export function unifiedBuilderEnabled(): boolean {
   return isTruthy(process.env.VIRES_LAB_UNIFIED_BUILDER)
 }
