@@ -87,6 +87,66 @@ interface TalonSectionIssue {
   message: string
 }
 
+const TALON_NUMERIC_FIELD_KEYS = new Set([
+  "adjusted_significance_level",
+  "base_size_pct",
+  "calendar_days_multiplier",
+  "closed_trades_multiplier",
+  "commission_assumption_value",
+  "current_sleeve_allocation_pct",
+  "drawdown_tightening_pct",
+  "effective_trials_estimate",
+  "estimated_compute_cost_usd",
+  "estimated_correlation",
+  "max",
+  "max_acceptable_correlation",
+  "max_bench_runs",
+  "max_correlated_exposure_pct",
+  "max_drawdown_pct",
+  "max_eras",
+  "max_joint_drawdown_pct",
+  "max_portfolio_drawdown_pct",
+  "max_positions",
+  "max_sector_concentration_pct",
+  "max_single_loss_usd",
+  "max_single_position_loss_pct",
+  "max_symbols",
+  "max_total_variants",
+  "max_variants",
+  "min",
+  "min_active_exposure_days",
+  "min_calendar_days",
+  "min_closed_trades",
+  "min_profit_factor",
+  "min_profitable_fold_pct",
+  "min_sharpe",
+  "min_trades",
+  "min_win_rate_pct",
+  "proposed_addition_pct",
+  "resulting_sleeve_allocation_pct",
+  "risk_per_trade_pct",
+  "slippage_assumption_bps",
+  "step",
+  "stop_loss_pct",
+  "target_pct",
+  "time_stop_days",
+  "trail_pct",
+  "activation_pct",
+])
+
+const TALON_INTEGER_FIELD_KEYS = new Set([
+  "max_bench_runs",
+  "max_eras",
+  "max_positions",
+  "max_symbols",
+  "max_total_variants",
+  "max_variants",
+  "min_active_exposure_days",
+  "min_calendar_days",
+  "min_closed_trades",
+  "min_trades",
+])
+
 const provenanceSchema = z.object({
   source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
   confidence: z.enum(["HIGH", "MEDIUM", "LOW"]),
@@ -721,9 +781,73 @@ function normalizeTalonGeneratedValue(value: unknown): unknown {
       if (key === "source" && typeof child === "string") {
         return [key, normalizeTalonProvenanceSource(child)]
       }
+      if (key === "capital_tier_modifier") {
+        return [key, normalizeTalonCapitalTierModifier(child)]
+      }
+      if (TALON_NUMERIC_FIELD_KEYS.has(key) && typeof child === "string") {
+        return [key, normalizeTalonNumber(key, child)]
+      }
       return [key, normalizeTalonGeneratedValue(child)]
     }),
   )
+}
+
+function normalizeTalonNumber(key: string, value: string): number | string {
+  const cleaned = value.replace(/,/g, "")
+  const match = cleaned.match(/-?\d+(?:\.\d+)?/)
+  if (!match) return value
+  const parsed = Number(match[0])
+  if (!Number.isFinite(parsed)) return value
+  if (TALON_INTEGER_FIELD_KEYS.has(key)) return Math.max(1, Math.round(parsed))
+  return parsed
+}
+
+function normalizeTalonCapitalTierModifier(value: unknown): unknown {
+  const raw = unwrapValueObject(value)
+  const normalized = normalizeTalonGeneratedValue(raw)
+  const object = normalized && typeof normalized === "object" && !Array.isArray(normalized)
+    ? normalized as Record<string, unknown>
+    : {}
+  return {
+    tier: normalizeTalonCapitalTier(object.tier),
+    calendar_days_multiplier: positiveNumberOrDefault(object.calendar_days_multiplier, 1),
+    closed_trades_multiplier: positiveNumberOrDefault(object.closed_trades_multiplier, 1),
+    drawdown_tightening_pct: nullableNonNegativeNumber(object.drawdown_tightening_pct),
+  }
+}
+
+function unwrapValueObject(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value
+  const object = value as Record<string, unknown>
+  return "value" in object ? object.value : value
+}
+
+function normalizeTalonCapitalTier(value: unknown): "TINY" | "SMALL" | "MEDIUM" | "LARGE" {
+  if (typeof value !== "string") return "SMALL"
+  const normalized = value.trim().toUpperCase()
+  if (normalized === "TINY" || normalized === "SMALL" || normalized === "MEDIUM" || normalized === "LARGE") {
+    return normalized
+  }
+  return "SMALL"
+}
+
+function positiveNumberOrDefault(value: unknown, fallback: number): number {
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string"
+      ? normalizeTalonNumber("generic", value)
+      : fallback
+  return typeof parsed === "number" && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function nullableNonNegativeNumber(value: unknown): number | null {
+  if (value == null) return null
+  const parsed = typeof value === "number"
+    ? value
+    : typeof value === "string"
+      ? normalizeTalonNumber("generic", value)
+      : null
+  return typeof parsed === "number" && Number.isFinite(parsed) && parsed >= 0 ? parsed : null
 }
 
 function normalizeTalonProvenanceSource(source: string): string {
