@@ -80,17 +80,29 @@ export interface CreateStrategyAuthoringPacketFromPayloadArgs extends CreateStra
 export type StrategyAuthoringSynthesisPayload = z.infer<typeof synthesisPayloadSchema>
 
 const PROVIDER_UNSUPPORTED_JSON_SCHEMA_KEYS = new Set([
+  "contains",
+  "dependentRequired",
+  "dependentSchemas",
+  "dependencies",
   "exclusiveMaximum",
   "exclusiveMinimum",
   "format",
+  "maxContains",
   "maxItems",
   "maxLength",
+  "maxProperties",
   "maximum",
+  "minContains",
   "minItems",
   "minLength",
+  "minProperties",
   "minimum",
   "multipleOf",
   "pattern",
+  "patternProperties",
+  "propertyNames",
+  "unevaluatedItems",
+  "unevaluatedProperties",
 ])
 
 const provenanceSchema = z.object({
