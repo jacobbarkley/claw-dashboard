@@ -11,6 +11,9 @@
 //
 // Built against:
 //   - GET/PATCH /api/research/strategy-authoring/packets/[id] (commit 8686c300)
+//   - POST /adversarial-review (commit 067b727a)
+//   - PATCH confirm_assumption (commit 74d5604d)
+//   - POST /bench-handoff (commit b10e92de)
 //   - PacketLifecycleView shape (lib/research-lab-strategy-authoring-lifecycle.server)
 
 import { useRouter } from "next/navigation"
@@ -35,6 +38,18 @@ interface PacketLifecycleViewClient {
   compile_result: PacketCompileResultV1
   validation_issues: StrategyAuthoringValidationIssue[]
   trial_ledger_entries: TrialLedgerEntryV1[]
+}
+
+type BenchHandoffStatus = "READY_FOR_BENCH" | "NEEDS_MAPPING"
+
+interface BenchHandoffApiResponse {
+  ok?: boolean
+  dry_run?: boolean
+  handoff_status?: BenchHandoffStatus
+  pending_trial_ledger_entries?: TrialLedgerEntryV1[]
+  created_trial_ledger_entries?: TrialLedgerEntryV1[]
+  existing_trial_ledger_entries?: TrialLedgerEntryV1[]
+  trial_ledger_entries?: TrialLedgerEntryV1[]
 }
 
 interface PacketDetailClientProps {
@@ -72,6 +87,10 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
   const [reviewBusy, setReviewBusy] = useState(false)
   const [reviewDryRun, setReviewDryRun] = useState(false)
   const [dryRunResult, setDryRunResult] = useState<PacketLifecycleViewClient | null>(null)
+  // Bench-handoff state — same independence as review.
+  const [handoffBusy, setHandoffBusy] = useState(false)
+  const [handoffDryRun, setHandoffDryRun] = useState(false)
+  const [handoffResult, setHandoffResult] = useState<BenchHandoffApiResponse | null>(null)
 
   const packet = view.packet
   const slugProvenance = packet.strategy_spec.strategy_id.provenance
@@ -174,6 +193,39 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
       setError(err instanceof Error ? err.message : "Review failed")
     } finally {
       setReviewBusy(false)
+    }
+  }
+
+  // POST /bench-handoff — seeds trial-ledger rows for an APPROVED packet
+  // (Codex slice b10e92de). Server-gated to APPROVED. Live runs may also
+  // refresh the lifecycle view since trial_ledger_entries can change.
+  const runBenchHandoff = async (dryRun: boolean) => {
+    if (handoffBusy) return
+    setHandoffBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(
+        `/api/research/strategy-authoring/packets/${encodeURIComponent(packet.packet_id)}/bench-handoff`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scope, dry_run: dryRun }),
+        },
+      )
+      const payload = (await res.json().catch(() => ({}))) as BenchHandoffApiResponse & { error?: string }
+      if (!res.ok) throw new Error(payload.error ?? `Handoff failed (${res.status})`)
+      setHandoffResult(payload)
+      if (!dryRun && payload.trial_ledger_entries) {
+        setView(prev => ({
+          ...prev,
+          trial_ledger_entries: payload.trial_ledger_entries ?? prev.trial_ledger_entries,
+        }))
+        router.refresh()
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Handoff failed")
+    } finally {
+      setHandoffBusy(false)
     }
   }
 
@@ -288,6 +340,19 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
         setReviewDryRun={setReviewDryRun}
         runReview={runReview}
         clearDryRun={() => setDryRunResult(null)}
+      />
+
+      <BenchHandoffSection
+        canRun={packet.status === "APPROVED"}
+        currentStatus={packet.status}
+        result={handoffResult}
+        existingLedgerEntries={view.trial_ledger_entries}
+        plannedCount={view.compile_result.planned_trial_ledger_entries.length}
+        handoffBusy={handoffBusy}
+        handoffDryRun={handoffDryRun}
+        setHandoffDryRun={setHandoffDryRun}
+        runHandoff={runBenchHandoff}
+        clearResult={() => setHandoffResult(null)}
       />
 
       <Section title="Compile preview" subtitle="Compiler-stub output — what would happen if you launched this on the bench right now.">
@@ -615,6 +680,164 @@ function ReviewBody({ review }: { review: StrategyAuthoringPacketV1["adversarial
         </div>
       )}
     </>
+  )
+}
+
+function BenchHandoffSection({
+  canRun,
+  currentStatus,
+  result,
+  existingLedgerEntries,
+  plannedCount,
+  handoffBusy,
+  handoffDryRun,
+  setHandoffDryRun,
+  runHandoff,
+  clearResult,
+}: {
+  canRun: boolean
+  currentStatus: StrategyAuthoringPacketStatus
+  result: BenchHandoffApiResponse | null
+  existingLedgerEntries: TrialLedgerEntryV1[]
+  plannedCount: number
+  handoffBusy: boolean
+  handoffDryRun: boolean
+  setHandoffDryRun: (next: boolean) => void
+  runHandoff: (dryRun: boolean) => void
+  clearResult: () => void
+}) {
+  const subtitle = canRun
+    ? "Seeds trial-ledger rows so the bench knows which (era × variant) cells to run. Idempotent. Does not launch a campaign or touch the broker."
+    : `Bench handoff is gated to APPROVED packets. Current status: ${currentStatus}.`
+  const pending = result?.pending_trial_ledger_entries?.length ?? 0
+  const created = result?.created_trial_ledger_entries?.length ?? 0
+  const existingFromResult = result?.existing_trial_ledger_entries?.length
+  const existingCount = existingFromResult ?? existingLedgerEntries.length
+  return (
+    <Section title="Bench handoff" subtitle={subtitle}>
+      <div className="vr-card" style={cardStyle}>
+        <KeyVal label="Planned trial-ledger rows" value={String(plannedCount)} />
+        <KeyVal label="Already-seeded rows" value={String(existingCount)} />
+        {canRun && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              borderTop: "1px solid var(--vr-line)",
+              paddingTop: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => runHandoff(handoffDryRun)}
+                disabled={handoffBusy}
+                style={{
+                  ...primaryButton,
+                  background: handoffBusy ? "transparent" : "var(--vr-gold)",
+                  color: handoffBusy ? "var(--vr-gold)" : "var(--vr-ink)",
+                  borderColor: "var(--vr-gold)",
+                  opacity: handoffBusy ? 0.6 : 1,
+                }}
+              >
+                {handoffBusy
+                  ? "Preparing…"
+                  : handoffDryRun
+                    ? "Prepare bench handoff (preview)"
+                    : "Prepare bench handoff"}
+              </button>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 11.5,
+                  color: "var(--vr-cream-dim)",
+                  cursor: handoffBusy ? "default" : "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={handoffDryRun}
+                  onChange={e => setHandoffDryRun(e.target.checked)}
+                  disabled={handoffBusy}
+                  style={{ accentColor: "var(--vr-gold)" }}
+                />
+                Dry run (show what would be seeded without writing)
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+      {result && (
+        <div
+          className="vr-card"
+          style={{
+            ...cardStyle,
+            border: result.dry_run
+              ? "1px dashed var(--vr-gold)"
+              : "1px solid var(--vr-up)",
+            background: result.dry_run ? "var(--vr-gold-soft)" : "transparent",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <span
+              className="t-eyebrow"
+              style={{
+                ...eyebrowStyle,
+                color: result.dry_run ? "var(--vr-gold)" : "var(--vr-up)",
+              }}
+            >
+              {result.dry_run ? "ⓘ DRY RUN PREVIEW · NOTHING WRITTEN" : "✓ HANDOFF COMPLETE"}
+            </span>
+            <button
+              type="button"
+              onClick={clearResult}
+              style={{
+                ...primaryButton,
+                background: "transparent",
+                color: "var(--vr-cream-mute)",
+                borderColor: "var(--vr-line-hi)",
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+          {result.handoff_status && (
+            <KeyVal label="Handoff status" value={result.handoff_status} />
+          )}
+          {result.dry_run ? (
+            <KeyVal
+              label="Rows that would be seeded"
+              value={String(pending)}
+            />
+          ) : (
+            <>
+              <KeyVal label="Rows newly seeded this run" value={String(created)} />
+              {pending > 0 && created === 0 && (
+                <span
+                  className="t-read"
+                  style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.4 }}
+                >
+                  Handoff was idempotent — every planned row already existed.
+                </span>
+              )}
+            </>
+          )}
+          {result.handoff_status === "NEEDS_MAPPING" && (
+            <span
+              className="t-read"
+              style={{ fontSize: 11.5, color: "var(--vr-gold)", lineHeight: 1.4 }}
+            >
+              Compiler reports NEEDS_MAPPING — the bench can run, but at least one
+              field needs a data-mapping decision before launch.
+            </span>
+          )}
+        </div>
+      )}
+    </Section>
   )
 }
 
