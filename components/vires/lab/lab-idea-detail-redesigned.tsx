@@ -50,6 +50,9 @@ interface LabIdeaDetailRedesignedProps {
   // When the unified builder feature flag is off the /builder route 404s,
   // so the spec CTA falls back to the legacy /spec/edit form.
   builderEnabled: boolean
+  // Strategy Authoring Packet flow CTA — surfaces the new questionnaire-
+  // driven packet path. Off by default; old idea→spec lane stays intact.
+  packetEnabled: boolean
 }
 
 export function LabIdeaDetailRedesigned({
@@ -61,6 +64,7 @@ export function LabIdeaDetailRedesigned({
   hasCampaign,
   neighborhood,
   builderEnabled,
+  packetEnabled,
 }: LabIdeaDetailRedesignedProps) {
   const idx = stageIndex(stage)
   const sleeveColor = SLEEVE_COLOR[idea.sleeve] ?? "var(--vr-cream-mute)"
@@ -177,6 +181,56 @@ export function LabIdeaDetailRedesigned({
           )}
         </div>
       </div>
+
+      {packetEnabled && (
+        <Link
+          href={`/vires/bench/lab/ideas/${encodeURIComponent(idea.idea_id)}/draft-packet`}
+          className="vr-card"
+          style={{
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            textDecoration: "none",
+            color: "inherit",
+            borderLeft: "2px solid var(--vr-gold)",
+            background: "rgba(200,169,104,0.06)",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: "var(--ff-serif)",
+                fontStyle: "italic",
+                fontSize: 15,
+                color: "var(--vr-cream)",
+                lineHeight: 1.2,
+              }}
+            >
+              Draft Strategy Authoring Packet
+            </div>
+            <div style={{ marginTop: 3, fontSize: 11, color: "var(--vr-cream-mute)" }}>
+              Answer the questionnaire — Talon synthesizes a governed packet you can review,
+              approve, and hand off to the bench. Old idea→spec lane stays available below.
+            </div>
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--ff-mono)",
+              fontSize: 11,
+              color: "var(--vr-gold)",
+              padding: "7px 14px",
+              border: "1px solid var(--vr-gold-line)",
+              borderRadius: 3,
+              background: "var(--vr-gold-soft)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Draft packet →
+          </span>
+        </Link>
+      )}
 
       {/* Timeline thread */}
       <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
