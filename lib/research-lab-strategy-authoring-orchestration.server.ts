@@ -1868,6 +1868,7 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
   if (idea.sleeve !== questionnaire.sleeve) {
     throw new Error(`Questionnaire sleeve ${questionnaire.sleeve} does not match idea sleeve ${idea.sleeve}.`)
   }
+  const normalizedPayload = normalizeSynthesisPayloadForPacket(payload, questionnaire)
 
   const packet: StrategyAuthoringPacketV1 = {
     schema_version: STRATEGY_AUTHORING_PACKET_SCHEMA_VERSION,
@@ -1878,29 +1879,29 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
     updated_at: now,
     status: "REVIEW",
     questionnaire,
-    assumptions: payload.assumptions,
+    assumptions: normalizedPayload.assumptions,
     data_readiness: buildPacketDataReadiness({
       catalog,
       sleeve: questionnaire.sleeve,
       allowedDataInputs: questionnaire.allowed_data_inputs.value,
     }),
-    era_benchmark_plan: payload.era_benchmark_plan,
+    era_benchmark_plan: normalizedPayload.era_benchmark_plan,
     strategy_spec: {
-      ...payload.strategy_spec,
+      ...normalizedPayload.strategy_spec,
       strategy_id: {
-        ...payload.strategy_spec.strategy_id,
+        ...normalizedPayload.strategy_spec.strategy_id,
         provenance: {
-          ...payload.strategy_spec.strategy_id.provenance,
+          ...normalizedPayload.strategy_spec.strategy_id.provenance,
           operator_confirmed: false,
         },
       },
     },
-    sweep_bounds: payload.sweep_bounds,
-    evidence_thresholds: payload.evidence_thresholds,
-    trial_ledger_budget: payload.trial_ledger_budget,
-    multiple_comparisons_plan: payload.multiple_comparisons_plan,
+    sweep_bounds: normalizedPayload.sweep_bounds,
+    evidence_thresholds: normalizedPayload.evidence_thresholds,
+    trial_ledger_budget: normalizedPayload.trial_ledger_budget,
+    multiple_comparisons_plan: normalizedPayload.multiple_comparisons_plan,
     adversarial_review: pendingAdversarialReview(now),
-    portfolio_fit: normalizePortfolioFit(payload.portfolio_fit, questionnaire),
+    portfolio_fit: normalizePortfolioFit(normalizedPayload.portfolio_fit, questionnaire),
     reproducibility_manifest: {
       synthesis_model: modelExecution,
       questionnaire_model: null,
@@ -1944,6 +1945,138 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
     raw_packet_json: rawPacketJson,
     prompt,
     persisted,
+  }
+}
+
+function normalizeSynthesisPayloadForPacket(
+  payload: StrategyAuthoringSynthesisPayload,
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringSynthesisPayload {
+  const assumptions = [...payload.assumptions.items]
+  const strategySpec = normalizeStrategySpecForQuestionnaire(payload.strategy_spec, questionnaire, assumptions)
+  const sweepBounds = payload.sweep_bounds
+  const eraCount = Math.max(1, payload.era_benchmark_plan.eras.length)
+  const maxTotalVariants = Math.max(1, Math.round(sweepBounds.max_total_variants))
+  const requiredBenchRuns = maxTotalVariants * eraCount
+  const trialLedgerBudget = {
+    ...payload.trial_ledger_budget,
+    max_variants: Math.max(payload.trial_ledger_budget.max_variants, maxTotalVariants),
+    max_eras: Math.max(payload.trial_ledger_budget.max_eras, eraCount),
+    max_bench_runs: Math.max(payload.trial_ledger_budget.max_bench_runs, requiredBenchRuns),
+  }
+  if (
+    trialLedgerBudget.max_variants !== payload.trial_ledger_budget.max_variants ||
+    trialLedgerBudget.max_eras !== payload.trial_ledger_budget.max_eras ||
+    trialLedgerBudget.max_bench_runs !== payload.trial_ledger_budget.max_bench_runs
+  ) {
+    trialLedgerBudget.rationale = appendServerNormalizationNote(
+      trialLedgerBudget.rationale,
+      `Server raised the trial-ledger budget to cover ${maxTotalVariants} variants across ${eraCount} eras after sectioned Talon synthesis.`,
+    )
+    assumptions.push(serverNormalizationAssumption(
+      "trial_ledger_budget",
+      "Sectioned Talon synthesis produced a sweep/era plan larger than the separately drafted trial budget; the server expanded the budget so validation and compiler accounting stay internally consistent.",
+    ))
+  }
+
+  return {
+    ...payload,
+    assumptions: { items: assumptions },
+    strategy_spec: strategySpec,
+    trial_ledger_budget: trialLedgerBudget,
+    multiple_comparisons_plan: {
+      ...payload.multiple_comparisons_plan,
+      effective_trials_estimate: Math.max(
+        payload.multiple_comparisons_plan.effective_trials_estimate,
+        maxTotalVariants,
+      ),
+    },
+  }
+}
+
+function normalizeStrategySpecForQuestionnaire(
+  strategySpec: StrategyAuthoringSynthesisPayload["strategy_spec"],
+  questionnaire: StrategyAuthoringQuestionnaire,
+  assumptions: StrategyAuthoringSynthesisPayload["assumptions"]["items"],
+): StrategyAuthoringSynthesisPayload["strategy_spec"] {
+  const normalizedSpec = { ...strategySpec }
+  if (normalizedSpec.sleeve !== questionnaire.sleeve) {
+    assumptions.push(serverNormalizationAssumption(
+      "strategy_spec.sleeve",
+      `Talon returned sleeve=${normalizedSpec.sleeve}; the server reset it to the operator-confirmed questionnaire sleeve ${questionnaire.sleeve}.`,
+    ))
+    normalizedSpec.sleeve = questionnaire.sleeve
+  }
+
+  const allowedInputs = questionnaire.allowed_data_inputs.value
+    .map(input => input.trim())
+    .filter(Boolean)
+  if (allowedInputs.length === 0) return normalizedSpec
+
+  const entryRules = normalizedSpec.entry_rules.value
+  const normalizedConditions = entryRules.conditions.map(condition => {
+    const normalizedDataInputId = normalizeEntryConditionDataInputId(condition.data_input_id, allowedInputs)
+    if (normalizedDataInputId === condition.data_input_id) return condition
+    assumptions.push(serverNormalizationAssumption(
+      `strategy_spec.entry_rules.value.conditions.${condition.name}.data_input_id`,
+      `Talon used data_input_id=${condition.data_input_id}, which is not in questionnaire.allowed_data_inputs; the server remapped it to ${normalizedDataInputId} and marked the condition as needing compiler mapping unless it was already unsupported.`,
+    ))
+    return {
+      ...condition,
+      data_input_id: normalizedDataInputId,
+      compiler_support: condition.compiler_support === "SUPPORTED" ? "NEEDS_MAPPING" : condition.compiler_support,
+    }
+  })
+
+  return {
+    ...normalizedSpec,
+    entry_rules: {
+      ...normalizedSpec.entry_rules,
+      value: {
+        ...entryRules,
+        conditions: normalizedConditions,
+      },
+    },
+  }
+}
+
+function normalizeEntryConditionDataInputId(dataInputId: string, allowedInputs: string[]): string {
+  if (allowedInputs.includes(dataInputId)) return dataInputId
+  const normalized = dataInputId.trim().toLowerCase()
+  const aliases: Record<string, string> = {
+    alpaca_equity_daily_ohlcv: "alpaca_equity_ohlcv",
+    price_ohlcv_daily: "alpaca_equity_ohlcv",
+    price_ohlcv: "alpaca_equity_ohlcv",
+    equity_ohlcv: "alpaca_equity_ohlcv",
+    daily_ohlcv: "alpaca_equity_ohlcv",
+  }
+  const alias = aliases[normalized]
+  if (alias && allowedInputs.includes(alias)) return alias
+  const ohlcvFallback = allowedInputs.find(input => input.includes("ohlcv"))
+  if (
+    ohlcvFallback &&
+    /ohlcv|price|volume|momentum|return|moving_average|rsi|volatility|mean_reversion/.test(normalized)
+  ) {
+    return ohlcvFallback
+  }
+  return allowedInputs[0]
+}
+
+function appendServerNormalizationNote(existing: string, note: string): string {
+  const trimmed = existing.trim()
+  return trimmed ? `${trimmed} Server normalization: ${note}` : `Server normalization: ${note}`
+}
+
+function serverNormalizationAssumption(
+  fieldPath: string,
+  assumption: string,
+): StrategyAuthoringSynthesisPayload["assumptions"]["items"][number] {
+  return {
+    field_path: fieldPath,
+    assumption,
+    provenance: scaffoldProvenance("Server-normalized cross-section Talon output after schema-valid section synthesis."),
+    risk_if_wrong: "MEDIUM",
+    resolution_needed: true,
   }
 }
 
@@ -2028,7 +2161,8 @@ function normalizePortfolioFit(
   proposed: PortfolioFit | null | undefined,
   questionnaire: StrategyAuthoringQuestionnaire,
 ): PortfolioFit {
-  if (proposed?.status === "ASSESSED" || proposed?.status === "WAIVED") return proposed
+  if (proposed?.status === "ASSESSED") return proposed
+  if (proposed?.status === "WAIVED" && proposed.marginal_value_notes?.trim()) return proposed
   return {
     status: "PENDING",
     deferred_until: "PAPER_PROMOTION",

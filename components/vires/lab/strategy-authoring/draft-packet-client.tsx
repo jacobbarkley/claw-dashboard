@@ -59,6 +59,22 @@ type WrappedKey =
   | "promotion_bar"
   | "talon_exclusions"
 
+interface PacketValidationIssue {
+  field_path: string
+  severity: "error" | "warn"
+  code: string
+  message: string
+}
+
+interface PacketErrorPayload {
+  error?: string
+  packet?: StrategyAuthoringPacketV1
+  validation_issues?: PacketValidationIssue[]
+  payload?: {
+    validation_issues?: PacketValidationIssue[]
+  }
+}
+
 const WRAPPED_KEYS: WrappedKey[] = [
   "universe_size_band",
   "allowed_data_inputs",
@@ -265,11 +281,8 @@ export function DraftPacketClient({ idea, scope }: DraftPacketClientProps) {
         ...(answers.length > 0 ? { clarification_answers: answers } : {}),
       }),
     })
-    const payload = (await res.json().catch(() => ({}))) as {
-      error?: string
-      packet?: StrategyAuthoringPacketV1
-    }
-    if (!res.ok) throw new Error(payload.error ?? `Create failed (${res.status})`)
+    const payload = (await res.json().catch(() => ({}))) as PacketErrorPayload
+    if (!res.ok) throw new Error(formatPacketError(payload, res.status))
     if (!payload.packet) throw new Error("Server did not return a packet")
     return payload.packet
   }
@@ -377,6 +390,7 @@ export function DraftPacketClient({ idea, scope }: DraftPacketClientProps) {
             borderRadius: 3,
             padding: "8px 12px",
             lineHeight: 1.5,
+            whiteSpace: "pre-wrap",
           }}
         >
           {error}
@@ -780,6 +794,18 @@ function canSubmit(form: FormState): boolean {
     return false
   }
   return true
+}
+
+function formatPacketError(payload: PacketErrorPayload, status: number): string {
+  const base = payload.error ?? `Create failed (${status})`
+  const issues = (payload.payload?.validation_issues ?? payload.validation_issues ?? [])
+    .filter(issue => issue.severity === "error")
+  if (issues.length === 0) return base
+  return [
+    base,
+    ...issues.slice(0, 5).map(issue => `${issue.field_path}: ${issue.message}`),
+    issues.length > 5 ? `${issues.length - 5} more validation issue(s).` : "",
+  ].filter(Boolean).join("\n")
 }
 
 function Header({

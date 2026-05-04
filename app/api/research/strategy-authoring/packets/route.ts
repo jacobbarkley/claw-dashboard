@@ -106,9 +106,19 @@ export async function POST(req: NextRequest) {
       ? (error as { status: number }).status
       : 400
     const payload = (error as { payload?: unknown }).payload
+    const validationIssues = typeof payload === "object" && payload && "validation_issues" in payload
+      ? (payload as { validation_issues?: unknown }).validation_issues
+      : null
+    if (validationIssues) {
+      console.error("[strategy-authoring/packets] request failed validation", {
+        error: error instanceof Error ? error.message : "Invalid strategy authoring packet request",
+        validation_issues: validationIssues,
+      })
+    }
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Invalid strategy authoring packet request",
+        ...(validationIssues ? { validation_issues: validationIssues } : {}),
         debug: {
           route: "POST /api/research/strategy-authoring/packets",
           source_file: "app/api/research/strategy-authoring/packets/route.ts",

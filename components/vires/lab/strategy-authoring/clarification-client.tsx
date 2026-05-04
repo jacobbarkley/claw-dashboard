@@ -117,6 +117,7 @@ export function ClarificationClient({
             borderRadius: 3,
             padding: "8px 12px",
             lineHeight: 1.5,
+            whiteSpace: "pre-wrap",
           }}
         >
           {error}

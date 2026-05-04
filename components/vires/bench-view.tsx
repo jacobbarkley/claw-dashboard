@@ -97,11 +97,13 @@ function BenchHero({
   paperCount,
   promotedCount,
   campaignCount,
+  labRedesign = false,
 }: {
   liveCount: number
   paperCount: number
   promotedCount: number
   campaignCount: number
+  labRedesign?: boolean
 }) {
   const stats = [
     { label: "Live",      value: liveCount },
@@ -116,7 +118,9 @@ function BenchHero({
         What is <span className="t-accent">in production</span> right now.
       </div>
       <div className="t-read" style={{ fontSize: 12, maxWidth: 340 }}>
-        Home shows what is in production right now. Research lives under Campaigns.
+        {labRedesign
+          ? "Home shows what is in production right now. Open the Lab vault for ideas and authoring; Campaigns tracks contenders."
+          : "Home shows what is in production right now. Research lives under Campaigns."}
       </div>
       <div
         style={{
@@ -422,6 +426,7 @@ export function ViresBenchView({
         paperCount={paperCount}
         promotedCount={promotedCount}
         campaignCount={campaignCount}
+        labRedesign={labRedesign}
       />
 
       {labRedesign && <LabPortalVault />}
