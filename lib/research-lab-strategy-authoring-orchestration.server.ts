@@ -4,11 +4,16 @@ import { z } from "zod"
 
 import type {
   AdversarialCheck,
+  ClarificationAnswer,
+  ClarificationProposedDefault,
+  ClarificationQuestion,
+  ClarificationRequest,
   IdeaArtifact,
   ModelExecution,
   PacketCompileResultV1,
   PortfolioFit,
   ScopeTriple,
+  StrategyAuthoringContextPacket,
   StrategyAuthoringDataReadiness,
   StrategyAuthoringPacketV1,
   StrategyAuthoringQuestionnaire,
@@ -61,6 +66,8 @@ export interface CreateStrategyAuthoringPacketWithTalonArgs {
   scope: ScopeTriple
   idea: IdeaArtifact
   questionnaire: StrategyAuthoringQuestionnaire
+  clarificationAnswers?: ClarificationAnswer[]
+  clarificationRequest?: ClarificationRequest | null
   operatorId?: string | null
   revisedFrom?: string | null
   revisionIndex?: number | null
@@ -79,6 +86,28 @@ export interface CreateStrategyAuthoringPacketFromPayloadArgs extends CreateStra
 }
 
 export type StrategyAuthoringSynthesisPayload = z.infer<typeof synthesisPayloadSchema>
+
+export interface CreateStrategyAuthoringClarificationArgs {
+  scope: ScopeTriple
+  idea: IdeaArtifact
+  questionnaire: StrategyAuthoringQuestionnaire
+  clarificationAnswers?: ClarificationAnswer[]
+}
+
+export interface StrategyAuthoringClarificationResult {
+  status: ClarificationRequest["status"]
+  clarification_request: ClarificationRequest
+  context_packet: StrategyAuthoringContextPacket
+  response_id: string | null
+}
+
+interface StrategyAuthoringContextBundle {
+  contextPacket: StrategyAuthoringContextPacket
+  catalog: DataCapabilityCatalogV1
+  lessons: string
+  referenceContext: string
+  failedPacketSummary: string
+}
 
 interface TalonSectionIssue {
   field_path: string
@@ -239,6 +268,69 @@ export const strategyAuthoringQuestionnaireSchema = z.object({
   talon_exclusions: wrappedSchema(z.string()),
   field_presentations: z.record(z.string(), z.enum(["PRESENTED", "HIDDEN", "SUGGESTED", "ACCEPTED"])),
 }) satisfies z.ZodType<StrategyAuthoringQuestionnaire>
+
+const clarificationAnswerSchema = z.object({
+  question_id: z.string().min(1),
+  action: z.enum(["ANSWER", "ACCEPT_DEFAULT", "MARK_UNKNOWN"]),
+  value: z.unknown().optional(),
+  rationale: z.string().nullable().optional(),
+}) satisfies z.ZodType<ClarificationAnswer>
+
+const clarificationRequestSchema = z.object({
+  request_id: z.string().min(1),
+  status: z.enum(["NEEDS_CLARIFICATION", "READY_FOR_SYNTHESIS"]),
+  questions: z.array(z.object({
+    id: z.string().min(1),
+    field_path: z.string().min(1),
+    section_key: z.enum(["assumptions", "era_benchmark_plan", "strategy_spec", "sweep_bounds", "evidence_thresholds", "trial_ledger_budget", "multiple_comparisons_plan", "portfolio_fit"]),
+    question: z.string().min(1),
+    why_it_matters: z.string().min(1),
+    answer_kind: z.enum(["FREE_TEXT", "SINGLE_CHOICE", "MULTI_CHOICE", "NUMBER", "RANGE", "BOOLEAN"]),
+    options: z.array(z.object({
+      label: z.string().min(1),
+      value: z.unknown(),
+      description: z.string().nullable().optional(),
+    })),
+    proposed_default: z.object({
+      value: z.unknown(),
+      rationale: z.string().min(1),
+      provenance_source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
+    }).nullable().optional(),
+    allow_unknown: z.boolean(),
+    severity: z.enum(["HIGH", "MEDIUM", "LOW"]),
+    blocking_policy: z.enum(["BLOCKS_SYNTHESIS", "CAN_USE_DEFAULT", "CAN_PROCEED_UNKNOWN"]),
+  })),
+  can_proceed_without_answers: z.boolean(),
+  missing_context_summary: z.array(z.string()),
+}) satisfies z.ZodType<ClarificationRequest>
+
+const clarificationOptionModelSchema = z.object({
+  label: z.string(),
+  value_json: z.string(),
+  description: z.string(),
+})
+
+const clarificationQuestionModelSchema = z.object({
+  id: z.string(),
+  field_path: z.string(),
+  section_key: z.enum(["assumptions", "era_benchmark_plan", "strategy_spec", "sweep_bounds", "evidence_thresholds", "trial_ledger_budget", "multiple_comparisons_plan", "portfolio_fit"]),
+  question: z.string(),
+  why_it_matters: z.string(),
+  answer_kind: z.enum(["FREE_TEXT", "SINGLE_CHOICE", "MULTI_CHOICE", "NUMBER", "RANGE", "BOOLEAN"]),
+  options: z.array(clarificationOptionModelSchema),
+  has_proposed_default: z.boolean(),
+  proposed_default_value_json: z.string(),
+  proposed_default_rationale: z.string(),
+  proposed_default_provenance_source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
+  allow_unknown: z.boolean(),
+  severity: z.enum(["HIGH", "MEDIUM", "LOW"]),
+  blocking_policy: z.enum(["BLOCKS_SYNTHESIS", "CAN_USE_DEFAULT", "CAN_PROCEED_UNKNOWN"]),
+})
+
+const clarificationModelOutputSchema = z.object({
+  questions: z.array(clarificationQuestionModelSchema),
+  missing_context_summary: z.array(z.string()),
+})
 
 const assumptionItemSchema = z.object({
   field_path: z.string().min(1),
@@ -556,6 +648,16 @@ export function parseStrategyAuthoringQuestionnaire(input: unknown): StrategyAut
   return strategyAuthoringQuestionnaireSchema.parse(input)
 }
 
+export function parseClarificationAnswers(input: unknown): ClarificationAnswer[] {
+  if (input == null) return []
+  return z.array(clarificationAnswerSchema).parse(input)
+}
+
+export function parseClarificationRequest(input: unknown): ClarificationRequest | null {
+  if (input == null) return null
+  return clarificationRequestSchema.parse(input)
+}
+
 export function parseStrategyAuthoringSynthesisPayload(rawPacketJson: string): StrategyAuthoringSynthesisPayload {
   return parseStrategyAuthoringSynthesisObject(JSON.parse(rawPacketJson))
 }
@@ -577,10 +679,29 @@ export function parseStrategyAuthoringSynthesisObject(input: unknown): StrategyA
   })
 }
 
+export async function createStrategyAuthoringClarification({
+  scope,
+  idea,
+  questionnaire,
+  clarificationAnswers = [],
+}: CreateStrategyAuthoringClarificationArgs): Promise<StrategyAuthoringClarificationResult> {
+  if (idea.sleeve !== questionnaire.sleeve) {
+    throw new Error(`Questionnaire sleeve ${questionnaire.sleeve} does not match idea sleeve ${idea.sleeve}.`)
+  }
+  const context = await loadStrategyAuthoringContext({ scope, idea, questionnaire })
+  return createStrategyAuthoringClarificationFromContext({
+    context,
+    clarificationAnswers,
+    model: process.env.TALON_PACKET_CLARIFICATION_MODEL ?? process.env.TALON_PACKET_SYNTHESIS_MODEL ?? DEFAULT_MODEL,
+  })
+}
+
 export async function createStrategyAuthoringPacketWithTalon({
   scope,
   idea,
   questionnaire,
+  clarificationAnswers = [],
+  clarificationRequest = null,
   operatorId = "jacob",
   revisedFrom = null,
   revisionIndex = null,
@@ -591,21 +712,24 @@ export async function createStrategyAuthoringPacketWithTalon({
     throw new Error(`Questionnaire sleeve ${questionnaire.sleeve} does not match idea sleeve ${idea.sleeve}.`)
   }
 
-  const [catalog, lessons, referenceContext, failedPacketSummary] = await Promise.all([
-    loadDataCapabilityCatalog(),
-    formatTalonLessonsForPrompt(),
-    formatReferenceStrategiesForPrompt(idea.reference_strategies),
-    loadFailedPacketSummary(scope, questionnaire.edge_family),
-  ])
-
+  const context = await loadStrategyAuthoringContext({ scope, idea, questionnaire })
   const model = process.env.TALON_PACKET_SYNTHESIS_MODEL ?? DEFAULT_MODEL
+  const activeClarification = clarificationRequest ?? (await createStrategyAuthoringClarificationFromContext({
+    context,
+    clarificationAnswers,
+    model: process.env.TALON_PACKET_CLARIFICATION_MODEL ?? model,
+  })).clarification_request
+  assertClarificationReadyForSynthesis(activeClarification, clarificationAnswers)
   const prompt = buildPacketSynthesisPrompt({
     idea,
     questionnaire,
-    catalog,
-    lessons,
-    referenceContext,
-    failedPacketSummary,
+    catalog: context.catalog,
+    lessons: context.lessons,
+    referenceContext: context.referenceContext,
+    failedPacketSummary: context.failedPacketSummary,
+    contextPacket: context.contextPacket,
+    clarificationRequest: activeClarification,
+    clarificationAnswers,
   })
   const started = Date.now()
   const staged = await synthesizePacketPayloadInSections({ model, prompt, idea, questionnaire })
@@ -634,12 +758,392 @@ export async function createStrategyAuthoringPacketWithTalon({
     revisionIndex,
     ledgerConsumption,
     persist,
-    catalog,
+    catalog: context.catalog,
     modelExecution,
     rawPacketJson: staged.rawPacketJson,
     prompt,
     payload: staged.payload,
   })
+}
+
+async function createStrategyAuthoringClarificationFromContext({
+  context,
+  clarificationAnswers,
+  model,
+}: {
+  context: StrategyAuthoringContextBundle
+  clarificationAnswers: ClarificationAnswer[]
+  model: string
+}): Promise<StrategyAuthoringClarificationResult> {
+  const result = await generateText({
+    model: anthropic(model),
+    output: Output.object({
+      name: "TalonStrategyAuthoringClarification",
+      description: "Targeted questions Talon must ask before strategy packet synthesis.",
+      schema: clarificationModelOutputSchema,
+    }),
+    temperature: DEFAULT_TEMPERATURE,
+    prompt: buildClarificationPrompt(context.contextPacket, clarificationAnswers),
+  })
+
+  const questions = mergeClarificationQuestions(
+    deterministicClarificationQuestions(context.contextPacket),
+    normalizeClarificationQuestions(result.output.questions),
+  )
+  const request = finalizeClarificationRequest({
+    requestId: clarificationRequestId(context.contextPacket),
+    questions,
+    answers: clarificationAnswers,
+    missingContextSummary: normalizeMissingContextSummary(
+      result.output.missing_context_summary,
+      context.contextPacket.missing_context_candidates,
+    ),
+  })
+
+  return {
+    status: request.status,
+    clarification_request: request,
+    context_packet: context.contextPacket,
+    response_id: responseIdFromResult(result),
+  }
+}
+
+async function loadStrategyAuthoringContext({
+  scope,
+  idea,
+  questionnaire,
+}: {
+  scope: ScopeTriple
+  idea: IdeaArtifact
+  questionnaire: StrategyAuthoringQuestionnaire
+}): Promise<StrategyAuthoringContextBundle> {
+  const [catalog, lessons, referenceContext, failedPacketSummary] = await Promise.all([
+    loadDataCapabilityCatalog(),
+    formatTalonLessonsForPrompt(),
+    formatReferenceStrategiesForPrompt(idea.reference_strategies),
+    loadFailedPacketSummary(scope, questionnaire.edge_family),
+  ])
+  const contextPacket: StrategyAuthoringContextPacket = {
+    schema_version: "research_lab.strategy_authoring_context_packet.v1",
+    generated_at: new Date().toISOString(),
+    idea: {
+      idea_id: idea.idea_id,
+      title: idea.title,
+      thesis: idea.thesis,
+      sleeve: idea.sleeve,
+      tags: idea.tags ?? [],
+      reference_strategies: idea.reference_strategies ?? [],
+      created_by: idea.created_by,
+    },
+    questionnaire,
+    data_catalog: catalog.capabilities.map(capability => ({
+      capability_id: capability.capability_id,
+      display_name: capability.display_name,
+      category: capability.category,
+      status: capability.status,
+      sleeves: capability.sleeves,
+      notes: capability.notes ?? null,
+    })),
+    talon_lessons: lessons || "Durable Talon lessons: none.",
+    reference_context: referenceContext,
+    failed_packet_summary: failedPacketSummary,
+    missing_context_candidates: deterministicMissingContextCandidates(questionnaire),
+  }
+  return { contextPacket, catalog, lessons, referenceContext, failedPacketSummary }
+}
+
+function buildClarificationPrompt(
+  contextPacket: StrategyAuthoringContextPacket,
+  clarificationAnswers: ClarificationAnswer[],
+): string {
+  return [
+    "You are Talon, Vires Capital's governed strategy-authoring agent.",
+    "Before drafting a StrategyAuthoringPacketV1, ask only the missing high-impact questions needed to prevent hallucinated strategy details.",
+    "",
+    "Rules:",
+    "- Ask at most 8 questions.",
+    "- Prefer no question when the questionnaire, references, data catalog, or prior lessons already answer it.",
+    "- Use BLOCKS_SYNTHESIS only when drafting would require inventing a core thesis, universe, benchmark, data source, or validation gate.",
+    "- Use CAN_USE_DEFAULT when a visible tunable default is honest and safe for a first draft.",
+    "- Use CAN_PROCEED_UNKNOWN when the unknown can be carried as an explicit assumption without degrading the draft.",
+    "- Do not ask for data sources that are not in the context packet data_catalog.",
+    "- For value_json fields, return valid JSON. Strings must be quoted JSON strings.",
+    "- If there is no proposed default, set has_proposed_default=false, proposed_default_value_json=null, and proposed_default_rationale='No safe default.'.",
+    "",
+    "Existing clarification answers:",
+    JSON.stringify(clarificationAnswers, null, 2),
+    "",
+    "Strategy authoring context packet:",
+    JSON.stringify(contextPacket, null, 2),
+  ].join("\n")
+}
+
+function normalizeClarificationQuestions(
+  questions: z.infer<typeof clarificationQuestionModelSchema>[],
+): ClarificationQuestion[] {
+  return questions
+    .slice(0, 8)
+    .map((question, index) => {
+      const id = safeClarificationId(question.id, index)
+      const proposedDefault = normalizeProposedDefault(question)
+      return {
+        id,
+        field_path: normalizeRequiredText(question.field_path, `clarification.${id}`),
+        section_key: question.section_key,
+        question: normalizeRequiredText(question.question, "What information should Talon clarify?"),
+        why_it_matters: normalizeRequiredText(question.why_it_matters, "This affects whether Talon can draft without inventing important strategy details."),
+        answer_kind: question.answer_kind,
+        options: question.options.map(option => ({
+          label: normalizeRequiredText(option.label, "Option"),
+          value: parseJsonOrString(option.value_json),
+          description: option.description.trim() || null,
+        })),
+        proposed_default: proposedDefault,
+        allow_unknown: question.allow_unknown,
+        severity: question.severity,
+        blocking_policy: question.blocking_policy,
+      }
+    })
+}
+
+function mergeClarificationQuestions(
+  deterministicQuestions: ClarificationQuestion[],
+  modelQuestions: ClarificationQuestion[],
+): ClarificationQuestion[] {
+  const seen = new Set<string>()
+  return [...deterministicQuestions, ...modelQuestions]
+    .filter(question => {
+      const key = `${question.field_path}:${question.question.toLowerCase()}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 8)
+}
+
+function deterministicClarificationQuestions(
+  contextPacket: StrategyAuthoringContextPacket,
+): ClarificationQuestion[] {
+  const questionnaire = contextPacket.questionnaire
+  const questions: ClarificationQuestion[] = []
+  if (questionnaire.allowed_data_inputs.value.length === 0) {
+    questions.push({
+      id: "clarify_required_data_inputs",
+      field_path: "questionnaire.allowed_data_inputs",
+      section_key: "strategy_spec",
+      question: "Which approved data inputs may Talon use for this strategy?",
+      why_it_matters: "Talon cannot draft entry rules or validation requirements without a real data source from the catalog.",
+      answer_kind: "MULTI_CHOICE",
+      options: contextPacket.data_catalog
+        .filter(capability => capability.sleeves.includes(questionnaire.sleeve))
+        .map(capability => ({
+          label: capability.display_name,
+          value: capability.capability_id,
+          description: capability.notes ?? null,
+        })),
+      proposed_default: null,
+      allow_unknown: false,
+      severity: "HIGH",
+      blocking_policy: "BLOCKS_SYNTHESIS",
+    })
+  }
+  if (
+    questionnaire.strategy_relationship.relationship === "REPLACE"
+    && !questionnaire.strategy_relationship.target_strategy_id
+  ) {
+    questions.push({
+      id: "clarify_replacement_target",
+      field_path: "questionnaire.strategy_relationship.target_strategy_id",
+      section_key: "portfolio_fit",
+      question: "Which existing strategy is this intended to replace?",
+      why_it_matters: "Replacement requires a higher evidence bar and a direct portfolio-fit comparison against the incumbent strategy.",
+      answer_kind: "FREE_TEXT",
+      options: [],
+      proposed_default: null,
+      allow_unknown: false,
+      severity: "HIGH",
+      blocking_policy: "BLOCKS_SYNTHESIS",
+    })
+  }
+  if (questionnaire.edge_family === "UNSURE") {
+    questions.push({
+      id: "clarify_edge_family",
+      field_path: "questionnaire.edge_family",
+      section_key: "strategy_spec",
+      question: "Which edge family best describes the pattern, or should Talon classify it from the thesis?",
+      why_it_matters: "The edge family changes entry confirmation, benchmark choice, and which prior failures Talon should study.",
+      answer_kind: "SINGLE_CHOICE",
+      options: ["MOMENTUM", "REVERSION", "BREAKOUT", "CATALYST", "SENTIMENT", "VOLATILITY", "HEDGE", "Talon classifies from thesis"].map(value => ({
+        label: value,
+        value,
+        description: null,
+      })),
+      proposed_default: {
+        value: "Talon classifies from thesis",
+        rationale: "Classification can be carried as a visible Talon inference when the operator is unsure.",
+        provenance_source: "TALON_INFERENCE",
+      },
+      allow_unknown: true,
+      severity: "MEDIUM",
+      blocking_policy: "CAN_USE_DEFAULT",
+    })
+  }
+  if (questionnaire.universe_shape === "TALON_PROPOSES" && fixedUniverseSymbols(questionnaire).length === 0) {
+    questions.push({
+      id: "clarify_universe_proposal",
+      field_path: "strategy_spec.universe",
+      section_key: "strategy_spec",
+      question: "Should Talon propose a dynamic universe screen, or do you want to provide specific symbols?",
+      why_it_matters: "Universe construction drives survivorship-bias risk, data coverage, trade count, and benchmark fairness.",
+      answer_kind: "FREE_TEXT",
+      options: [],
+      proposed_default: {
+        value: "Talon proposes a dynamic screen constrained to catalog-supported data and marks it TENTATIVE.",
+        rationale: "The operator delegated universe selection to Talon; the safest default is a tentative dynamic screen, not hidden symbol invention.",
+        provenance_source: "TALON_INFERENCE",
+      },
+      allow_unknown: true,
+      severity: "MEDIUM",
+      blocking_policy: "CAN_USE_DEFAULT",
+    })
+  }
+  return questions
+}
+
+function finalizeClarificationRequest({
+  requestId,
+  questions,
+  answers,
+  missingContextSummary,
+}: {
+  requestId: string
+  questions: ClarificationQuestion[]
+  answers: ClarificationAnswer[]
+  missingContextSummary: string[]
+}): ClarificationRequest {
+  const unresolvedBlocking = questions.filter(question => (
+    question.blocking_policy === "BLOCKS_SYNTHESIS"
+    && !isClarificationQuestionResolved(question, answers)
+  ))
+  return {
+    request_id: requestId,
+    status: unresolvedBlocking.length > 0 ? "NEEDS_CLARIFICATION" : "READY_FOR_SYNTHESIS",
+    questions,
+    can_proceed_without_answers: questions.every(question => question.blocking_policy !== "BLOCKS_SYNTHESIS"),
+    missing_context_summary: missingContextSummary,
+  }
+}
+
+function assertClarificationReadyForSynthesis(
+  request: ClarificationRequest,
+  answers: ClarificationAnswer[],
+) {
+  const unresolved = request.questions.filter(question => (
+    question.blocking_policy === "BLOCKS_SYNTHESIS"
+    && !isClarificationQuestionResolved(question, answers)
+  ))
+  if (unresolved.length === 0) return
+
+  throw Object.assign(new Error("Talon needs clarification before strategy packet synthesis."), {
+    status: 409,
+    payload: {
+      error_code: "TALON_CLARIFICATION_REQUIRED",
+      route: "POST /api/research/strategy-authoring/packets",
+      source_file: "lib/research-lab-strategy-authoring-orchestration.server.ts",
+      source_function: "assertClarificationReadyForSynthesis",
+      clarification_request: {
+        ...request,
+        status: "NEEDS_CLARIFICATION",
+      },
+      unresolved_question_ids: unresolved.map(question => question.id),
+      operator_hint: "Answer blocking questions or accept a proposed default before drafting the packet.",
+    },
+  })
+}
+
+function isClarificationQuestionResolved(
+  question: ClarificationQuestion,
+  answers: ClarificationAnswer[],
+): boolean {
+  const answer = answers.find(candidate => candidate.question_id === question.id)
+  if (!answer) return false
+  if (answer.action === "ANSWER") return answer.value != null && String(answer.value).trim() !== ""
+  if (answer.action === "ACCEPT_DEFAULT") return question.proposed_default != null
+  if (answer.action === "MARK_UNKNOWN") return question.allow_unknown && question.blocking_policy !== "BLOCKS_SYNTHESIS"
+  return false
+}
+
+function normalizeProposedDefault(
+  question: z.infer<typeof clarificationQuestionModelSchema>,
+): ClarificationProposedDefault | null {
+  if (!question.has_proposed_default) return null
+  return {
+    value: parseJsonOrString(question.proposed_default_value_json),
+    rationale: normalizeRequiredText(question.proposed_default_rationale, "Talon proposed this as a tunable default for operator review."),
+    provenance_source: question.proposed_default_provenance_source,
+  }
+}
+
+function parseJsonOrString(value: string): unknown {
+  const trimmed = value.trim()
+  if (!trimmed) return ""
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    return trimmed
+  }
+}
+
+function normalizeMissingContextSummary(modelSummary: string[], deterministicSummary: string[]): string[] {
+  return [...modelSummary, ...deterministicSummary]
+    .map(item => item.trim())
+    .filter((item, index, items) => item && items.indexOf(item) === index)
+    .slice(0, 12)
+}
+
+function deterministicMissingContextCandidates(questionnaire: StrategyAuthoringQuestionnaire): string[] {
+  const gaps: string[] = []
+  if (questionnaire.edge_family === "UNSURE") gaps.push("Edge family is UNSURE; Talon should classify it or ask the operator before drafting entry logic.")
+  if (questionnaire.universe_shape === "TALON_PROPOSES" && fixedUniverseSymbols(questionnaire).length === 0) {
+    gaps.push("Universe is delegated to Talon; Talon must ask or propose a visible default instead of inventing unsupported symbols.")
+  }
+  if (questionnaire.allowed_data_inputs.value.length === 0) {
+    gaps.push("No allowed data inputs were selected; synthesis must block until data sources are chosen.")
+  }
+  if (questionnaire.strategy_relationship.relationship === "REPLACE" && !questionnaire.strategy_relationship.target_strategy_id) {
+    gaps.push("Replacement intent requires a target strategy id so portfolio-fit and evidence bars can be raised.")
+  }
+  if (!questionnaire.kill_criteria_user.trim()) {
+    gaps.push("Kill criteria are empty; Talon needs a failure condition before setting promotion thresholds.")
+  }
+  return gaps
+}
+
+function clarificationRequestId(contextPacket: StrategyAuthoringContextPacket): string {
+  return `clarify_${simpleHash(JSON.stringify({
+    idea_id: contextPacket.idea.idea_id,
+    questionnaire: contextPacket.questionnaire,
+    missing_context_candidates: contextPacket.missing_context_candidates,
+  }))}`
+}
+
+function simpleHash(value: string): string {
+  let hash = 0x811c9dc5
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0")
+}
+
+function safeClarificationId(value: string, index: number): string {
+  const slug = slugify(value || `question_${index + 1}`)
+  return `clarify_${String(index + 1).padStart(2, "0")}_${slug}`.slice(0, 80)
+}
+
+function normalizeRequiredText(value: string, fallback: string): string {
+  const trimmed = value.trim()
+  return trimmed || fallback
 }
 
 async function synthesizePacketPayloadInSections({
@@ -1549,6 +2053,9 @@ function buildPacketSynthesisPrompt({
   lessons,
   referenceContext,
   failedPacketSummary,
+  contextPacket,
+  clarificationRequest,
+  clarificationAnswers,
 }: {
   idea: IdeaArtifact
   questionnaire: StrategyAuthoringQuestionnaire
@@ -1556,6 +2063,9 @@ function buildPacketSynthesisPrompt({
   lessons: string
   referenceContext: string
   failedPacketSummary: string
+  contextPacket: StrategyAuthoringContextPacket
+  clarificationRequest: ClarificationRequest
+  clarificationAnswers: ClarificationAnswer[]
 }): string {
   return [
     "You are Talon, Vires Capital's governed strategy-authoring agent.",
@@ -1569,6 +2079,8 @@ function buildPacketSynthesisPrompt({
     "- Ask through assumptions/unknowns by setting resolution_needed=true when a missing answer materially changes the strategy.",
     "- Keep sweep bounds tight. The trial budget must be internally consistent.",
     "- Respect post-mortem lessons from failed packets in the same edge family.",
+    "- Use clarification answers as operator-confirmed context. If the operator accepted a default, keep that provenance visible as a tunable default.",
+    "- If a clarification was marked unknown and the blocking policy allows it, carry it as an assumption rather than inventing a hidden fact.",
     "- Counts, days, position limits, variants, and trial budgets must be positive integers. Percentages, costs, multipliers, and thresholds must be non-negative numbers unless the field is nullable.",
     "- Omit optional nullable fields when they do not apply; do not spoof values just to fill blanks.",
     "",
@@ -1598,6 +2110,12 @@ function buildPacketSynthesisPrompt({
     }, null, 2)}`,
     "",
     `Questionnaire:\n${JSON.stringify(questionnaire, null, 2)}`,
+    "",
+    `Clarification request:\n${JSON.stringify(clarificationRequest, null, 2)}`,
+    "",
+    `Clarification answers:\n${JSON.stringify(clarificationAnswers, null, 2)}`,
+    "",
+    `Strategy authoring context packet:\n${JSON.stringify(contextPacket, null, 2)}`,
     "",
     `Available data catalog:\n${JSON.stringify(catalog.capabilities.map(capability => ({
       capability_id: capability.capability_id,

@@ -12,6 +12,8 @@ import {
 } from "@/lib/research-lab-strategy-authoring.server"
 import {
   createStrategyAuthoringPacketWithTalon,
+  parseClarificationAnswers,
+  parseClarificationRequest,
   parseStrategyAuthoringQuestionnaire,
 } from "@/lib/research-lab-strategy-authoring-orchestration.server"
 
@@ -33,6 +35,8 @@ interface PacketPostBody {
   operator_id?: unknown
   revised_from?: unknown
   revision_index?: unknown
+  clarification_answers?: unknown
+  clarification_request?: unknown
   dry_run?: unknown
 }
 
@@ -74,10 +78,13 @@ export async function POST(req: NextRequest) {
     }
 
     const questionnaire = parseStrategyAuthoringQuestionnaire(body.questionnaire)
+    const clarificationAnswers = parseClarificationAnswers(body.clarification_answers)
     const result = await createStrategyAuthoringPacketWithTalon({
       scope,
       idea,
       questionnaire,
+      clarificationAnswers,
+      clarificationRequest: parseClarificationRequest(body.clarification_request),
       operatorId: optionalString(body.operator_id) ?? idea.created_by ?? "jacob",
       revisedFrom: optionalString(body.revised_from),
       revisionIndex: normalizeRevisionIndex(body.revision_index),

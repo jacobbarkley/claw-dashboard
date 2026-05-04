@@ -569,6 +569,20 @@ export type PacketCompileReasonCode =
   | "CUSTOM_MAPPING_REQUIRED"
   | "INVALID_PACKET"
   | "APPROVAL_REQUIRED"
+export type StrategyAuthoringSectionKey =
+  | "assumptions"
+  | "era_benchmark_plan"
+  | "strategy_spec"
+  | "sweep_bounds"
+  | "evidence_thresholds"
+  | "trial_ledger_budget"
+  | "multiple_comparisons_plan"
+  | "portfolio_fit"
+export type ClarificationRequestStatus = "NEEDS_CLARIFICATION" | "READY_FOR_SYNTHESIS"
+export type ClarificationSeverity = "HIGH" | "MEDIUM" | "LOW"
+export type ClarificationAnswerKind = "FREE_TEXT" | "SINGLE_CHOICE" | "MULTI_CHOICE" | "NUMBER" | "RANGE" | "BOOLEAN"
+export type ClarificationBlockingPolicy = "BLOCKS_SYNTHESIS" | "CAN_USE_DEFAULT" | "CAN_PROCEED_UNKNOWN"
+export type ClarificationAnswerAction = "ANSWER" | "ACCEPT_DEFAULT" | "MARK_UNKNOWN"
 
 export interface AuthoringProvenance {
   source: ProvenanceSource
@@ -623,6 +637,74 @@ export interface StrategyAuthoringQuestionnaire {
   promotion_bar: ProvenanceWrapped<string>
   talon_exclusions: ProvenanceWrapped<string>
   field_presentations: Record<string, FieldPresentation>
+}
+
+export interface StrategyAuthoringContextPacket {
+  schema_version: "research_lab.strategy_authoring_context_packet.v1"
+  generated_at: string
+  idea: {
+    idea_id: string
+    title: string
+    thesis: string
+    sleeve: ResearchSleeve
+    tags: string[]
+    reference_strategies: ReferenceStrategy[]
+    created_by: string
+  }
+  questionnaire: StrategyAuthoringQuestionnaire
+  data_catalog: Array<{
+    capability_id: string
+    display_name: string
+    category: string
+    status: string
+    sleeves: ResearchSleeve[]
+    notes?: string | null
+  }>
+  talon_lessons: string
+  reference_context: string
+  failed_packet_summary: string
+  missing_context_candidates: string[]
+}
+
+export interface ClarificationOption {
+  label: string
+  value: unknown
+  description?: string | null
+}
+
+export interface ClarificationProposedDefault {
+  value: unknown
+  rationale: string
+  provenance_source: ProvenanceSource
+}
+
+export interface ClarificationQuestion {
+  id: string
+  field_path: string
+  section_key: StrategyAuthoringSectionKey
+  question: string
+  why_it_matters: string
+  answer_kind: ClarificationAnswerKind
+  options: ClarificationOption[]
+  proposed_default?: ClarificationProposedDefault | null
+  allow_unknown: boolean
+  severity: ClarificationSeverity
+  blocking_policy: ClarificationBlockingPolicy
+}
+
+export interface ClarificationRequest {
+  request_id: string
+  status: ClarificationRequestStatus
+  questions: ClarificationQuestion[]
+  can_proceed_without_answers: boolean
+  missing_context_summary: string[]
+}
+
+export interface ClarificationAnswer {
+  question_id: string
+  action: ClarificationAnswerAction
+  value?: unknown
+  rationale?: string | null
 }
 
 export interface AssumptionItem {
