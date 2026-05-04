@@ -1,5 +1,6 @@
 import { anthropic } from "@ai-sdk/anthropic"
-import { generateText, Output } from "ai"
+import { generateText, jsonSchema, Output, zodSchema } from "ai"
+import type { JSONSchema7 } from "json-schema"
 import { z } from "zod"
 
 import type {
@@ -77,6 +78,20 @@ export interface CreateStrategyAuthoringPacketFromPayloadArgs extends CreateStra
 }
 
 export type StrategyAuthoringSynthesisPayload = z.infer<typeof synthesisPayloadSchema>
+
+const PROVIDER_UNSUPPORTED_JSON_SCHEMA_KEYS = new Set([
+  "exclusiveMaximum",
+  "exclusiveMinimum",
+  "format",
+  "maxItems",
+  "maxLength",
+  "maximum",
+  "minItems",
+  "minLength",
+  "minimum",
+  "multipleOf",
+  "pattern",
+])
 
 const provenanceSchema = z.object({
   source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
@@ -312,12 +327,33 @@ const synthesisPayloadSchema = z.object({
   portfolio_fit: portfolioFitSchema.nullable().optional(),
 })
 
+const talonSynthesisProviderSchema = jsonSchema<StrategyAuthoringSynthesisPayload>(
+  async () => sanitizeProviderJsonSchema(await zodSchema(synthesisPayloadSchema).jsonSchema),
+)
+
 export function parseStrategyAuthoringQuestionnaire(input: unknown): StrategyAuthoringQuestionnaire {
   return strategyAuthoringQuestionnaireSchema.parse(input)
 }
 
 export function parseStrategyAuthoringSynthesisPayload(rawPacketJson: string): StrategyAuthoringSynthesisPayload {
-  return synthesisPayloadSchema.parse(JSON.parse(rawPacketJson))
+  return parseStrategyAuthoringSynthesisObject(JSON.parse(rawPacketJson))
+}
+
+export function parseStrategyAuthoringSynthesisObject(input: unknown): StrategyAuthoringSynthesisPayload {
+  const parsed = synthesisPayloadSchema.safeParse(input)
+  if (parsed.success) return parsed.data
+  const error = new Error("Talon packet synthesis did not match the StrategyAuthoringPacketV1 synthesis contract.")
+  throw Object.assign(error, {
+    status: 422,
+    payload: {
+      validation_issues: parsed.error.issues.map(issue => ({
+        field_path: issue.path.join(".") || "packet",
+        severity: "error",
+        code: "TALON_SYNTHESIS_SCHEMA",
+        message: issue.message,
+      })),
+    },
+  })
 }
 
 export async function createStrategyAuthoringPacketWithTalon({
@@ -356,12 +392,12 @@ export async function createStrategyAuthoringPacketWithTalon({
     output: Output.object({
       name: "StrategyAuthoringSynthesisPayload",
       description: "Research-authored sections of a StrategyAuthoringPacketV1. Server-owned governance fields are intentionally excluded.",
-      schema: synthesisPayloadSchema,
+      schema: talonSynthesisProviderSchema,
     }),
     temperature: DEFAULT_TEMPERATURE,
     prompt,
   })
-  const payload = result.output
+  const payload = parseStrategyAuthoringSynthesisObject(result.output)
   const rawPacketJson = JSON.stringify(payload, null, 2)
   const modelExecution: ModelExecution = {
     required_capabilities: {
@@ -620,6 +656,7 @@ function buildPacketSynthesisPrompt({
     "- Ask through assumptions/unknowns by setting resolution_needed=true when a missing answer materially changes the strategy.",
     "- Keep sweep bounds tight. The trial budget must be internally consistent.",
     "- Respect post-mortem lessons from failed packets in the same edge family.",
+    "- Counts, days, position limits, variants, and trial budgets must be positive integers. Percentages, costs, multipliers, and thresholds must be non-negative numbers unless the field is nullable.",
     "",
     "Return the structured object required by the provided schema with these top-level keys:",
     "assumptions, era_benchmark_plan, strategy_spec, sweep_bounds, evidence_thresholds, trial_ledger_budget, multiple_comparisons_plan, portfolio_fit.",
@@ -686,6 +723,38 @@ async function loadFailedPacketSummary(scope: ScopeTriple, edgeFamily: StrategyA
   return failed.length
     ? `Recent failed packets in edge_family=${edgeFamily}:\n${JSON.stringify(failed, null, 2)}`
     : `Recent failed packets in edge_family=${edgeFamily}: none found.`
+}
+
+function sanitizeProviderJsonSchema(schema: JSONSchema7): JSONSchema7 {
+  return sanitizeProviderJsonSchemaValue(schema) as JSONSchema7
+}
+
+function sanitizeProviderJsonSchemaValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(sanitizeProviderJsonSchemaValue)
+  }
+  if (!value || typeof value !== "object") {
+    return value
+  }
+
+  const output: Record<string, unknown> = {}
+  for (const [key, child] of Object.entries(value)) {
+    if (PROVIDER_UNSUPPORTED_JSON_SCHEMA_KEYS.has(key)) continue
+    if (key === "type") {
+      output[key] = sanitizeJsonSchemaType(child)
+      continue
+    }
+    output[key] = sanitizeProviderJsonSchemaValue(child)
+  }
+  return output
+}
+
+function sanitizeJsonSchemaType(value: unknown): unknown {
+  if (value === "integer") return "number"
+  if (!Array.isArray(value)) return value
+
+  const sanitized = value.map(item => item === "integer" ? "number" : item)
+  return [...new Set(sanitized)]
 }
 
 function responseIdFromResult(result: unknown): string | null {
