@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import type { ImplementationPriority, StrategyAuthoringPacketStatus } from "@/lib/research-lab-contracts"
 import {
+  confirmPacketAssumption,
   confirmPacketStrategyId,
   loadPacketLifecycleView,
   transitionPacketStatus,
@@ -38,6 +39,7 @@ interface PacketPatchBody {
   strategy_id?: unknown
   next_status?: unknown
   requested_by?: unknown
+  field_path?: unknown
   implementation_notes?: unknown
   priority?: unknown
 }
@@ -96,6 +98,16 @@ export async function PATCH(
       return NextResponse.json({ ok: true, ...result })
     }
 
+    if (action === "confirm_assumption") {
+      const result = await confirmPacketAssumption({
+        scope,
+        packetId,
+        fieldPath: requiredString(body.field_path, "field_path"),
+        actor,
+      })
+      return NextResponse.json({ ok: true, ...result })
+    }
+
     if (action === "transition_status") {
       const result = await transitionPacketStatus({
         scope,
@@ -109,7 +121,7 @@ export async function PATCH(
     }
 
     return NextResponse.json(
-      { error: "action must be confirm_strategy_id or transition_status" },
+      { error: "action must be confirm_strategy_id, confirm_assumption, or transition_status" },
       { status: 400 },
     )
   } catch (error) {

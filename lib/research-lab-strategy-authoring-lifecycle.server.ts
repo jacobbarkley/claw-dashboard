@@ -38,6 +38,13 @@ export interface ConfirmPacketStrategyIdArgs {
   actor?: string | null
 }
 
+export interface ConfirmPacketAssumptionArgs {
+  scope: ScopeTriple
+  packetId: string
+  fieldPath: string
+  actor?: string | null
+}
+
 export interface TransitionPacketStatusArgs {
   scope: ScopeTriple
   packetId: string
@@ -109,6 +116,58 @@ export async function confirmPacketStrategyId({
     packet: nextPacket,
     scope,
     message: `research lab: confirm strategy authoring slug ${nextPacket.packet_id}`,
+  })
+  return { ...(await viewForPacket(nextPacket, scope)), persisted }
+}
+
+export async function confirmPacketAssumption({
+  scope,
+  packetId,
+  fieldPath,
+  actor = "jacob",
+}: ConfirmPacketAssumptionArgs): Promise<PacketLifecycleMutationResult> {
+  const packet = await requirePacket(packetId, scope)
+  if (packet.status !== "DRAFT" && packet.status !== "REVIEW" && packet.status !== "ADVERSARIAL") {
+    throw httpError(409, `Cannot confirm assumptions while packet is ${packet.status}.`)
+  }
+
+  const targetFieldPath = fieldPath.trim()
+  if (!targetFieldPath) throw httpError(400, "field_path required")
+
+  let matchCount = 0
+  const now = new Date().toISOString()
+  const nextPacket: StrategyAuthoringPacketV1 = {
+    ...packet,
+    updated_at: now,
+    assumptions: {
+      ...packet.assumptions,
+      items: packet.assumptions.items.map(item => {
+        if (item.field_path !== targetFieldPath) return item
+        matchCount += 1
+        return {
+          ...item,
+          provenance: {
+            ...item.provenance,
+            rationale: appendSentence(
+              item.provenance.rationale,
+              `Operator ${actor ?? "jacob"} confirmed this assumption.`,
+            ),
+            operator_confirmed: true,
+          },
+        }
+      }),
+    },
+  }
+
+  if (matchCount === 0) {
+    throw httpError(404, `No packet assumption found for field_path ${targetFieldPath}.`)
+  }
+
+  assertValidForPersist(nextPacket)
+  const persisted = await persistStrategyAuthoringPacket({
+    packet: nextPacket,
+    scope,
+    message: `research lab: confirm strategy authoring assumption ${nextPacket.packet_id}`,
   })
   return { ...(await viewForPacket(nextPacket, scope)), persisted }
 }

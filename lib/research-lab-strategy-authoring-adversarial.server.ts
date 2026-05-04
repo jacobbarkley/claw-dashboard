@@ -11,10 +11,12 @@ import type {
   PacketCompileResultV1,
   ScopeTriple,
   StrategyAuthoringPacketV1,
+  TrialLedgerEntryV1,
 } from "./research-lab-contracts"
 import { compileStrategyAuthoringPacket } from "./research-lab-strategy-authoring-compiler"
 import {
   loadStrategyAuthoringPacket,
+  loadTrialLedgerEntriesForPacket,
   persistStrategyAuthoringPacket,
 } from "./research-lab-strategy-authoring.server"
 import {
@@ -73,6 +75,7 @@ export interface BlindAdversarialReviewResult {
   packet: StrategyAuthoringPacketV1
   compile_result: PacketCompileResultV1
   validation_issues: StrategyAuthoringValidationIssue[]
+  trial_ledger_entries: TrialLedgerEntryV1[]
   raw_review_json: string
   prompt: string
   persisted?: Awaited<ReturnType<typeof persistStrategyAuthoringPacket>> | null
@@ -142,6 +145,7 @@ export async function runBlindAdversarialReview({
     packet: nextPacket,
     compile_result: compileStrategyAuthoringPacket(nextPacket),
     validation_issues: validationIssues,
+    trial_ledger_entries: await loadTrialLedgerEntriesForPacket(nextPacket.packet_id, scope),
     raw_review_json: rawReviewJson,
     prompt,
     persisted,
