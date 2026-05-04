@@ -312,10 +312,6 @@ const synthesisPayloadSchema = z.object({
   portfolio_fit: portfolioFitSchema.nullable().optional(),
 })
 
-const synthesisEnvelopeSchema = z.object({
-  packet_json: z.string().min(1),
-})
-
 export function parseStrategyAuthoringQuestionnaire(input: unknown): StrategyAuthoringQuestionnaire {
   return strategyAuthoringQuestionnaireSchema.parse(input)
 }
@@ -357,12 +353,16 @@ export async function createStrategyAuthoringPacketWithTalon({
   const started = Date.now()
   const result = await generateText({
     model: anthropic(model),
-    output: Output.object({ schema: synthesisEnvelopeSchema }),
+    output: Output.object({
+      name: "StrategyAuthoringSynthesisPayload",
+      description: "Research-authored sections of a StrategyAuthoringPacketV1. Server-owned governance fields are intentionally excluded.",
+      schema: synthesisPayloadSchema,
+    }),
     temperature: DEFAULT_TEMPERATURE,
     prompt,
   })
-  const rawPacketJson = result.output.packet_json
-  const payload = parseStrategyAuthoringSynthesisPayload(rawPacketJson)
+  const payload = result.output
+  const rawPacketJson = JSON.stringify(payload, null, 2)
   const modelExecution: ModelExecution = {
     required_capabilities: {
       min_context_window_tokens: 64000,
@@ -621,10 +621,10 @@ function buildPacketSynthesisPrompt({
     "- Keep sweep bounds tight. The trial budget must be internally consistent.",
     "- Respect post-mortem lessons from failed packets in the same edge family.",
     "",
-    "Return only an object with packet_json. packet_json must be a JSON string with these top-level keys:",
+    "Return the structured object required by the provided schema with these top-level keys:",
     "assumptions, era_benchmark_plan, strategy_spec, sweep_bounds, evidence_thresholds, trial_ledger_budget, multiple_comparisons_plan, portfolio_fit.",
     "",
-    "Required packet_json shape summary:",
+    "Required output shape summary:",
     "- Every ProvenanceWrapped field is { value, provenance }, where provenance is { source, confidence, rationale, source_artifact_id, operator_confirmed }.",
     "- assumptions.items[]: { field_path, assumption, provenance, risk_if_wrong: LOW|MEDIUM|HIGH, resolution_needed }.",
     "- era_benchmark_plan: { benchmark_id, benchmark_rationale, eras[], era_weighting_method }; each era has { era_id, label, start_date, end_date, regime_tags, rationale }.",
