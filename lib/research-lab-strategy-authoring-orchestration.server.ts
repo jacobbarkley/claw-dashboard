@@ -1,6 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic"
-import { generateText, jsonSchema, Output, zodSchema } from "ai"
-import type { JSONSchema7 } from "json-schema"
+import { generateText, Output } from "ai"
 import { z } from "zod"
 
 import type {
@@ -46,6 +45,8 @@ const TALON_ORCHESTRATOR_VERSION = "research_lab.talon_packet_orchestrator.v1"
 const DEFAULT_MODEL = "claude-sonnet-4-6"
 const DEFAULT_TEMPERATURE = 0.2
 const FAILED_PACKET_CONTEXT_LIMIT = 10
+const TALON_SECTION_ATTEMPTS = 2
+const TALON_SECTION_CONCURRENCY = 2
 
 export interface TalonPacketSynthesisResult {
   packet: StrategyAuthoringPacketV1
@@ -78,32 +79,6 @@ export interface CreateStrategyAuthoringPacketFromPayloadArgs extends CreateStra
 }
 
 export type StrategyAuthoringSynthesisPayload = z.infer<typeof synthesisPayloadSchema>
-
-const PROVIDER_UNSUPPORTED_JSON_SCHEMA_KEYS = new Set([
-  "contains",
-  "dependentRequired",
-  "dependentSchemas",
-  "dependencies",
-  "exclusiveMaximum",
-  "exclusiveMinimum",
-  "format",
-  "maxContains",
-  "maxItems",
-  "maxLength",
-  "maxProperties",
-  "maximum",
-  "minContains",
-  "minItems",
-  "minLength",
-  "minProperties",
-  "minimum",
-  "multipleOf",
-  "pattern",
-  "patternProperties",
-  "propertyNames",
-  "unevaluatedItems",
-  "unevaluatedProperties",
-])
 
 const provenanceSchema = z.object({
   source: z.enum(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"]),
@@ -286,62 +261,168 @@ const portfolioFitSchema = z.object({
   marginal_value_notes: z.string().nullable().optional(),
 })
 
+const assumptionsSchema = z.object({ items: z.array(assumptionItemSchema) })
+
+const eraBenchmarkPlanSchema = z.object({
+  benchmark_id: z.string().min(1),
+  benchmark_rationale: z.string().min(1),
+  eras: z.array(eraDefinitionSchema).min(1),
+  era_weighting_method: wrappedSchema(z.string()),
+})
+
+const sweepBoundsSchema = z.object({
+  parameters: z.array(z.object({
+    field_path: z.string().min(1),
+    min: z.number(),
+    max: z.number(),
+    step: z.number().nullable().optional(),
+    values: z.array(z.union([z.number(), z.string()])).nullable().optional(),
+    provenance: provenanceSchema,
+  })),
+  max_total_variants: z.number().int().positive(),
+  sweep_method: z.enum(["GRID", "RANDOM", "BAYESIAN", "MANUAL"]),
+})
+
+const evidenceThresholdsSchema = z.object({
+  backtest: z.object({
+    min_trades: z.number().int().positive(),
+    min_win_rate_pct: z.number().nonnegative(),
+    min_profit_factor: z.number().nonnegative(),
+    min_sharpe: z.number().nonnegative(),
+    max_drawdown_pct: z.number().nonnegative(),
+    min_profitable_fold_pct: z.number().nullable().optional(),
+    additional: z.record(z.string(), z.number()).nullable().optional(),
+  }),
+  paper: paperThresholdsSchema,
+  live: paperThresholdsSchema.extend({
+    max_single_loss_usd: z.number().nullable().optional(),
+  }),
+})
+
+const trialLedgerBudgetSchema = z.object({
+  max_variants: z.number().int().positive(),
+  max_eras: z.number().int().positive(),
+  max_bench_runs: z.number().int().positive(),
+  estimated_compute_cost_usd: z.number().nullable().optional(),
+  rationale: z.string().min(1),
+})
+
+const multipleComparisonsPlanSchema = z.object({
+  method: z.enum(["BONFERRONI", "FDR_BH", "BOOTSTRAP_REALITY_CHECK", "NONE_V1_PLACEHOLDER"]),
+  effective_trials_estimate: z.number().nonnegative(),
+  adjusted_significance_level: z.number().nullable().optional(),
+  notes: z.string().min(1),
+  full_implementation_target: z.string().nullable().optional(),
+})
+
 const synthesisPayloadSchema = z.object({
-  assumptions: z.object({ items: z.array(assumptionItemSchema) }),
-  era_benchmark_plan: z.object({
-    benchmark_id: z.string().min(1),
-    benchmark_rationale: z.string().min(1),
-    eras: z.array(eraDefinitionSchema).min(1),
-    era_weighting_method: wrappedSchema(z.string()),
-  }),
+  assumptions: assumptionsSchema,
+  era_benchmark_plan: eraBenchmarkPlanSchema,
   strategy_spec: strategySpecSchema,
-  sweep_bounds: z.object({
-    parameters: z.array(z.object({
-      field_path: z.string().min(1),
-      min: z.number(),
-      max: z.number(),
-      step: z.number().nullable().optional(),
-      values: z.array(z.union([z.number(), z.string()])).nullable().optional(),
-      provenance: provenanceSchema,
-    })),
-    max_total_variants: z.number().int().positive(),
-    sweep_method: z.enum(["GRID", "RANDOM", "BAYESIAN", "MANUAL"]),
-  }),
-  evidence_thresholds: z.object({
-    backtest: z.object({
-      min_trades: z.number().int().positive(),
-      min_win_rate_pct: z.number().nonnegative(),
-      min_profit_factor: z.number().nonnegative(),
-      min_sharpe: z.number().nonnegative(),
-      max_drawdown_pct: z.number().nonnegative(),
-      min_profitable_fold_pct: z.number().nullable().optional(),
-      additional: z.record(z.string(), z.number()).nullable().optional(),
-    }),
-    paper: paperThresholdsSchema,
-    live: paperThresholdsSchema.extend({
-      max_single_loss_usd: z.number().nullable().optional(),
-    }),
-  }),
-  trial_ledger_budget: z.object({
-    max_variants: z.number().int().positive(),
-    max_eras: z.number().int().positive(),
-    max_bench_runs: z.number().int().positive(),
-    estimated_compute_cost_usd: z.number().nullable().optional(),
-    rationale: z.string().min(1),
-  }),
-  multiple_comparisons_plan: z.object({
-    method: z.enum(["BONFERRONI", "FDR_BH", "BOOTSTRAP_REALITY_CHECK", "NONE_V1_PLACEHOLDER"]),
-    effective_trials_estimate: z.number().nonnegative(),
-    adjusted_significance_level: z.number().nullable().optional(),
-    notes: z.string().min(1),
-    full_implementation_target: z.string().nullable().optional(),
-  }),
+  sweep_bounds: sweepBoundsSchema,
+  evidence_thresholds: evidenceThresholdsSchema,
+  trial_ledger_budget: trialLedgerBudgetSchema,
+  multiple_comparisons_plan: multipleComparisonsPlanSchema,
   portfolio_fit: portfolioFitSchema.nullable().optional(),
 })
 
-const talonSynthesisProviderSchema = jsonSchema<StrategyAuthoringSynthesisPayload>(
-  async () => sanitizeProviderJsonSchema(await zodSchema(synthesisPayloadSchema).jsonSchema),
-)
+type SynthesisSectionKey = keyof StrategyAuthoringSynthesisPayload
+
+interface TalonSectionSpec<K extends SynthesisSectionKey = SynthesisSectionKey> {
+  key: K
+  label: string
+  schema: z.ZodType<StrategyAuthoringSynthesisPayload[K]>
+  shape: string
+  guidance: string[]
+}
+
+const talonSectionEnvelopeSchema = z.object({
+  section_json: z.string(),
+})
+
+const TALON_SECTION_SPECS = [
+  {
+    key: "assumptions",
+    label: "assumptions",
+    schema: assumptionsSchema,
+    shape: "Object: { items: [{ field_path, assumption, provenance, risk_if_wrong, resolution_needed }] }.",
+    guidance: [
+      "Use assumptions only for material gaps or inferred defaults.",
+      "Set resolution_needed=true when a wrong assumption would change the strategy or bench plan.",
+    ],
+  },
+  {
+    key: "era_benchmark_plan",
+    label: "era and benchmark plan",
+    schema: eraBenchmarkPlanSchema,
+    shape: "Object: { benchmark_id, benchmark_rationale, eras, era_weighting_method }.",
+    guidance: [
+      "Choose eras that make the strategy honestly testable, including at least one recent or relevant validation window.",
+      "Explain why the benchmark is fair for the sleeve and thesis.",
+    ],
+  },
+  {
+    key: "strategy_spec",
+    label: "strategy specification",
+    schema: strategySpecSchema,
+    shape: "Object: { strategy_family, strategy_name, strategy_id, sleeve, universe, entry_rules, exit_rules, position_sizing, risk_limits, execution_constraints }.",
+    guidance: [
+      "strategy_id.value should be a human-readable slug proposal; operator_confirmed must be false.",
+      "entry_rules.value.conditions[].data_input_id must use allowed_data_inputs from the questionnaire.",
+      "Mark compiler_support=NEEDS_MAPPING for custom logic that cannot be directly compiled.",
+    ],
+  },
+  {
+    key: "sweep_bounds",
+    label: "sweep bounds",
+    schema: sweepBoundsSchema,
+    shape: "Object: { parameters, max_total_variants, sweep_method }.",
+    guidance: [
+      "Keep search budgets narrow enough to avoid p-hacking.",
+      "Every parameter must include field_path, min, max, optional step or values, and provenance.",
+    ],
+  },
+  {
+    key: "evidence_thresholds",
+    label: "evidence thresholds",
+    schema: evidenceThresholdsSchema,
+    shape: "Object: { backtest, paper, live } with closed-trade and active-exposure gates.",
+    guidance: [
+      "Calendar days are only a floor; closed trades and exposure days matter.",
+      "Higher capital or replacement intent should raise the evidence bar.",
+    ],
+  },
+  {
+    key: "trial_ledger_budget",
+    label: "trial ledger budget",
+    schema: trialLedgerBudgetSchema,
+    shape: "Object: { max_variants, max_eras, max_bench_runs, estimated_compute_cost_usd, rationale }.",
+    guidance: [
+      "Ensure max_variants covers sweep_bounds.max_total_variants and max_bench_runs covers variants times eras.",
+      "Use a conservative budget that keeps the experiment honest.",
+    ],
+  },
+  {
+    key: "multiple_comparisons_plan",
+    label: "multiple-comparisons plan",
+    schema: multipleComparisonsPlanSchema,
+    shape: "Object: { method, effective_trials_estimate, adjusted_significance_level, notes, full_implementation_target }.",
+    guidance: [
+      "Use NONE_V1_PLACEHOLDER only when the adjustment will be enforced by the ledger/compiler later.",
+      "Do not pretend a broad sweep has the same evidence value as one planned test.",
+    ],
+  },
+  {
+    key: "portfolio_fit",
+    label: "portfolio fit",
+    schema: portfolioFitSchema.nullable(),
+    shape: "Object or null. Prefer PENDING with deferred_until=PAPER_PROMOTION when full correlation data is not available yet.",
+    guidance: [
+      "Include the target strategy from the relationship question in existing_strategies when relevant.",
+      "Use WAIVED only with clear notes; otherwise defer explicitly.",
+    ],
+  },
+] satisfies TalonSectionSpec[]
 
 export function parseStrategyAuthoringQuestionnaire(input: unknown): StrategyAuthoringQuestionnaire {
   return strategyAuthoringQuestionnaireSchema.parse(input)
@@ -399,28 +480,17 @@ export async function createStrategyAuthoringPacketWithTalon({
     failedPacketSummary,
   })
   const started = Date.now()
-  const result = await generateText({
-    model: anthropic(model),
-    output: Output.object({
-      name: "StrategyAuthoringSynthesisPayload",
-      description: "Research-authored sections of a StrategyAuthoringPacketV1. Server-owned governance fields are intentionally excluded.",
-      schema: talonSynthesisProviderSchema,
-    }),
-    temperature: DEFAULT_TEMPERATURE,
-    prompt,
-  })
-  const payload = parseStrategyAuthoringSynthesisObject(result.output)
-  const rawPacketJson = JSON.stringify(payload, null, 2)
+  const staged = await synthesizePacketPayloadInSections({ model, prompt })
   const modelExecution: ModelExecution = {
     required_capabilities: {
       min_context_window_tokens: 64000,
       structured_output_required: true,
       reasoning_depth: "EXTENDED",
-      notes: "Strategy Authoring Packet synthesis requires long-context reasoning over questionnaire, catalog, references, and past failures.",
+      notes: "Strategy Authoring Packet synthesis runs as sectioned Talon calls over questionnaire, catalog, references, and past failures.",
     },
     actual_provider: "anthropic",
     actual_model_id: model,
-    actual_response_id: responseIdFromResult(result),
+    actual_response_id: staged.responseIds.length ? staged.responseIds.join(",") : null,
     temperature: DEFAULT_TEMPERATURE,
     seed: null,
     max_tokens: null,
@@ -438,10 +508,181 @@ export async function createStrategyAuthoringPacketWithTalon({
     persist,
     catalog,
     modelExecution,
-    rawPacketJson,
+    rawPacketJson: staged.rawPacketJson,
     prompt,
-    payload,
+    payload: staged.payload,
   })
+}
+
+async function synthesizePacketPayloadInSections({
+  model,
+  prompt,
+}: {
+  model: string
+  prompt: string
+}): Promise<{
+  payload: StrategyAuthoringSynthesisPayload
+  rawPacketJson: string
+  responseIds: string[]
+}> {
+  const sections = await mapWithConcurrency(
+    TALON_SECTION_SPECS,
+    TALON_SECTION_CONCURRENCY,
+    spec => generateTalonSection({ model, prompt, spec }),
+  )
+  const candidate = Object.fromEntries(
+    sections.map(section => [section.key, section.value]),
+  )
+  const payload = parseStrategyAuthoringSynthesisObject(candidate)
+  return {
+    payload,
+    rawPacketJson: JSON.stringify({
+      synthesis_mode: "sectioned",
+      sections: Object.fromEntries(sections.map(section => [section.key, section.rawJson])),
+      payload,
+    }, null, 2),
+    responseIds: sections.map(section => section.responseId).filter((id): id is string => Boolean(id)),
+  }
+}
+
+async function generateTalonSection({
+  model,
+  prompt,
+  spec,
+}: {
+  model: string
+  prompt: string
+  spec: TalonSectionSpec
+}): Promise<{
+  key: SynthesisSectionKey
+  value: unknown
+  rawJson: string
+  responseId: string | null
+}> {
+  let feedback: string | null = null
+  let lastIssues: Array<{ field_path: string; severity: "error"; code: string; message: string }> = []
+  for (let attempt = 1; attempt <= TALON_SECTION_ATTEMPTS; attempt += 1) {
+    const result = await generateText({
+      model: anthropic(model),
+      output: Output.object({
+        name: "TalonStrategyAuthoringSection",
+        description: `JSON string for the ${spec.label} section of a StrategyAuthoringPacketV1.`,
+        schema: talonSectionEnvelopeSchema,
+      }),
+      temperature: DEFAULT_TEMPERATURE,
+      prompt: buildTalonSectionPrompt({ basePrompt: prompt, spec, attempt, feedback }),
+    })
+    const parsed = parseTalonSectionJson(spec, result.output.section_json)
+    if (parsed.ok) {
+      return {
+        key: spec.key,
+        value: parsed.value,
+        rawJson: result.output.section_json,
+        responseId: responseIdFromResult(result),
+      }
+    }
+    lastIssues = parsed.issues
+    feedback = formatSectionValidationFeedback(lastIssues)
+  }
+
+  const error = new Error(`Talon ${spec.label} section did not match the StrategyAuthoringPacketV1 synthesis contract.`)
+  throw Object.assign(error, {
+    status: 422,
+    payload: { validation_issues: lastIssues },
+  })
+}
+
+function parseTalonSectionJson(
+  spec: TalonSectionSpec,
+  sectionJson: string,
+): {
+  ok: true
+  value: unknown
+} | {
+  ok: false
+  issues: Array<{ field_path: string; severity: "error"; code: string; message: string }>
+} {
+  let json: unknown
+  try {
+    json = JSON.parse(sectionJson)
+  } catch (error) {
+    return {
+      ok: false,
+      issues: [{
+        field_path: spec.key,
+        severity: "error",
+        code: "TALON_SECTION_JSON",
+        message: error instanceof Error ? error.message : "Section JSON did not parse.",
+      }],
+    }
+  }
+
+  const parsed = spec.schema.safeParse(json)
+  if (parsed.success) return { ok: true, value: parsed.data }
+  return {
+    ok: false,
+    issues: parsed.error.issues.map(issue => ({
+      field_path: [spec.key, ...issue.path].join("."),
+      severity: "error",
+      code: "TALON_SECTION_SCHEMA",
+      message: issue.message,
+    })),
+  }
+}
+
+function formatSectionValidationFeedback(
+  issues: Array<{ field_path: string; message: string }>,
+): string {
+  return issues.map(issue => `- ${issue.field_path}: ${issue.message}`).join("\n")
+}
+
+function buildTalonSectionPrompt({
+  basePrompt,
+  spec,
+  attempt,
+  feedback,
+}: {
+  basePrompt: string
+  spec: TalonSectionSpec
+  attempt: number
+  feedback: string | null
+}): string {
+  return [
+    basePrompt,
+    "",
+    "Sectioned synthesis task:",
+    `- Produce only the ${spec.label} section.`,
+    "- Return one object with exactly one property: section_json.",
+    "- section_json must be a parseable JSON string for the section VALUE itself, not the whole packet and not wrapped under its top-level key.",
+    "- Do not include Markdown fences, commentary, or extra keys inside section_json.",
+    "- Omit optional nullable fields when they do not apply; use null only when the field is nullable and its absence would be ambiguous.",
+    `- Attempt: ${attempt} of ${TALON_SECTION_ATTEMPTS}.`,
+    "",
+    `Section key: ${spec.key}`,
+    `Section shape: ${spec.shape}`,
+    ...spec.guidance.map(line => `- ${line}`),
+    feedback ? `\nPrevious validation errors to fix:\n${feedback}` : "",
+  ].filter(Boolean).join("\n")
+}
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let nextIndex = 0
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex
+      nextIndex += 1
+      results[index] = await fn(items[index], index)
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
+  )
+  return results
 }
 
 export async function createStrategyAuthoringPacketFromSynthesisPayload({
@@ -669,9 +910,9 @@ function buildPacketSynthesisPrompt({
     "- Keep sweep bounds tight. The trial budget must be internally consistent.",
     "- Respect post-mortem lessons from failed packets in the same edge family.",
     "- Counts, days, position limits, variants, and trial budgets must be positive integers. Percentages, costs, multipliers, and thresholds must be non-negative numbers unless the field is nullable.",
-    "- Include every property shown in the schema. Use null for nullable fields that do not apply; do not omit them.",
+    "- Omit optional nullable fields when they do not apply; do not spoof values just to fill blanks.",
     "",
-    "Return the structured object required by the provided schema with these top-level keys:",
+    "The orchestrator will request one section at a time. The final packet payload has these top-level keys:",
     "assumptions, era_benchmark_plan, strategy_spec, sweep_bounds, evidence_thresholds, trial_ledger_budget, multiple_comparisons_plan, portfolio_fit.",
     "",
     "Required output shape summary:",
@@ -736,45 +977,6 @@ async function loadFailedPacketSummary(scope: ScopeTriple, edgeFamily: StrategyA
   return failed.length
     ? `Recent failed packets in edge_family=${edgeFamily}:\n${JSON.stringify(failed, null, 2)}`
     : `Recent failed packets in edge_family=${edgeFamily}: none found.`
-}
-
-function sanitizeProviderJsonSchema(schema: JSONSchema7): JSONSchema7 {
-  return sanitizeProviderJsonSchemaValue(schema) as JSONSchema7
-}
-
-function sanitizeProviderJsonSchemaValue(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sanitizeProviderJsonSchemaValue)
-  }
-  if (!value || typeof value !== "object") {
-    return value
-  }
-
-  const output: Record<string, unknown> = {}
-  for (const [key, child] of Object.entries(value)) {
-    if (PROVIDER_UNSUPPORTED_JSON_SCHEMA_KEYS.has(key)) continue
-    if (key === "type") {
-      output[key] = sanitizeJsonSchemaType(child)
-      continue
-    }
-    output[key] = sanitizeProviderJsonSchemaValue(child)
-  }
-  if (isJsonSchemaProperties(output.properties)) {
-    output.required = Object.keys(output.properties)
-  }
-  return output
-}
-
-function sanitizeJsonSchemaType(value: unknown): unknown {
-  if (value === "integer") return "number"
-  if (!Array.isArray(value)) return value
-
-  const sanitized = value.map(item => item === "integer" ? "number" : item)
-  return [...new Set(sanitized)]
-}
-
-function isJsonSchemaProperties(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value)
 }
 
 function responseIdFromResult(result: unknown): string | null {
