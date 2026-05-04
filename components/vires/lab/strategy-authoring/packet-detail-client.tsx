@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 import type {
+  AdversarialCheck,
   AdversarialCheckCategory,
   PacketCompileResultV1,
   ScopeTriple,
@@ -66,6 +67,11 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [slugDraft, setSlugDraft] = useState(view.packet.strategy_spec.strategy_id.value)
+  // Adversarial review state — separate from `busy` so the operator can
+  // run a review without locking out other lifecycle actions visually.
+  const [reviewBusy, setReviewBusy] = useState(false)
+  const [reviewDryRun, setReviewDryRun] = useState(false)
+  const [dryRunResult, setDryRunResult] = useState<PacketLifecycleViewClient | null>(null)
 
   const packet = view.packet
   const slugProvenance = packet.strategy_spec.strategy_id.provenance
@@ -118,6 +124,58 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
 
   const onTransition = (next: StrategyAuthoringPacketStatus) =>
     patch({ action: "transition_status", next_status: next })
+
+  // PATCH confirm_assumption — flips operator_confirmed: true on the
+  // matching assumption's provenance (Codex slice 74d5604d).
+  const onConfirmAssumption = (fieldPath: string) =>
+    patch({ action: "confirm_assumption", field_path: fieldPath })
+
+  // POST /adversarial-review — runs the blind reviewer (Codex slice 067b727a).
+  // Server-gated to ADVERSARIAL status. dry_run skips persistence; we render
+  // the would-be result in a separate preview panel.
+  const runReview = async (dryRun: boolean) => {
+    if (reviewBusy) return
+    setReviewBusy(true)
+    setError(null)
+    try {
+      const res = await fetch(
+        `/api/research/strategy-authoring/packets/${encodeURIComponent(packet.packet_id)}/adversarial-review`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scope, dry_run: dryRun }),
+        },
+      )
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string
+        dry_run?: boolean
+        packet?: StrategyAuthoringPacketV1
+        compile_result?: PacketCompileResultV1
+        validation_issues?: StrategyAuthoringValidationIssue[]
+        trial_ledger_entries?: TrialLedgerEntryV1[]
+      }
+      if (!res.ok) throw new Error(payload.error ?? `Review failed (${res.status})`)
+      if (payload.packet && payload.compile_result) {
+        const nextView: PacketLifecycleViewClient = {
+          packet: payload.packet,
+          compile_result: payload.compile_result,
+          validation_issues: payload.validation_issues ?? [],
+          trial_ledger_entries: payload.trial_ledger_entries ?? [],
+        }
+        if (payload.dry_run) {
+          setDryRunResult(nextView)
+        } else {
+          setView(nextView)
+          setDryRunResult(null)
+          router.refresh()
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Review failed")
+    } finally {
+      setReviewBusy(false)
+    }
+  }
 
   return (
     <main
@@ -205,32 +263,32 @@ export function PacketDetailClient({ initialView, scope }: PacketDetailClientPro
         subtitle={
           packet.assumptions.items.length === 0
             ? "Talon flagged no assumptions — every field came from your inputs or hard references."
-            : `${packet.assumptions.items.length} assumption${packet.assumptions.items.length > 1 ? "s" : ""} — review before approval. Per-assumption confirmation API not wired yet; these are read-only.`
+            : `${packet.assumptions.items.length} assumption${packet.assumptions.items.length > 1 ? "s" : ""} — confirm each one before approving the packet.`
         }
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {packet.assumptions.items.map(item => (
-            <AssumptionCard key={item.field_path} item={item} />
+            <AssumptionCard
+              key={item.field_path}
+              item={item}
+              busy={busy}
+              onConfirm={() => onConfirmAssumption(item.field_path)}
+            />
           ))}
         </div>
       </Section>
 
-      <Section title="Adversarial review" subtitle="Different-family reviewer hunts lookahead, survivorship bias, leakage, etc.">
-        <div className="vr-card" style={cardStyle}>
-          <KeyVal label="Status" value={packet.adversarial_review.status} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span className="t-eyebrow" style={eyebrowStyle}>
-              REQUIRED CATEGORIES
-            </span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {packet.adversarial_review.required_categories.map(cat => {
-                const checked = packet.adversarial_review.checks.find(c => c.category === cat)
-                return <CategoryPill key={cat} category={cat} state={checked?.passed} pending={!checked} />
-              })}
-            </div>
-          </div>
-        </div>
-      </Section>
+      <AdversarialReviewSection
+        liveReview={packet.adversarial_review}
+        dryRunReview={dryRunResult?.packet.adversarial_review ?? null}
+        canRun={packet.status === "ADVERSARIAL"}
+        currentStatus={packet.status}
+        reviewBusy={reviewBusy}
+        reviewDryRun={reviewDryRun}
+        setReviewDryRun={setReviewDryRun}
+        runReview={runReview}
+        clearDryRun={() => setDryRunResult(null)}
+      />
 
       <Section title="Compile preview" subtitle="Compiler-stub output — what would happen if you launched this on the bench right now.">
         <div className="vr-card" style={cardStyle}>
@@ -376,6 +434,256 @@ function StatusBadge({ status }: { status: StrategyAuthoringPacketStatus }) {
       {status}
     </span>
   )
+}
+
+function AdversarialReviewSection({
+  liveReview,
+  dryRunReview,
+  canRun,
+  currentStatus,
+  reviewBusy,
+  reviewDryRun,
+  setReviewDryRun,
+  runReview,
+  clearDryRun,
+}: {
+  liveReview: StrategyAuthoringPacketV1["adversarial_review"]
+  dryRunReview: StrategyAuthoringPacketV1["adversarial_review"] | null
+  canRun: boolean
+  currentStatus: StrategyAuthoringPacketStatus
+  reviewBusy: boolean
+  reviewDryRun: boolean
+  setReviewDryRun: (next: boolean) => void
+  runReview: (dryRun: boolean) => void
+  clearDryRun: () => void
+}) {
+  const subtitle = canRun
+    ? "Different-family reviewer hunts lookahead, survivorship bias, leakage, cost underestimate, benchmark cheating, current-regime-only, weak kill criteria, and overfitting."
+    : `Reviewer runs only when packet status is ADVERSARIAL. Current status: ${currentStatus}.`
+  return (
+    <Section title="Adversarial review" subtitle={subtitle}>
+      <div className="vr-card" style={cardStyle}>
+        <ReviewBody review={liveReview} />
+        {canRun && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 8,
+              borderTop: "1px solid var(--vr-line)",
+              paddingTop: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => runReview(reviewDryRun)}
+                disabled={reviewBusy}
+                style={{
+                  ...primaryButton,
+                  background: reviewBusy ? "transparent" : "var(--vr-gold)",
+                  color: reviewBusy ? "var(--vr-gold)" : "var(--vr-ink)",
+                  borderColor: "var(--vr-gold)",
+                  opacity: reviewBusy ? 0.6 : 1,
+                }}
+              >
+                {reviewBusy
+                  ? "Reviewing…"
+                  : reviewDryRun
+                    ? "Run review (preview)"
+                    : "Run review"}
+              </button>
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 11.5,
+                  color: "var(--vr-cream-dim)",
+                  cursor: reviewBusy ? "default" : "pointer",
+                  userSelect: "none",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={reviewDryRun}
+                  onChange={e => setReviewDryRun(e.target.checked)}
+                  disabled={reviewBusy}
+                  style={{ accentColor: "var(--vr-gold)" }}
+                />
+                Dry run (preview without persisting or stamping the manifest)
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+      {dryRunReview && (
+        <div
+          className="vr-card"
+          style={{
+            ...cardStyle,
+            border: "1px dashed var(--vr-gold)",
+            background: "var(--vr-gold-soft)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+            <span className="t-eyebrow" style={{ ...eyebrowStyle, color: "var(--vr-gold)" }}>
+              ⓘ DRY RUN PREVIEW · NOT PERSISTED
+            </span>
+            <button
+              type="button"
+              onClick={clearDryRun}
+              style={{
+                ...primaryButton,
+                background: "transparent",
+                color: "var(--vr-cream-mute)",
+                borderColor: "var(--vr-line-hi)",
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+          <ReviewBody review={dryRunReview} />
+        </div>
+      )}
+    </Section>
+  )
+}
+
+function ReviewBody({ review }: { review: StrategyAuthoringPacketV1["adversarial_review"] }) {
+  const checksByCategory = new Map(review.checks.map(c => [c.category, c]))
+  const reviewerModel = review.reviewer_model_actual
+  return (
+    <>
+      <KeyVal label="Status" value={review.status} />
+      {review.review_timestamp && (
+        <KeyVal label="Reviewed at" value={fmtTimestamp(review.review_timestamp)} />
+      )}
+      {reviewerModel && <KeyVal label="Reviewer model" value={reviewerModel} mono />}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <span className="t-eyebrow" style={eyebrowStyle}>
+          REQUIRED CATEGORIES
+        </span>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {review.required_categories.map(cat => {
+            const checked = checksByCategory.get(cat)
+            return <CategoryPill key={cat} category={cat} state={checked?.passed} pending={!checked} />
+          })}
+        </div>
+      </div>
+      {review.checks.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <span className="t-eyebrow" style={eyebrowStyle}>
+            CHECK DETAILS ({review.checks.length})
+          </span>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+            {review.checks.map((check, i) => (
+              <CheckLine key={`${check.category}-${i}`} check={check} />
+            ))}
+          </ul>
+        </div>
+      )}
+      {review.overall_notes && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span className="t-eyebrow" style={eyebrowStyle}>
+            REVIEWER NOTES
+          </span>
+          <p
+            className="t-read"
+            style={{ margin: 0, fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.5 }}
+          >
+            {review.overall_notes}
+          </p>
+        </div>
+      )}
+      {review.conditions_for_pass && review.conditions_for_pass.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span className="t-eyebrow" style={{ ...eyebrowStyle, color: "var(--vr-gold)" }}>
+            CONDITIONS FOR PASS ({review.conditions_for_pass.length})
+          </span>
+          <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 4 }}>
+            {review.conditions_for_pass.map((c, i) => (
+              <li
+                key={i}
+                className="t-read"
+                style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.4 }}
+              >
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </>
+  )
+}
+
+function CheckLine({ check }: { check: AdversarialCheck }) {
+  const color = check.passed
+    ? "var(--vr-up)"
+    : check.severity === "CRITICAL"
+      ? "var(--vr-down)"
+      : check.severity === "WARNING"
+        ? "var(--vr-gold)"
+        : "var(--vr-cream-mute)"
+  return (
+    <li
+      style={{
+        borderLeft: `2px solid ${color}`,
+        paddingLeft: 10,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
+    >
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <span
+          className="t-eyebrow"
+          style={{ fontSize: 9, letterSpacing: "0.14em", color, fontFamily: "var(--ff-mono)" }}
+        >
+          {check.passed ? "✓" : "✗"} {check.category}
+        </span>
+        <span
+          className="t-mono"
+          style={{ fontSize: 9.5, color: "var(--vr-cream-faint)" }}
+        >
+          {check.severity}
+        </span>
+      </div>
+      <span
+        className="t-read"
+        style={{ fontSize: 11.5, color: "var(--vr-cream-dim)", lineHeight: 1.45 }}
+      >
+        {check.finding}
+      </span>
+      {check.remediation && (
+        <span
+          className="t-read"
+          style={{
+            fontSize: 11,
+            color: "var(--vr-gold)",
+            lineHeight: 1.4,
+            paddingTop: 2,
+          }}
+        >
+          → {check.remediation}
+        </span>
+      )}
+    </li>
+  )
+}
+
+function fmtTimestamp(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
 }
 
 function CategoryPill({
