@@ -728,7 +728,22 @@ function normalizeTalonGeneratedValue(value: unknown): unknown {
 
 function normalizeTalonProvenanceSource(source: string): string {
   const normalized = source.trim().toUpperCase().replace(/[\s-]+/g, "_")
-  if (normalized === "TALON" || normalized === "AI" || normalized === "MODEL" || normalized === "LLM") {
+  const canonical = new Set(["USER", "REFERENCE", "PAPER", "CATALOG", "MARKET_PACKET", "TUNABLE_DEFAULT", "TALON_INFERENCE"])
+  if (canonical.has(normalized)) return normalized
+  if (
+    normalized === "TALON"
+    || normalized === "AI"
+    || normalized === "AI_INFERENCE"
+    || normalized === "AI_INFERRED"
+    || normalized === "ASSISTANT"
+    || normalized === "MODEL"
+    || normalized === "MODEL_INFERENCE"
+    || normalized === "LLM"
+    || normalized === "LLM_INFERENCE"
+    || normalized === "INFERENCE"
+    || normalized === "TALON_ASSUMPTION"
+    || normalized === "TALON_GENERATED"
+  ) {
     return "TALON_INFERENCE"
   }
   if (normalized === "OPERATOR" || normalized === "HUMAN") return "USER"
@@ -736,7 +751,7 @@ function normalizeTalonProvenanceSource(source: string): string {
   if (normalized === "DATA_CATALOG") return "CATALOG"
   if (normalized === "MARKET" || normalized === "MARKET_DATA") return "MARKET_PACKET"
   if (normalized === "DEFAULT" || normalized === "TUNABLE") return "TUNABLE_DEFAULT"
-  return normalized
+  return "TALON_INFERENCE"
 }
 
 function formatSectionValidationFeedback(
