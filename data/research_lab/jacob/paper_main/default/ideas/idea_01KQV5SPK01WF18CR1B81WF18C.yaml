@@ -1,0 +1,22 @@
+schema_version: research_lab.idea.v2
+idea_id: idea_01KQV5SPK01WF18CR1B81WF18C
+user_id: jacob
+account_id: paper_main
+strategy_group_id: default
+title: Test x12
+thesis: Why wouldn’t it work? It’s a test!
+sleeve: STOCKS
+tags: []
+params: {}
+reference_strategies: []
+strategy_ref:
+  kind: REGISTERED
+  active_spec_id: null
+  pending_spec_id: null
+  strategy_id: regime_aware_momentum
+  preset_id: null
+status: DRAFT
+needs_spec: false
+created_at: '2026-05-05T04:19:33.600Z'
+created_by: jacob
+source: MANUAL
