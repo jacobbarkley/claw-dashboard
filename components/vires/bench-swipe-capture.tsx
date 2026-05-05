@@ -4,8 +4,8 @@
 // so it spans every bench child route, but only ENABLES the gesture
 // when the user is on one of the three canonical sub-tab routes
 // (/vires/bench, /vires/bench/campaigns, /vires/bench/lab). Nested
-// drill-in routes under passport/run skip the gesture so the page's
-// own back affordance isn't contested.
+// drill-in routes skip the gesture so drafting/review flows cannot lose
+// local progress to an accidental horizontal drag.
 //
 // Behavior (bench-level):
 //   - Swipe LEFT on content body  = move to next tab (home → campaigns → lab)
@@ -35,19 +35,10 @@ const TAB_HREF: Record<BenchTab, string> = {
 }
 
 function resolveTab(pathname: string): BenchTab | null {
-  if (pathname.startsWith("/vires/bench/lab")) return "lab"
-  // Campaign INDEX participates in the tab cycle; campaign DETAIL drills
-  // down and manages its own swipe-right-to-index gesture (see
-  // campaigns-detail.tsx).
-  if (pathname === "/vires/bench/campaigns") return "campaigns"
-  if (pathname.startsWith("/vires/bench/campaigns/")) return null
-  if (
-    pathname.startsWith("/vires/bench/passport") ||
-    pathname.startsWith("/vires/bench/run")
-  ) {
-    return null
-  }
-  if (pathname === "/vires/bench" || pathname.startsWith("/vires/bench/")) return "home"
+  const path = pathname.replace(/\/+$/, "") || "/"
+  if (path === "/vires/bench") return "home"
+  if (path === "/vires/bench/campaigns") return "campaigns"
+  if (path === "/vires/bench/lab") return "lab"
   return null
 }
 
@@ -75,12 +66,12 @@ export function BenchSwipeCapture({ children }: { children: React.ReactNode }) {
     if (prevPathRef.current === pathname) return
     const prevIdx = tabIndex(prevPathRef.current)
     const curIdx = tabIndex(pathname)
-    if (prevIdx != null && curIdx != null && prevIdx !== curIdx) {
-      setSlideDir(curIdx > prevIdx ? "forward" : "back")
-    } else {
-      setSlideDir(null)
-    }
+    const nextSlideDir = prevIdx != null && curIdx != null && prevIdx !== curIdx
+      ? curIdx > prevIdx ? "forward" : "back"
+      : null
     prevPathRef.current = pathname
+    const frame = window.requestAnimationFrame(() => setSlideDir(nextSlideDir))
+    return () => window.cancelAnimationFrame(frame)
   }, [pathname])
 
   // Walk the tab order forward on swipe-left, backward on swipe-right.
@@ -117,7 +108,7 @@ export function BenchSwipeCapture({ children }: { children: React.ReactNode }) {
       : undefined
 
   return (
-    <div ref={ref} style={{ touchAction: "pan-y" }}>
+    <div ref={ref} style={{ touchAction: tab ? "pan-y" : "auto" }}>
       <div
         key={pathname}
         className={slideClass}

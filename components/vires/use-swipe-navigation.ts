@@ -20,6 +20,25 @@ const EDGE_ZONE_PX = 24      // left / right edge detection band
 const HORIZ_THRESHOLD_PX = 60 // min horizontal delta to fire a swipe
 const VERT_LIMIT_PX = 40     // gesture aborts if vertical drift exceeds this
 const AXIS_LOCK_PX = 10      // when first meaningful movement exceeds this, pick an axis
+const SWIPE_SKIP_TARGET_SELECTOR = [
+  "[data-allow-horizontal-scroll]",
+  "[data-disable-swipe-navigation]",
+  "a[href]",
+  "button",
+  "input",
+  "label",
+  "select",
+  "summary",
+  "textarea",
+  "[contenteditable='true']",
+  "[contenteditable='plaintext-only']",
+  "[role='button']",
+  "[role='combobox']",
+  "[role='link']",
+  "[role='listbox']",
+  "[role='menuitem']",
+  "[role='textbox']",
+].join(", ")
 
 export interface UseSwipeNavigationOpts {
   /** Ref to the element whose pointer events drive the gesture. */
@@ -73,11 +92,11 @@ export function useSwipeNavigation({
     }
 
     const onPointerDown = (e: PointerEvent) => {
-      // Let nested horizontal-scrollers claim the gesture. Chart scrubbers,
-      // scroll-snap carousels, overflow-x tables — whoever owns horizontal
-      // pan inside their zone.
+      // Let nested controls claim the gesture. Draft forms, menus, links,
+      // chart scrubbers, scroll-snap carousels, and overflow-x tables should
+      // never become route-navigation handles.
       const target = e.target as HTMLElement | null
-      if (target?.closest?.("[data-allow-horizontal-scroll]")) {
+      if (target?.closest?.(SWIPE_SKIP_TARGET_SELECTOR)) {
         skipGesture = true
         return
       }

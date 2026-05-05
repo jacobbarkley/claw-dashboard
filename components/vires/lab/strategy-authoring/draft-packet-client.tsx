@@ -40,6 +40,7 @@ import {
 import { ClarificationClient } from "./clarification-client"
 import { ModePill } from "./mode-pill"
 import { ProvenanceChip } from "./provenance-chip"
+import { useUnsavedWorkGuard } from "../use-unsaved-work-guard"
 
 interface DraftPacketClientProps {
   idea: IdeaArtifact
@@ -195,9 +196,9 @@ function defaultState(idea: IdeaArtifact): FormState {
 }
 
 function defaultDataInputsForSleeve(sleeve: ResearchSleeve): string[] {
-  if (sleeve === "CRYPTO") return ["alpaca_crypto_daily_ohlcv"]
-  if (sleeve === "OPTIONS") return ["alpaca_equity_daily_ohlcv", "options_chain_snapshots"]
-  return ["alpaca_equity_daily_ohlcv"]
+  if (sleeve === "CRYPTO") return ["alpaca_crypto_ohlcv"]
+  if (sleeve === "OPTIONS") return ["alpaca_equity_ohlcv", "alpaca_options_chain"]
+  return ["alpaca_equity_ohlcv"]
 }
 
 function defaultBenchmarkForSleeve(sleeve: ResearchSleeve): string {
@@ -232,6 +233,12 @@ export function DraftPacketClient({ idea, scope }: DraftPacketClientProps) {
   const busy = phase !== "FORM"
   const overriddenCount = touchedWrapped.size
   const stillDefaultCount = WRAPPED_KEYS.length - overriddenCount
+  useUnsavedWorkGuard({
+    enabled: true,
+    message: phase === "SYNTHESIZING"
+      ? "Leave packet drafting? Talon is synthesizing now, and progress on this page may be lost."
+      : "Leave packet drafting? Questionnaire, clarification, or synthesis progress on this page will be lost.",
+  })
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: value }))
@@ -745,7 +752,7 @@ function buildQuestionnaire(form: FormState, touched: Set<WrappedKey>): Strategy
       form.universe_shape === "FIXED_LIST" ? splitCsv(form.universe_fixed_list) : null,
     regime_expectation: form.regime_expectation,
     universe_size_band: wrapString("universe_size_band", form.universe_size_band),
-    allowed_data_inputs: wrap(splitCsv(form.allowed_data_inputs), touched.has("allowed_data_inputs")),
+    allowed_data_inputs: wrap(splitCsv(form.allowed_data_inputs).map(canonicalDataInputId), touched.has("allowed_data_inputs")),
     entry_confirmation: wrapString("entry_confirmation", form.entry_confirmation),
     exit_logic: wrapString("exit_logic", form.exit_logic),
     risk_profile: wrapString("risk_profile", form.risk_profile),
@@ -785,6 +792,16 @@ function splitCsv(input: string): string[] {
     .split(",")
     .map(s => s.trim())
     .filter(Boolean)
+}
+
+function canonicalDataInputId(input: string): string {
+  const normalized = input.trim().toLowerCase()
+  const aliases: Record<string, string> = {
+    alpaca_crypto_daily_ohlcv: "alpaca_crypto_ohlcv",
+    alpaca_equity_daily_ohlcv: "alpaca_equity_ohlcv",
+    options_chain_snapshots: "alpaca_options_chain",
+  }
+  return aliases[normalized] ?? input.trim()
 }
 
 function canSubmit(form: FormState): boolean {

@@ -147,13 +147,13 @@ export function mockClarifyResponse(
         "Talon will only consider strategies whose required feeds are in this list. Adding feeds beyond what's catalog-backed forces NEEDS_MAPPING.",
       answer_kind: "MULTI_CHOICE",
       options: [
-        { label: "alpaca_equity_daily_ohlcv", value: "alpaca_equity_daily_ohlcv" },
-        { label: "alpaca_equity_intraday_ohlcv", value: "alpaca_equity_intraday_ohlcv" },
-        { label: "options_chain_snapshots", value: "options_chain_snapshots" },
+        { label: "alpaca_equity_ohlcv", value: "alpaca_equity_ohlcv" },
+        { label: "alpaca_options_chain", value: "alpaca_options_chain" },
+        { label: "alpaca_crypto_ohlcv", value: "alpaca_crypto_ohlcv" },
         { label: "wikipedia_pageviews", value: "wikipedia_pageviews" },
       ],
       proposed_default: defaultFor(
-        ["alpaca_equity_daily_ohlcv"],
+        ["alpaca_equity_ohlcv"],
         "Cheapest catalog default for STOCKS.",
         "CATALOG",
       ),

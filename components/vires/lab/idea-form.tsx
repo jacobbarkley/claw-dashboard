@@ -4,7 +4,7 @@
 // strategy work by default; selected registered strategies are lineage
 // and Talon/Codex context, not the execution target.
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
 import type {
@@ -13,6 +13,8 @@ import type {
   ReferenceStrategy,
   ResearchSleeve,
 } from "@/lib/research-lab-contracts"
+
+import { useUnsavedWorkGuard } from "./use-unsaved-work-guard"
 
 export interface StrategyOption {
   strategy_id: string
@@ -60,6 +62,42 @@ export function IdeaForm({
 
   const strategiesForSleeve = strategyOptions.filter(s => s.sleeve === sleeve)
   const selectedStrategy = strategyOptions.find(s => s.strategy_id === strategyId) ?? null
+  const hasDraftWork = useMemo(
+    () =>
+      title.trim().length > 0 ||
+      thesis.trim().length > 0 ||
+      tags.trim().length > 0 ||
+      dataSources.trim().length > 0 ||
+      signalFilters.trim().length > 0 ||
+      exitRules.trim().length > 0 ||
+      codePending ||
+      referenceStrategies.length > 0 ||
+      promoteToCampaign ||
+      promotionTarget != null ||
+      status !== "DRAFT" ||
+      sleeve !== "STOCKS",
+    [
+      title,
+      thesis,
+      tags,
+      dataSources,
+      signalFilters,
+      exitRules,
+      codePending,
+      referenceStrategies,
+      promoteToCampaign,
+      promotionTarget,
+      status,
+      sleeve,
+    ],
+  )
+
+  useUnsavedWorkGuard({
+    enabled: submitState === "submitting" || hasDraftWork,
+    message: submitState === "submitting"
+      ? "Leave idea generation? The idea is still saving, and progress on this page may be lost."
+      : "Leave idea generation? Unsaved idea fields on this page will be lost.",
+  })
 
   const onSleeveChange = (next: ResearchSleeve) => {
     setSleeve(next)

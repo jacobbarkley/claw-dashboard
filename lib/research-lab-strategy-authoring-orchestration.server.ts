@@ -52,6 +52,15 @@ const DEFAULT_TEMPERATURE = 0.2
 const FAILED_PACKET_CONTEXT_LIMIT = 10
 const TALON_SECTION_ATTEMPTS = 3
 const TALON_SECTION_CONCURRENCY = 2
+const DATA_INPUT_ALIASES: Record<string, string> = {
+  alpaca_crypto_daily_ohlcv: "alpaca_crypto_ohlcv",
+  alpaca_equity_daily_ohlcv: "alpaca_equity_ohlcv",
+  options_chain_snapshots: "alpaca_options_chain",
+  price_ohlcv_daily: "alpaca_equity_ohlcv",
+  price_ohlcv: "alpaca_equity_ohlcv",
+  equity_ohlcv: "alpaca_equity_ohlcv",
+  daily_ohlcv: "alpaca_equity_ohlcv",
+}
 
 export interface TalonPacketSynthesisResult {
   packet: StrategyAuthoringPacketV1
@@ -1868,7 +1877,8 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
   if (idea.sleeve !== questionnaire.sleeve) {
     throw new Error(`Questionnaire sleeve ${questionnaire.sleeve} does not match idea sleeve ${idea.sleeve}.`)
   }
-  const normalizedPayload = normalizeSynthesisPayloadForPacket(payload, questionnaire)
+  const normalizedQuestionnaire = normalizeQuestionnaireDataInputs(questionnaire)
+  const normalizedPayload = normalizeSynthesisPayloadForPacket(payload, normalizedQuestionnaire)
 
   const packet: StrategyAuthoringPacketV1 = {
     schema_version: STRATEGY_AUTHORING_PACKET_SCHEMA_VERSION,
@@ -1878,12 +1888,12 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
     created_at: now,
     updated_at: now,
     status: "REVIEW",
-    questionnaire,
+    questionnaire: normalizedQuestionnaire,
     assumptions: normalizedPayload.assumptions,
     data_readiness: buildPacketDataReadiness({
       catalog,
-      sleeve: questionnaire.sleeve,
-      allowedDataInputs: questionnaire.allowed_data_inputs.value,
+      sleeve: normalizedQuestionnaire.sleeve,
+      allowedDataInputs: normalizedQuestionnaire.allowed_data_inputs.value,
     }),
     era_benchmark_plan: normalizedPayload.era_benchmark_plan,
     strategy_spec: {
@@ -1901,7 +1911,7 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
     trial_ledger_budget: normalizedPayload.trial_ledger_budget,
     multiple_comparisons_plan: normalizedPayload.multiple_comparisons_plan,
     adversarial_review: pendingAdversarialReview(now),
-    portfolio_fit: normalizePortfolioFit(normalizedPayload.portfolio_fit, questionnaire),
+    portfolio_fit: normalizePortfolioFit(normalizedPayload.portfolio_fit, normalizedQuestionnaire),
     reproducibility_manifest: {
       synthesis_model: modelExecution,
       questionnaire_model: null,
@@ -1910,7 +1920,7 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
       market_packet_id: process.env.VIRES_MARKET_PACKET_ID ?? null,
       paper_index_version: process.env.VIRES_PAPER_INDEX_VERSION ?? null,
       strategy_registry_commit: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local",
-      questionnaire_input_hash: computeQuestionnaireInputHash(questionnaire),
+      questionnaire_input_hash: computeQuestionnaireInputHash(normalizedQuestionnaire),
       prompt_version: PROMPT_VERSION,
       questionnaire_schema_version: QUESTIONNAIRE_SCHEMA_VERSION,
       packet_contract_schema_version: STRATEGY_AUTHORING_PACKET_SCHEMA_VERSION,
@@ -1945,6 +1955,36 @@ export async function createStrategyAuthoringPacketFromSynthesisPayload({
     raw_packet_json: rawPacketJson,
     prompt,
     persisted,
+  }
+}
+
+function normalizeQuestionnaireDataInputs(
+  questionnaire: StrategyAuthoringQuestionnaire,
+): StrategyAuthoringQuestionnaire {
+  const originalInputs = questionnaire.allowed_data_inputs.value
+    .map(input => input.trim())
+    .filter(Boolean)
+  const normalizedInputs = [...new Set(originalInputs.map(canonicalDataInputId).filter(Boolean))]
+  if (
+    originalInputs.length === normalizedInputs.length &&
+    originalInputs.every((input, index) => input === normalizedInputs[index])
+  ) {
+    return questionnaire
+  }
+
+  return {
+    ...questionnaire,
+    allowed_data_inputs: {
+      ...questionnaire.allowed_data_inputs,
+      value: normalizedInputs,
+      provenance: {
+        ...questionnaire.allowed_data_inputs.provenance,
+        rationale: appendServerNormalizationNote(
+          questionnaire.allowed_data_inputs.provenance.rationale,
+          `Server canonicalized allowed_data_inputs from [${originalInputs.join(", ") || "none"}] to [${normalizedInputs.join(", ") || "none"}] using data catalog capability IDs.`,
+        ),
+      },
+    },
   }
 }
 
@@ -2043,15 +2083,8 @@ function normalizeStrategySpecForQuestionnaire(
 function normalizeEntryConditionDataInputId(dataInputId: string, allowedInputs: string[]): string {
   if (allowedInputs.includes(dataInputId)) return dataInputId
   const normalized = dataInputId.trim().toLowerCase()
-  const aliases: Record<string, string> = {
-    alpaca_equity_daily_ohlcv: "alpaca_equity_ohlcv",
-    price_ohlcv_daily: "alpaca_equity_ohlcv",
-    price_ohlcv: "alpaca_equity_ohlcv",
-    equity_ohlcv: "alpaca_equity_ohlcv",
-    daily_ohlcv: "alpaca_equity_ohlcv",
-  }
-  const alias = aliases[normalized]
-  if (alias && allowedInputs.includes(alias)) return alias
+  const canonical = canonicalDataInputId(dataInputId)
+  if (allowedInputs.includes(canonical)) return canonical
   const ohlcvFallback = allowedInputs.find(input => input.includes("ohlcv"))
   if (
     ohlcvFallback &&
@@ -2060,6 +2093,11 @@ function normalizeEntryConditionDataInputId(dataInputId: string, allowedInputs: 
     return ohlcvFallback
   }
   return allowedInputs[0]
+}
+
+function canonicalDataInputId(input: string): string {
+  const trimmed = input.trim()
+  return DATA_INPUT_ALIASES[trimmed.toLowerCase()] ?? trimmed
 }
 
 function appendServerNormalizationNote(existing: string, note: string): string {
@@ -2090,7 +2128,7 @@ function buildPacketDataReadiness({
   allowedDataInputs: string[]
 }): StrategyAuthoringDataReadiness {
   const capabilityById = new Map(catalog.capabilities.map(capability => [capability.capability_id, capability]))
-  const uniqueInputs = [...new Set(allowedDataInputs.map(input => input.trim()).filter(Boolean))]
+  const uniqueInputs = [...new Set(allowedDataInputs.map(canonicalDataInputId).filter(Boolean))]
   const assessment = assessDataReadiness({
     catalog,
     sleeve,

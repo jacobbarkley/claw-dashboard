@@ -35,9 +35,23 @@ const ALL_ADVERSARIAL_CATEGORIES: AdversarialCheckCategory[] = [
   ...REQUIRED_ADVERSARIAL_CATEGORIES,
   "OTHER",
 ]
+const ALL_ADVERSARIAL_CATEGORY_SET = new Set<string>(ALL_ADVERSARIAL_CATEGORIES)
+
+interface NormalizedAdversarialCategory {
+  category: AdversarialCheckCategory
+  rawCategory: string | null
+}
+
+function normalizeAdversarialCategory(rawCategory: string): NormalizedAdversarialCategory {
+  const normalized = rawCategory.trim().toUpperCase()
+  if (ALL_ADVERSARIAL_CATEGORY_SET.has(normalized)) {
+    return { category: normalized as AdversarialCheckCategory, rawCategory: null }
+  }
+  return { category: "OTHER", rawCategory: rawCategory.trim() || "UNKNOWN" }
+}
 
 const adversarialCheckSchema = z.object({
-  category: z.enum(ALL_ADVERSARIAL_CATEGORIES as [AdversarialCheckCategory, ...AdversarialCheckCategory[]]),
+  category: z.string().min(1).transform(normalizeAdversarialCategory),
   passed: z.boolean(),
   finding: z.string().min(1),
   severity: z.enum(["INFO", "WARNING", "CRITICAL"]),
@@ -199,10 +213,14 @@ function buildAdversarialReview(
 function normalizedChecks(checks: BlindAdversarialReviewPayload["checks"]): AdversarialCheck[] {
   const byCategory = new Map<AdversarialCheckCategory, AdversarialCheck>()
   for (const check of checks) {
+    const category = check.category.category
+    const finding = check.category.rawCategory
+      ? `Reviewer category ${check.category.rawCategory}: ${check.finding.trim()}`
+      : check.finding.trim()
     const normalized: AdversarialCheck = {
-      category: check.category,
+      category,
       passed: check.passed,
-      finding: check.finding.trim(),
+      finding,
       severity: check.severity,
       remediation: check.remediation?.trim() || null,
     }
@@ -221,11 +239,13 @@ function normalizedChecks(checks: BlindAdversarialReviewPayload["checks"]): Adve
   return [
     ...REQUIRED_ADVERSARIAL_CATEGORIES.map(category => byCategory.get(category) as AdversarialCheck),
     ...checks
-      .filter(check => check.category === "OTHER")
+      .filter(check => check.category.category === "OTHER")
       .map(check => ({
         category: "OTHER" as const,
         passed: check.passed,
-        finding: check.finding.trim(),
+        finding: check.category.rawCategory
+          ? `Reviewer category ${check.category.rawCategory}: ${check.finding.trim()}`
+          : check.finding.trim(),
         severity: check.severity,
         remediation: check.remediation?.trim() || null,
       })),
