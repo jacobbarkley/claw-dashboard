@@ -1325,6 +1325,55 @@ export async function loadBenchIndexWithViresContracts(): Promise<JsonObject | n
   }
 }
 
+export async function loadBenchHomeIndex(): Promise<JsonObject | null> {
+  const index = await readJson<JsonObject>("data/bench/index.json")
+  if (!index) return null
+
+  const manifests = arr<JsonObject>(index.manifests)
+  const runEntries = arr<JsonObject>(index.runs)
+  const specs = arr<JsonObject>(index.specs)
+  const specByBenchId = new Map(specs.map(spec => [str(spec.bench_id) ?? "", spec]))
+  const normalizedRuns = runEntries.map(entry => {
+    const benchId = str(entry.bench_id)
+    const runId = str(entry.run_id)
+    const spec = specByBenchId.get(benchId ?? "") ?? {}
+    return {
+      ...entry,
+      id: benchId && runId ? `${benchId}/${runId}` : benchId ?? runId ?? "run",
+      winner: str(entry.selected_config_id),
+      role: humanizeRole(entry),
+      hypothesis: str(spec.hypothesis),
+      generated: str(entry.generated_at),
+      detail_key: benchId && runId ? `${benchId}/${runId}` : null,
+    }
+  })
+
+  return {
+    ...index,
+    runs: normalizedRuns,
+    passports: manifests.map(manifest => ({
+      id: str(manifest.strategy_id) ?? str(manifest.manifest_id) ?? str(manifest.source?.bench_id) ?? "passport",
+      bench_id: str(manifest.source?.bench_id) ?? str(manifest.bench_id),
+      run_id: str(manifest.source?.run_id) ?? str(manifest.run_id),
+      source_type: "manifest",
+      name: str(manifest.title) ?? str(manifest.manifest_id) ?? "Strategy Passport",
+      variant: str(manifest.deployment_config_id) ?? "selected",
+      sleeve: str(manifest.sleeve),
+      strategy_family: str(manifest.strategy_family),
+      benchmark: str(manifest.benchmark_symbol),
+      manifest: {
+        provenance: "CHECKED_IN",
+        ref: str(manifest.manifest_id) ?? str(manifest.title),
+        stage: stageLabelForManifest(manifest),
+        eligibility: eligibilityForManifest(manifest),
+        runtimeContract: str(manifest.runtime_contract),
+        cadence: str(manifest.cadence),
+        broker: manifest.broker ?? null,
+      },
+    })),
+  }
+}
+
 export async function loadBenchRunDetail(benchId: string, runId: string): Promise<JsonObject | null> {
   const raw = await readRunArtifacts(benchId, runId)
   if (!raw) return null

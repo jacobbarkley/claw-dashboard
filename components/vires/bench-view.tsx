@@ -332,15 +332,15 @@ export function ViresBenchView({
     setLiveOperator(initialOperator)
   }, [initialOperator])
 
-  // Poll /api/bench/index + /api/trading every 90s and on focus so the
-  // promoted card, counts, and runs update without a redeploy.
+  // Poll the lightweight Bench-home snapshot + /api/trading every 90s and on
+  // focus so promoted cards and counts update without blocking navigation.
   useEffect(() => {
     let cancelled = false
 
     async function refresh() {
       try {
         const [benchRes, tradingRes] = await Promise.all([
-          fetch("/api/bench/index", { cache: "no-store" }),
+          fetch("/api/bench/home", { cache: "no-store" }),
           fetch("/api/trading", { cache: "no-store" }),
         ])
 

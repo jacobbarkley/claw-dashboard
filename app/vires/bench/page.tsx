@@ -2,7 +2,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import { ViresBenchView } from "@/components/vires/bench-view"
 import { labRedesignEnabled } from "@/lib/feature-flags.server"
-import { loadBenchIndexWithViresContracts } from "@/lib/vires-bench"
+import { loadBenchHomeIndex } from "@/lib/vires-bench"
 import { loadCampaignsIndex } from "@/lib/vires-campaigns.server"
 
 async function readJson(filename: string) {
@@ -15,7 +15,7 @@ async function readJson(filename: string) {
 }
 
 async function getInitialBench() {
-  return await loadBenchIndexWithViresContracts()
+  return await loadBenchHomeIndex()
 }
 
 async function getOperator() {
