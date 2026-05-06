@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-06T14:15:09.449393+00:00",
+  "generated_at": "2026-05-06T14:30:10.099502+00:00",
   "as_of_date": "2026-05-06",
   "account": {
     "equity": 85675.64,
@@ -1677,11 +1677,30 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "SCHW",
+        "price": 94.8,
+        "sector": "Financial Services",
+        "expiry": "2026-05-29",
+        "dte": 23,
+        "short_strike": 96.0,
+        "long_strike": 91.0,
+        "spread_width": 5.0,
+        "net_credit": 1.9,
+        "credit_width_ratio": 0.38,
+        "annualized_yield_pct": 660.5,
+        "max_loss_per_contract": 310.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
