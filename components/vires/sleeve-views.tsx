@@ -10,7 +10,7 @@
 // stays attached to the strategy.
 
 import { useState } from "react"
-import { Delta, StatusPill, fmtCurrency, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
+import { StatusPill, fmtCurrency, fmtPct, toneColor, toneOf, type Sleeve } from "./shared"
 import type { ViresTradingData } from "./trading-home"
 import { useSharedTimeframe, TimeframeDropdown, TIMEFRAMES } from "./timeframe-context"
 import { ActiveStrategy, type ActiveStrategyOperator } from "./active-strategy"
@@ -142,16 +142,53 @@ function SleeveSummary({ sleeve, positions, equityCurve, sleeveHistory }: {
     crypto:  { c: "var(--vr-sleeve-crypto)",  title: "Crypto",  copy: "Digital asset sleeve · two-layer" },
   }[sleeve]
 
+  const { tf } = useSharedTimeframe()
+  const tfMeta = TIMEFRAMES.find(t => t.k === tf) ?? TIMEFRAMES[1]
+
   const total = positions.reduce((s, p) => s + (p.market_value ?? 0), 0)
-  // Today's $ change: per-position market_value × pct/(100+pct) so the sleeve
-  // total reads cleanly even when sizes vary across symbols.
-  const todayUsd = positions.reduce((s, p) => {
-    const pct = p.change_today_pct ?? 0
-    if (!pct) return s
-    return s + (p.market_value ?? 0) * (pct / (100 + pct))
-  }, 0)
-  const todayPct = total > 0 ? (todayUsd / (total - todayUsd)) * 100 : null
   const upnl = positions.reduce((s, p) => s + (p.unrealized_pnl ?? 0), 0)
+
+  // Period delta — read the start of the active timeframe window from
+  // sleeve_equity_history, anchor the end to the live total (matching the
+  // sparkline below). Picking a different timeframe in the dropdown updates
+  // both the hero number and the sparkline at once.
+  //
+  // Falls back to today's $ move from per-position change_today_pct when
+  // history is absent (newly funded sleeve, options/crypto pre-promotion).
+  // Dollar-only by design: with cash reserves in the base, percentages
+  // compress so hard at short horizons that they read as zero. Dollar
+  // delta tells the truth at every timeframe.
+  const historySeries =
+    sleeveHistory?.status === "available" && Array.isArray(sleeveHistory.series)
+      ? sleeveHistory.series.filter(
+          (p): p is SleeveEquityHistoryPoint =>
+            !!p && typeof p.date === "string" && typeof p.market_value === "number"
+        )
+      : []
+
+  let periodDeltaUsd: number | null = null
+  let periodLabel = "today"
+
+  if (historySeries.length >= 2 && total > 0) {
+    const window = tfMeta.days === Infinity
+      ? historySeries
+      : historySeries.slice(-Math.max(2, Math.min(historySeries.length, tfMeta.days + 1)))
+    const startValue = window[0].market_value
+    if (startValue > 0) {
+      periodDeltaUsd = total - startValue
+      periodLabel = tf === "1D" ? "today" : tf
+    }
+  }
+
+  if (periodDeltaUsd == null && total > 0) {
+    const todayUsd = positions.reduce((s, p) => {
+      const pct = p.change_today_pct ?? 0
+      if (!pct) return s
+      return s + (p.market_value ?? 0) * (pct / (100 + pct))
+    }, 0)
+    periodDeltaUsd = todayUsd
+    periodLabel = "today"
+  }
 
   return (
     <div className="vr-card-hero" style={{ padding: 22, borderColor: `${cfg.c}33` }}>
@@ -165,8 +202,12 @@ function SleeveSummary({ sleeve, positions, equityCurve, sleeveHistory }: {
       <div style={{ display: "flex", gap: 14, marginTop: 8, alignItems: "baseline", flexWrap: "wrap" }}>
         {total > 0 ? (
           <>
-            {todayPct != null && <Delta value={todayPct} size="12px" />}
-            <span className="t-label" style={{ fontSize: 11 }}>today</span>
+            {periodDeltaUsd != null && (
+              <span className="t-num" style={{ fontSize: 12, color: toneColor(toneOf(periodDeltaUsd)) }}>
+                {fmtCurrency(periodDeltaUsd, { sign: true })}
+              </span>
+            )}
+            <span className="t-label" style={{ fontSize: 11 }}>{periodLabel}</span>
             <span style={{ color: "var(--vr-cream-faint)" }}>·</span>
             <span className="t-num" style={{ fontSize: 12, color: toneColor(toneOf(upnl)) }}>
               {fmtCurrency(upnl, { sign: true })}
