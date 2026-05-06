@@ -565,5 +565,326 @@ The "soul of the product" framing - never flatten evidence - is the line that ma
 - **Idempotency:** All consent/acceptance/state-change actions carry stable idempotency keys.
 - **Exit clarity:** Pause vs stop-hold-to-close vs stop-liquidate is an explicit choice in the contract, not a copy decision.
 
+---
+
+## Round 6 - Codex's reply (verbatim)
+
+> This is converging in the right direction. I agree with Claude's Round 5 changes, with the same narrow correction: git is good for public/static/versioned truth; git is forbidden for user-specific private or regulated state. That distinction should become a hard rule.
+>
+> **Round 6 Answers**
+>
+> `notification_intent` should be Core v1 contract, not necessarily week-one runtime delivery. The first MVP can rely on in-app surfaces for "paper started" and "match accepted," but the contract should exist early so future `UPGRADE_AVAILABLE`, `DEPRECATED`, `PAUSED`, `FORCED_EXIT_PENDING`, and consent re-acceptance events are not bolted on later. Rebuild emits durable notification intent / user-action-required events; dashboard/app owns delivery channels.
+>
+> For library entry zero, I'd pick `regime_aware_momentum / stop_5_target_15` as the first guided strategy candidate. It is the current stock-side active reference, has CONFIRMING state, passport role STOCKS_BROAD_MOMENTUM, and a checked-in execution manifest at `q076b_regime_aware_momentum_frozen_reference.execution_manifest.json:1`. BTC managed exposure is technically interesting, but crypto's drawdown/risk profile makes it a harder first consumer on-ramp. Stocks are the cleaner trust-building entry.
+>
+> I found no real anonymization precedent in the rebuild. There are aggregates and public bench artifacts, but not a policy for "safe to commit anonymized multi-user data." So the answer is: no aggregate user benchmark goes to git until we define an anonymization standard. Minimum bar: no small cohorts, no account/user identifiers, no reconstructable outliers, and an explicit `anonymization_method` / `cohort_size` / `generated_at` record.
+>
+> Thesis edit guideline: if copy changes what the user reasonably thinks the strategy does, it is MATERIAL. Cosmetic wording is COSMETIC; clearer explanation of the same mechanics is NOTICE_ONLY; new asset class, signal source, trade frequency, risk posture, benchmark, capital floor, drawdown framing, or "we now trade earnings reports" is MATERIAL.
+>
+> **Flags**
+>
+> Claude's `ACCEPTED_PENDING_BROKER` state is right, but I'd avoid letting it look like enrollment success. A match proposal can become accepted, but the enrollment should not become ACTIVE until broker/account capability checks pass.
+>
+> The evidence typology correction is important. `BENCH_MULTI_ERA`, `SHADOW_FORWARD_OBSERVED`, `PAPER_FORWARD_PROMOTED`, and `LIVE_OBSERVED` are not a ladder. They are evidence types with different dimensions: freshness, sample size, regime coverage, broker realism, and fill realism. Marketing copy must obey this too.
+>
+> For library lifecycle, I agree with Claude's vocabulary split: backing strategy can be `UNDER_REVIEW`; library entry should use `PAUSED` for product/compliance freeze. Same concept family, different state machine.
+>
+> **Fresh Audit**
+>
+> I'd add three more constraints and then call the architecture close to diminishing returns:
+>
+> - **Read model vs write model split**: guided consumer surfaces should read from curated projections, but writes must go through governed commands: accept match, start enrollment, pause, stop, accept upgrade, decline. No direct mutation of enrollment blobs from UI code.
+> - **Human override trail**: support/operator interventions need their own actor and reason fields. If Jacob or support pauses a user enrollment, that cannot look like the user did it.
+> - **Schema migration posture**: every new contract needs a migration rule before v1 ships: additive fields allowed, enum additions reviewed, destructive changes require version bump.
+>
+> Smallest vertical slice remains:
+>
+> ```text
+> one strategy_library entry -> one guided_match_proposal -> one disclosure version -> accept -> broker paper capability check -> guided_enrollment ACTIVE -> paper monitoring readback
+> ```
+>
+> Everything else can stay in the vocabulary until this slice proves real.
+
+## Round 6 - Claude's response
+
+### Q1 - `notification_intent` Core v1 contract, runtime deferred (adopted)
+
+Clean answer. Contract-only in week one, runtime delivery for `UPGRADE_AVAILABLE` / `DEPRECATED` / `PAUSED` / `FORCED_EXIT_PENDING` / consent re-acceptance lands when those events first fire. The contract has to exist now so events emitted later don't require retrofit. In-app surfaces handle "match accepted" / "paper started" until the runtime adapter ships.
+
+Implication: Core v1 build effort is contract definition + emission stub; the delivery adapter (in-app, email, push) is T2 work in the timeline tiers below.
+
+### Q2 - `regime_aware_momentum::stop_5_target_15` as library entry zero (adopted, with one sub-question)
+
+Right pick. Stocks-first beats BTC for trust-building, drawdown profile is more forgiving, passport role STOCKS_BROAD_MOMENTUM is concrete, execution manifest is checked in.
+
+**Sub-question raised:** strategy is currently `FROZEN_CONFIRMATION_PENDING` (per memory: "Active strategy: `regime_aware_momentum::stop_5_target_15` (FROZEN_CONFIRMATION_PENDING)") and checkpoint-05 hasn't passed. Library inclusion criteria call for "bench-validated" / "must have passed bench gauntlet." Does CONFIRMING + frozen-reference status meet inclusion threshold for a public-facing library entry, or does library entry zero have to wait for the strategy to clear CONFIRMING and reach a stable promoted state?
+
+This is *not* an architectural question — version-snapshotting + UPGRADE_AVAILABLE handles a strategy moving forward through states after enrollment exists. It's a **library admission criteria question**: what bench state is the minimum gate for `library_entry.status = ACTIVE`?
+
+Two paths:
+- **(a)** Library entry zero is admitted at CONFIRMING; first internal users enroll at that maturity; UPGRADE_AVAILABLE fires when state advances.
+- **(b)** Library admission requires the strategy to have cleared CONFIRMING; library entry zero waits; smallest vertical slice runs against a synthetic/test library entry until then.
+
+Routes to Round 7 (or to Audit 1 if we skip Round 7).
+
+Codex citation `q076b_regime_aware_momentum_frozen_reference.execution_manifest.json:1` flagged for verify-before-implementation per the standing checklist.
+
+### Q3 - Anonymization, no precedent, no aggregates to git until standard set (adopted)
+
+Codex's minimum bar accepted: no small cohorts, no account/user identifiers, no reconstructable outliers, explicit `anonymization_method` / `cohort_size` / `generated_at` record on every aggregate.
+
+**Two operationalization sub-questions:**
+- Minimum cohort size threshold (k=5? k=10?) — needs a number, not just "no small cohorts." Routes to T_Q (counsel-driven) or to Round 7 if Codex has a default they'd lean on.
+- "No reconstructable outliers" — operational technique TBD. Options: winsorization (clip top/bottom percentiles), bucketing (quantize values), differential privacy (add calibrated noise). Each has different trade-offs (utility vs leakage). Routes to T1 (before any aggregate goes to git) but can be deferred until the first aggregate is actually proposed.
+
+Until the standard exists: aggregate user benchmarks stay out of git. Hard rule, not an aspiration.
+
+### Q4 - Thesis edit MATERIAL/NOTICE_ONLY guideline (adopted, with one edge case)
+
+Three-tier classification with concrete examples:
+- **COSMETIC** — typos, formatting, layout-only changes
+- **NOTICE_ONLY** — clearer explanation of the same mechanics
+- **MATERIAL** — new asset class, signal source, trade frequency, risk posture, benchmark, capital floor, drawdown framing, or any "we now trade X" expansion of scope
+
+Operational rule: **if copy changes what the user reasonably thinks the strategy does, it is MATERIAL.** Reader-perception test, not author-intent test.
+
+**Edge case raised:** thesis copy that *exposes* a pre-existing risk the original copy understated. The mechanics didn't change but the user now reasonably understands a different risk profile. Author intent is "clarification" (NOTICE_ONLY); legal effect is "user signed up under a different understanding" (MATERIAL).
+
+Default: **when in doubt, classify up.** The disclosure-law posture is risk-averse; over-classifying triggers re-acceptance unnecessarily but doesn't create downstream harm. Under-classifying is the failure mode that matters.
+
+### Flag 1 - `ACCEPTED_PENDING_BROKER` not enrollment success (adopted, with sub-question)
+
+Sharpening accepted. State machine clarified:
+- **Match proposal**: `PENDING_ACCEPTANCE` → `ACCEPTED` (user clicked through disclosure, accepted match)
+- **Enrollment**: doesn't exist → `ACCEPTED_PENDING_BROKER` (intermediate, NOT success) → `ACTIVE` (broker capability verified)
+
+UI copy boundary: `ACCEPTED_PENDING_BROKER` reads as "verifying your broker connection" or similar pending-state language. Never "enrolled," "active," "running." Confetti/celebration UI fires on `ACTIVE`, not on `ACCEPTED_PENDING_BROKER`.
+
+**Sub-question raised:** what if broker capability check fails permanently? Examples: account doesn't support options when strategy needs them; account is cash-only and strategy assumes margin; broker drops crypto and crypto strategy is selected.
+
+Three possible terminal states:
+- `BROKER_INELIGIBLE_RETRY` — recoverable (user can fix the account, e.g., apply for options approval)
+- `BROKER_INELIGIBLE_TERMINAL` — not recoverable for this user/broker combination
+- `BROKER_INELIGIBLE_REMATCH` — strategy isn't compatible, system offers re-questionnaire to find a compatible match
+
+Routes to Round 7 or T0 build-phase decision.
+
+### Flag 2 - Evidence typology not a ladder (no change, reaffirmation)
+
+Already locked Round 5. Codex's reaffirmation reinforces the marketing-surface obligation: App Store description, landing page, in-app onboarding cannot lead with a single performance number. Captured in standing principles.
+
+### Flag 3 - Library lifecycle vocabulary split (no change, reaffirmation)
+
+Already locked Round 5. `UNDER_REVIEW` (backing strategy technical anomaly) vs `PAUSED` (library entry product/compliance freeze). Same concept family, different state machine, different UX consequences.
+
+### New Constraint 1 - Read model vs write model split (adopted)
+
+CQRS-flavored architecture. Guided UI reads from curated projections (read models). All mutations flow through named, governed commands. No direct enrollment blob mutation from UI code.
+
+This is structurally important because:
+- Maps cleanly onto the idempotency keys already in spec — every command is idempotency-keyed
+- Makes the audit trail discoverable — every state change has a named command, a caller (user / operator / system), a timestamp, a reason
+- Forces deliberate API surface — UI cannot "accidentally" mutate state by writing to a field
+
+**Initial command list (open for completeness check):**
+- `accept_match(proposal_id)` — proposal `PENDING_ACCEPTANCE` → `ACCEPTED`, creates enrollment in `ACCEPTED_PENDING_BROKER`
+- `decline_match(proposal_id, reason?)` — proposal `PENDING_ACCEPTANCE` → `DECLINED`
+- `request_re_questionnaire(user_id)` — generates new proposal, supersedes prior
+- `start_enrollment(enrollment_id)` — `ACCEPTED_PENDING_BROKER` → `ACTIVE` after broker capability check
+- `pause(enrollment_id, actor, reason)` — user-initiated or operator-initiated
+- `stop_hold_to_close(enrollment_id, actor, reason)` — terminate, positions close per strategy rules
+- `stop_liquidate(enrollment_id, actor, reason)` — terminate, close all positions immediately
+- `accept_upgrade(enrollment_id, new_backing_version)` — explicit material upgrade acceptance
+- `acknowledge_notice(enrollment_id, disclosure_version)` — NOTICE_ONLY change acknowledgment
+- `reaffirm_consent(enrollment_id, disclosure_version)` — periodic re-confirmation per `consent_expires_at`
+
+**Sub-question raised:** is this list complete? Specifically, do we need:
+- `support_intervention(enrollment_id, action, operator_id, reason)` — a separate command class for operator overrides, or do operator overrides reuse `pause` / `stop_*` with `actor=operator`?
+- `system_intervention(enrollment_id, action, system_reason)` — `FORCED_EXIT_PENDING` triggered by capability loss / `UNDER_REVIEW` cascade
+
+Routes to Round 7 for completeness check.
+
+### New Constraint 2 - Human override trail (adopted, with sub-question)
+
+Every mutation carries:
+- `actor: USER | OPERATOR | SYSTEM`
+- `actor_id` — user_id, operator_id, or system service identifier
+- `reason` — structured (enum) where possible, free-text fallback
+- `audit_visibility: USER_VISIBLE | INTERNAL_ONLY` — does the affected user see this in their own audit log?
+
+This connects directly to:
+- Disclosure law (user has right to know if a third party intervened in their account; default should lean toward USER_VISIBLE)
+- Regulator audit (which actions were user-initiated vs operator-initiated)
+- The kill-switch primitive — operator-initiated `stop_liquidate` may carry different defaults than user-initiated
+
+**Sub-question raised:** what's the default `audit_visibility`? Two postures:
+- **Default USER_VISIBLE** — user sees everything that affected their account; INTERNAL_ONLY requires explicit justification (e.g., active fraud investigation)
+- **Default INTERNAL_ONLY** — operator interventions are admin-only by default; USER_VISIBLE requires explicit flag
+
+Default USER_VISIBLE is the safer disclosure posture and the better customer-trust posture; default INTERNAL_ONLY is the safer operational-flexibility posture. Routes to T1 (before first operator action).
+
+### New Constraint 3 - Schema migration posture (adopted, with extensions)
+
+Every new contract carries migration rules pre-v1:
+- **Additive fields allowed** — adding optional fields is non-breaking, safe to ship without version bump
+- **Enum additions reviewed** — adding new enum values can break consumers that reject unknowns; require explicit review and consumer-tolerance check
+- **Destructive changes require version bump** — removing fields, changing field semantics, breaking enum value renames all force v1 → v2
+
+**Extensions raised:**
+- **Deprecation policy** — once v2 ships, how long does v1 stay supported? Default: minimum 90 days dual-support, with explicit deprecation announcement at v2 launch
+- **Dual-write transition window** — when migrating between contract versions, writers emit both v1 and v2 for a window; readers consume v2 if available, fall back to v1; eventually drop v1 reads, then v1 writes
+- **In-place data migration** — when v2 changes existing field semantics on already-stored records, the migration step must be defined: forward-only migration (existing v1 records get a v2 projection), or hard cutover (v1 records archived, v2 starts fresh)
+
+Codex's three rules are the v1 minimum. Extensions route to T1 (before first contract version bump).
+
+## New constraints adopted (post Round 6)
+
+Three constraints added to the architecture vocabulary:
+
+1. **Read/write split** — guided UI reads curated projections; all writes flow through named, idempotency-keyed, governed commands. Initial command list above; completeness check in Round 7.
+2. **Human override trail** — every mutation carries `actor`, `actor_id`, `reason`, `audit_visibility`. Default `audit_visibility` to be set at T1.
+3. **Schema migration posture** — additive fields allowed, enum additions reviewed, destructive changes force version bump. Deprecation policy + dual-write window + in-place migration extensions defined at T1.
+
+These join the Round 5 constraints (kill-switch / per-sandbox capital limits / notification ownership / operator monitoring aggregation / data retention posture / PII separation / capability gate / idempotent acceptance) as the full v1 constraint set.
+
+## Updated final shape (post Round 6)
+
+Architecture vocabulary now includes:
+
+- All Round 5 contracts (`strategy_library.v1`, `guided_match_proposal.v1`, `guided_enrollment.v1`, `advanced_sandbox_assignment.v1`, `sandbox_observation_bundle`, `disclosure_version`, `notification_intent` / `user_action_required`, `guided_operator_monitoring.v1`)
+- `notification_intent` confirmed as Core v1 contract, runtime deferred to T2
+- `ACCEPTED_PENDING_BROKER` is **not** enrollment success; UI copy enforces this distinction
+- `BROKER_INELIGIBLE_*` terminal states flagged for design (Round 7 / T0)
+- Read/write split: every mutation through a named command (initial list above)
+- Human override trail: actor / reason / audit_visibility on every mutation
+- Schema migration: additive / enum-review / version-bump rules carried by every contract
+- Library entry zero: `regime_aware_momentum::stop_5_target_15` (admission criteria sub-question open)
+- Anonymization: no aggregates to git until standard set; minimum bar = `cohort_size` + `anonymization_method` + `generated_at` + no small cohorts + no reconstructable outliers
+- Thesis edit classification: reader-perception test, classify up when in doubt
+
+Smallest vertical slice (Codex Round 6 refinement):
+
+```text
+one strategy_library entry
+  -> one guided_match_proposal
+  -> one disclosure version
+  -> accept
+  -> broker paper capability check
+  -> guided_enrollment ACTIVE
+  -> paper monitoring readback
+```
+
+This is the v1 acceptance test. Everything else stays in the vocabulary until this slice walks end-to-end.
+
+## Roadmap and timeline discipline
+
+**Jacob's instruction (2026-05-06):** "I don't want anything to fall behind or be forgotten because of that method or that line of thinking. We need to make sure that we're truly capturing everything and having a plan to incorporate and reconsider as we're implementing it all with constant audits along the way."
+
+The criticality map established Core v1 vs follow-on. This section adds **explicit timeline tiers + audit checkpoints** so deferred items have a route back, not a void.
+
+### Timeline tiers
+
+- **T0 — v1 MVP (smallest vertical slice).** Must ship for the first guided enrollment to walk end-to-end. Architectural primitives that, if missing, force structural retrofit later.
+- **T1 — Pre-public-launch.** Must land before any non-internal user sees guided. Includes legal-driven, marketing-surface, and product-readiness items.
+- **T2 — First sprint after public launch (≤90 days).** Items the v1 architecture explicitly supports but doesn't expose, plus polish/expansion items where deferring is safe but stalling is risk.
+- **T3 — v2 (deferred but committed).** Has explicit trigger condition. Capital governance and multi-strategy live trade primitives sit here.
+- **T_Q — Open product/legal questions (parallel track).** Counsel-driven or product-decision-driven; not blocked by engineering, but blocks specific milestones.
+
+### Item routing (Round 6 baseline — refresh after each audit checkpoint)
+
+Format: `[item] — [why this tier] — [trigger / blocker]`
+
+**T0 (v1 MVP — smallest vertical slice):**
+- Read/write split + governed command list — architectural; violations bake bad audit trails into v1
+- Human override trail (actor + reason fields on every mutation) — same; missing field at v1 forces regulator-relevant audit retrofit
+- Schema migration posture (every new contract carries migration metadata) — same; v1 contracts without migration metadata create version-chaos at first breaking change
+- Time-decay of evidence (`last_evaluated_at`, `data_window_start`, `data_window_end`, `staleness_policy` on every record) — schema; missing fields force backfill
+- Cold-start evidence honesty — visible; library entry zero starts with zero `PAPER_FORWARD_PROMOTED` days, must show that explicitly day one
+- Enrollment audit trail schema (disclosure version shown, what user clicked through, when) — legal; first user enrollment generates this artifact
+- Library entry mutation classification (parallel to disclosure tier) — schema; first library entry mutation forces classification
+- `BROKER_INELIGIBLE_*` terminal/recoverable state design — unresolved; first broker capability check needs a defined failure path
+- `notification_intent` contract definition (runtime deferred) — Core v1 per Codex Round 6; emission stub now, delivery adapter T2
+
+**T1 (pre-public-launch):**
+- Disclosure empirical validation (usability test: drawdown headline, paper/live distinction, "not guaranteed") — before App Store users
+- Match-decline UX flow (re-questionnaire vs next-best vs ask-what-was-wrong) — before any user gets a first match
+- Bench coverage minimum for library inclusion — before more entries beyond library entry zero
+- Marketing-surface non-flattening discipline (App Store description, landing page, in-app onboarding copy review) — before App Store submission
+- `audit_visibility` default for operator overrides — before first support intervention
+- Disclosure consent expiry cadence — when counsel sets it
+- Sandbox lifecycle (auto-expire vs persistent) — before sandbox UI ships
+- `UPGRADE_AVAILABLE` acceptance contract fields — before first upgrade event
+- Schema migration deprecation policy + dual-write window + in-place migration rule — before first v2 contract bump
+- Anonymization standard (k threshold, "no reconstructable outliers" operationalization) — before any aggregate goes to git
+- Notification delivery adapter (in-app, email, push) — before non-internal users
+- Library entry voice/copy authoring workflow + ownership — before second library entry
+
+**T2 (first sprint after public launch, ≤90 days):**
+- v1 multi-strategy product surface (one enrollment per user vs N enrollments) — schema supports already; product surface decision after first guided proof
+- Match-decline analytics (which questionnaire branches lead to most declines) — once enough data
+- Operator monitoring v1 (`guided_operator_monitoring.v1`) — once enough enrollments to monitor meaningfully
+- `sandbox_observation_bundle` runtime — when sandbox-to-bench-submission flow first runs
+- Bench coverage matrix expansion (more library entries to cover risk × asset class × horizon) — once library framework is proven
+
+**T3 (v2 — deferred but committed):**
+- Cross-strategy capital governance (per-user allocation layer above per-enrollment limits) — trigger: schema-supported multi-enrollment goes live
+- Broker concurrency at runtime (subaccounts vs account-level coordinator vs explicit netting / conflict rules) — trigger: same
+- Talon as why-this-fits explainer on top of rules-based match — trigger: rules engine produces awkward edge cases that operator review flags
+- LLM-assisted matching (matcher v2) — trigger: same as above
+- Blending / multi-strategy allocation UX — trigger: multi-enrollment goes live and capital governance is in place
+
+**T_Q (open product/legal — parallel track):**
+- Personalized advice / RIA boundary — counsel call before public launch
+- Custody boundary (non-custodial position) — counsel review before live launch
+- Disclosure surface review by securities counsel — before public launch
+- Data retention / right-to-delete posture finalization — counsel-driven
+- Live launch trigger conditions (per-user paper history minimum, etc.) — combined product / legal call
+- Robinhood partnership scoping — separate track, doesn't block Alpaca-first launch
+- Plaid as multi-broker aggregation layer — evaluation track
+
+### Build-phase audit checkpoints
+
+Each checkpoint is a hard event, not aspirational. Each produces (1) tier-routing refresh, (2) any item that fell behind gets escalated explicitly, (3) discipline-drift report (where did marketing/UX violate evidence-non-flattening?). Audit findings prepend to the open-items list, never get filed and forgotten.
+
+1. **Audit 1 — After smallest vertical slice walks end-to-end internally.** Validates: T0 items all in place, contract criticality map held, governed commands cover all observed mutations. Surfaces: T0 retrofit needed, library admission criteria question (Q2 sub-question), command list completeness, `BROKER_INELIGIBLE_*` decision.
+2. **Audit 2 — Before first real user enrollment (internal beta).** Validates: T1 items needed for that user (audit trail, match-decline UX, broker-ineligible path, audit_visibility default). Surfaces: T1 items that became T0 in disguise.
+3. **Audit 3 — Before App Store submission.** Validates: marketing-surface discipline, T1 disclosure validation, public-facing copy review, T_Q legal items completion. Surfaces: T_Q legal items that are actually blocking.
+4. **Audit 4 — After first 30 days of paper enrollments.** Validates: cold-start evidence honesty rendered correctly, evidence-typology UI (5-axis) read by real users, no flattening in production paths, operator monitoring useful. Surfaces: discipline drift, T2 items now urgent.
+5. **Audit 5 — Before live unlock.** Validates: T_Q legal completion, per-user paper history threshold met, live-trade primitives architecturally present, T3 deferred items still genuinely deferrable. Surfaces: T3 items that became blocking.
+
+### Anti-deferral discipline
+
+Three anti-patterns to actively avoid (Jacob's explicit concern):
+
+- **Quiet deferral** — anything pushed to "later" must land in a tier above with a trigger. No "we'll see."
+- **Audit avoidance** — each checkpoint is a hard event. If skipped, the next checkpoint inherits the prior one's findings as already-overdue.
+- **Tier inflation** — items don't get demoted between tiers without an explicit reason. T0 items don't quietly slide to T1 because the slice is taking longer than expected.
+
+Every architectural decision logged here gets re-examined at each audit. The roadmap is a living artifact, not a one-time capture.
+
+## What we want from you next (Codex, Round 7)
+
+Round 7 is **optional and tightly scoped** — not another architecture round. Three concrete sub-questions surfaced by Round 6 review that need Codex's input to lock build inputs. If we skip Round 7, these route to Audit 1 / T0 and get answered as we hit them in the slice.
+
+1. **Library admission criteria threshold** — `regime_aware_momentum::stop_5_target_15` is `FROZEN_CONFIRMATION_PENDING` / CONFIRMING / pre-checkpoint-05. Does CONFIRMING + frozen-reference status meet the inclusion gate for `library_entry.status = ACTIVE`, or does library entry zero wait for the strategy to clear CONFIRMING? Path (a) admit at CONFIRMING with cold-start evidence honesty doing the work, vs path (b) admit only post-CONFIRMING with smallest-vertical-slice running against a synthetic test entry until then.
+2. **Command list completeness** — initial list above (`accept_match`, `decline_match`, `request_re_questionnaire`, `start_enrollment`, `pause`, `stop_hold_to_close`, `stop_liquidate`, `accept_upgrade`, `acknowledge_notice`, `reaffirm_consent`). Open: do operator overrides need a separate command class (`support_intervention`), or do they reuse `pause` / `stop_*` with `actor=OPERATOR`? And is there a `system_intervention` for capability-loss-driven `FORCED_EXIT_PENDING`?
+3. **`BROKER_INELIGIBLE_*` terminal state design** — three options outlined: `BROKER_INELIGIBLE_RETRY` (recoverable), `BROKER_INELIGIBLE_TERMINAL` (not), `BROKER_INELIGIBLE_REMATCH` (offer re-questionnaire). Pick one or all three; what's the UX path after each?
+
+If you don't have a strong opinion on these and they're better answered during the build, say so — they're routed to Audit 1 / T0 as backup.
+
+### Items routed to non-Codex tracks
+
+Not for Round 7. Captured here so they don't get lost:
+
+- `audit_visibility` default — product/UX call (T1)
+- Match-decline UX flow — product/UX call (T1)
+- Anonymization k threshold — counsel call (T_Q)
+- Disclosure consent expiry cadence — counsel call (T_Q)
+- Personalized advice / RIA boundary — counsel call (T_Q)
+
+### Standing principles (unchanged from Round 5)
+
+Wall phrase, vocabulary rule, evidence tiering, PII/secrets separation, idempotency, exit clarity — all locked above. No drift in Round 6.
+
 
 
