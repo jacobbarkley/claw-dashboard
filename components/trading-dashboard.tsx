@@ -2582,35 +2582,33 @@ function SleevePositionsChart({ positions }: { positions: Position[] }) {
 
 function StocksSleeve({ data }: { data: TradingData }) {
   const meta = SLEEVE_META.stocks
-  // Reserves (SGOV, etc.) are bank, not strategy. Excluded from the
-  // stocks sleeve view entirely — they distort allocation %, today's move,
-  // and the universe display since 90%+ of "deployed equity" can be
-  // sitting in a treasury ETF the strategy isn't actually trading.
-  // Home page still shows the full portfolio including reserves.
-  // TODO(multi-tenant): make this per-user config when scope-aware.
+  // Cash reserves (SGOV) are part of the stock allotment — they're where
+  // proceeds park between strategy entries. The sleeve total + position
+  // list include them so post-sale equity comparison stays apples-to-apples.
+  // The Strategy Universe panel still scopes to strategy-only — SGOV isn't
+  // a strategy candidate, just a parking spot.
+  // TODO(multi-tenant): make reserve symbols per-user config when scope-aware.
   const RESERVE_SYMBOLS = new Set(["SGOV"])
   const allEquityPositions = data.positions.filter(
     p => (p.asset_type ?? "EQUITY") === "EQUITY" && !parseOptionSymbol(p.symbol),
   )
-  const equityPositions = allEquityPositions.filter(p => !RESERVE_SYMBOLS.has(p.symbol))
-  const reservesValue = allEquityPositions
-    .filter(p => RESERVE_SYMBOLS.has(p.symbol))
-    .reduce((acc, p) => acc + (p.market_value ?? 0), 0)
-  const equitySymbols = new Set(equityPositions.map(p => p.symbol))
+  const strategyEquityPositions = allEquityPositions.filter(p => !RESERVE_SYMBOLS.has(p.symbol))
+  const equitySymbols = new Set(allEquityPositions.map(p => p.symbol))
   const equityExits = data.exit_candidates.filter(e => equitySymbols.has(e.symbol) || !data.positions.find(p => p.symbol === e.symbol && parseOptionSymbol(p.symbol)))
 
-  // Sleeve totals — operator-feed equity_deployed includes reserves, so we
-  // subtract them. Falls back to summing strategy-only positions if the
-  // operator-feed field is missing.
+  // Sleeve total — full stock allotment including reserves. Prefer the
+  // operator-feed value (already authoritative); fall back to summing all
+  // equity positions if the field is missing.
   const stockHoldings = data.account.equity_deployed != null
-    ? Math.max(0, data.account.equity_deployed - reservesValue)
-    : equityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
+    ? Math.max(0, data.account.equity_deployed)
+    : allEquityPositions.reduce((acc, p) => acc + (p.market_value ?? 0), 0)
 
   // Today's $ change for stocks — derived per-position from market_value and
-  // change_today_pct using the exact identity P_now - P_prev. The portfolio
-  // today_pnl on `account` is account-level (includes options/crypto), so we
-  // recompute for the sleeve to stay scoped.
-  const stocksTodayChangeUsd = equityPositions.reduce((acc, p) => {
+  // change_today_pct. SGOV is included; its change is near-zero so the dollar
+  // figure stays accurate, but the percentage will compress against the larger
+  // base. That's honest — moves on $2.8K of strategy positions ARE small
+  // against a $54K stock allotment.
+  const stocksTodayChangeUsd = allEquityPositions.reduce((acc, p) => {
     const pct = p.change_today_pct ?? 0
     if (!pct) return acc
     return acc + (p.market_value ?? 0) * (pct / (100 + pct))
@@ -2629,11 +2627,11 @@ function StocksSleeve({ data }: { data: TradingData }) {
   // Annotate each symbol with its status today (held / qualified today / awaiting).
   const activeStrategy = data.operator?.strategy_bank?.active
   const strategySymbols: string[] = activeStrategy?.symbols ?? []
-  const heldSymbols = new Set(equityPositions.map(p => p.symbol))
+  const heldSymbols = new Set(strategyEquityPositions.map(p => p.symbol))
   const qualifiedSymbols = new Set(data.watchlist.items.map(i => i.symbol))
   const qualifiedToday = strategySymbols.filter(s => qualifiedSymbols.has(s)).length
 
-  const positionBySymbol = new Map(equityPositions.map(p => [p.symbol, p]))
+  const positionBySymbol = new Map(strategyEquityPositions.map(p => [p.symbol, p]))
   const universeItems = strategySymbols.length > 0
     ? strategySymbols.map(sym => {
         const held = heldSymbols.has(sym)
@@ -2683,7 +2681,7 @@ function StocksSleeve({ data }: { data: TradingData }) {
           todayChangeUsd={stocksTodayChangeUsd}
           todayChangePct={stocksTodayChangePct}
           allocationPct={allocationPct}
-          positionCount={equityPositions.length}
+          positionCount={allEquityPositions.length}
         />
       </section>
 
@@ -2704,28 +2702,30 @@ function StocksSleeve({ data }: { data: TradingData }) {
       {/* Open positions */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <span className="cb-label">Open Positions · {equityPositions.length}</span>
+          <span className="cb-label">Open Positions · {allEquityPositions.length}</span>
           {equityExits.length > 0 && (
             <span className="text-[10px]" style={{ color: "var(--cb-amber)" }}>
               {equityExits.length} exit signal{equityExits.length > 1 ? "s" : ""}
             </span>
           )}
         </div>
-        <PositionsList positions={equityPositions} exitCandidates={equityExits} />
+        <PositionsList positions={allEquityPositions} exitCandidates={equityExits} />
       </section>
 
-      {/* Today's moves — mini-chart of what's invested, not the whole equity */}
+      {/* Today's moves — mini-chart of strategy positions only. SGOV doesn't
+          move so including it adds a flat bar; the chart's job is to show
+          what's actually moving in the strategy. */}
       <section>
-        <SleevePositionsChart positions={equityPositions} />
+        <SleevePositionsChart positions={strategyEquityPositions} />
       </section>
 
-      {/* Exit signals not tied to current positions */}
-      {equityExits.some(e => !equityPositions.find(p => p.symbol === e.symbol)) && (
+      {/* Exit signals not tied to current strategy positions */}
+      {equityExits.some(e => !strategyEquityPositions.find(p => p.symbol === e.symbol)) && (
         <section>
           <div className="flex items-center justify-between mb-3">
             <span className="cb-label">Exit Signals · No Current Position</span>
           </div>
-          <ExitCandidatesPanel items={equityExits} positions={equityPositions} />
+          <ExitCandidatesPanel items={equityExits} positions={strategyEquityPositions} />
         </section>
       )}
 
