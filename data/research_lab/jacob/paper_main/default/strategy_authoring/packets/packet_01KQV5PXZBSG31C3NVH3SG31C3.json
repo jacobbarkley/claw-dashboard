@@ -1,0 +1,776 @@
+{
+  "schema_version": "research_lab.strategy_authoring_packet.v1",
+  "packet_id": "packet_01KQV5PXZBSG31C3NVH3SG31C3",
+  "revised_from": null,
+  "revision_index": null,
+  "created_at": "2026-05-05T04:18:02.861Z",
+  "updated_at": "2026-05-05T04:18:02.861Z",
+  "status": "REVIEW",
+  "questionnaire": {
+    "render_mode": "INTERMEDIATE",
+    "pattern_description": "This is a test. I don't expect anything to work yet but we're going to spoof some data here. If you're looking for a real thesis just mimic a regime-aware momentum",
+    "sleeve": "STOCKS",
+    "trade_horizon": "DAYS",
+    "capital_tier": "SMALL",
+    "capital_custom_usd": null,
+    "strategy_relationship": {
+      "relationship": "ALONGSIDE",
+      "target_strategy_id": null,
+      "evidence_bar_modifier": "STANDARD"
+    },
+    "kill_criteria_user": "test",
+    "edge_family": "UNSURE",
+    "prior_work_refs": [
+      "test"
+    ],
+    "changes_from_refs": "",
+    "universe_shape": "TALON_PROPOSES",
+    "universe_fixed_list": null,
+    "regime_expectation": "MOST_CONDITIONS",
+    "universe_size_band": {
+      "value": "10-50",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "allowed_data_inputs": {
+      "value": [
+        "alpaca_equity_daily_ohlcv"
+      ],
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "entry_confirmation": {
+      "value": "Wait for the idea's primary signal to confirm before entering.",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "exit_logic": {
+      "value": "Stop-loss, target, or signal flip — Talon to refine bounds.",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "risk_profile": {
+      "value": "balanced",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "benchmark": {
+      "value": "SPY",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "era_validation_strategy": {
+      "value": "multi-era",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "era_weighting": {
+      "value": "equal",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "historical_window": {
+      "value": {
+        "start_date": "2018-01-01",
+        "end_date": "2026-05-05",
+        "rationale": "Default authoring window — Talon will narrow if data coverage requires it.",
+        "talon_tradeoff_notes": "Wider windows trade specificity for regime diversity."
+      },
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "promotion_bar": {
+      "value": "STANDARD",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "talon_exclusions": {
+      "value": "",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Talon default carried into the questionnaire; operator did not override.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "field_presentations": {
+      "universe_size_band": "SUGGESTED",
+      "allowed_data_inputs": "SUGGESTED",
+      "entry_confirmation": "SUGGESTED",
+      "exit_logic": "SUGGESTED",
+      "risk_profile": "SUGGESTED",
+      "benchmark": "SUGGESTED",
+      "era_validation_strategy": "SUGGESTED",
+      "era_weighting": "SUGGESTED",
+      "historical_window": "SUGGESTED",
+      "promotion_bar": "SUGGESTED",
+      "talon_exclusions": "SUGGESTED"
+    }
+  },
+  "assumptions": {
+    "items": [
+      {
+        "field_path": "questionnaire.edge_family",
+        "assumption": "Talon classifies the edge family as MOMENTUM based on the thesis instruction to mimic a regime-aware momentum strategy. The operator accepted the default 'Talon classifies from thesis' and the thesis explicitly references regime-aware momentum.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "Operator accepted the proposed default; thesis text explicitly says 'mimic a regime-aware momentum'. Edge family is therefore inferred as MOMENTUM rather than left as UNSURE.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "strategy_spec.signal_lookback_days",
+        "assumption": "Primary momentum lookback is 63 calendar days (approximately one quarter). The clarification answer mapped to question clarify_01_q1 returned 'MOMENTUM' rather than a numeric lookback, so Talon falls back to the proposed default of 63 days from the clarification question clarify_01_clarify_momentum_lookback.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "The clarification answer for clarify_01_q1 returned value 'MOMENTUM' which does not resolve the numeric lookback. The proposed default of 63 days from the original clarification question is the most defensible anchor per talon_lessons known-good template.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "strategy_spec.regime_filter",
+        "assumption": "Regime filter is SPY > 200-day SMA (risk-on only). The clarification answer for clarify_03_q3 returned 'SPY_200SMA', which aligns with the proposed default and the known-good template.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "Operator accepted default SPY_200SMA via clarify_03_q3. This is fully derivable from alpaca_equity_daily_ohlcv with no additional data dependencies and matches the known-good regime-aware momentum template.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "strategy_spec.max_positions",
+        "assumption": "Maximum simultaneous positions is 10. The clarification answer for clarify_04_q4 returned 'SWEEP' which maps to the position-count sweep question (clarify_03_clarify_portfolio_size). Talon interprets this as a sweep over 5/10/20 positions with 10 as the anchor default.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "clarify_04_q4 answer 'SWEEP' appears to be a misaligned answer (the question was about stop-loss range, not position count). Talon falls back to the proposed default of 10 positions from clarify_03_clarify_portfolio_size and flags for resolution.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "sweep_bounds.stop_loss_pct",
+        "assumption": "Stop-loss sweep range is 5% to 20% in 5% steps (0.05, 0.10, 0.15, 0.20). The clarification answer for clarify_04_q4 returned 'SWEEP', which Talon interprets as accepting the proposed default sweep range from clarify_04_clarify_stop_loss.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "'SWEEP' aligns with the proposed default range of 5%-20% in 5% steps from the clarification question. This is the standard sweep range from the known-good momentum template.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "MEDIUM",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "strategy_spec.rebalance_frequency",
+        "assumption": "Rebalance frequency is WEEKLY (every 5 trading days). The clarification answer for clarify_05_q5 returned 'EQUAL_WEIGHT', which addresses position sizing rather than rebalance frequency. Talon falls back to the proposed default of WEEKLY from clarify_05_clarify_rebalance_frequency.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "clarify_05_q5 answer 'EQUAL_WEIGHT' appears misaligned with the rebalance frequency question. Talon adopts WEEKLY as the default per the known-good template and flags the position sizing answer separately.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "MEDIUM",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "strategy_spec.position_sizing",
+        "assumption": "Position sizing is equal-weight across all held positions. The clarification answer for clarify_05_q5 returned 'EQUAL_WEIGHT', which Talon interprets as the operator confirming equal-weight sizing even though the question was about rebalance frequency.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "'EQUAL_WEIGHT' is a coherent position-sizing instruction and is consistent with the balanced risk profile and the known-good momentum template. Talon adopts it as the sizing method.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "LOW",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "strategy_spec.universe",
+        "assumption": "Universe is a dynamic screen of US equities derivable from alpaca_equity_daily_ohlcv, constrained to 10–50 symbols, marked TENTATIVE. The operator accepted the default 'Talon proposes a dynamic screen constrained to catalog-supported data'. Screen criteria will use price momentum rank and minimum liquidity (ADV) filters derivable from OHLCV data only.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "MEDIUM",
+          "rationale": "Operator delegated universe selection to Talon (universe_shape=TALON_PROPOSES) and accepted the dynamic-screen default. Only alpaca_equity_daily_ohlcv is in allowed_data_inputs, so the screen must be OHLCV-derivable. Marked TENTATIVE per the clarification default.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "MEDIUM",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "questionnaire.allowed_data_inputs",
+        "assumption": "The only allowed data input is alpaca_equity_daily_ohlcv. All signals, regime filters, and universe screens must be derivable from OHLCV bars. No sentiment, macro, fundamentals, or options data is in scope.",
+        "provenance": {
+          "source": "TUNABLE_DEFAULT",
+          "confidence": "MEDIUM",
+          "rationale": "Operator did not override the allowed_data_inputs default. The catalog capability_id 'alpaca_equity_daily_ohlcv' maps to 'alpaca_equity_ohlcv' in the data catalog (the daily OHLCV feed). All strategy logic is constrained to this feed.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "questionnaire.kill_criteria_user",
+        "assumption": "The operator-supplied kill criterion is the literal string 'test' and carries no actionable content. Talon will apply standard evidence-threshold kill criteria (max drawdown breach, profit factor floor, trade count floor) in the absence of a meaningful operator-defined kill rule.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "LOW",
+          "rationale": "The kill_criteria_user field contains only 'test', which is not an actionable criterion. Standard promotion/kill gates from evidence_thresholds will govern advancement decisions.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "MEDIUM",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "questionnaire.prior_work_refs",
+        "assumption": "The prior_work_refs entry 'test' contains no actionable reference to a prior strategy or paper. Talon treats this as a blank-slate strategy with no inherited constraints from prior work.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "HIGH",
+          "rationale": "The reference_context confirms 'Reference strategies: none. Treat this as a blank-slate strategy idea.' The string 'test' is not a resolvable artifact ID.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "LOW",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "era_benchmark_plan.benchmark_id",
+        "assumption": "Benchmark is SPY (SPDR S&P 500 ETF). The operator accepted the tunable default. SPY data is derivable from alpaca_equity_daily_ohlcv and is the standard benchmark for a US equities momentum strategy.",
+        "provenance": {
+          "source": "TUNABLE_DEFAULT",
+          "confidence": "MEDIUM",
+          "rationale": "Operator did not override the benchmark default. SPY is the canonical benchmark for US equities and is used in the known-good momentum template.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "LOW",
+        "resolution_needed": false
+      },
+      {
+        "field_path": "strategy_spec",
+        "assumption": "Talon could not produce a contract-valid strategy_spec section after 3 attempts. The server scaffolded a conservative placeholder so this packet can be reviewed instead of losing the operator's work.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "LOW",
+          "rationale": "Server-generated scaffold from failed Talon section validation. Validation issues: - strategy_spec.sleeve: Invalid input - strategy_spec.entry_rules.value.description: Invalid input - strategy_spec.entry_rules.value.confirmation_required: Invalid input - strategy_spec.exit_rules.value.custom_exits.0.description: Invalid input - strategy_spec.exit_rules.value.custom_exits.0.condition: Invalid input - strategy_spec.exit_rules.value.custom_exits.1.description: Invalid input",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "sweep_bounds",
+        "assumption": "Talon could not produce a contract-valid sweep_bounds section after 3 attempts. The server scaffolded a conservative placeholder so this packet can be reviewed instead of losing the operator's work.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "LOW",
+          "rationale": "Server-generated scaffold from failed Talon section validation. Validation issues: - sweep_bounds.parameters.0.provenance.source: Invalid input - sweep_bounds.parameters.0.provenance.confidence: Invalid input - sweep_bounds.parameters.0.provenance.rationale: Invalid input - sweep_bounds.parameters.0.provenance.operator_confirmed: Invalid input - sweep_bounds.parameters.1.provenance.source: Invalid input - sweep_bounds.parameters.1.provenance.confidence: Invalid input",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "HIGH",
+        "resolution_needed": true
+      },
+      {
+        "field_path": "trial_ledger_budget",
+        "assumption": "Sectioned Talon synthesis produced a sweep/era plan larger than the separately drafted trial budget; the server expanded the budget so validation and compiler accounting stay internally consistent.",
+        "provenance": {
+          "source": "TALON_INFERENCE",
+          "confidence": "LOW",
+          "rationale": "Server-normalized cross-section Talon output after schema-valid section synthesis.",
+          "source_artifact_id": null,
+          "operator_confirmed": false
+        },
+        "risk_if_wrong": "MEDIUM",
+        "resolution_needed": true
+      }
+    ]
+  },
+  "data_readiness": {
+    "overall_status": "BLOCKED",
+    "items": [
+      {
+        "data_input_id": "alpaca_equity_daily_ohlcv",
+        "catalog_entry_id": null,
+        "available": false,
+        "coverage_start": null,
+        "coverage_end": null,
+        "gaps": [
+          "No catalog entry matched alpaca_equity_daily_ohlcv."
+        ],
+        "notes": "No catalog entry matched alpaca_equity_daily_ohlcv."
+      }
+    ]
+  },
+  "era_benchmark_plan": {
+    "benchmark_id": "SPY",
+    "benchmark_rationale": "SPY is the standard broad-market benchmark for a STOCKS-sleeve regime-aware momentum strategy. The thesis explicitly references SPY as the regime filter anchor (SPY > 200-day SMA), making it the natural performance yardstick. The operator accepted SPY as the benchmark default without override.",
+    "eras": [
+      {
+        "era_id": "bull_pre_covid",
+        "label": "Pre-COVID Bull Market",
+        "start_date": "2018-01-01",
+        "end_date": "2020-02-19",
+        "regime_tags": [
+          "bull",
+          "low_volatility",
+          "momentum_favorable"
+        ],
+        "rationale": "A sustained risk-on environment where the SPY 200-day SMA regime filter would be persistently active. Tests whether momentum generates alpha in a clean trending regime rather than merely riding beta."
+      },
+      {
+        "era_id": "covid_crash_recovery",
+        "label": "COVID Crash and Recovery",
+        "start_date": "2020-02-20",
+        "end_date": "2020-12-31",
+        "regime_tags": [
+          "crash",
+          "high_volatility",
+          "regime_flip",
+          "sharp_recovery"
+        ],
+        "rationale": "A severe drawdown followed by a rapid V-shaped recovery. The SPY 200-day SMA filter should trigger a risk-off exit during the crash and a re-entry during recovery. Critical stress test for the regime gate and stop-loss logic."
+      },
+      {
+        "era_id": "post_covid_bull",
+        "label": "Post-COVID Bull and Meme Era",
+        "start_date": "2021-01-01",
+        "end_date": "2021-12-31",
+        "regime_tags": [
+          "bull",
+          "high_retail_activity",
+          "momentum_favorable"
+        ],
+        "rationale": "A momentum-rich environment with elevated retail participation. Tests whether the strategy captures genuine momentum alpha versus noise-driven returns in a frothy market."
+      },
+      {
+        "era_id": "bear_rate_hike",
+        "label": "Rate-Hike Bear Market",
+        "start_date": "2022-01-01",
+        "end_date": "2022-12-31",
+        "regime_tags": [
+          "bear",
+          "high_volatility",
+          "rising_rates",
+          "regime_filter_active"
+        ],
+        "rationale": "SPY spent extended periods below its 200-day SMA, so the regime filter should suppress most entries. Tests whether the strategy correctly sits out a prolonged drawdown and avoids large losses."
+      },
+      {
+        "era_id": "recovery_and_ai_bull",
+        "label": "Recovery and AI-Driven Bull",
+        "start_date": "2023-01-01",
+        "end_date": "2024-12-31",
+        "regime_tags": [
+          "bull",
+          "momentum_favorable",
+          "sector_concentration"
+        ],
+        "rationale": "A strong recovery led by a narrow set of large-cap technology names. Tests whether the dynamic momentum screen captures the leading names or dilutes returns across laggards."
+      },
+      {
+        "era_id": "recent_validation",
+        "label": "Recent Validation Window",
+        "start_date": "2025-01-01",
+        "end_date": "2026-05-05",
+        "regime_tags": [
+          "recent",
+          "mixed_regime",
+          "elevated_uncertainty"
+        ],
+        "rationale": "The most recent tape available. Ensures the strategy is still relevant under current market microstructure and is not purely a historical artifact. Kept as a held-out validation window where possible."
+      }
+    ],
+    "era_weighting_method": {
+      "value": "equal",
+      "provenance": {
+        "source": "TUNABLE_DEFAULT",
+        "confidence": "MEDIUM",
+        "rationale": "Operator accepted the equal-weighting default without override. Equal weighting treats each regime era as equally informative, preventing any single era from dominating the aggregate score. Appropriate for a first-pass multi-era validation across diverse regimes.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    }
+  },
+  "strategy_spec": {
+    "strategy_family": "unsure_stocks",
+    "strategy_name": "test x11",
+    "strategy_id": {
+      "value": "test_x11_idea_01kqrj889rv37qzpeaggv37qzp",
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server-scaffolded slug proposal after Talon returned an invalid strategy specification; operator confirmation is required.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "sleeve": "STOCKS",
+    "universe": {
+      "value": {
+        "type": "DYNAMIC",
+        "symbols": null,
+        "screen_criteria": "Talon must propose a supported universe screen before implementation.",
+        "max_symbols": 50,
+        "rebalance_frequency": "per_bench_run"
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Conservative universe scaffold from questionnaire answers; operator review required.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "entry_rules": {
+      "value": {
+        "description": "Scaffolded entry logic because Talon returned invalid strategy rules; implementation must map or replace this before bench automation.",
+        "conditions": [
+          {
+            "name": "Review-required signal placeholder",
+            "parameter": "signal",
+            "operator": "gte",
+            "threshold": 1,
+            "data_input_id": "alpaca_equity_daily_ohlcv",
+            "compiler_support": "NEEDS_MAPPING"
+          }
+        ],
+        "confirmation_required": true,
+        "confirmation_description": "Entry rules were scaffolded by the server and require operator review."
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server scaffold; Talon output failed strategy specification validation.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "exit_rules": {
+      "value": {
+        "stop_loss_pct": null,
+        "target_pct": null,
+        "time_stop_days": null,
+        "trailing_stop": {
+          "enabled": false,
+          "trail_pct": null,
+          "activation_pct": null
+        },
+        "custom_exits": [
+          {
+            "name": "Review-required exit placeholder",
+            "description": "Exit logic must be confirmed or mapped before implementation.",
+            "condition": "Stop-loss, target, or signal flip — Talon to refine bounds.",
+            "compiler_support": "NEEDS_MAPPING"
+          }
+        ]
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server scaffold from questionnaire exit logic; operator review required.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "position_sizing": {
+      "value": {
+        "method": "EQUAL_WEIGHT",
+        "base_size_pct": null,
+        "max_positions": 50,
+        "risk_per_trade_pct": null,
+        "custom_description": "Equal-weight scaffold only; tune before implementation."
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server-scaffolded neutral sizing because Talon returned invalid strategy specification output.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "risk_limits": {
+      "value": {
+        "max_portfolio_drawdown_pct": 12,
+        "max_single_position_loss_pct": 5,
+        "max_correlated_exposure_pct": null,
+        "max_sector_concentration_pct": null,
+        "circuit_breaker_rules": "Scaffolded risk guard; operator review required before promotion."
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server-scaffolded conservative risk limits.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    },
+    "execution_constraints": {
+      "value": {
+        "order_types": [
+          "MARKET"
+        ],
+        "no_trade_zones": null,
+        "slippage_assumption_bps": 10,
+        "commission_model": "FLAT",
+        "commission_assumption_value": 0
+      },
+      "provenance": {
+        "source": "TALON_INFERENCE",
+        "confidence": "LOW",
+        "rationale": "Server-scaffolded execution assumptions; confirm cost model before bench handoff.",
+        "source_artifact_id": null,
+        "operator_confirmed": false
+      }
+    }
+  },
+  "sweep_bounds": {
+    "parameters": [],
+    "max_total_variants": 1,
+    "sweep_method": "MANUAL"
+  },
+  "evidence_thresholds": {
+    "backtest": {
+      "min_trades": 100,
+      "min_win_rate_pct": 45,
+      "min_profit_factor": 1.3,
+      "min_sharpe": 0.5,
+      "max_drawdown_pct": 25
+    },
+    "paper": {
+      "min_calendar_days": 30,
+      "min_closed_trades": 20,
+      "min_active_exposure_days": 15,
+      "max_drawdown_pct": 20,
+      "min_win_rate_pct": 42,
+      "min_profit_factor": 1.2,
+      "capital_tier_modifier": {
+        "tier": "SMALL",
+        "calendar_days_multiplier": 1,
+        "closed_trades_multiplier": 1,
+        "drawdown_tightening_pct": null
+      }
+    },
+    "live": {
+      "min_calendar_days": 60,
+      "min_closed_trades": 40,
+      "min_active_exposure_days": 30,
+      "max_drawdown_pct": 18,
+      "min_win_rate_pct": 44,
+      "min_profit_factor": 1.25,
+      "capital_tier_modifier": {
+        "tier": "SMALL",
+        "calendar_days_multiplier": 1,
+        "closed_trades_multiplier": 1,
+        "drawdown_tightening_pct": null
+      }
+    }
+  },
+  "trial_ledger_budget": {
+    "max_variants": 48,
+    "max_eras": 6,
+    "max_bench_runs": 192,
+    "estimated_compute_cost_usd": 0,
+    "rationale": "Sweep dimensions: momentum_lookback (3 values: 20, 63, 126) × stop_loss_pct (4 values: 0.05, 0.10, 0.15, 0.20) × regime_filter (2 values: SPY_200SMA, SPY_50SMA) × max_positions (1 anchor: 10) = 24 base variants. Doubling for rebalance_frequency sweep (WEEKLY vs DAILY) yields 48 total variants. With 4 eras (bull-2018, bear-2020, recovery-2020-2022, post-hike-2022-2026) that is 48 × 4 = 192 bench runs. max_bench_runs=192 satisfies the constraint max_total_variants × eras.length = 48 × 4 = 192. Budget is conservative: all signals are OHLCV-derived from alpaca_equity_ohlcv with no external data pulls, so compute cost is negligible and estimated at 0.0 USD pending infrastructure pricing. The 48-variant ceiling keeps the multiple-comparisons correction tractable and avoids over-fitting risk flagged in the known-good momentum template lessons. Server normalization: Server raised the trial-ledger budget to cover 1 variants across 6 eras after sectioned Talon synthesis."
+  },
+  "multiple_comparisons_plan": {
+    "method": "BONFERRONI",
+    "effective_trials_estimate": 12,
+    "adjusted_significance_level": 0.004,
+    "notes": "Sweep dimensions: momentum lookback (63-day anchor, default accepted), regime filter (SPY_200SMA, default accepted), stop-loss pct (5%–20% in 5% steps = 4 variants), max positions (10, default accepted), rebalance frequency (WEEKLY, default accepted). The clarification answers collapsed most sweep axes to single values; only the stop-loss sweep remains open with 4 variants across 3 eras = 12 effective bench runs. Bonferroni correction applied: alpha = 0.05 / 12 ≈ 0.004. If the operator later reopens the lookback or position-count sweep, effective_trials_estimate and adjusted_significance_level must be recalculated before promotion.",
+    "full_implementation_target": "BACKTEST"
+  },
+  "adversarial_review": {
+    "status": "PENDING",
+    "reviewer_model_capabilities": {
+      "min_context_window_tokens": 64000,
+      "structured_output_required": true,
+      "reasoning_depth": "EXTENDED",
+      "notes": "Separate blind reviewer must run before approval or promotion."
+    },
+    "reviewer_model_actual": null,
+    "review_timestamp": null,
+    "required_categories": [
+      "LOOKAHEAD_BIAS",
+      "SURVIVORSHIP_BIAS",
+      "COST_UNDERESTIMATE",
+      "BENCHMARK_CHEATING",
+      "DATA_LEAKAGE",
+      "CURRENT_REGIME_ONLY",
+      "WEAK_KILL_CRITERIA",
+      "OVERFITTING"
+    ],
+    "checks": [
+      {
+        "category": "LOOKAHEAD_BIAS",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated LOOKAHEAD_BIAS.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "SURVIVORSHIP_BIAS",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated SURVIVORSHIP_BIAS.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "COST_UNDERESTIMATE",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated COST_UNDERESTIMATE.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "BENCHMARK_CHEATING",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated BENCHMARK_CHEATING.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "DATA_LEAKAGE",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated DATA_LEAKAGE.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "CURRENT_REGIME_ONLY",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated CURRENT_REGIME_ONLY.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "WEAK_KILL_CRITERIA",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated WEAK_KILL_CRITERIA.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      },
+      {
+        "category": "OVERFITTING",
+        "passed": false,
+        "finding": "PENDING as of 2026-05-05T04:18:02.861Z; blind adversarial reviewer has not evaluated OVERFITTING.",
+        "severity": "INFO",
+        "remediation": "Run required adversarial review."
+      }
+    ],
+    "overall_notes": "Blind adversarial review has not run yet; placeholder rows keep category coverage explicit.",
+    "conditions_for_pass": [
+      "Run a blind, different-family adversarial review before approval."
+    ]
+  },
+  "portfolio_fit": {
+    "status": "PENDING",
+    "deferred_until": "PAPER_PROMOTION",
+    "existing_strategies": [],
+    "correlation_assessment": null,
+    "joint_drawdown_estimate": null,
+    "sleeve_budget_impact": null,
+    "capital_capacity_notes": "Portfolio-fit review is deferred until paper-promotion review.",
+    "marginal_value_notes": null
+  },
+  "reproducibility_manifest": {
+    "synthesis_model": {
+      "required_capabilities": {
+        "min_context_window_tokens": 64000,
+        "structured_output_required": true,
+        "reasoning_depth": "EXTENDED",
+        "notes": "Strategy Authoring Packet synthesis runs as sectioned Talon calls over questionnaire, catalog, references, and past failures."
+      },
+      "actual_provider": "anthropic",
+      "actual_model_id": "claude-sonnet-4-6",
+      "actual_response_id": "msg_01FbKKS6PUMPVgBcwa1MP9zc,msg_01ViuCtqwynKf43Nsz1gwAw1,msg_01H8ndswWduFP5zkUxsmse8w,msg_01JBdyNZgH4Zk7gNqk8Hq5KF,msg_01EYokHufy2bbDfkE9um6hvZ,msg_01QA5B5csiogdWEnUdyiTAr9,msg_012jyK5dhYgfCZV7vq8tMdrH,msg_01BbzJHcRGTmPCJRae2BG2RN",
+      "temperature": 0.2,
+      "seed": null,
+      "max_tokens": null,
+      "timestamp": "2026-05-05T04:10:16.759Z"
+    },
+    "questionnaire_model": null,
+    "adversarial_model": null,
+    "data_catalog_version": "2026-04-30.2",
+    "market_packet_id": null,
+    "paper_index_version": null,
+    "strategy_registry_commit": "local",
+    "questionnaire_input_hash": "d47ddc950a1a05b8757bfb23385d7619aa1b14027f8b0ae94dba8e28b68a41c4",
+    "prompt_version": "talon_strategy_authoring_packet.v1",
+    "questionnaire_schema_version": "research_lab.strategy_authoring_questionnaire.v1",
+    "packet_contract_schema_version": "research_lab.strategy_authoring_packet.v1",
+    "talon_orchestrator_version": "research_lab.talon_packet_orchestrator.v1"
+  },
+  "implementation_request": null
+}
