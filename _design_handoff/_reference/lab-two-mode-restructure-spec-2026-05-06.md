@@ -6,9 +6,23 @@ originSessionId: b290cf04-5bf5-4d1d-ad6a-3420b24dedad
 ---
 **Status:** Brainstorm doc captured 2026-05-06 after a prior conversation thread was lost. Shared with Codex; Codex's review captured below ("Codex review and architecture refinements"). Numbers, schemas, sequencing — all still open. The intent is direction-setting, not committed architecture.
 
-## Codex dialog and architecture refinements (2026-05-06, four rounds)
+## Codex dialog and architecture refinements (2026-05-06, five rounds — settled)
+
+**Phase transition Round 5:** Architecture is settled. Brainstorm phase complete. Discipline phase begins — the job is preventing scope creep while preserving future doors. The criticality map (below) is the sequencing tool.
+
+
 
 Captured here so they don't get lost. Full dialog is in `~/claude/claw-dashboard/_design_handoff/CLAUDE_REVIEW_2026-05-06_lab_two_mode_response_to_codex.md`.
+
+### Contract criticality map (Codex Round 5 — sequencing discipline)
+
+The 8 contracts split into three priority tiers. This is the build-order discipline that prevents pouring the whole cathedral foundation in one afternoon.
+
+- **Core v1 required** (build first): `strategy_library.v1`, `guided_match_proposal.v1`, `guided_enrollment.v1`, `disclosure_version`, `notification_intent` (probe open: contract-only vs runtime needed in week one).
+- **Advanced v1 required only if templates ship**: `advanced_sandbox_assignment.v1`.
+- **Can follow after first guided proof**: `sandbox_observation_bundle`, `guided_operator_monitoring.v1`, multi-strategy allocation layer.
+
+The smallest vertical slice for v1: 1 strategy + 1 disclosure + 1 user flow (questionnaire → match → enrollment → paper trading). Build end-to-end, then iterate. Contracts beyond Core v1 stay in the schema vocabulary but don't get built until needed.
 
 ### Three-bucket sorting (Codex Round 4)
 
@@ -49,14 +63,18 @@ That sentence is the architecture. Everything below serves it.
 - `guided_enrollment.v1` — consumer-facing user-strategy relationship. **Singular**: one enrollment = one library strategy (corrected from Round 3 hedge — multi-strategy is N enrollments + future per-user allocation layer, NOT a list-of-strategies inside one enrollment). Bench-backed, version-snapshotted, paper first then live. Scoped via existing ScopeTriple (`user_id × account_id × strategy_group_id`) plus `broker_adapter`, `broker_connection_id`, `broker_account_ref`, `environment: PAPER|LIVE`, `library_entry_id`. Path/key scope validated against payload scope. Failure mode: `ACCEPTED_PENDING_BROKER` for partially-failed enrollment when broker paper account creation fails post-acceptance.
 - `advanced_sandbox_assignment.v1` — power-user template experimentation. **Loud** UNBENCHMARKED_TEMPLATE status, paper-only, no passport role, no strategy-bank promotion, no live lane, no "validated" language. Carries per-assignment max paper capital / notional limits. To graduate, must go through bench/campaign/passport like everything else.
 - `sandbox_observation_bundle` — exportable from sandbox for bench-submission attachment as supplemental forward evidence. Bench reconstructs from raw trade log + assignment config + code/version refs + canonical market data + broker paper fills. If not re-derivable, marked unverified supplemental evidence (narrative not scored).
-- `disclosure_version` — immutable, append-only versions. Each carries `change_classification: MATERIAL | COSMETIC`. Material forces re-acceptance from existing enrollees; cosmetic logs an audit event without user interruption. Independent consent-validity-window concept may also be required for periodic re-confirmation regardless of change.
+- `disclosure_version` — immutable, append-only versions. Each carries `change_classification: MATERIAL | NOTICE_ONLY | COSMETIC` (three-tier per Codex Round 5: NOTICE_ONLY is middle state for friendly_name / thesis edits that need user-visible notice but not forced re-acceptance). Material forces re-acceptance; notice_only surfaces an in-app notice without blocking; cosmetic logs an audit event silently. Schema also carries `consent_expires_at` / `reaffirmation_due_at` for periodic re-confirmation independent of change-classification (cadence is policy-driven, set by legal/product, not invented in schema).
 - `notification_intent` / `user_action_required` — durable events emitted by rebuild core. Dashboard / app service owns delivery adapters (in-app, email, push). Core does not become a mail/push provider.
 - `guided_operator_monitoring.v1` — own contract, NOT `operator-feed.json`. Per-strategy aggregated views across all enrolled users (collective signal, aggregate paper P&L, strategy-level health KPIs). `operator-feed.json` may surface top-level summary projections later.
 - `strategy_bank` / passport — unchanged. Only validated promotions.
 
-Each artifact carries: evidence freshness fields (`last_evaluated_at`, `data_window_end`); idempotency key on consent/acceptance actions scoped `(user × action × proposal_id × device-or-session-token)`; PII/secrets separation discipline (refs, not raw tokens or unnecessary user data).
+Each artifact carries: evidence freshness fields (`last_evaluated_at`, `data_window_start`, `data_window_end`, `staleness_policy` — Codex Round 5 added staleness_policy and data_window_start); idempotency key on consent/acceptance actions scoped `(user × action × proposal_id × device-or-session-token)`; PII/secrets separation discipline (refs, not raw tokens or unnecessary user data).
 
-### Evidence tiering (the sharpest unlock — refined Round 4)
+### Evidence tiering (the soul of the product — refined through Round 5)
+
+Codex Round 5 framing: **"Never flatten evidence" may be the soul of the product.** That one choice is what makes everything else worth doing. The discipline extends *outside* the app surface too — App Store description, landing page, marketing copy cannot lead with a single performance number either. If marketing flattens, the principle is hollow.
+
+UI extension (Codex Round 5): show five orthogonal dimensions of evidence quality *separately*: freshness, sample size, regime coverage, broker realism, fill realism. Never one number.
 
 Never flatten into one "performance" blob. Always carry the tier explicitly to UI. **Tiers are a type label, not a strength score** — comparing tiers requires judgment, the system never tries to enforce a linear ordering (BENCH_MULTI_ERA and LIVE_OBSERVED have orthogonal strengths).
 
@@ -102,9 +120,10 @@ User-initiated and system-initiated may have different defaults. Different audit
 
 **Data retention / right-to-delete posture** — finalization waits for counsel, but contract plan adds `retention_class`, `delete_behavior`, "contains broker/user data?" flags now.
 
-**PII/secrets separation (Codex Round 4 — hard constraint):**
+**PII/secrets separation (Codex Round 4 + sharpened Round 5):**
 - Contracts hold refs (user_id, account_id, broker_connection_id), never raw OAuth tokens, API keys, or unnecessary PII.
-- **Existing `push-dashboard-data.sh -> GitHub -> Vercel` pattern is fundamentally incompatible with multi-tenant.** No user PII can live in git-backed artifacts once N users land. Concrete blocking constraint on the multi-tenant migration plan, not soft guidance.
+- **Narrow rule (corrected Round 5):** No *user-specific regulated/private state* in git-backed artifacts. The earlier "GitHub pattern is fundamentally incompatible" overgeneralized. Git CAN hold versioned public/static state — strategy library definitions, disclosure templates, schema docs, curated copy, non-user fixtures, and properly-anonymized aggregates. Those benefit from PR-based change management and audit trails. The constraint targets PII/secrets/per-user-state specifically.
+- Existing `push-dashboard-data.sh -> GitHub -> Vercel` pattern still requires migration before multi-tenant launch — but the migration is "user state goes elsewhere," not "git goes away."
 
 **Account capability gate (Codex Round 4):**
 - Pre-enrollment validation: paper/live, asset class, fractional shares, options approval, crypto availability, cash/margin constraints.
@@ -151,7 +170,15 @@ Resolved Round 4:
 - ~~`SHADOW_OBSERVED` tier decision~~ — own tier, renamed `SHADOW_FORWARD_OBSERVED`
 - ~~Sandbox provenance filtering approach~~ — re-derive from raw log; non-re-derivable cases marked unverified narrative evidence
 
-Still open, queued for Codex Round 5 (or for design-pass after architecture lock):
+Resolved Round 5:
+- ~~PII/git overgeneralization~~ — corrected: rule is no user-specific regulated/private state in git; public/static/versioned artifacts are still git-friendly
+- ~~Evidence tiering UI surface~~ — show freshness, sample size, regime coverage, broker realism, fill realism as five separate dimensions
+- ~~`staleness_policy` + `data_window_start` on evidence records~~ — added
+- ~~`NOTICE_ONLY` middle classification~~ — adopted between MATERIAL and COSMETIC for friendly_name / thesis mutations
+- ~~`ACCEPTED_PENDING_BROKER` → `ACTIVE` transition~~ — confirmed name and flow
+- ~~Contract criticality map~~ — sequencing discipline established (Core v1 / Advanced if templates / follows after first proof)
+
+Still open, queued for Codex Round 6 (or for design-pass after architecture lock):
 
 - Sandbox lifecycle — auto-expire vs persistent? Sandbox-to-bench-submission conversion path or always re-author?
 - `UPGRADE_AVAILABLE` acceptance contract — exact fields enrollment captures at the consent event for defensibility
@@ -167,6 +194,12 @@ Still open, queued for Codex Round 5 (or for design-pass after architecture lock
 - Library entry mutation classification (Claude Round 4) — backing_strategy_id change is material, friendly_name is debatable, coverage_tags is silent
 - Match-decline UX (Claude Round 4) — schema has DECLINED state, product behavior undefined (re-questionnaire, next-best entry, prompt for what was wrong?)
 - Data retention / right-to-delete finalization — waits for counsel; contract plan carries flags now
+- `notification_intent` Core v1 placement (Codex Round 6 question) — contract-only (paint-into-corner avoidance) or runtime needed in week one?
+- Smallest vertical slice strategy pick — which 1 strategy on the bench is the natural candidate for library entry zero (begins pinning schema fields against reality)
+- Anonymization discipline for aggregate benchmarks in git (Round 5 flag) — k-anonymity / differential privacy considerations; what counts as "safe to commit"
+- Thesis-edit MATERIAL vs NOTICE_ONLY guideline (Round 5 flag) — heuristic for "changes what the strategy does" vs "changes how it's described"
+- Bench coverage minimum for library inclusion — number of eras, asset class coverage, regime exposures required before library entry can graduate to ACTIVE
+- Marketing-surface discipline for evidence non-flattening — App Store description, landing page, in-app onboarding cannot lead with single performance number either
 
 ### Citations to verify before implementation
 
