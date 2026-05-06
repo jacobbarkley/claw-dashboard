@@ -860,12 +860,34 @@ def normalize_order_side(value: Optional[str]) -> str:
     return 'BUY'
 
 
+PORTFOLIO_ACTION_BRIDGE_PREFIX = 'rebuild_portfolio_action_bridge: '
+PORTFOLIO_ACTION_REASON_LABELS = {
+    'max_hold_days_reached': 'Holding period ended',
+    'stop_price_breached': 'Stop loss triggered',
+    'target_price_reached': 'Profit target reached',
+    'governed_exit_action': 'Governed exit',
+}
+
+
 def prettify_order_note(note: Optional[str]) -> Optional[str]:
     if not note:
         return None
     text = str(note).strip()
     if not text:
         return None
+    # rebuild_portfolio_action_bridge fills carry an action prefix and one or
+    # more reason codes joined by `; ` (e.g. "Market SELL submitted.
+    # rebuild_portfolio_action_bridge: stop_price_breached; target_price_reached").
+    # Surface the human-readable reason(s) only.
+    bridge_idx = text.find(PORTFOLIO_ACTION_BRIDGE_PREFIX)
+    if bridge_idx != -1:
+        tail = text[bridge_idx + len(PORTFOLIO_ACTION_BRIDGE_PREFIX):].strip().rstrip('.')
+        reasons = [r.strip() for r in tail.split(';') if r.strip()]
+        if reasons:
+            return ' · '.join(
+                PORTFOLIO_ACTION_REASON_LABELS.get(r, r.replace('_', ' '))
+                for r in reasons
+            )
     replacements = {
         'cash_management_park_required': 'Cash management reserve park',
         'cash_management_unpark_required': 'Cash management reserve release',
@@ -1170,6 +1192,35 @@ def collect_order_blotter_events(
                     'fallback_date': report.get('trading_date'),
                     'note': prettify_order_note(request_item.get('reason') or item.get('note')),
                     'kind': 'manual',
+                }
+            )
+
+    # Stewardship/protective exits — emitted by portfolio_action_bridge when
+    # stops, targets, or max-hold rules trigger. Symbols may no longer be in
+    # current positions (the whole point is to close them), so don't filter
+    # by stock_symbols or stock_open_dates here. Retention window still
+    # applies. EQUITY-only at the bridge level today.
+    for path in iter_rebuild_report_paths('portfolio_action_execution_report.json', after_date=after_date):
+        report = load(path)
+        if report.get('status') not in {'OK', 'PARTIAL', 'SUBMITTED'}:
+            continue
+        for item in report.get('items', []):
+            symbol = normalize_symbol(item.get('symbol'))
+            if not symbol:
+                continue
+            order_id = item.get('broker_order_id')
+            if not order_id:
+                continue
+            events.append(
+                {
+                    'sleeve': 'stocks',
+                    'symbol': symbol,
+                    'order_id': str(order_id),
+                    'fallback_qty': safe_float(item.get('quantity')),
+                    'fallback_price': safe_float(item.get('avg_fill_price')),
+                    'fallback_date': report.get('trading_date'),
+                    'note': prettify_order_note(item.get('note')),
+                    'kind': 'portfolio_action',
                 }
             )
 

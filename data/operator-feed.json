@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-06T20:00:03.091361+00:00",
+  "generated_at": "2026-05-06T20:26:51.279283+00:00",
   "as_of_date": "2026-05-06",
   "source_context": {
     "mode": "canonical",
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-06T20:00:03.091443+00:00"
+    "audit_written_at": "2026-05-06T20:26:51.279324+00:00"
   },
   "kpis": {
     "total_trades": 66,
@@ -1143,7 +1143,7 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-06T19:59:59.804043299Z",
+    "as_of": "2026-05-06T20:25:55.773378078Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
@@ -1159,10 +1159,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 425.31,
+        "current_price": 426.53,
         "prior_close": 427.35,
-        "change_usd": -2.04,
-        "change_pct": -0.4774,
+        "change_usd": -0.82,
+        "change_pct": -0.1919,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1192,10 +1192,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 612.615,
+        "current_price": 612.07,
         "prior_close": 604.92,
-        "change_usd": 7.695,
-        "change_pct": 1.2721,
+        "change_usd": 7.15,
+        "change_pct": 1.182,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1203,10 +1203,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 207.67,
+        "current_price": 208.31,
         "prior_close": 196.5,
-        "change_usd": 11.17,
-        "change_pct": 5.6845,
+        "change_usd": 11.81,
+        "change_pct": 6.0102,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1214,10 +1214,10 @@
       },
       {
         "symbol": "SGOV",
-        "current_price": 100.435,
+        "current_price": 100.44,
         "prior_close": 100.425,
-        "change_usd": 0.01,
-        "change_pct": 0.01,
+        "change_usd": 0.015,
+        "change_pct": 0.0149,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": false,
@@ -1229,7 +1229,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-06T20:00:02.653986+00:00",
+        "as_of": "2026-05-06T20:26:51.148486+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1239,7 +1239,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-06T20:00:03.091159+00:00",
+        "as_of": "2026-05-06T20:26:51.279139+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2235,6 +2235,24 @@
           "note": "Cash management reserve park"
         },
         {
+          "date": "2026-04-29",
+          "side": "SELL",
+          "sym": "NVDA",
+          "qty": 16.0,
+          "price": 210.6169,
+          "usd": null,
+          "note": "Holding period ended"
+        },
+        {
+          "date": "2026-04-30",
+          "side": "SELL",
+          "sym": "META",
+          "qty": 2.0,
+          "price": 610.795,
+          "usd": null,
+          "note": "Stop loss triggered"
+        },
+        {
           "date": "2026-04-30",
           "side": "BUY",
           "sym": "NVDA",
@@ -2242,6 +2260,24 @@
           "price": 200.6471,
           "usd": null,
           "note": "Market order submitted. size_modifier=FULL, shares=7, notional=$1605.18."
+        },
+        {
+          "date": "2026-05-01",
+          "side": "SELL",
+          "sym": "AAPL",
+          "qty": 5.0,
+          "price": 282.466,
+          "usd": null,
+          "note": "Holding period ended"
+        },
+        {
+          "date": "2026-05-06",
+          "side": "SELL",
+          "sym": "AVGO",
+          "qty": 3.0,
+          "price": 434.04,
+          "usd": null,
+          "note": "Holding period ended"
         },
         {
           "date": "2026-05-06",
@@ -2346,7 +2382,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-06T20:00:02.330431+00:00",
+        "as_of": "2026-05-06T20:26:50.876018+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2356,7 +2392,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-06T20:00:02.653986+00:00",
+        "as_of": "2026-05-06T20:26:51.148486+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2366,7 +2402,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-06T20:00:03.091159+00:00",
+        "as_of": "2026-05-06T20:26:51.279139+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
