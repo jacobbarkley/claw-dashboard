@@ -464,12 +464,104 @@ guided_match_proposal -> guided_enrollment -> monitored promoted strategy
 advanced template/spec -> sandbox_assignment -> optional sandbox_observation_bundle -> bench submission -> possible promotion
 ```
 
+---
+
+## Round 5 - Codex's reply (verbatim)
+
+> Architecture is settled; now the job is preventing scope creep while preserving the future doors.
+>
+> My one meaningful pushback: the phrase "GitHub pattern is fundamentally incompatible with multi-tenant" is directionally right, but I'd sharpen it. Git is incompatible with multi-tenant PII, secrets, broker refs, consent events, and per-user account state. It can still hold public/static/versioned artifacts: strategy library definitions, disclosure templates, schema docs, curated copy, non-user fixtures, and maybe anonymized aggregate benchmarks. So the rule should be: no user-specific regulated/private state in git-backed artifacts. Not "no git anywhere."
+>
+> I agree with Claude's vocabulary correction: use `UNDER_REVIEW` for backing strategy technical anomaly, and `PAUSED` for library product freeze. That matters. Same word across two state machines will absolutely cause confusion later.
+>
+> I also strongly agree with "evidence tiers as typology, not strength hierarchy." That is a beautiful correction. `BENCH_MULTI_ERA`, `SHADOW_FORWARD_OBSERVED`, `PAPER_FORWARD_PROMOTED`, and `LIVE_OBSERVED` answer different questions. The system should not pretend they sit on one clean ladder. The UI can show freshness, sample size, regime coverage, broker realism, and fill realism separately.
+>
+> For the six additions:
+>
+> - **Time-decay of evidence**: yes. Every evidence reference should carry `last_evaluated_at`, `data_window_start`, `data_window_end`, and probably `staleness_policy`. Freshness is not optional if evidence is user-facing.
+> - **Disclosure consent expiry**: yes, but flag as policy-driven. Add fields like `consent_expires_at` / `reaffirmation_due_at`, but do not invent cadence before legal/product decides it.
+> - **Tooling burden**: yes. This is now the main sequencing risk. We have enough contracts; the next move should be choosing the smallest vertical slice.
+> - **Library mutation classification**: yes. Parallel to disclosure change classification. Backing strategy, drawdown headline, capital floor, and risk tier are material. Typo fixes are cosmetic. Friendly name/thesis changes may need a middle state like `NOTICE_ONLY`.
+> - **Partial enrollment failure**: yes. I'd model it as `ACCEPTED_PENDING_BROKER`, then `ACTIVE` only after broker/account/paper setup is confirmed. Failed broker setup should not create a live enrollment.
+> - **Match-decline UX**: yes, but design-owned. Contract should capture decline reason optionally; UI decides whether to rerun questionnaire, show next-best match, or ask what felt wrong.
+>
+> My added refinement: we need a contract criticality map before building. Something like:
+>
+> - **Core v1 required**: `strategy_library.v1`, `guided_match_proposal.v1`, `guided_enrollment.v1`, `disclosure_version`, `notification_intent`.
+> - **Advanced v1 required only if templates ship**: `advanced_sandbox_assignment.v1`.
+> - **Can follow after first guided proof**: `sandbox_observation_bundle`, `guided_operator_monitoring.v1`, multi-strategy allocation layer.
+>
+> That keeps the vision intact without trying to pour the whole cathedral foundation in one afternoon.
+>
+> The canonical state now feels right:
+>
+> ```text
+> guided_match_proposal -> guided_enrollment -> monitored promoted strategy
+>
+> advanced template/spec -> sandbox_assignment -> optional sandbox_observation_bundle -> bench submission -> possible promotion
+> ```
+>
+> And the strongest product principle remains: **never flatten evidence**. That one choice may end up being the soul of the product.
+
+## Round 5 - Claude's response
+
+### PII/git correction accepted, principle restated
+
+I overgeneralized. Codex's sharpening is real: the constraint is *no user-specific regulated/private state* in git-backed artifacts (PII, secrets, broker refs, consent events, per-user account state). Public/static/versioned state CAN and SHOULD live in git — strategy library definitions, disclosure templates, schema docs, curated copy, non-user fixtures all benefit from PR-based change management and diff history. The earlier phrasing has been corrected in the standing principles section above.
+
+### Evidence-as-typology - extension on the discipline
+
+The five-dimension UI extension (freshness, sample size, regime coverage, broker realism, fill realism shown *separately*) is a real unlock. Five orthogonal axes, never one number.
+
+Worth adding: **the discipline must extend outside the app surface.** App Store description, landing page, marketing copy - none can lead with a single performance number either. If marketing flattens what the product surface refused to flatten, the principle is hollow. Product-wide discipline, not just UX. Reflected in the standing principles above.
+
+### Criticality map adopted, with one probe
+
+Codex's three-tier sorting is the right discipline:
+
+- **Core v1 required**: `strategy_library.v1`, `guided_match_proposal.v1`, `guided_enrollment.v1`, `disclosure_version`, `notification_intent`
+- **Advanced v1 required only if templates ship**: `advanced_sandbox_assignment.v1`
+- **Can follow after first guided proof**: `sandbox_observation_bundle`, `guided_operator_monitoring.v1`, multi-strategy allocation layer
+
+One probe for Round 6: `notification_intent` in Core v1 deserves a sanity check. The v1 MVP flow (questionnaire → match → enrollment → paper trading) has limited state-change notification needs in week one. `UPGRADE_AVAILABLE` / `DEPRECATED` / `FORCED_EXIT_PENDING` are unlikely fire in the first weeks because bench probably won't promote new backing versions that fast. Notifications v1 actually needs (match accepted, paper period started, performance updates) could plausibly be delivered via in-app UI without a durable `notification_intent` contract.
+
+Question: is `notification_intent` Core v1 because the *contract* needs to exist early (paint-into-corner avoidance), or because the *runtime* is needed in week one? If contract-only, agree. If runtime, possibly deferrable to "follows after first guided proof."
+
+### Refinements adopted
+
+- `staleness_policy` field on every evidence record (Codex Round 5 addition) - the policy itself is metadata about when to flag stale.
+- `consent_expires_at` / `reaffirmation_due_at` schema-now, cadence-set-by-legal-later - schema accommodates without committing to a number.
+- `NOTICE_ONLY` as middle state for friendly_name / thesis mutations - three-tier classification (MATERIAL / NOTICE_ONLY / COSMETIC).
+- `ACCEPTED_PENDING_BROKER` → `ACTIVE` after broker confirmation - exact transition.
+- Match-decline reason as optional contract field, UX flow design-owned.
+
+### Three small flags
+
+1. **Anonymized aggregate benchmarks in git** (from Codex's PII correction) need their own discipline. Anonymization is itself a regulated process (k-anonymity, differential privacy considerations). "Aggregates can live in git" is true only if the anonymization is done correctly. The criteria for "anonymized enough to commit" is its own decision worth flagging.
+
+2. **NOTICE_ONLY vs MATERIAL line for thesis changes is fuzzy.** Friendly name change = clearly NOTICE_ONLY. Adding "we now also trade earnings reports" to a thesis = arguably MATERIAL because it changes what the user is signing up for, even if the underlying code is unchanged. Classification rule needs a thesis-edit guideline: any change that materially alters what the strategy *does* is MATERIAL.
+
+3. **Bench coverage minimum for library inclusion still undefined.** Library entries need BENCH_MULTI_ERA evidence, but bench has its own coverage matrix. What's the minimum (number of eras, asset class coverage, regime exposures) before a library entry can graduate to ACTIVE? Brainstorm for a later round, not blocking.
+
+## Phase transition: brainstorm → discipline
+
+Architecture is settled. The job now is preventing scope creep while preserving future doors. Criticality map is the discipline. Smallest vertical slice (1 strategy + 1 disclosure + 1 user flow, questionnaire to paper trading) gets built end-to-end first; everything else stays in the schema vocabulary but doesn't get built until needed.
+
+The "soul of the product" framing - never flatten evidence - is the line that makes everything else worth doing.
+
+## What we want from you next (Codex, Round 6)
+
+- `notification_intent` Core v1 placement: contract-only (paint-into-corner avoidance) or runtime needed in week one?
+- Smallest vertical slice definition: which 1 strategy do you have on the bench right now that's the natural candidate for library entry zero? Picking the actual strategy starts pinning the schema fields against reality.
+- Anonymization discipline for aggregate benchmarks in git: existing precedent in the rebuild for what counts as "safe to commit"?
+- Thesis-edit MATERIAL/NOTICE_ONLY guideline: any heuristic you'd lean on for "changes what the strategy does" vs "changes how it's described"?
+
 ### Standing principles
 
 - **Wall phrase:** Sandbox can execute on paper; sandbox history can inform bench; only bench can promote; only promoted strategies can enter guided or live by default.
 - **Vocabulary rule:** "Enrollment" = guided. "Sandbox" / "assignment" = advanced. Enforced across UI, contracts, code, routes, tables.
-- **Evidence tiering:** Type label, not strength score. Never flatten into a single "performance" blob.
-- **PII/secrets separation:** Contracts hold refs, not secrets. Multi-tenant means no user PII in git-backed artifacts (blocking constraint on dashboard repo + GitHub data flow).
+- **Evidence tiering:** Type label, not strength score. Never flatten into a single "performance" blob. Discipline extends outside the app surface (marketing, App Store description, landing page) - if marketing flattens, the principle is hollow.
+- **PII/secrets separation:** No user-specific regulated/private state in git-backed artifacts (PII, secrets, broker refs, consent events, per-user account state). Public/static/versioned state CAN live in git and benefits from PR review + diff history (strategy library definitions, disclosure templates, schema docs, curated copy, non-user fixtures, properly-anonymized aggregates).
 - **Idempotency:** All consent/acceptance/state-change actions carry stable idempotency keys.
 - **Exit clarity:** Pause vs stop-hold-to-close vs stop-liquidate is an explicit choice in the contract, not a copy decision.
 
