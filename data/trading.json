@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-05T15:15:09.828989+00:00",
-  "as_of_date": "2026-05-01",
+  "generated_at": "2026-05-06T13:00:10.310128+00:00",
+  "as_of_date": "2026-05-06",
   "account": {
-    "equity": 85562.38,
-    "cash": 30714.2,
-    "buying_power": 115392.67,
+    "equity": 85667.12,
+    "cash": 30714.19,
+    "buying_power": 115454.38,
     "base_value": 100000.0,
-    "total_pnl": -14437.62,
-    "total_pnl_pct": -14.4376,
-    "today_pnl": -53.08,
-    "today_pnl_pct": -0.062,
-    "positions_value": 54848.11,
-    "equity_deployed": 54848.11,
+    "total_pnl": -14332.88,
+    "total_pnl_pct": -14.3329,
+    "today_pnl": 56.76,
+    "today_pnl_pct": 0.0663,
+    "positions_value": 54952.93,
+    "equity_deployed": 54952.93,
     "options_deployed": 0,
-    "unrealized_pnl": 7.06,
-    "unrealized_pnl_pct": 0.01
+    "unrealized_pnl": 111.88,
+    "unrealized_pnl_pct": 0.2
   },
   "positions": [
     {
@@ -22,44 +22,44 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 401.666667,
-      "current_price": 420.75,
-      "market_value": 1262.25,
-      "unrealized_pnl": 57.249999,
-      "unrealized_pct": 4.75,
-      "change_today_pct": 0.8
+      "current_price": 435.29,
+      "market_value": 1305.87,
+      "unrealized_pnl": 100.869999,
+      "unrealized_pct": 8.37,
+      "change_today_pct": 1.86
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78352.821,
-      "market_value": 883.905931,
-      "unrealized_pnl": 23.428868,
-      "unrealized_pct": 2.72,
-      "change_today_pct": 2.05
+      "current_price": 82166.44,
+      "market_value": 926.927744,
+      "unrealized_pnl": 66.450681,
+      "unrealized_pct": 7.72,
+      "change_today_pct": 0.88
     },
     {
       "symbol": "NVDA",
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 198.9199,
-      "market_value": 1392.4393,
-      "unrealized_pnl": -12.090701,
-      "unrealized_pct": -0.86,
-      "change_today_pct": -0.33
+      "current_price": 200.05,
+      "market_value": 1400.35,
+      "unrealized_pnl": -4.180001,
+      "unrealized_pct": -0.3,
+      "change_today_pct": 1.81
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530411,
-      "current_price": 100.41,
-      "market_value": 51309.51,
-      "unrealized_pnl": -61.530021,
-      "unrealized_pct": -0.12,
-      "change_today_pct": -0.26
+      "current_price": 100.4301,
+      "market_value": 51319.7811,
+      "unrealized_pnl": -51.258921,
+      "unrealized_pct": -0.1,
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -836,6 +836,21 @@
       "date": "2026-05-01",
       "equity": 85615.46,
       "profit_loss": -77.23
+    },
+    {
+      "date": "2026-05-02",
+      "equity": 85560.86,
+      "profit_loss": -54.6
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 85560.86,
+      "profit_loss": 0.0
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 85610.36,
+      "profit_loss": 49.5
     }
   ],
   "watchlist": {
@@ -1673,30 +1688,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "SCHW",
-        "price": 94.8,
-        "sector": "Financial Services",
-        "expiry": "2026-05-29",
-        "dte": 24,
-        "short_strike": 96.0,
-        "long_strike": 91.0,
-        "spread_width": 5.0,
-        "net_credit": 2.46,
-        "credit_width_ratio": 0.492,
-        "annualized_yield_pct": 855.1,
-        "max_loss_per_contract": 254.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
