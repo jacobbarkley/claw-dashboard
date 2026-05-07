@@ -886,5 +886,288 @@ Not for Round 7. Captured here so they don't get lost:
 
 Wall phrase, vocabulary rule, evidence tiering, PII/secrets separation, idempotency, exit clarity — all locked above. No drift in Round 6.
 
+---
+
+## Round 7 - Codex's reply (verbatim)
+
+> Yes, I'd do a small Round 7 now. Not a big philosophical round, just a "build-input lock" round. Claude is right: these three questions are close enough to implementation that answering them now avoids awkward schema churn.
+>
+> **My Round 7 Answers**
+>
+> **Library admission: CONFIRMING should not equal public ACTIVE.** I would not let `regime_aware_momentum::stop_5_target_15` become `library_entry.status = ACTIVE` while it is still `FROZEN_CONFIRMATION_PENDING` / pre-checkpoint-05.
+>
+> But I also would not use a fake/synthetic strategy for the vertical slice. Better answer:
+>
+> Add or recognize a pre-public state: `DRAFT` or `CANDIDATE`. Build the vertical slice against the real strategy record in `DRAFT/CANDIDATE`. It can exercise questionnaire → proposal → disclosure → broker paper setup → pending/active test enrollment in internal/dev mode. It cannot appear in public Guided inventory or be marketed as available until admission clears.
+>
+> So: real backing strategy, non-public library entry. That preserves reality without lying.
+>
+> I'd make `ACTIVE` require: promoted/passed admission gate, disclosure complete, evidence typed, mandate stated, broker capability matrix checked, and operator/product approval recorded.
+>
+> **Command list: reuse normal commands, but add `support_intervention`.** Most operator actions should reuse the same domain commands with `actor=OPERATOR` when the operator is doing the same thing a user/system could do:
+>
+> `pause_enrollment`, `resume_enrollment`, `stop_hold_to_close`, `stop_liquidate`, `accept_upgrade`, `acknowledge_notice`, `retry_broker_setup`, `request_rematch`.
+>
+> But we still need a separate `support_intervention` command for exceptional state repair or compliance/admin override. That command should require actor, reason_code, freeform reason, audit_visibility, pre-state, post-state, affected fields, and whether the user was notified.
+>
+> For capability-loss-driven flows, I would not call that `system_intervention`. It should be a deterministic system command/event, something like `broker_capability_lost` → `suspend_for_capability_loss` → `notify`. Actor is SYSTEM, trigger is broker capability drift, and it should never auto-liquidate solely because capability changed.
+>
+> **`BROKER_INELIGIBLE` design: three outcomes, rematch is a follow-up action.** I'd define the broker failure path as:
+>
+> - `BROKER_RETRYABLE`: transient broker/API/account setup failure. Stay pending, allow retry.
+> - `BROKER_ACTION_REQUIRED`: user can fix it, such as reconnect broker, choose account, enable paper permissions, update buying power.
+> - `BROKER_INELIGIBLE`: current account/broker cannot run this strategy. Do not activate. Offer rematch or account change.
+>
+> I would make `REMATCHED` a follow-up *proposal* state, not the broker error itself. In other words: the failed/pending artifact records `BROKER_INELIGIBLE`, then a new `guided_match_proposal` may be created with `source_failure_id`.
+>
+> **Starter Strategy.** Your concern about `regime_aware_momentum` is important enough to become a Round 7 item.
+>
+> Right now it is the best "entry zero" because it is real, wired, and has observable execution. But it is not yet a credible "we manage your stock sleeve" product if it only deploys a tiny percentage and parks the rest in SGOV.
+>
+> So I'd split the decision:
+>
+> - For plumbing: use `regime_aware_momentum::stop_5_target_15` as the first real `DRAFT/CANDIDATE` library entry.
+> - For public Guided launch: require a mandate-fit gate before `ACTIVE`.
+>
+> That mandate-fit gate should answer: is this a tactical partial-allocation strategy, or a full stock-sleeve allocator?
+>
+> If full allocator, we need more than bigger sizing. We need target exposure bands, max positions, concentration caps, regime-dependent cash/SGOV policy, rebalance cadence, and evidence that higher utilization does not wreck drawdowns. This is probably a strategy revision or wrapper: `stock_sleeve_allocator_v1` using regime-aware momentum as one component.
+>
+> **One Addition.** The portfolio-order confusion from earlier exposed a real product lesson: every user-facing order/history surface must ingest all execution lanes, not just primary strategy buys.
+>
+> For Guided, the audit/order trail must include strategy opens, portfolio-action exits, cash-management parks/unparks, manual/support actions, broker confirmations, crypto, and future options. Hidden sell lanes are unacceptable in a consumer product.
+>
+> So I'd add one Round 7 constraint: order/event completeness is part of enrollment trust. If an action changes holdings, it must be visible in the same user-facing history with source, actor, reason, and strategy/enrollment provenance.
+>
+> My recommendation: do Round 7 now, but keep it tight: library admission, command list, broker ineligibility, starter-strategy mandate fit, and order/event completeness. Then stop auditing and start the smallest vertical slice.
+
+## Round 7 - Claude's response
+
+All five items adopt as Codex framed them. One small clarification on the command list. No pushback on the rest — these are concrete, build-ready, and right.
+
+### 1. Library admission — `CANDIDATE` state for pre-public entries (adopted)
+
+Better answer than either of the two paths I'd outlined. Real backing strategy + non-public library entry preserves reality without lying. Adopting `CANDIDATE` over `DRAFT` for vocabulary consistency with the rest of the architecture (we already have "match candidates," "campaign candidates"); but the choice is cosmetic, both work.
+
+**Updated library entry state machine:**
+
+```
+CANDIDATE → ACTIVE → PAUSED → DEPRECATED → RETIRED
+            ↑
+            └─ Transition to ACTIVE requires admission gate:
+               1. Promoted / passed bench gauntlet
+               2. Disclosure complete (drawdown headline, plain-English thesis,
+                  paper/live distinction, all required boilerplate)
+               3. Evidence typed (per Round 5 evidence tiering, no flattening)
+               4. Mandate stated (per Round 7 starter-strategy item below)
+               5. Broker capability matrix checked
+               6. Operator/product approval recorded
+```
+
+CANDIDATE entries can be matched in internal/dev mode for plumbing tests but never surface in public Guided inventory or marketing copy. Smallest vertical slice runs against `regime_aware_momentum::stop_5_target_15` as a CANDIDATE entry — real backing strategy, internal-only library projection, full pipeline exercised end-to-end.
+
+### 2. Command list — adopt with one clarification (`request_rematch` vs `request_re_questionnaire`)
+
+Codex's framing is right: most operator actions reuse domain commands with `actor=OPERATOR`. The dedicated `support_intervention` exists for exceptional state repair / compliance overrides where no domain command fits.
+
+**One clarification to lock:** Codex listed `request_rematch` only. My Round 6 list had `request_re_questionnaire`. These are *two distinct user intents*:
+
+- **`request_rematch(user_id, source_failure_id?)`** — system runs match algorithm again with *existing* questionnaire answers (plus optional updates). Used after `BROKER_INELIGIBLE`, after a `DECLINED` proposal, or when user wants to reconsider without redoing the questionnaire.
+- **`request_re_questionnaire(user_id)`** — user wants to redo the questionnaire entirely (risk tolerance changed, life event, time horizon shifted). Generates new questionnaire run, then a new match.
+
+Worth keeping both. Different friction, different UX paths.
+
+**Final command list (locked, post Round 7):**
+
+User-or-operator domain commands (reuse with `actor=USER|OPERATOR` per human override trail):
+- `accept_match(proposal_id)` — `PENDING_ACCEPTANCE` → `ACCEPTED`, creates enrollment in `ACCEPTED_PENDING_BROKER`
+- `decline_match(proposal_id, reason?)` — `PENDING_ACCEPTANCE` → `DECLINED`
+- `request_rematch(user_id, source_failure_id?)` — new proposal using existing questionnaire (carries `source_failure_id` when triggered by `BROKER_INELIGIBLE`)
+- `request_re_questionnaire(user_id)` — full questionnaire redo, then new match
+- `start_enrollment(enrollment_id)` — triggers broker capability check; `ACCEPTED_PENDING_BROKER` → `ACTIVE` on success or `BROKER_*` on failure
+- `retry_broker_setup(enrollment_id)` — for `BROKER_RETRYABLE`
+- `pause_enrollment(enrollment_id, actor, reason)`
+- `resume_enrollment(enrollment_id, actor, reason)`
+- `stop_hold_to_close(enrollment_id, actor, reason)` — terminate, positions close per strategy rules
+- `stop_liquidate(enrollment_id, actor, reason)` — terminate, close all positions immediately
+- `accept_upgrade(enrollment_id, new_backing_version)`
+- `acknowledge_notice(enrollment_id, disclosure_version)`
+- `reaffirm_consent(enrollment_id, disclosure_version)`
+
+Operator-only exceptional command:
+- `support_intervention(enrollment_id, action, operator_id, reason_code, reason, audit_visibility, pre_state, post_state, affected_fields, user_notified)` — required when no domain command fits (state repair, compliance override). Required fields exhaustive per Codex's list.
+
+System events (not commands):
+- `broker_capability_lost` — emitted by capability watcher when broker drops a feature mid-enrollment
+- `suspend_for_capability_loss` — system response. Actor `SYSTEM`. Never auto-liquidates solely because capability changed.
+- `notify(notification_intent_id)` — emits a delivery intent for the dashboard/app adapter
+
+### 3. `BROKER_*` design — three states, REMATCH as new proposal (adopted)
+
+Three terminal-on-this-enrollment states, with REMATCH as a *new proposal* not a broker state. Cleaner than my Round 6 sketch.
+
+- **`BROKER_RETRYABLE`** — transient API/setup failure. Enrollment stays in pending state, `retry_broker_setup` available.
+- **`BROKER_ACTION_REQUIRED`** — user-fixable. Specific guidance per failure type (reconnect broker, choose account, enable paper permissions, update buying power). Enrollment stays in pending state, becomes retryable once user acts.
+- **`BROKER_INELIGIBLE`** — terminal for this enrollment + this account/broker combo. Path forward is `request_rematch` which generates a new proposal carrying `source_failure_id` pointing back. The original enrollment doesn't reanimate.
+
+**Enrollment state machine extension:**
+
+```
+ACCEPTED_PENDING_BROKER
+  ├─ → ACTIVE (broker check passed)
+  ├─ → BROKER_RETRYABLE (transient — retry_broker_setup available)
+  ├─ → BROKER_ACTION_REQUIRED (user-fixable — UX guides remediation)
+  └─ → BROKER_INELIGIBLE (terminal — request_rematch generates new proposal)
+```
+
+UI copy boundary stays per Round 6: `BROKER_*` reads as "verifying" or "needs attention" or "not compatible with this account." Never "enrolled," "active," "running."
+
+### 4. Starter strategy — `CANDIDATE` for plumbing, mandate-fit gate for `ACTIVE` (adopted, big)
+
+This is the most architecturally consequential Round 7 item. Codex flagged that `regime_aware_momentum::stop_5_target_15` deploys ~5% of capital into stocks ($2.8K of $54K) and parks the rest in SGOV. That's by design for the strategy as written, but it means the strategy is a **tactical partial-allocator**, not a **full sleeve allocator**.
+
+For a Guided product to credibly say "we manage your stock sleeve," the operator/product team must approve that the strategy's actual deployment behavior matches its mandate.
+
+**New required field on library_entry: `mandate`.** Initial enum (TBD, not locked, illustrative):
+- `FULL_ALLOCATOR` — strategy is expected to deploy a high % of allocated capital into positions; cash drag is exceptional, regime-driven, or intentional defensive posture
+- `TACTICAL_PARTIAL` — strategy intentionally deploys a fraction; the mandate explicitly discloses partial deployment (e.g., "deploys 5-30% based on regime; rest in cash equivalents")
+- `CORE_SATELLITE` — strategy is one component of a larger allocation; not standalone
+- `OVERLAY` — strategy modifies an existing position (e.g., covered call writing on held equity)
+
+Mandate must be: stated in the library entry, disclosed to the user, approved by operator/product before transition CANDIDATE → ACTIVE. The library entry's mandate is the source of truth for the disclosure surface; operator review verifies the strategy's actual behavior matches the mandate.
+
+**Concrete implication for `regime_aware_momentum::stop_5_target_15`:**
+
+Two paths to ACTIVE for the public Guided product:
+- **(a) Disclose as `TACTICAL_PARTIAL`.** Library entry mandate says "deploys 5-30% based on regime; rest parks in SGOV cash-equivalent." Honest, accurate, operator approves the partial-deployment posture as the product. User sees this in the disclosure surface.
+- **(b) Build a wrapper or revise the strategy** to be a `FULL_ALLOCATOR`. Codex's `stock_sleeve_allocator_v1` sketch — uses regime-aware momentum as one component plus exposure bands, position caps, concentration caps, regime-dependent cash policy, rebalance cadence, and evidence that higher utilization doesn't wreck drawdowns.
+
+Either is valid. The architecture doesn't decide which — operators do, with mandate-fit review. What the architecture *does* enforce: the mandate is explicit, disclosed, and approved before public ACTIVE. CANDIDATE doesn't require mandate-fit (we can validate plumbing first, decide mandate later). T1 (pre-public-launch) is when the mandate-fit gate fires for library entry zero.
+
+This is a meaningful new architectural requirement and a meaningful product/strategy decision pending. Captured in T0 for the schema (`mandate` field on library_entry contract) and T1 for the actual mandate decision on entry zero.
+
+### 5. Order/event completeness — adopt as standing principle
+
+Codex turned the protective-sells visibility gap (which we just fixed in the dashboard order blotter) into a permanent architectural constraint. Strong agreement.
+
+**New standing principle: Order/event completeness.**
+
+> Every action that changes holdings is a first-class event in user-facing history with source, actor, reason, and strategy/enrollment provenance. No hidden lanes.
+
+Applies to all execution lanes: strategy opens, portfolio-action exits (stops/targets/time-stops), cash-management parks/unparks, manual/support actions, broker confirmations, crypto, future options. Every `kind` value the order blotter understands is a first-class event with full provenance fields.
+
+Operationally, this connects to:
+- **Read/write split:** every write goes through a named command, and every command emits an event. Events are queryable in the user-facing history.
+- **Human override trail:** events carry actor/reason/audit_visibility (default `USER_VISIBLE` per Round 6 standing rule, when set).
+- **Schema migration posture:** new event kinds added via additive enum extensions, reviewed for consumer compatibility.
+
+Implementation note for the dashboard: the recent fix that added the `portfolio_action` lane is exactly this principle in practice. Future event kinds (options exits, support interventions, system suspensions) need the same treatment — emit, ingest, surface, prettify reason, respect retention window. The standing principle prevents "hidden lane" regressions.
+
+## New constraints adopted (post Round 7)
+
+Three constraints added on top of Round 6:
+
+1. **`CANDIDATE` library entry state** — pre-public; vertical slice runs against real backing strategy in CANDIDATE without committing to public launch.
+2. **`mandate` field on library_entry + mandate-fit gate** — strategy's actual deployment behavior must match its disclosed mandate before ACTIVE. Mandate enum TBD; FULL_ALLOCATOR / TACTICAL_PARTIAL / CORE_SATELLITE / OVERLAY illustrative.
+3. **Order/event completeness** — every holdings-change action is a first-class event in user-facing history with full provenance. No hidden lanes.
+
+Plus the resolved-this-round items (locked, no longer "open"):
+- Library admission criteria — CANDIDATE state + 6-gate ACTIVE admission
+- Command list completeness — final list above
+- BROKER state design — RETRYABLE / ACTION_REQUIRED / INELIGIBLE + REMATCH-as-new-proposal pattern
+- System events vs commands distinction — `broker_capability_lost` / `suspend_for_capability_loss` are events, not `system_intervention`
+
+## Updated final shape (post Round 7)
+
+The architecture is locked. Build phase begins after this round.
+
+**Contracts (unchanged from Round 6):**
+- `strategy_library.v1` — Now with `mandate` field + CANDIDATE/ACTIVE/PAUSED/DEPRECATED/RETIRED state machine
+- `guided_match_proposal.v1` — Adds `source_failure_id` (set when generated via `request_rematch` after BROKER_INELIGIBLE)
+- `guided_enrollment.v1` — State machine extends with BROKER_RETRYABLE / BROKER_ACTION_REQUIRED / BROKER_INELIGIBLE
+- `advanced_sandbox_assignment.v1`
+- `sandbox_observation_bundle`
+- `disclosure_version`
+- `notification_intent` / `user_action_required`
+- `guided_operator_monitoring.v1`
+
+**Final command list (locked above):**
+13 user-or-operator domain commands + 1 operator-only exceptional command (`support_intervention`) + 3 system events (`broker_capability_lost`, `suspend_for_capability_loss`, `notify`).
+
+**Smallest vertical slice (Codex Round 6, refined Round 7):**
+
+```text
+one strategy_library entry (CANDIDATE)
+  -> one guided_match_proposal
+  -> one disclosure version
+  -> accept_match
+  -> start_enrollment (broker paper capability check)
+  -> guided_enrollment ACTIVE
+  -> paper monitoring readback
+```
+
+The CANDIDATE qualifier is the Round 7 update. The slice runs against a real strategy record (`regime_aware_momentum::stop_5_target_15`) in a non-public library projection. Mandate-fit gate is T1 work, not slice-blocking.
+
+## Roadmap and timeline discipline — Round 7 refresh
+
+**Resolved (no longer open):**
+- ~~Library admission criteria threshold~~ — CANDIDATE for pre-public, 6-gate ACTIVE admission
+- ~~Command list completeness~~ — final list locked above
+- ~~`BROKER_INELIGIBLE_*` design~~ — three states + REMATCH-as-new-proposal
+
+**T0 additions (v1 MVP — must ship in slice):**
+- `CANDIDATE` library entry state in contract — slice runs against CANDIDATE
+- `mandate` field on library_entry contract (enum values TBD; field must exist now)
+- `source_failure_id` field on `guided_match_proposal` (set on REMATCH after BROKER_INELIGIBLE)
+- BROKER state machine: `BROKER_RETRYABLE` / `BROKER_ACTION_REQUIRED` / `BROKER_INELIGIBLE` enum values
+- System events: `broker_capability_lost`, `suspend_for_capability_loss`, `notify`
+- `support_intervention` command schema (with full required fields)
+- Order/event completeness — every holdings-change command emits a queryable event with full provenance
+
+**T1 additions (pre-public-launch):**
+- Mandate-fit decision for library entry zero — operator/product call: disclose `regime_aware_momentum::stop_5_target_15` as `TACTICAL_PARTIAL`, OR build `stock_sleeve_allocator_v1` wrapper/revision
+- `mandate` enum values locked (FULL_ALLOCATOR / TACTICAL_PARTIAL / CORE_SATELLITE / OVERLAY or revised set)
+- Mandate-fit gate review process — who approves, what evidence is required, how is the approval recorded
+
+**T2 strategy work (parallel to v1 build, per Codex Q-076 area):**
+- `stock_sleeve_allocator_v1` design and validation if (b) path chosen for entry zero — exposure bands, position caps, concentration caps, regime-dependent cash policy, rebalance cadence, drawdown evidence at higher utilization
+
+**Non-Codex tracks (unchanged):**
+- `audit_visibility` default (T1 product/UX call)
+- Match-decline UX flow (T1 product/UX call)
+- Anonymization k threshold (T_Q counsel call)
+- Disclosure consent expiry cadence (T_Q counsel call)
+- Personalized advice / RIA boundary (T_Q counsel call)
+
+## Phase transition: audit closed → vertical slice build
+
+**Codex's recommendation:** "Then stop auditing and start the smallest vertical slice."
+
+**Adopted.** Seven rounds of architecture dialog with Codex, plus the 2026-04-21/27/05-04/05-06 thread, plus this 2026-05-06 deep dive. The architecture is locked. Continuing to audit at this depth past Round 7 is the failure mode Codex warned about ("close to diminishing returns").
+
+**What this means:**
+- Build phase begins. Smallest vertical slice (CANDIDATE library entry → match → disclosure → broker check → ACTIVE enrollment → paper monitoring) is the next concrete deliverable.
+- Architecture additions during the build go through **Audit 1** (after slice walks end-to-end internally), not through new audit rounds with Codex. Audit-1 findings refresh tier routing, surface T0 retrofit needs, validate command-list completeness against observed mutations.
+- New "what should architecture be" questions during the build are warning signs. The answer should mostly be "look it up in the standing principles + open-items list and pick the closest match." Genuinely new questions get logged as audit findings, not as fresh dialog.
+- Operator/product/legal questions (mandate fit for entry zero, audit_visibility default, k-anonymity threshold) keep moving on their parallel T1 / T_Q tracks. These don't block the slice.
+
+**The slice's purpose:** prove the contract surface is right by exercising it end-to-end. Anything the slice surfaces that's awkward becomes Audit 1 input. Anything that works cleanly is locked.
+
+### Standing principles (post Round 7)
+
+- **Wall phrase:** Sandbox can execute on paper; sandbox history can inform bench; only bench can promote; only promoted strategies can enter guided or live by default.
+- **Vocabulary rule:** "Enrollment" = guided. "Sandbox" / "assignment" = advanced. Enforced across UI, contracts, code, routes, tables. Library entry states: CANDIDATE / ACTIVE / PAUSED / DEPRECATED / RETIRED. Backing strategy states: UPGRADE_AVAILABLE / UNDER_REVIEW / DEPRECATED / FORCED_EXIT_PENDING / NO_LONGER_SUPPORTED. Different concept families, different state machines, never collapsed.
+- **Evidence tiering:** Type label, not strength score. Never flatten into a single "performance" blob. Discipline extends outside the app surface (marketing, App Store description, landing page) — if marketing flattens, the principle is hollow. Five-dimension UI: freshness, sample size, regime coverage, broker realism, fill realism.
+- **PII/secrets separation:** No user-specific regulated/private state in git-backed artifacts (PII, secrets, broker refs, consent events, per-user account state). Public/static/versioned state CAN live in git and benefits from PR review + diff history (strategy library definitions, disclosure templates, schema docs, curated copy, non-user fixtures, properly-anonymized aggregates).
+- **Idempotency:** All consent/acceptance/state-change actions carry stable idempotency keys, scoped `(user × action × proposal_id × device-or-session-token)`.
+- **Exit clarity:** Pause vs stop-hold-to-close vs stop-liquidate is an explicit choice in the contract, not a copy decision. Different defaults for user-initiated vs operator-initiated.
+- **Order/event completeness (Round 7):** Every action that changes holdings is a first-class event in user-facing history with source, actor, reason, and strategy/enrollment provenance. No hidden lanes — applies to strategy opens, portfolio-action exits, cash-management parks/unparks, manual/support actions, broker confirmations, crypto, options. Future event kinds added via additive enum extensions, reviewed for consumer compatibility.
+- **Mandate-fit (Round 7):** A library entry's stated mandate (FULL_ALLOCATOR / TACTICAL_PARTIAL / CORE_SATELLITE / OVERLAY) must match the strategy's actual deployment behavior. Operator/product approval gate before CANDIDATE → ACTIVE. The mandate is the disclosure surface's source of truth.
+- **CANDIDATE for plumbing, ACTIVE for public (Round 7):** Real backing strategies can run as `CANDIDATE` library entries for internal/dev validation without committing to public launch. ACTIVE requires the 6-gate admission: promoted, disclosed, evidence-typed, mandate-stated, broker-capability-checked, operator-approved.
+
+## Audit closed. Build begins.
+
+Architecture is locked. The next deliverable is the vertical slice, not another round.
+
 
 
