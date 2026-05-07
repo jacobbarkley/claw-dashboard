@@ -1169,5 +1169,87 @@ The CANDIDATE qualifier is the Round 7 update. The slice runs against a real str
 
 Architecture is locked. The next deliverable is the vertical slice, not another round.
 
+---
+
+## Build-phase guardrails — Codex post-lock notes (2026-05-06)
+
+After Round 7 closed, Codex sent a final message confirming the lock and flagging five build-phase guardrails. None are objections; all are discipline rules to keep sharp as we enter the slice. Captured here as standing build-phase rules so they're not implicit-only.
+
+### 1. `guided_enrollment.status = ACTIVE` ≠ "strategy validated"
+
+> If broker paper setup succeeds, ACTIVE can mean "enrollment active in paper." It should not imply "strategy has proven itself" or "public product is validated." That distinction matters because the library entry is still CANDIDATE.
+
+There are two distinct ACTIVE states in the architecture, on two different objects, and they mean different things:
+
+- **`guided_enrollment.status = ACTIVE`** — process state. "We are running this strategy for you on paper, broker is connected, capability checks passed."
+- **`library_entry.status = ACTIVE`** — admission state. "This strategy has cleared the 6-gate admission. Publicly available, marketable."
+
+A user can have an ACTIVE enrollment in a CANDIDATE library entry (that's exactly what the slice exercises). UI copy must not blur the line. No language like "validated strategy," "approved for live," "successfully tested" attached to enrollment ACTIVE while the library entry is still CANDIDATE. Enrollment ACTIVE reads as "your paper trading is running" — about the user's paper session, not about the strategy's product status.
+
+This sharpens the existing UI copy boundary from Round 6 (`ACCEPTED_PENDING_BROKER` ≠ enrollment success). Same posture: copy must not over-claim what a state actually means.
+
+### 2. CANDIDATE must be *visibly* non-public
+
+> Internally fine, externally unavailable. No accidental dashboard copy like "available strategy" or "recommended strategy" until the 6-gate admission is satisfied.
+
+Hard rule. CANDIDATE library entries:
+- Do not surface in public Guided inventory
+- Do not appear as match candidates in public matcher runs
+- Do not get marketing copy ("available," "recommended," "validated," "approved")
+- Are visible only in internal/dev/admin modes, with explicit "Internal preview" or "Pre-admission" badging
+- Become matchable in public mode only after CANDIDATE → ACTIVE transition (6-gate admission)
+
+The dev-mode visibility is what lets the slice exercise the full pipeline without lying about availability.
+
+### 3. Mandate-fit is the biggest product fork
+
+> I agree it is not slice-blocking, but it is strategically huge. regime_aware_momentum at ~5% deployed is either an honest TACTICAL_PARTIAL product or a component inside a fuller allocator. We should not let "entry zero" quietly become the product promise.
+
+Re-emphasized from Round 7 #4. The mandate-fit decision for entry zero is the moment where the architecture meets the product. It cannot slip:
+
+- T1 work but **not** "do whatever feels easiest at the time"
+- Two viable paths (disclose `TACTICAL_PARTIAL` vs build `stock_sleeve_allocator_v1`); both are valid; the choice has product/marketing/legal consequences
+- Operator/product/strategy team owns the decision; architecture enforces that *some* decision happens before public ACTIVE
+- The decision is logged on the library entry's mandate field + operator approval record; it's not a private call
+
+If the slice walks end-to-end against `CANDIDATE` and we reflexively flip to ACTIVE without the mandate review, we accidentally launch a tactical strategy as if it were a full product. Codex's "should not let entry zero quietly become the product promise" is the load-bearing line.
+
+### 4. Order/event completeness — earn it with a test fixture
+
+> Not implementation now, but when we build: one fixture should include an open, protective exit, cash reserve action, and broker confirmation so we prove the unified event history does not miss lanes.
+
+Operational rule for the slice: as part of slice acceptance, build a fixture that exercises every event lane and verify the unified event history surfaces every one of them. Fixture composition (minimum):
+
+- One strategy entry (BUY)
+- One protective exit (stop / target / max-hold) — `portfolio_action` lane
+- One cash-management action (park or unpark) — `cash_management` lane
+- One broker confirmation event
+- (When applicable) one manual / support / system action — `manual` / `support_intervention` / `system` lanes
+
+Run the fixture, render the user-facing history, assert every event appears with full provenance fields (source, actor, reason, strategy/enrollment provenance). This becomes a regression test against the protective-sells class of bug — never silently dropping a lane again.
+
+This is concrete enough to add to the slice's T0 acceptance criteria.
+
+### 5. `support_intervention` is break-glass, not generic admin
+
+> Good to have, but we should treat it like a break-glass command with audit gravity, not a convenient generic admin action.
+
+Operational discipline for the support_intervention command:
+
+- **Hard to invoke.** Requires explicit operator role + escalation reason. Not a one-click admin button.
+- **Heavy audit weight.** Every invocation generates a high-priority audit record. Routinely review.
+- **Justifiable.** Each invocation must explain *why no domain command fit*. If a pattern of invocations emerges with the same justification, that's a signal to add a domain command, not normalize the workaround.
+- **User-notified by default** (per audit_visibility USER_VISIBLE default, when set at T1).
+
+The reason this matters: `support_intervention` is the only command that bypasses the named-domain-command discipline. Letting it become routine erodes the read/write split principle. Treat it as the exception that proves the rule.
+
+## Build-phase guardrails — adopted
+
+All five guardrails added to standing principles for the build. They're not new architecture; they're enforcement around the existing architecture. The slice and Audit 1 use them as criteria.
+
+**Final lock confirmation:** Codex closes with — "I agree with Claude: audit phase can close. The next right move, when you're ready, is the smallest real vertical slice against `regime_aware_momentum::stop_5_target_15` as CANDIDATE, with anything awkward routed into Audit 1 instead of reopening grand architecture."
+
+Adopted. Audit closed. Build begins when Jacob is ready.
+
 
 
