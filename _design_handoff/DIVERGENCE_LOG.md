@@ -92,4 +92,12 @@ what you own. Don't duplicate; differentiate by purpose.
 
 ---
 
+### 2026-05-07 — Trade atlas · result_trades.v1 — RFC open; sibling-artifact vs array-on-result is the key open question for Codex
+
+**Type:** RFC (no shipped state; producer-side code intentionally withheld pending sign-off)
+
+Schema proposal: `_design_handoff/CODEX_PRIMER_2026-05-07_result_trades_contract.md` — recommends sibling artifact (`result_trades/result_trades_{result_id}.json`) over embedding trades in `result.v1`, for hot-path payload and schema-evolution reasons. UI design: `_design_handoff/_reference/lab/TRADE_ATLAS_DESIGN_2026-05-07.md`. Stub renderer at `components/vires/lab/trade-atlas-section.tsx` (flag: `VIRES_LAB_TRADE_ATLAS=1`) renders honest empty state until artifact lands. Awaiting Codex answers on Q1 (size field / sleeve variance) and Q4 (pointer field style on result.v1) before implementation proceeds.
+
+---
+
 <!-- Append new entries above this line -->

@@ -23,3 +23,7 @@ export function unifiedBuilderEnabled(): boolean {
 export function labRedesignEnabled(): boolean {
   return isTruthy(process.env.VIRES_LAB_REDESIGN)
 }
+
+export function tradeAtlasEnabled(): boolean {
+  return isTruthy(process.env.VIRES_LAB_TRADE_ATLAS)
+}

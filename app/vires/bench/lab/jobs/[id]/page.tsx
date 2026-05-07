@@ -15,6 +15,8 @@ import {
 } from "@/lib/research-lab-cold.server"
 import { loadIdeaById } from "@/lib/research-lab-ideas.server"
 import { hasLabCampaignForIdea } from "@/lib/vires-campaigns.server"
+import { tradeAtlasEnabled } from "@/lib/feature-flags.server"
+import { TradeAtlasSection } from "@/components/vires/lab/trade-atlas-section"
 
 export const metadata = {
   title: "Vires Capital — Lab · Run",
@@ -194,6 +196,10 @@ export default async function ViresLabJobDetailPage({
             <CandidateScorecard candidate={candidate} />
           </DetailsDisclosure>
         ) : null}
+
+        {tradeAtlasEnabled() && result && (
+          <TradeAtlasSection result_id={result.result_id} />
+        )}
       </div>
     </>
   )
