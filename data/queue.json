@@ -38,6 +38,26 @@
       ]
     },
     {
+      "id": "Q-095",
+      "category": "ui",
+      "title": "Equity curve P&L decomposition \u2014 realized vs unrealized split on sleeve hero",
+      "what": "The sleeve hero shows period delta as a single number (e.g. '-$2,985 1W') derived from total deployed capital change. Technically honest but operationally unhelpful \u2014 operator can't tell from the headline whether the loss came from realized stop-outs, unrealized mark-to-market on currently-held positions, or both. Without context, the operator has to mentally reverse-engineer the trade history to trust the number, which fails the 'beta-user can self-explain' bar.\n\nDiagnosed 2026-05-06 from a -$2,985 1W reading on stocks sleeve that turned out to be real: META stop-loss Apr 30 + AAPL/AVGO/NVDA-old time-stops that closed at small losses + unrealized mark-to-market on today's small AAPL/NVDA reopens. The number was correct, the display didn't explain it.\n\nFix: decompose the period delta on the hero alongside the headline.\n\nRequired:\n- BACKEND (Codex): emit realized P&L per period in operator feed. Either a sibling field   on sleeve_equity_history.{sleeve}.series points (e.g. realized_pnl_to_date, so we can   diff start vs end) or a separate operator.realized_pnl_history block by sleeve.   Must be reconstructable from execution_report.json + portfolio_action_execution_report.json   + position_book history.\n- UI (Claude): hero shows total + period delta + realized/unrealized split. Layout sketch:\n    $54,213  Stocks\n    -$2,985  1W   \u00b7   -$345 unrealized\n    \u2514\u2500 -$2,640 realized \u00b7 4 trades closed\n    \u2514\u2500 -$345 unrealized \u00b7 2 positions held\n- UI (Claude): tap-to-expand or scrub-to-reveal trade-level attribution \u2014 which symbols,   which exit reasons, what realized P&L per closed trade during the period.\n- HONESTY: when realized P&L data is incomplete (early in adoption / coverage gap),   surface that explicitly with cold-start evidence honesty rather than hiding gaps.\n\nRoutes to T1 (pre-public-launch) per the Lab two-mode timeline tiers \u2014 beta users need to trust + understand the equity curve before live trading is on the table. Not a v1 MVP blocker but must land before any non-internal user sees the dashboard.",
+      "blocker": "Codex must emit realized P&L by period in operator feed (new sibling field on sleeve_equity_history or separate realized_pnl_history block)",
+      "blocker_type": "dependency",
+      "prereq": "sleeve_equity_history shipping with daily marks (done). portfolio_action_execution_report + execution_report on disk (done). Position book history with cost basis (mostly done \u2014 q076b stewardship layer).",
+      "priority": "medium",
+      "ticket": null,
+      "tags": [
+        "ui",
+        "dashboard",
+        "equity-curve",
+        "p&l",
+        "sleeve",
+        "transparency",
+        "T1"
+      ]
+    },
+    {
       "id": "Q-075",
       "category": "operator",
       "title": "Vercel approval buttons \u2014 long-term approval channel on trading page",
