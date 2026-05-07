@@ -25,14 +25,15 @@ Power-user authoring product. Talon-assisted spec drafting, packet-based experim
 
 - **Authoritative artifacts:** `advanced_sandbox_assignment.v1`, `sandbox_observation_bundle.v1`, packet contracts (research, spec, idea), bench/campaign contracts, `strategy_bank` / passport.
 - **Hard rules:** **sandbox can execute on paper; sandbox history can inform bench; only bench can promote; only promoted strategies can enter Guided or live by default.** Sandbox status is `UNBENCHMARKED_TEMPLATE`, never "validated." Sandbox never gets a passport role or strategy-bank promotion directly.
+- **Private by default:** user-created Lab strategies are private to the user. Validation does not equal permission. See the cross-lane principle below.
 - **Vocabulary discipline:** "enrollment" = Guided. "Sandbox / assignment" = Advanced. Different nouns across UI, contracts, code, routes, tables.
-- **Promotion path:** sandbox → optional `sandbox_observation_bundle` attachment → bench/campaign submission → bench owns decisive verdict → if PASS, eligible for `strategy_library` curation.
+- **Promotion path:** sandbox → optional `sandbox_observation_bundle` attachment → bench/campaign submission → bench owns decisive verdict → if PASS, eligible for `strategy_library` curation **only via the contribution lane** for user-authored strategies.
 
 ### 3. Strategy Generation
 
 How new candidate strategies enter the bench in the first place. Two parallel tracks, each produces strategies that compete through the same bench gauntlet.
 
-- **Hybrid-curated track (today):** human-authored or Talon-assisted strategies, drafted via the Lab packet workflow, validated against the bench. `q076b_*` campaigns are the pattern.
+- **Hybrid-curated track (today):** human-authored or Talon-assisted strategies, drafted via the Lab packet workflow, validated against the bench. `q076b_*` campaigns are the pattern. User-authored strategies enter the curated track only via the contribution lane (see cross-lane principle below) — never silently from a private Lab assignment.
 - **Future autonomous-generation track:** LLM-assisted matcher v2 / Talon-as-strategy-author / autonomous experiment proposers. Behind a hard gate — does not ship until the hybrid-curated track produces a stable cadence of validated strategies AND Lab earns trust through Audit 1+ rigor.
 - **Hard rule:** evidence tiering stays a typology, never a strength score. `BENCH_MULTI_ERA / SHADOW_FORWARD_OBSERVED / PAPER_FORWARD_PROMOTED / LIVE_OBSERVED / PAPER_FORWARD_SANDBOX` all answer different questions and are never collapsed.
 - **Why two tracks:** every new strategy carries the regulatory-defensibility burden of "how did this come to be?" Hybrid-curated has a deterministic, auditable path. Autonomous generation does not — until it earns one.
@@ -58,6 +59,84 @@ The set of legal, broker, monitoring, risk, consent, and audit rails that must b
   - **Consent:** per-user re-acceptance for the live-capital transition; audit ledger of *who consented to what* with idempotency; reaffirmation cadence honored.
   - **Audit:** every command/event emission traceable; `audit_visibility=USER_VISIBLE` default for operator interventions; support_intervention treated as break-glass with audit gravity.
 - **Hard rule:** **live unlock requires all six.** Skipping one unlocks none.
+
+## Cross-lane principle: Lab strategy ownership and reuse
+
+**User-created Lab strategies are PRIVATE BY DEFAULT. Validation does not equal permission.**
+
+A user strategy being bench-passed, promoted, or evidence-rich does not automatically grant Vires the right to:
+- use it in Guided
+- expose it to Talon as a reference
+- train or tune on it
+- create derivative strategies from it
+- market it
+- distribute it to other users
+
+### Allowed by default (no explicit consent needed)
+
+- Store and process the strategy for the user's own Lab workflow
+- Run backtests / bench / paper monitoring for that user
+- Show the user their own results
+- Use operational metadata needed to provide support, security, or compliance
+
+Anything broader requires an explicit contribution / license flow.
+
+### Future contribution lane
+
+A user strategy moves through these states only with explicit consent at each step:
+
+```
+PRIVATE
+  → CONTRIBUTED_FOR_REVIEW   (user submits for potential broader use)
+  → LICENSED_REFERENCE       (terms agreed; Vires/Talon may reference)
+  → GUIDED_LIBRARY_CANDIDATE (admission gate begins)
+  → GUIDED_LIBRARY_ACTIVE    (post-admission, public-facing)
+```
+
+Each transition is a deliberate user-driven act, not an automatic consequence of bench performance.
+
+### Contribution flow questions (explicit, per user, per strategy)
+
+- Can Vires use this in Guided?
+- Can Talon reference it (as inspiration / template / training input)?
+- Can Vires create derivatives from it?
+- Is attribution anonymous, credited by name, or company-only?
+- Is compensation none, bounty, revenue share, or custom?
+- Can the user revoke future use?
+- What happens to already-enrolled users if the user revokes permission?
+
+### Talon reference set rule
+
+Talon may reference **only**:
+- Company-owned strategies
+- Public / template strategies
+- Explicitly licensed user strategies (post-`LICENSED_REFERENCE`)
+- Properly anonymized aggregate lessons
+
+Talon **must not** browse private user strategies as inspiration, training input, or context.
+
+### Guided rule
+
+Using a user-created strategy in Guided requires the strongest possible consent path:
+- Operator approval
+- Legal review
+- Evidence packaging
+- Disclosure packaging
+- Stable admission through the library entry lifecycle (`GUIDED_LIBRARY_CANDIDATE` → `GUIDED_LIBRARY_ACTIVE`)
+
+Guided **must not** consume private Lab strategies directly. The contribution lane is the only path in.
+
+### Trust copy principle
+
+> **Your Lab strategies are private unless you submit them.**
+
+This must eventually become visible product language — surfaced in onboarding, in Lab UI, on the contribution flow itself — not buried in a terms-of-service clause.
+
+### Why this matters
+
+The single biggest trust failure mode for an AI-assisted strategy lab is the user thinking "I'm experimenting privately" while the system silently uses their work for training, marketing, derivatives, or other users' Guided matches. That failure mode is regulatory exposure (consent / data rights), reputational damage (trust collapse), and product damage (users stop using Lab once they suspect they're being mined).
+
+Private-by-default is the simple rule that prevents all three. Validation does not equal permission. Bench-passing a strategy does not consent to its use in Guided. Building an LLM context for Talon does not include private user strategies. Aggregating across users requires a real anonymization standard before a single number reaches a queryable surface.
 
 ## The sequencing principle
 
@@ -85,6 +164,7 @@ These were named explicitly during the architecture dialog with Codex and remain
 - **Evidence flattening.** No surface — UI, marketing, App Store description, landing page — can lead with a single performance number. Evidence is typology, never strength score.
 - **Vocabulary collision.** "Enrollment" is Guided only. "Sandbox / assignment" is Advanced only. The same word in two state machines means a confused contract.
 - **Skipping the bench.** Sandbox can execute on paper; sandbox history can inform bench; only bench can promote; only promoted strategies can enter Guided or live by default.
+- **Silent reuse of user strategies.** Validation does not equal permission. A bench-passed user strategy is not consent to reference, train on, derive from, or distribute. Private-by-default; the contribution lane is the only path to broader use.
 
 ## What this map is not
 
