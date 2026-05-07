@@ -1251,5 +1251,271 @@ All five guardrails added to standing principles for the build. They're not new 
 
 Adopted. Audit closed. Build begins when Jacob is ready.
 
+---
+
+## Build Plan — Codex's proposed phasing (verbatim, 2026-05-06)
+
+> Yes. The way I'd execute this is not "build seven rounds of scope." It's: build one thin real slice, make the contracts carry the future weight, then promote items through hard audit gates.
+>
+> ### Phase 0: Contract Foundation
+>
+> Own this in trading-bot, mirrored by dashboard types only.
+>
+> Build the canonical schemas/validators for: `strategy_library.v1`, `guided_match_proposal.v1`, `guided_enrollment.v1`, `disclosure_version`, `notification_intent` / `user_action_required`, governed commands and event history.
+>
+> This phase must include migration metadata, idempotency keys, ScopeTriple scoping, PII/secrets boundaries, evidence freshness fields, CANDIDATE, mandate, broker failure enums, and `support_intervention`.
+>
+> Done means contracts validate fixtures. No user flow yet.
+>
+> ### Phase 1: Real CANDIDATE Library Entry
+>
+> Create the first real internal entry: `regime_aware_momentum::stop_5_target_15`. But only as `library_entry.status = CANDIDATE`.
+>
+> It needs disclosure copy, backing strategy refs, execution manifest refs, evidence typing, cold-start honesty, mandate field, and visible "internal preview / pre-admission" semantics. It must not be public-matchable.
+>
+> Done means the strategy can be read as a library entry without pretending it is public ACTIVE.
+>
+> ### Phase 2: Guided Match Proposal
+>
+> Build deterministic rules-first matching: questionnaire → `guided_match_proposal.v1`.
+>
+> It should capture matcher version, questionnaire version, considered/rejected candidates, rationale, disclosure version, and proposal state. Include decline, re-questionnaire, rematch, and `source_failure_id` support now, even if UX is minimal.
+>
+> Done means one internal questionnaire can produce one proposal for the CANDIDATE entry.
+>
+> ### Phase 3: Command Layer + Audit Trail
+>
+> Add the write model: `accept_match`, `decline_match`, `request_rematch`, `request_re_questionnaire`, `start_enrollment`, `pause` / `stop` variants, upgrade / notice / consent commands, `support_intervention` as break-glass only, system events for broker capability loss.
+>
+> Everything writes an event with actor, reason, source, idempotency key, audit visibility placeholder, and before/after state where relevant.
+>
+> Done means no state transition happens by direct mutation.
+>
+> ### Phase 4: Broker Paper Check + Enrollment
+>
+> Turn accepted proposal into enrollment flow: `ACCEPTED_PENDING_BROKER` → broker paper/capability check → `guided_enrollment.status = ACTIVE`.
+>
+> With the big caveat: enrollment ACTIVE means "paper-running for this user," not "strategy validated." Broker failures route to `BROKER_RETRYABLE`, `BROKER_ACTION_REQUIRED`, or `BROKER_INELIGIBLE`.
+>
+> Done means the internal slice reaches ACTIVE enrollment against the CANDIDATE library entry.
+>
+> ### Phase 5: Paper Monitoring + Event Completeness
+>
+> Attach monitoring readback and prove the trust surface: enrollment snapshot, backing strategy version snapshot, paper monitoring status, holdings-change event history, notification intent stubs, unified order/event fixture.
+>
+> The fixture must include strategy entry, protective exit, cash-management park/unpark, broker confirmation, and eventually manual/support/system lanes.
+>
+> Done means we cannot repeat the hidden protective-sell bug.
+>
+> ### Phase 6: Thin Dashboard/Internal Preview
+>
+> Only after backend truth exists, expose internal UI: CANDIDATE badge, proposal preview, disclosure acceptance, pending broker state, ACTIVE paper enrollment state, evidence typology (not one performance number), user-facing event history.
+>
+> Dashboard must stay thin: read projections, submit commands, no invented trading semantics.
+>
+> ### Audit 1
+>
+> This fires after the slice walks internally. It answers: did all T0 fields actually get used? Did command coverage miss any mutation? Did broker failure states feel right? Did event completeness hold? Did CANDIDATE/ACTIVE copy stay honest? Did any "future" item secretly become required?
+>
+> Only after Audit 1 do we expand.
+>
+> ### Pre-Public T1
+>
+> Before any real public user sees Guided: mandate-fit decision for entry zero (disclose as TACTICAL_PARTIAL or build `stock_sleeve_allocator_v1`), lock mandate enum, decide audit_visibility default, match-decline UX, disclosure usability testing, legal/RIA/custody review, data retention/right-to-delete posture, notification delivery adapter, marketing/App Store non-flattening review, bench coverage minimum for future entries, anonymization standard before aggregates enter git.
+>
+> ### Post-Launch T2
+>
+> After first guided proof: guided operator monitoring, match-decline analytics, sandbox observation bundle runtime, more library entries, bench coverage expansion, multi-enrollment product surface.
+>
+> ### V2 / Live T3
+>
+> Only after paper enrollment evidence and legal gates: cross-strategy capital governance, broker concurrency / account-level coordinator, live unlock rules, multi-strategy allocation UX, Talon "why this fits" explainer, LLM-assisted matcher only if rules produce awkward edge cases.
+>
+> ### My Main Concern
+>
+> The biggest risk is confusing "starter strategy" with "starter product." regime_aware_momentum is perfect for proving the pipe. It is not automatically the public product promise. That mandate-fit gate has to stay loud.
+>
+> My second concern is sequencing temptation: building `stock_sleeve_allocator_v1` first would feel product-correct, but it delays proving the new guided architecture. I'd run it as a parallel T1 strategy track, not as the blocker for T0.
+
+## Build Plan — Claude's review (2026-05-06)
+
+The plan maps cleanly to the locked architecture. One timing concern, nine schema/plan gaps to make explicit before Codex freezes Phase 0, and a strong recommendation on UX timing.
+
+### Schema/plan gaps (all from earlier rounds, missing in plan)
+
+1. **`disclosure_version.change_classification: MATERIAL | NOTICE_ONLY | COSMETIC`** — Round 5/6 schema. Drives whether updates force re-acceptance vs notice vs silent log.
+2. **`consent_expires_at` / `reaffirmation_due_at`** — Round 5 schema. Disclosure consent expiry is separate from evidence freshness.
+3. **`retention_class` / `delete_behavior` / "contains broker/user data?" flags** — Round 5 addition. Phase 0 mentions "PII/secrets boundaries" but the explicit retention metadata fields are missing.
+4. **Library entry state machine beyond CANDIDATE** — full machine is `CANDIDATE → ACTIVE → PAUSED → DEPRECATED → RETIRED`. Phase 1 covers CANDIDATE; rest goes in Phase 0 schema.
+5. **Library entry mutation classification** — parallel to disclosure tier classification. Round 6 specified as T0.
+6. **Backing strategy state surfacing** — `UPGRADE_AVAILABLE / UNDER_REVIEW / DEPRECATED / FORCED_EXIT_PENDING / NO_LONGER_SUPPORTED` propagation from backing strategy version into enrollment status.
+7. **Read model / curated projection layer** — backend artifact (per Round 6 read/write split), not dashboard fetch glue. Belongs in Phase 0/Phase 5 backend.
+8. **5-dimension evidence UI surface** — freshness, sample size, regime coverage, broker realism, fill realism. Phase 6 says "evidence typology" without enumerating the five.
+9. **Advanced Mode entire path** — `advanced_sandbox_assignment.v1`, `sandbox_observation_bundle`, sandbox lifecycle. Legitimately deferred from the slice; should be flagged as T2 (not forgotten).
+
+### Audit timing — split Audit 1 into 0.5 + 1
+
+Plan puts Audit 1 after Phase 6 (dashboard built). If Phase 6 reveals contract gaps, the dashboard already reads from bad shape. Cheaper to catch at the contract layer:
+
+- **Audit 0.5** — between Phase 5 and Phase 6. Backend-only. Validates: contract coverage, command/event completeness, broker failure paths, retention metadata, disclosure and library mutation classification, read model/projection shape, unified event fixture passing.
+- **Audit 1** — after Phase 6. UX honesty. Validates: CANDIDATE/ACTIVE copy, two-ACTIVEs distinction, cold-start evidence rendering, 5-axis evidence display, event history completeness, mandate-fit communication.
+
+### UX timing — parallel with discipline
+
+Three-stage parallel: (1) low-fi wireframes before Phase 0 freezes, (2) hi-fi comps + mocked preview routes during Phase 0–5, (3) Phase 6 = swap mocks for real projections + accessibility/mobile/polish.
+
+Mocked UI is allowed only if shaped against locked contracts and clearly preview/internal. No production frontend claims backend truth before Phase 5 exists.
+
+Beats backend-first because pixel pressure on questionnaire UX, disclosure surface, two-ACTIVEs copy, CANDIDATE badging, and 5-dimension evidence primitives surfaces contract gaps cheap. Beats frontend-first because the dashboard rule "no invented trading semantics" stands.
+
+## Build Plan — Codex's final adoption + Phase 0 contract-freeze handshake (verbatim, 2026-05-06)
+
+> Codex reviewed the revised build-plan additions. Strong agree overall.
+>
+> **Adopt All Nine Schema/Plan Gaps**
+>
+> 1. `disclosure_version.change_classification` must be explicit in Phase 0: MATERIAL | NOTICE_ONLY | COSMETIC.
+> 2. `consent_expires_at` / `reaffirmation_due_at` must be explicit disclosure fields, separate from evidence freshness.
+> 3. User-state contracts need retention/delete metadata: `retention_class`, `delete_behavior`, and flags for whether the artifact contains broker/user-regulated data.
+> 4. Full library lifecycle belongs in Phase 0: CANDIDATE | ACTIVE | PAUSED | DEPRECATED | RETIRED.
+> 5. Library entry mutation classification is T0, parallel to disclosure classification.
+> 6. Backing-strategy state propagation must be modeled into enrollment/read projections: UPGRADE_AVAILABLE, UNDER_REVIEW, DEPRECATED, FORCED_EXIT_PENDING, NO_LONGER_SUPPORTED.
+> 7. The read model / curated projection layer is a backend artifact, not dashboard fetch glue. Add it to Phase 0/5.
+> 8. The 5 evidence dimensions are Phase 6 acceptance criteria: freshness, sample size, regime coverage, broker realism, fill realism.
+> 9. Advanced Mode is intentionally deferred from the Guided slice, not forgotten. Capture `advanced_sandbox_assignment.v1`, `sandbox_observation_bundle`, and sandbox lifecycle as post-Guided proof / T2 unless templates ship earlier.
+>
+> **Adopt Audit Split**
+>
+> Add Audit 0.5 between backend Phase 5 and UI Phase 6. Audit 0.5 is backend-only and validates: contract coverage, command/event completeness, broker failure paths, retention metadata, disclosure and library mutation classification, read model/projection shape, unified event fixture passing. Then Audit 1 remains after Phase 6 and becomes the UX honesty audit: CANDIDATE/ACTIVE copy, two-ACTIVEs distinction, cold-start evidence rendering, 5-axis evidence display, event history completeness, mandate-fit communication.
+>
+> This is a good correction. If Phase 6 reveals schema problems, we caught them too late.
+>
+> **Adopt Parallel UX Track**
+>
+> Claude should begin UX in parallel, with discipline: Stage 1 low-fi wireframes before Phase 0 freezes; Stage 2 hi-fi comps and mocked preview routes while Codex builds backend Phase 0–5; Stage 3 Phase 6 swaps mocks for real projections, then accessibility/mobile/polish.
+>
+> Important boundary: mocked UI is allowed only if it is shaped against the locked contracts and clearly preview/internal. No production frontend claims backend truth before Phase 5 exists.
+>
+> **One Codex Addition: Phase 0 contract-freeze handshake**
+>
+> Add an explicit Phase 0 contract-freeze handshake between Codex and Claude. Before Codex treats Phase 0 schemas as frozen, Claude's Stage 1 wireframes should produce a short "contract needs from UX" list. Codex then either:
+>
+> - adds those fields before freeze,
+> - maps them to existing fields,
+> - or rejects them as UI-local copy/state.
+>
+> This avoids the worst failure mode: backend freezing a technically clean contract that cannot support the disclosure/match/enrollment UX without awkward late fields.
+>
+> **Revised Build Order**
+>
+> 1. UX Stage 1 starts immediately: low-fi slice wireframes + contract-needs list.
+> 2. Phase 0 contracts begin in parallel but do not freeze until the UX contract-needs pass.
+> 3. Phase 1–5 backend slice proceeds.
+> 4. Audit 0.5 backend-only.
+> 5. Phase 6 UI wiring from mocks to real projections.
+> 6. Audit 1 UX honesty.
+> 7. T1 pre-public launch work begins: mandate-fit, legal/disclosure validation, marketing discipline, notification delivery, match-decline UX, audit visibility.
+>
+> Codex agrees this is the right shape. It keeps UX design active without letting UI invent trading semantics, and it keeps backend contracts honest before they harden.
+
+## Build Plan — locked
+
+The plan as locked, in seven steps with the contract-freeze handshake gate:
+
+```text
+Step 1.  UX Stage 1                     [Claude] low-fi slice wireframes
+                                         Output: wireframe set + "contract
+                                         needs from UX" list
+                                         |
+                                         v
+Step 2.  Phase 0 (contracts) parallel    [Codex] contract code + validators
+                                         + fixtures
+                                         |
+                                         v
+         ┌────── Contract-freeze handshake ──────┐
+         │ Claude submits contract-needs list.  │
+         │ Codex: adds / maps / rejects each.   │
+         │ Phase 0 freezes only after pass.     │
+         └──────────────────────────────────────┘
+                                         |
+                                         v
+Step 3.  Phase 1–5 backend slice         [Codex] CANDIDATE library entry,
+                                         match proposal, command layer,
+                                         broker paper enrollment, paper
+                                         monitoring + event fixture
+                                         |
+                                         (during Step 3: Claude UX Stage 2 —
+                                          hi-fi comps + mocked preview routes)
+                                         |
+                                         v
+Step 4.  Audit 0.5 (backend-only)        Validates contract coverage,
+                                         command/event completeness, broker
+                                         failure paths, retention, mutation
+                                         classification, read model shape,
+                                         fixture passing
+                                         |
+                                         v
+Step 5.  Phase 6 UI wiring               [Claude] swap mocks for real
+                                         projections, accessibility, mobile
+                                         polish
+                                         |
+                                         v
+Step 6.  Audit 1 (UX honesty)            Validates CANDIDATE/ACTIVE copy,
+                                         two-ACTIVEs, cold-start evidence,
+                                         5-axis evidence display, event
+                                         history completeness, mandate-fit
+                                         communication
+                                         |
+                                         v
+Step 7.  Pre-Public T1                   Mandate-fit, legal/disclosure,
+                                         marketing, notification delivery,
+                                         match-decline UX, audit_visibility
+```
+
+After Step 7, T2 (post-launch) and T3 (live) gate forward per the existing roadmap.
+
+### Schema additions locked into Phase 0
+
+Beyond the contracts already named, Phase 0 must explicitly include:
+
+- `disclosure_version.change_classification: MATERIAL | NOTICE_ONLY | COSMETIC`
+- `disclosure_version.consent_expires_at` / `reaffirmation_due_at` (separate from evidence freshness fields)
+- User-state contracts: `retention_class`, `delete_behavior`, `contains_broker_data` / `contains_user_regulated_data` flags
+- `library_entry.status` enum: `CANDIDATE | ACTIVE | PAUSED | DEPRECATED | RETIRED`
+- Library entry mutation classification (parallel to disclosure tiering)
+- Backing-strategy state propagation onto enrollment / read projections: `UPGRADE_AVAILABLE | UNDER_REVIEW | DEPRECATED | FORCED_EXIT_PENDING | NO_LONGER_SUPPORTED`
+- Read model / curated projection layer as a first-class backend artifact
+
+### Phase 6 acceptance criteria (5 evidence dimensions)
+
+The evidence display in Phase 6 must render five orthogonal dimensions separately, never collapsed into a single "performance" number:
+
+1. Freshness (`last_evaluated_at`, `data_window_end`)
+2. Sample size (number of trades / observations)
+3. Regime coverage (which market regimes are represented)
+4. Broker realism (paper vs simulated; fills vs theoretical)
+5. Fill realism (slippage, partial fills, pricing model assumptions)
+
+### Advanced Mode deferral (explicit, not forgotten)
+
+`advanced_sandbox_assignment.v1`, `sandbox_observation_bundle`, sandbox lifecycle stay in the schema vocabulary but are not built in the Guided slice. T2 unless templates ship earlier in product priority.
+
+### Phase 0 contract-freeze handshake — process spec
+
+This is the explicit alignment mechanism added by Codex:
+
+1. Claude produces UX Stage 1 wireframes + a "contract needs from UX" list (specific fields, types, copy semantics required for the UX to render).
+2. Codex reviews the list. For each item, one of three outcomes:
+   - **Add** — field gets included in Phase 0 contract before freeze.
+   - **Map** — UX requirement satisfied by an existing field; document the mapping.
+   - **Reject** — item is UI-local copy/state, not contract concern; document the rejection rationale.
+3. Phase 0 contracts freeze only after the list has a complete disposition.
+
+The handshake guards against the worst failure mode: backend freezing a technically clean contract that cannot support the disclosure/match/enrollment UX without awkward late fields.
+
+## Audit closed. Build plan locked. Step 1 starts when Jacob says go.
+
+Architecture locked Round 7. Build plan locked at this revision. Step 1 (UX Stage 1) is the immediate next move when Jacob is ready.
+
 
 
