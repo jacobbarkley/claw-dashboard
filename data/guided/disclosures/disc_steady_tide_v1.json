@@ -1,0 +1,89 @@
+{
+  "schema_version": "disclosure_version.v1",
+  "disclosure_version_id": "disc_steady_tide_v1",
+  "library_entry_id": "steady_tide_internal",
+  "library_entry_version": 1,
+  "version_label": "v1",
+  "change_classification": "MATERIAL",
+  "plain_english_thesis": "Steady Tide trades large-cap US stock momentum only when the market regime is supportive.",
+  "mandate_disclosure_paragraph": "Steady Tide is a tactical partial stock strategy. It may deploy only a small share of the stock sleeve while idle paper cash remains parked.",
+  "drawdown_headline": "Bench max drawdown was 8.9%; future paper or live results may be worse.",
+  "drawdown_headline_pct": 8.9,
+  "drawdown_headline_period_label": "in any evaluated rolling period",
+  "paper_live_distinction": "This Guided v1 slice runs in paper mode only; no real money moves.",
+  "not_guaranteed_copy": "Past performance does not guarantee future results, and paper fills may differ from live fills.",
+  "what_you_accept_bullets": [
+    "Steady Tide can buy and sell US equities in your paper account.",
+    "Idle paper cash may park in short-term Treasury ETFs.",
+    "Each strategy position uses a 5% stop loss, 15% target, and max-hold exit.",
+    "You can pause or stop the paper enrollment at any time."
+  ],
+  "required_attestation_text": "I understand this is paper trading, the strategy can lose money, and past performance is not a guarantee.",
+  "evidence_summary": [
+    {
+      "evidence_id": "steady_tide_bench_multi_era_001",
+      "evidence_type": "BENCH_MULTI_ERA",
+      "freshness": {
+        "last_evaluated_at": "2026-05-07T15:30:00Z",
+        "data_window_start": "2022-05-08T15:30:00Z",
+        "data_window_end": "2026-05-06T15:30:00Z",
+        "staleness_policy": "flag_after_30_days"
+      },
+      "sample_size": 247,
+      "regime_coverage": [
+        "CALM",
+        "VOLATILE",
+        "RISK_OFF"
+      ],
+      "broker_realism": "SIMULATED",
+      "fill_realism": "SPREAD_AWARE_SIMULATED",
+      "source_refs": {
+        "bench_report": "backtest/bench/results/q076b/stock_bench_report.json"
+      },
+      "notes": [
+        "CANDIDATE evidence for internal preview; not public ACTIVE admission."
+      ]
+    }
+  ],
+  "technical_details": [
+    {
+      "section_id": "backing_strategy",
+      "title": "Backing strategy",
+      "body": "regime_aware_momentum::stop_5_target_15",
+      "required": true
+    },
+    {
+      "section_id": "execution_manifest",
+      "title": "Execution manifest",
+      "body": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+      "required": true
+    }
+  ],
+  "technical_details_payload": {
+    "backing_record_id": "regime_aware_momentum::stop_5_target_15",
+    "execution_manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+    "strategy_parameters": {
+      "stop_loss_pct": 5.0,
+      "target_pct": 15.0,
+      "max_hold_days": 15
+    }
+  },
+  "effective_at": "2026-05-07T15:30:00Z",
+  "created_at": "2026-05-07T15:30:00Z",
+  "created_by": "codex",
+  "consent_expires_at": "2027-05-07T15:30:00Z",
+  "reaffirmation_due_at": "2026-11-03T15:30:00Z",
+  "supersedes_disclosure_version_id": null,
+  "retention": {
+    "retention_class": "PUBLIC_STATIC",
+    "delete_behavior": "TOMBSTONE",
+    "contains_user_data": false,
+    "contains_broker_data": false,
+    "contains_regulated_data": false
+  },
+  "migration": {
+    "introduced_in_schema_version": "disclosure_version.v1",
+    "compatible_from_schema_version": "disclosure_version.v1",
+    "migration_policy": "ADDITIVE_ONLY"
+  }
+}

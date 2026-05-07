@@ -1,12 +1,14 @@
 "use client"
 
 import type { GuidedEnrollmentView } from "./types"
-import { FieldEyebrow, GuidedHeroCard, formatUsd } from "./shared"
+import { FieldEyebrow, GuidedHeroCard, PendingUserActionsBanner, formatUsd } from "./shared"
 
 // S9 — guided_enrollment.status = ACTIVE paper-running view.
 // Hard rule: enrollment ACTIVE ≠ library_entry ACTIVE.
 // Library entry is CANDIDATE, banner says so. Hero copy says "PAPER · RUNNING"
 // and explicitly disclaims "Not validated. Not approved for live capital."
+
+const COLD_START_DAYS_THRESHOLD = 5
 
 export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }) {
   if (!view.enrollment) {
@@ -16,6 +18,14 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
   const realized = view.cumulative_paper_pnl_realized ?? 0
   const unrealized = view.cumulative_paper_pnl_unrealized ?? 0
   const periodLabel = `paper · ${view.paper_observation_days_count}d`
+  const isColdStart = view.paper_observation_days_count < COLD_START_DAYS_THRESHOLD
+  const totalValue = view.current_value_usd ?? 0
+  const cashValue = view.cash_value_usd ?? 0
+  const deployedValue = Math.max(totalValue - cashValue, 0)
+  const deployedPct = totalValue > 0 ? (deployedValue / totalValue) * 100 : 0
+  const cashPct = totalValue > 0 ? (cashValue / totalValue) * 100 : 0
+  const strategyHoldings = view.holdings.filter(h => h.holding_role === "STRATEGY_POSITION")
+  const cashReserveHoldings = view.holdings.filter(h => h.holding_role === "CASH_RESERVE")
 
   return (
     <GuidedHeroCard accent="var(--vr-sleeve-stocks, #c8a968)">
@@ -73,6 +83,30 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
         </div>
       </div>
 
+      {view.pending_user_actions.length > 0 ? (
+        <PendingUserActionsBanner actions={view.pending_user_actions} />
+      ) : null}
+
+      {isColdStart ? (
+        <div
+          style={{
+            padding: "10px 12px",
+            border: "1px dashed var(--vr-line, #2a2438)",
+            borderRadius: 3,
+            background: "rgba(241,236,224,0.02)",
+            marginBottom: 14,
+            fontSize: 11,
+            color: "var(--vr-cream-mute, #8c8579)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: "var(--vr-gold, #c8a968)", fontWeight: 600 }}>Cold start.</strong>{" "}
+          {view.paper_observation_days_count === 0
+            ? "Day zero — paper enrollment hasn't completed an observation period yet."
+            : `${view.paper_observation_days_count} of ${COLD_START_DAYS_THRESHOLD} clean days. Numbers below are early signal, not a track record.`}
+        </div>
+      ) : null}
+
       {/* Total + period delta + realized/unrealized */}
       <div
         className="t-display t-num"
@@ -85,7 +119,7 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
       >
         {view.current_value_usd != null ? formatUsd(view.current_value_usd) : "—"}
       </div>
-      <div style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", marginBottom: 18 }}>
+      <div style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", marginBottom: 12 }}>
         <PeriodDelta label="Realized" value={realized} />
         <span style={{ color: "var(--vr-cream-faint, #4a4358)" }}>·</span>
         <PeriodDelta label="Unrealized" value={unrealized} />
@@ -95,22 +129,49 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
         </span>
       </div>
 
+      {/* Mandate-fit: TACTICAL_PARTIAL behavior shown by deployment % */}
+      {totalValue > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            alignItems: "baseline",
+            marginBottom: 18,
+            paddingBottom: 14,
+            borderBottom: "1px solid var(--vr-line, #2a2438)",
+          }}
+        >
+          <span
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color: "var(--vr-cream-mute, #8c8579)",
+            }}
+          >
+            Deployment
+          </span>
+          <span style={{ fontSize: 12, color: "var(--vr-cream-dim, #c4bdac)", fontFamily: "var(--ff-mono)" }}>
+            {deployedPct.toFixed(0)}% in stocks · {cashPct.toFixed(0)}% in cash
+          </span>
+          <span style={{ fontSize: 10, color: "var(--vr-cream-mute, #8c8579)" }}>
+            (mandate: {view.library_entry.mandate.toLowerCase().replace(/_/g, " ")})
+          </span>
+        </div>
+      ) : null}
+
       <FieldEyebrow>Holding</FieldEyebrow>
       <div style={{ marginBottom: 16 }}>
-        {view.holdings
-          .filter(h => h.symbol !== "SGOV")
-          .map(h => (
-            <HoldingRow key={h.symbol} symbol={h.symbol} qty={h.quantity} mv={h.market_value_usd} unrealized={h.unrealized_pnl_usd} />
-          ))}
+        {strategyHoldings.map(h => (
+          <HoldingRow key={h.symbol} symbol={h.symbol} qty={h.quantity} mv={h.market_value_usd} unrealized={h.unrealized_pnl_usd} />
+        ))}
       </div>
 
       <FieldEyebrow>Cash reserve</FieldEyebrow>
       <div style={{ marginBottom: 18 }}>
-        {view.holdings
-          .filter(h => h.symbol === "SGOV")
-          .map(h => (
-            <HoldingRow key={h.symbol} symbol={h.symbol} qty={h.quantity} mv={h.market_value_usd} unrealized={null} />
-          ))}
+        {cashReserveHoldings.map(h => (
+          <HoldingRow key={h.symbol} symbol={h.symbol} qty={h.quantity} mv={h.market_value_usd} unrealized={null} />
+        ))}
       </div>
 
       <div
@@ -128,6 +189,48 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
         <div>library_entry.status · {view.library_entry.status}</div>
         <div>disclosure_state · {view.disclosure_state}</div>
         <div>paper_observation · {view.paper_observation_days_count} days</div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 18,
+          paddingTop: 14,
+          borderTop: "1px solid var(--vr-line, #2a2438)",
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+        }}
+      >
+        <a
+          href="/vires/guided/preview/monitoring"
+          style={{
+            padding: "10px 14px",
+            border: "1px solid var(--vr-line, #2a2438)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            borderRadius: 2,
+          }}
+        >
+          View paper monitoring →
+        </a>
+        <a
+          href="/vires/guided/preview/events"
+          style={{
+            padding: "10px 14px",
+            border: "1px solid var(--vr-line, #2a2438)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            borderRadius: 2,
+          }}
+        >
+          View event history →
+        </a>
       </div>
     </GuidedHeroCard>
   )

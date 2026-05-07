@@ -90,6 +90,7 @@ export type GuidedEventKind =
   | "NOTICE"
   | "SUPPORT_INTERVENTION"
   | "SYSTEM"
+export type GuidedHoldingRole = "STRATEGY_POSITION" | "CASH_RESERVE" | "OTHER"
 
 export type RetentionClass =
   | "PUBLIC_STATIC"
@@ -223,6 +224,14 @@ export interface StrategyLibraryEntry {
   migration: ContractMigrationMetadata
 }
 
+export interface StrategyLibrary {
+  schema_version: "strategy_library.v1"
+  generated_at: string
+  entries: StrategyLibraryEntry[]
+  retention: RetentionPolicy
+  migration: ContractMigrationMetadata
+}
+
 // ─── Disclosure ─────────────────────────────────────────────────────────────
 
 export interface DisclosureSection {
@@ -285,6 +294,9 @@ export interface GuidedMatchProposal {
   matched_library_entry_version: number
   disclosure_version_id: string
   considered_candidates: CandidateConsideration[]
+  match_quality_score: number
+  matched_answer_keys: string[]
+  mismatched_answer_keys: string[]
   source_failure_id: string | null
   created_at: string
   expires_at: string | null
@@ -390,11 +402,23 @@ export interface EnrollmentEventsView {
   migration: ContractMigrationMetadata
 }
 
+export interface GuidedMatchProposalView {
+  schema_version: "guided_match_proposal_view.v1"
+  scope: GuidedScope
+  generated_at: string
+  proposal: GuidedMatchProposal
+  library_entry: StrategyLibraryEntry
+  disclosure: DisclosureVersion
+  retention: RetentionPolicy
+  migration: ContractMigrationMetadata
+}
+
 // ─── Read model ─────────────────────────────────────────────────────────────
 
 export interface GuidedHoldingView {
   symbol: string
   asset_type: string
+  holding_role: GuidedHoldingRole
   quantity: number
   market_value_usd: number
   unrealized_pnl_usd: number | null

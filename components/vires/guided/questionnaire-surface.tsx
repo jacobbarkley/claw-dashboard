@@ -30,7 +30,7 @@ export function QuestionnaireSurface({ questionnaire }: { questionnaire: Questio
           Question {step + 1} of {total}
         </FieldEyebrow>
         <span style={{ fontSize: 10, color: "var(--vr-cream-mute, #8c8579)" }}>
-          v{questionnaire.version}
+          {questionnaire.questionnaire_id}.{questionnaire.version}
         </span>
       </div>
 
@@ -241,23 +241,43 @@ function Complete({ answers, onBack }: { answers: Record<string, string>; onBack
       >
         {JSON.stringify(answers, null, 2)}
       </pre>
-      <button
-        type="button"
-        onClick={onBack}
-        style={{
-          padding: "10px 16px",
-          background: "transparent",
-          border: "1px solid var(--vr-line, #2a2438)",
-          color: "var(--vr-cream-dim, #c4bdac)",
-          fontSize: 11,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-          cursor: "pointer",
-          borderRadius: 2,
-        }}
-      >
-        ← Edit answers
-      </button>
+      <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            padding: "10px 16px",
+            background: "transparent",
+            border: "1px solid var(--vr-line, #2a2438)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            cursor: "pointer",
+            borderRadius: 2,
+          }}
+        >
+          ← Edit answers
+        </button>
+        <a
+          href="/vires/guided/preview/match"
+          style={{
+            padding: "10px 16px",
+            background: "var(--vr-gold, #c8a968)",
+            border: "1px solid var(--vr-gold, #c8a968)",
+            color: "var(--vr-bg, #0c0a17)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            fontWeight: 600,
+            textDecoration: "none",
+            borderRadius: 2,
+            display: "inline-block",
+          }}
+        >
+          See match →
+        </a>
+      </div>
     </GuidedHeroCard>
   )
 }

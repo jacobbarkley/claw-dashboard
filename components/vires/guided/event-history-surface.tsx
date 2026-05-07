@@ -14,9 +14,9 @@ type SourceFilter = "all" | GuidedEventSource
 
 const SOURCE_FILTER_OPTIONS: Array<{ key: SourceFilter; label: string }> = [
   { key: "all", label: "All" },
-  { key: "strategy_execution", label: "Strategy" },
-  { key: "portfolio_action", label: "Protective" },
-  { key: "cash_management", label: "Cash mgmt" },
+  { key: "strategy_execution", label: "Entries" },
+  { key: "portfolio_action", label: "Exits" },
+  { key: "cash_management", label: "Cash" },
   { key: "broker_confirmation", label: "Broker" },
   { key: "manual_action", label: "Manual" },
   { key: "support_intervention", label: "Support" },
@@ -80,13 +80,70 @@ export function EventHistorySurface({ eventsView }: { eventsView: EnrollmentEven
               fontSize: 11,
               color: "var(--vr-cream-mute, #8c8579)",
               textAlign: "center",
+              lineHeight: 1.55,
             }}
           >
-            No events match this filter.
+            {eventsView.events.length === 0
+              ? "Paper enrollment hasn't generated any events yet."
+              : "No events match this filter."}
           </div>
         ) : (
           visible.map(e => <EventRow key={e.event_id} event={e} />)
         )}
+      </div>
+
+      <div
+        style={{
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: "1px solid var(--vr-line, #2a2438)",
+          fontSize: 9,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "var(--vr-cream-mute, #8c8579)",
+        }}
+      >
+        Times shown in UTC
+      </div>
+
+      <div
+        style={{
+          marginTop: 18,
+          paddingTop: 14,
+          borderTop: "1px solid var(--vr-line, #2a2438)",
+          display: "flex",
+          gap: 8,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <span
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: "var(--vr-gold, #c8a968)",
+            fontWeight: 600,
+          }}
+        >
+          Walkthrough complete
+        </span>
+        <a
+          href="/vires/guided/preview"
+          style={{
+            padding: "10px 14px",
+            border: "1px solid var(--vr-line, #2a2438)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 11,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            textDecoration: "none",
+            borderRadius: 2,
+            marginLeft: "auto",
+          }}
+        >
+          ← All Guided previews
+        </a>
       </div>
     </GuidedHeroCard>
   )
@@ -179,14 +236,17 @@ function triggeredByLabel(e: GuidedEvent): string {
 }
 
 function actionVerb(e: GuidedEvent): string {
-  if (e.kind === "CONSENT") return "Disclosure accepted"
+  if (e.kind === "CONSENT") return e.reason_label ?? "Disclosure accepted"
   if (e.kind === "STATE_CHANGE") return e.reason_label ?? e.reason
-  if (e.kind === "SUPPORT_INTERVENTION") return "Enrollment paused"
+  if (e.kind === "SUPPORT_INTERVENTION") return e.reason_label ?? e.reason ?? "Support action"
   if (e.kind === "BROKER_CONFIRMATION") return `Broker filled ${e.symbol ?? ""}`.trim()
   if (e.kind === "HOLDINGS_CHANGE") {
-    const verb = e.side === "BUY" ? "bought" : e.side === "SELL" ? "sold" : "moved"
     const qty = e.quantity != null ? `${e.quantity} ` : ""
     const sym = e.symbol ?? ""
+    if (e.source === "broker_confirmation") {
+      return `Broker filled ${qty}${sym}`.trim()
+    }
+    const verb = e.side === "BUY" ? "bought" : e.side === "SELL" ? "sold" : "moved"
     return `${qty}${sym} ${verb}`.trim()
   }
   return e.kind.toLowerCase()

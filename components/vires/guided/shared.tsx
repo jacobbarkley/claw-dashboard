@@ -2,7 +2,7 @@
 // evidence display + helpers used across the slice.
 
 import type { CSSProperties, ReactNode } from "react"
-import type { GuidedEvidenceRecord } from "./types"
+import type { GuidedEvidenceRecord, GuidedPendingUserAction } from "./types"
 
 // ─── CANDIDATE / internal-preview banner ────────────────────────────────────
 // Hard rule from the spec: anything CANDIDATE is visibly non-public.
@@ -245,6 +245,85 @@ export function formatUsd(n: number, opts: { sign?: boolean } = {}): string {
   return `${signChar}$${body}`
 }
 
+export function PendingUserActionsBanner({ actions }: { actions: GuidedPendingUserAction[] }) {
+  if (actions.length === 0) return null
+  return (
+    <div
+      role="status"
+      aria-label="Pending action banner"
+      style={{
+        padding: "12px 14px",
+        marginBottom: 14,
+        border: "1px solid var(--vr-gold, #c8a968)55",
+        background: "rgba(200,169,104,0.07)",
+        borderRadius: 3,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--vr-gold, #c8a968)",
+          fontWeight: 600,
+          marginBottom: 6,
+        }}
+      >
+        Action needed
+      </div>
+      <ul style={{ margin: 0, paddingLeft: 20, color: "var(--vr-cream-dim, #c4bdac)", fontSize: 12, lineHeight: 1.55 }}>
+        {actions.map(a => (
+          <li key={a.action_id}>
+            <strong style={{ color: "var(--vr-cream, #f1ece0)", fontWeight: 600 }}>
+              {a.action_type.replace(/_/g, " ")}
+            </strong>
+            {": "}
+            {a.reason_label}
+            {a.due_at ? (
+              <span style={{ fontSize: 10, color: "var(--vr-cream-mute, #8c8579)", marginLeft: 6 }}>
+                · due {a.due_at.slice(0, 10)}
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export function MockFallbackBadge({ reason }: { reason: string }) {
+  return (
+    <div
+      role="status"
+      aria-label="Mock fallback notice"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 10px",
+        marginBottom: 12,
+        border: "1px dashed #c8a96866",
+        borderRadius: 3,
+        background: "rgba(200,169,104,0.04)",
+      }}
+    >
+      <span
+        className="t-eyebrow"
+        style={{
+          fontSize: 9,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "var(--vr-gold, #c8a968)",
+          fontWeight: 600,
+        }}
+      >
+        Mock fallback
+      </span>
+      <span style={{ fontSize: 10, color: "var(--vr-cream-mute, #8c8579)" }}>{reason}</span>
+    </div>
+  )
+}
+
 export function PreviewPageShell({
   title,
   subtitle,
@@ -265,6 +344,20 @@ export function PreviewPageShell({
       }}
     >
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
+        <a
+          href="/vires/guided/preview"
+          style={{
+            display: "inline-block",
+            fontSize: 10,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: "var(--vr-cream-mute, #8c8579)",
+            textDecoration: "none",
+            marginBottom: 12,
+          }}
+        >
+          ← All Guided previews
+        </a>
         <InternalPreviewBanner context={`Stage 2 · ${surfaceId}`} />
         <div style={{ marginBottom: 20 }}>
           <h1

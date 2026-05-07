@@ -11,6 +11,7 @@ import type {
   GuidedEvent,
   GuidedEvidenceRecord,
   GuidedMatchProposal,
+  GuidedMatchProposalView,
   GuidedNotificationIntent,
   Questionnaire,
   RetentionPolicy,
@@ -118,7 +119,7 @@ const PAPER_FORWARD_EVIDENCE: GuidedEvidenceRecord = {
 
 export const MOCK_STEADY_TIDE_CANDIDATE: StrategyLibraryEntry = {
   schema_version: "strategy_library_entry.v1",
-  library_entry_id: "steady_tide",
+  library_entry_id: "steady_tide_internal",
   library_entry_version: 1,
   status: "CANDIDATE",
   sleeve: "STOCKS",
@@ -127,12 +128,19 @@ export const MOCK_STEADY_TIDE_CANDIDATE: StrategyLibraryEntry = {
   friendly_name: "Steady Tide",
   plain_english_thesis:
     "Trades a small set of large-cap US stocks when momentum aligns with a supportive market regime. Holds each position up to 15 days, exits on stop or target. Rest of your capital parks in short-term Treasury ETFs while waiting.",
-  drawdown_headline: "−8.9% in any rolling period",
+  drawdown_headline: "Bench max drawdown was 8.9% over the evaluated window.",
   risk_summary: "Low single-position sizing with 5% stop, 15% target, and ~15-day max hold.",
   holding_period_typical_label: "~5–15 days per trade",
   trade_frequency_typical_label: "~2–4 trades per month",
   asset_class_label: "US equities",
-  coverage_tags: ["large_cap", "momentum", "us_equities", "multi_week_horizon"],
+  coverage_tags: [
+    "conservative_drawdown",
+    "balanced_risk",
+    "us_equities",
+    "multi_week_horizon",
+    "tactical_partial",
+    "paper_internal",
+  ],
   backing_strategy: {
     backing_record_id: "regime_aware_momentum::stop_5_target_15",
     strategy_id: "regime_aware_momentum",
@@ -147,9 +155,9 @@ export const MOCK_STEADY_TIDE_CANDIDATE: StrategyLibraryEntry = {
   evidence: [BENCH_EVIDENCE, SHADOW_EVIDENCE, PAPER_FORWARD_EVIDENCE],
   admission: {
     promoted: false,
-    disclosed: true,
-    evidence_typed: true,
-    mandate_stated: true,
+    disclosed: false,
+    evidence_typed: false,
+    mandate_stated: false,
     broker_capability_checked: false,
     operator_approved: false,
     approved_by: null,
@@ -164,7 +172,7 @@ export const MOCK_STEADY_TIDE_CANDIDATE: StrategyLibraryEntry = {
 export const MOCK_DISCLOSURE_STEADY_TIDE_V1: DisclosureVersion = {
   schema_version: "disclosure_version.v1",
   disclosure_version_id: "disc_steady_tide_v1",
-  library_entry_id: "steady_tide",
+  library_entry_id: "steady_tide_internal",
   library_entry_version: 1,
   version_label: "v1",
   change_classification: "MATERIAL",
@@ -204,11 +212,13 @@ export const MOCK_DISCLOSURE_STEADY_TIDE_V1: DisclosureVersion = {
     },
   ],
   technical_details_payload: {
-    matcher_version: "rules_matcher.v1",
-    questionnaire_version: "guided_questionnaire.v1",
-    bench_record: "q076b_regime_aware_momentum_opt_02 :: stop_5_target_15",
-    deployment_matched_excess_return_pct: 42.33,
-    sharpe: 1.93,
+    backing_record_id: "regime_aware_momentum::stop_5_target_15",
+    execution_manifest_id: "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+    strategy_parameters: {
+      stop_loss_pct: 5.0,
+      target_pct: 15.0,
+      max_hold_days: 15,
+    },
   },
   effective_at: "2026-05-01T00:00:00Z",
   created_at: "2026-05-01T00:00:00Z",
@@ -224,20 +234,20 @@ export const MOCK_DISCLOSURE_STEADY_TIDE_V1: DisclosureVersion = {
 
 export const MOCK_QUESTIONNAIRE_V1: Questionnaire = {
   schema_version: "questionnaire.v1",
-  questionnaire_id: "guided_questionnaire_v1",
-  version: "guided_questionnaire.v1",
-  title: "Find a strategy that fits how you want to invest",
+  questionnaire_id: "guided_onboarding",
+  version: "v1",
+  title: "Guided onboarding",
   questions: [
     {
       key: "risk_profile",
       sequence: 1,
-      text: "How would you describe your risk profile?",
+      text: "How much market movement are you comfortable seeing?",
       why_we_ask_text:
-        "We use this to filter strategies that wouldn't suit your appetite for volatility.",
+        "This helps separate conservative, balanced, and risk-on strategy matches.",
       answer_options: [
-        { option_id: "conservative", label: "Conservative — protect capital first", matcher_value: "conservative", matcher_tags: ["conservative_risk"] },
-        { option_id: "balanced", label: "Balanced — modest growth, modest drawdowns", matcher_value: "balanced", matcher_tags: ["balanced_risk"] },
-        { option_id: "risk_on", label: "Risk-on — willing to accept big swings for growth", matcher_value: "risk_on", matcher_tags: ["risk_on"] },
+        { option_id: "conservative", label: "Conservative", matcher_value: "CONSERVATIVE", matcher_tags: ["conservative_drawdown"] },
+        { option_id: "balanced", label: "Balanced", matcher_value: "BALANCED", matcher_tags: ["balanced_risk"] },
+        { option_id: "risk_on", label: "Risk-on", matcher_value: "RISK_ON", matcher_tags: ["risk_on"] },
       ],
     },
     {
@@ -245,46 +255,31 @@ export const MOCK_QUESTIONNAIRE_V1: Questionnaire = {
       sequence: 2,
       text: "How would you feel if your account dropped 20% in a single month?",
       why_we_ask_text:
-        "People often overestimate their tolerance until they see the number. This shapes what we propose.",
+        "People often overestimate their tolerance until they see the number.",
       answer_options: [
-        { option_id: "hold", label: "I'd hold and wait it out", matcher_value: "hold_through", matcher_tags: ["conservative_drawdown", "patient"] },
-        { option_id: "uncomfortable", label: "I'd be uncomfortable but stay", matcher_value: "uncomfortable_stay", matcher_tags: ["conservative_drawdown"] },
-        { option_id: "cut", label: "I'd want to cut losses immediately", matcher_value: "cut_losses", matcher_tags: ["low_drawdown_required"] },
-        { option_id: "exit_all", label: "I'd sell everything", matcher_value: "exit_all", matcher_tags: ["very_low_drawdown_required"] },
+        { option_id: "hold_wait", label: "I'd hold and wait it out", matcher_value: "HIGH_DRAWDOWN_TOLERANCE", matcher_tags: ["risk_on"] },
+        { option_id: "uncomfortable_stay", label: "I'd be uncomfortable but stay", matcher_value: "CONSERVATIVE_DRAWDOWN", matcher_tags: ["conservative_drawdown"] },
+        { option_id: "cut_losses", label: "I'd want to cut losses quickly", matcher_value: "LOW_DRAWDOWN_TOLERANCE", matcher_tags: ["conservative_drawdown"] },
       ],
     },
     {
       key: "asset_class_preference",
       sequence: 3,
-      text: "Which asset classes do you want to trade?",
-      why_we_ask_text: "We only propose strategies that match the asset classes you've chosen.",
+      text: "Which sleeve do you want this paper strategy to practice with?",
+      why_we_ask_text: "Guided v1 creates one paper enrollment at a time.",
       answer_options: [
-        { option_id: "us_equities", label: "US equities", matcher_value: "us_equities", matcher_tags: ["us_equities"] },
-        { option_id: "etfs", label: "ETFs", matcher_value: "etfs", matcher_tags: ["etfs"] },
-        { option_id: "crypto", label: "Crypto", matcher_value: "crypto", matcher_tags: ["crypto"] },
-        { option_id: "mixed", label: "A mix is fine", matcher_value: "mixed", matcher_tags: ["us_equities", "etfs", "crypto"] },
+        { option_id: "us_equities", label: "US equities", matcher_value: "STOCKS", matcher_tags: ["us_equities"] },
+        { option_id: "crypto", label: "Crypto", matcher_value: "CRYPTO", matcher_tags: ["crypto"] },
       ],
     },
     {
       key: "time_horizon",
       sequence: 4,
-      text: "What's your typical investment horizon?",
-      why_we_ask_text: "Some strategies hold for days; others for months. Match matters.",
+      text: "How long should a typical trade last?",
+      why_we_ask_text: "Holding period changes which strategy evidence is relevant.",
       answer_options: [
-        { option_id: "weeks", label: "A few weeks", matcher_value: "weeks", matcher_tags: ["multi_week_horizon"] },
-        { option_id: "months", label: "Months", matcher_value: "months", matcher_tags: ["multi_month_horizon"] },
-        { option_id: "years", label: "Years", matcher_value: "years", matcher_tags: ["long_horizon"] },
-      ],
-    },
-    {
-      key: "capital_cadence",
-      sequence: 5,
-      text: "How will you fund this account?",
-      why_we_ask_text:
-        "Lump sum vs recurring contributions changes how strategies size positions over time.",
-      answer_options: [
-        { option_id: "lump", label: "One lump sum", matcher_value: "lump_sum", matcher_tags: ["lump_sum"] },
-        { option_id: "recurring", label: "Regular contributions", matcher_value: "recurring", matcher_tags: ["recurring_contribution"] },
+        { option_id: "multi_week", label: "A few days to a few weeks", matcher_value: "MULTI_WEEK", matcher_tags: ["multi_week_horizon"] },
+        { option_id: "long_term", label: "Months or longer", matcher_value: "LONG_TERM", matcher_tags: ["long_term"] },
       ],
     },
   ],
@@ -299,25 +294,28 @@ export const MOCK_MATCH_PROPOSAL: GuidedMatchProposal = {
   scope: SCOPE,
   proposal_id: "proposal_steady_tide_001",
   status: "PENDING_ACCEPTANCE",
-  questionnaire_version: "guided_questionnaire.v1",
+  questionnaire_version: "guided_onboarding.v1",
   matcher_version: "rules_matcher.v1",
   questionnaire_answers_snapshot: [
-    { question_key: "risk_profile", option_id: "conservative", matcher_value: "conservative", answered_at: NOW },
-    { question_key: "drawdown_tolerance", option_id: "uncomfortable", matcher_value: "uncomfortable_stay", answered_at: NOW },
-    { question_key: "asset_class_preference", option_id: "us_equities", matcher_value: "us_equities", answered_at: NOW },
-    { question_key: "time_horizon", option_id: "weeks", matcher_value: "weeks", answered_at: NOW },
-    { question_key: "capital_cadence", option_id: "lump", matcher_value: "lump_sum", answered_at: NOW },
+    { question_key: "risk_profile", option_id: "balanced", matcher_value: "BALANCED", answered_at: NOW },
+    { question_key: "drawdown_tolerance", option_id: "uncomfortable_stay", matcher_value: "CONSERVATIVE_DRAWDOWN", answered_at: NOW },
+    { question_key: "asset_class_preference", option_id: "us_equities", matcher_value: "STOCKS", answered_at: NOW },
+    { question_key: "time_horizon", option_id: "long_term", matcher_value: "LONG_TERM", answered_at: NOW },
   ],
-  matched_library_entry_id: "steady_tide",
+  matched_library_entry_id: "steady_tide_internal",
   matched_library_entry_version: 1,
   disclosure_version_id: "disc_steady_tide_v1",
   considered_candidates: [
     {
-      library_entry_id: "steady_tide",
+      library_entry_id: "steady_tide_internal",
       library_entry_version: 1,
       decision: "SELECTED",
-      rationale: "Conservative drawdown tolerance, US equities preference, multi-week horizon all match Steady Tide.",
-      matched_tags: ["conservative_drawdown", "us_equities", "multi_week_horizon"],
+      rationale: "Selected by deterministic rules from questionnaire coverage tags.",
+      matched_tags: [
+        "balanced_risk",
+        "conservative_drawdown",
+        "us_equities",
+      ],
       rejection_reason_code: null,
       rejection_reason_label: null,
     },
@@ -340,6 +338,9 @@ export const MOCK_MATCH_PROPOSAL: GuidedMatchProposal = {
       rejection_reason_label: "Bench sample size was below the multi-era admission threshold.",
     },
   ],
+  match_quality_score: 0.75,
+  matched_answer_keys: ["risk_profile", "drawdown_tolerance", "asset_class_preference"],
+  mismatched_answer_keys: ["time_horizon"],
   source_failure_id: null,
   created_at: NOW,
   expires_at: "2026-05-14T15:30:00Z",
@@ -349,6 +350,21 @@ export const MOCK_MATCH_PROPOSAL: GuidedMatchProposal = {
   decline_reason: null,
   retention: USER_PROPOSAL_RETENTION,
   migration: migration("guided_match_proposal.v1"),
+}
+
+// ─── Composed match-proposal view (Codex backend Audit 0.5 patch) ───────────
+// Mirrors GuidedMatchProposalView from models/guided.py:546. Phase 6 wires
+// the S3 surface to a single composed read instead of "fetch three."
+
+export const MOCK_MATCH_PROPOSAL_VIEW: GuidedMatchProposalView = {
+  schema_version: "guided_match_proposal_view.v1",
+  scope: SCOPE,
+  generated_at: NOW,
+  proposal: MOCK_MATCH_PROPOSAL,
+  library_entry: MOCK_STEADY_TIDE_CANDIDATE,
+  disclosure: MOCK_DISCLOSURE_STEADY_TIDE_V1,
+  retention: USER_PROPOSAL_RETENTION,
+  migration: migration("guided_match_proposal_view.v1"),
 }
 
 // ─── Enrollment fixtures (one per state for the broker flow) ────────────────
@@ -389,7 +405,7 @@ function buildEnrollment(
     proposal_id: "proposal_steady_tide_001",
     status,
     environment: "PAPER",
-    library_entry_id: "steady_tide",
+    library_entry_id: "steady_tide_internal",
     library_entry_version: 1,
     backing_record_id: "regime_aware_momentum::stop_5_target_15",
     execution_manifest_id: "q076b_regime_aware_momentum_frozen_reference.paper_v1",
@@ -482,7 +498,7 @@ export const MOCK_ENROLLMENT_BROKER_INELIGIBLE = buildEnrollment(
 
 const PROVENANCE = {
   enrollment_id: "enrollment_steady_tide_001",
-  library_entry_id: "steady_tide",
+  library_entry_id: "steady_tide_internal",
   library_entry_version: 1,
   backing_record_id: "regime_aware_momentum::stop_5_target_15",
   execution_manifest_id: "q076b_regime_aware_momentum_frozen_reference.paper_v1",
@@ -533,12 +549,13 @@ export const MOCK_EVENTS: GuidedEvent[] = [
     occurred_at: "2026-05-04T13:30:00Z",
     kind: "STATE_CHANGE",
     source: "system",
-    actor_type: "USER",
-    actor_id: "jacob",
-    reason_code: "ENROLLMENT_ACTIVATED",
-    reason: "Enrollment transitioned to ACTIVE after broker capability check passed.",
-    reason_label: "Paper enrollment ACTIVE",
+    actor_type: "SYSTEM",
+    actor_id: "guided_runtime",
+    reason_code: "ENROLLMENT_ACTIVE",
+    reason: "Broker paper capability was verified and the enrollment became active.",
+    reason_label: "Enrollment active",
     audit_visibility: "USER_VISIBLE",
+    user_notified: false,
   }),
   buildEvent({
     event_id: "event_cash_park_001",
@@ -610,7 +627,7 @@ export const MOCK_EVENTS: GuidedEvent[] = [
   buildEvent({
     event_id: "event_broker_confirmation_aapl_001",
     occurred_at: "2026-05-06T15:45:30Z",
-    kind: "BROKER_CONFIRMATION",
+    kind: "HOLDINGS_CHANGE",
     source: "broker_confirmation",
     actor_type: "SYSTEM",
     actor_id: "alpaca_webhook",
@@ -682,9 +699,30 @@ export const MOCK_ENROLLMENT_VIEW_ACTIVE: GuidedEnrollmentView = {
   disclosure_state: "NORMAL",
   evidence: [BENCH_EVIDENCE, SHADOW_EVIDENCE, PAPER_FORWARD_EVIDENCE],
   holdings: [
-    { symbol: "AAPL", asset_type: "EQUITY", quantity: 5, market_value_usd: 1427, unrealized_pnl_usd: -179 },
-    { symbol: "NVDA", asset_type: "EQUITY", quantity: 7, market_value_usd: 1440, unrealized_pnl_usd: -165 },
-    { symbol: "SGOV", asset_type: "EQUITY", quantity: 511, market_value_usd: 51325, unrealized_pnl_usd: 0 },
+    {
+      symbol: "AAPL",
+      asset_type: "EQUITY",
+      holding_role: "STRATEGY_POSITION",
+      quantity: 5,
+      market_value_usd: 1427,
+      unrealized_pnl_usd: -179,
+    },
+    {
+      symbol: "NVDA",
+      asset_type: "EQUITY",
+      holding_role: "STRATEGY_POSITION",
+      quantity: 7,
+      market_value_usd: 1440,
+      unrealized_pnl_usd: -165,
+    },
+    {
+      symbol: "SGOV",
+      asset_type: "EQUITY",
+      holding_role: "CASH_RESERVE",
+      quantity: 511,
+      market_value_usd: 51325,
+      unrealized_pnl_usd: 0,
+    },
   ],
   current_value_usd: 54192,
   cash_value_usd: 51325,

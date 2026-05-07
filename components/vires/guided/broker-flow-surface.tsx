@@ -26,7 +26,7 @@ export function BrokerFlowSurface({
   return (
     <>
       <SurfacePicker value={surface} onChange={setSurface} />
-      {surface === "connect" ? <Connect /> : null}
+      {surface === "connect" ? <Connect onConnect={() => setSurface("pending")} /> : null}
       {surface === "pending" ? <Pending enrollment={pending} /> : null}
       {surface === "retryable" ? <Retryable enrollment={retryable} /> : null}
       {surface === "action_required" ? <ActionRequired enrollment={actionRequired} /> : null}
@@ -48,12 +48,12 @@ function SurfacePicker({ value, onChange }: { value: Surface; onChange: (s: Surf
       style={{
         display: "flex",
         gap: 4,
+        flexWrap: "wrap",
         marginBottom: 14,
         padding: 4,
         background: "rgba(241,236,224,0.03)",
         border: "1px solid var(--vr-line, #2a2438)",
         borderRadius: 3,
-        overflow: "auto",
       }}
     >
       {options.map(o => (
@@ -81,7 +81,7 @@ function SurfacePicker({ value, onChange }: { value: Surface; onChange: (s: Surf
   )
 }
 
-function Connect() {
+function Connect({ onConnect }: { onConnect: () => void }) {
   return (
     <GuidedHeroCard>
       <h1
@@ -126,7 +126,7 @@ function Connect() {
               Connect via OAuth (recommended)
             </div>
           </div>
-          <button type="button" style={btnPrimary}>
+          <button type="button" onClick={onConnect} style={btnPrimary}>
             Connect
           </button>
         </div>
@@ -151,7 +151,7 @@ function Connect() {
 function Pending({ enrollment }: { enrollment: GuidedEnrollment }) {
   return (
     <GuidedHeroCard>
-      <FieldEyebrow>Setting up your paper account</FieldEyebrow>
+      <FieldEyebrow>Snapshot · pending broker check</FieldEyebrow>
       <h1
         style={{
           fontSize: 22,
@@ -160,29 +160,32 @@ function Pending({ enrollment }: { enrollment: GuidedEnrollment }) {
           color: "var(--vr-cream, #f1ece0)",
           fontWeight: 400,
           marginTop: 6,
-          marginBottom: 14,
+          marginBottom: 8,
         }}
       >
-        Verifying broker connection…
+        Broker capability check
       </h1>
+      <p style={{ fontSize: 11, color: "var(--vr-cream-mute, #8c8579)", lineHeight: 1.55, marginTop: 0, marginBottom: 16 }}>
+        Preview shows the <code style={{ fontFamily: "var(--ff-mono)" }}>CHECKING</code> snapshot only. In production this resolves to one of <code>VERIFIED</code> · <code>BROKER_RETRYABLE</code> · <code>BROKER_ACTION_REQUIRED</code> · <code>BROKER_INELIGIBLE</code> within seconds. Use the picker above to view those outcomes.
+      </p>
 
       <div
         style={{
+          padding: 14,
+          border: "1px solid var(--vr-line, #2a2438)",
+          background: "rgba(241,236,224,0.02)",
+          borderRadius: 3,
+          marginBottom: 18,
           fontSize: 11,
           color: "var(--vr-cream-mute, #8c8579)",
           fontFamily: "var(--ff-mono)",
-          marginBottom: 18,
+          lineHeight: 1.6,
         }}
       >
-        enrollment.status · {enrollment.status}
-      </div>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 }}>
-        <CheckRow status="ok" label="Connection authorized" />
-        <CheckRow status="ok" label="Paper account exists" />
-        <CheckRow status="working" label="Equity trading enabled" />
-        <CheckRow status="pending" label="Buying power adequate" />
-        <CheckRow status="pending" label="Capability matrix matches" />
+        <div>enrollment.status · {enrollment.status}</div>
+        <div>broker_capabilities.status · {enrollment.broker_capabilities.status}</div>
+        <div>broker_adapter · {enrollment.broker_capabilities.broker_adapter ?? "—"}</div>
+        <div>environment · {enrollment.broker_capabilities.environment}</div>
       </div>
 
       <div
@@ -193,27 +196,21 @@ function Pending({ enrollment }: { enrollment: GuidedEnrollment }) {
           fontSize: 11,
           color: "var(--vr-cream-mute, #8c8579)",
           lineHeight: 1.5,
+          marginBottom: 16,
         }}
       >
         Not enrolled yet. Paper trading begins only after this check passes.
       </div>
-    </GuidedHeroCard>
-  )
-}
 
-function CheckRow({ status, label }: { status: "ok" | "working" | "pending"; label: string }) {
-  const icon = status === "ok" ? "✓" : status === "working" ? "⠋" : "○"
-  const color =
-    status === "ok"
-      ? "var(--vr-good, #9ec4a0)"
-      : status === "working"
-        ? "var(--vr-gold, #c8a968)"
-        : "var(--vr-cream-mute, #8c8579)"
-  return (
-    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-      <span style={{ width: 14, color, fontFamily: "var(--ff-mono)" }}>{icon}</span>
-      <span style={{ fontSize: 12, color: "var(--vr-cream-dim, #c4bdac)" }}>{label}</span>
-    </div>
+      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+        <a href="/vires/guided/preview/active" style={btnPrimary}>
+          Simulate VERIFIED → ACTIVE
+        </a>
+      </div>
+      <div style={{ marginTop: 10, fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--vr-cream-mute, #8c8579)" }}>
+        Preview only · use the picker above to view the failure variants
+      </div>
+    </GuidedHeroCard>
   )
 }
 
@@ -297,12 +294,12 @@ function Retryable({ enrollment }: { enrollment: GuidedEnrollment }) {
       body="We couldn't reach Alpaca right now. This is usually temporary."
       actions={
         <>
-          <button type="button" style={btnSecondary}>
+          <a href="/vires/guided/preview" style={btnSecondary}>
             Cancel
-          </button>
-          <button type="button" style={btnPrimary}>
+          </a>
+          <a href="/vires/guided/preview/active" style={btnPrimary}>
             Try again
-          </button>
+          </a>
         </>
       }
     />
@@ -325,9 +322,9 @@ function ActionRequired({ enrollment }: { enrollment: GuidedEnrollment }) {
           ) : (
             <span />
           )}
-          <button type="button" style={btnPrimary}>
+          <a href="/vires/guided/preview/active" style={btnPrimary}>
             I&apos;ve fixed it
-          </button>
+          </a>
         </>
       }
     />
@@ -342,12 +339,10 @@ function Ineligible({ enrollment }: { enrollment: GuidedEnrollment }) {
       body={`${enrollment.broker_capabilities.failure_human_label ?? "Account and strategy aren't compatible."} This isn't a problem with the strategy or your account — they just aren't compatible.`}
       actions={
         <>
-          <button type="button" style={btnSecondary}>
-            Reconnect a different broker
-          </button>
-          <button type="button" style={btnPrimary}>
+          <span />
+          <a href="/vires/guided/preview/questionnaire" style={btnPrimary}>
             Find a different match
-          </button>
+          </a>
         </>
       }
     />

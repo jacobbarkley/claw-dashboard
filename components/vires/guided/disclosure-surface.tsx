@@ -30,11 +30,22 @@ export function DisclosureSurface({
           color: "var(--vr-cream, #f1ece0)",
           fontWeight: 400,
           marginTop: 6,
+          marginBottom: 8,
+        }}
+      >
+        Start paper trading with {libraryEntry.friendly_name}?
+      </h1>
+      <p
+        style={{
+          fontSize: 11,
+          color: "var(--vr-cream-mute, #8c8579)",
+          lineHeight: 1.55,
+          marginTop: 0,
           marginBottom: 18,
         }}
       >
-        You&apos;re about to enroll in {libraryEntry.friendly_name}
-      </h1>
+        Accepting captures your consent and starts broker setup. Paper trading begins only after broker checks pass.
+      </p>
 
       {/* The drawdown headline — big, framed as worst case */}
       <Block>
@@ -178,26 +189,42 @@ export function DisclosureSurface({
         </span>
       </label>
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
-        <button type="button" style={btnSecondary}>
+      <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap" }}>
+        <a href="/vires/guided/preview/match" style={btnSecondary}>
           Cancel
-        </button>
-        <button
-          type="button"
-          disabled={!attested}
-          style={{
-            ...btnPrimary,
-            background: attested ? "var(--vr-gold, #c8a968)" : "rgba(200,169,104,0.18)",
-            color: attested ? "var(--vr-bg, #0c0a17)" : "var(--vr-cream-mute, #8c8579)",
-            cursor: attested ? "pointer" : "not-allowed",
-          }}
-        >
-          Accept →
-        </button>
+        </a>
+        {attested ? (
+          <a
+            href="/vires/guided/preview/broker"
+            style={{
+              ...btnPrimary,
+              background: "var(--vr-gold, #c8a968)",
+              color: "var(--vr-bg, #0c0a17)",
+            }}
+          >
+            Accept →
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled
+            style={{
+              ...btnPrimary,
+              background: "rgba(200,169,104,0.18)",
+              color: "var(--vr-cream-mute, #8c8579)",
+              cursor: "not-allowed",
+            }}
+          >
+            Accept →
+          </button>
+        )}
       </div>
 
       <div style={{ marginTop: 16, fontSize: 10, color: "var(--vr-cream-mute, #8c8579)", fontFamily: "var(--ff-mono)" }}>
         disclosure_version: {disclosure.disclosure_version_id} · classification: {disclosure.change_classification}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--vr-cream-mute, #8c8579)" }}>
+        Preview only · clicks navigate between surfaces, no commands run
       </div>
     </GuidedHeroCard>
   )
@@ -229,6 +256,8 @@ const btnPrimary = {
   textTransform: "uppercase" as const,
   fontWeight: 600,
   borderRadius: 2,
+  textDecoration: "none",
+  display: "inline-block",
 }
 
 const btnSecondary = {
@@ -241,4 +270,6 @@ const btnSecondary = {
   textTransform: "uppercase" as const,
   cursor: "pointer",
   borderRadius: 2,
+  textDecoration: "none",
+  display: "inline-block",
 }

@@ -1,7 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import type { DisclosureVersion, GuidedMatchProposal, StrategyLibraryEntry } from "./types"
+import type {
+  DisclosureVersion,
+  GuidedMatchProposal,
+  GuidedMatchProposalView,
+  StrategyLibraryEntry,
+} from "./types"
 import { EvidenceCard, FieldEyebrow, GuidedHeroCard, SectionLabel } from "./shared"
 
 // S3 — Match proposal preview. Shows the friendly_name, mandate_subtitle,
@@ -118,6 +123,30 @@ export function MatchProposalSurface({
         ))}
       </ul>
 
+      {proposal.mismatched_answer_keys.length > 0 ? (
+        <>
+          <SectionLabel>What to know</SectionLabel>
+          <div
+            style={{
+              padding: 12,
+              border: "1px dashed var(--vr-gold, #c8a968)66",
+              borderRadius: 3,
+              background: "rgba(200,169,104,0.04)",
+              marginBottom: 18,
+              fontSize: 12,
+              color: "var(--vr-cream-dim, #c4bdac)",
+              lineHeight: 1.6,
+            }}
+          >
+            This is a partial fit. Your answer on{" "}
+            <strong style={{ color: "var(--vr-gold, #c8a968)", fontWeight: 600 }}>
+              {proposal.mismatched_answer_keys.map(humanizeAnswerKey).join(", ")}
+            </strong>{" "}
+            does not fully match this strategy. You can continue in paper mode, but treat that mismatch as part of the risk.
+          </div>
+        </>
+      ) : null}
+
       {/* Technical details expansion */}
       <button
         type="button"
@@ -165,6 +194,12 @@ export function MatchProposalSurface({
             {"\n"}
             matcher: {proposal.matcher_version} · questionnaire: {proposal.questionnaire_version}
             {"\n"}
+            match quality: {(proposal.match_quality_score * 100).toFixed(0)}%
+            {"\n"}
+            matched answers: {proposal.matched_answer_keys.map(humanizeAnswerKey).join(", ") || "none"}
+            {"\n"}
+            mismatched answers: {proposal.mismatched_answer_keys.map(humanizeAnswerKey).join(", ") || "none"}
+            {"\n"}
             library entry: {libraryEntry.library_entry_id} v{libraryEntry.library_entry_version}
           </pre>
 
@@ -190,18 +225,35 @@ export function MatchProposalSurface({
         </div>
       ) : null}
 
-      <div style={{ display: "flex", gap: 8, justifyContent: "space-between", marginTop: 18 }}>
-        <button type="button" style={btnSecondary}>
+      <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap", marginTop: 18 }}>
+        <a href="/vires/guided/preview/questionnaire" style={btnSecondary}>
           Decline
-        </button>
-        <button type="button" style={btnSecondary}>
+        </a>
+        <a href="/vires/guided/preview" style={btnSecondary}>
           Maybe later
-        </button>
-        <button type="button" style={btnPrimary}>
+        </a>
+        <a href="/vires/guided/preview/disclosure" style={btnPrimary}>
           Continue →
-        </button>
+        </a>
+      </div>
+      <div style={{ marginTop: 12, fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--vr-cream-mute, #8c8579)" }}>
+        Preview only · clicks navigate between surfaces, no commands run
       </div>
     </GuidedHeroCard>
+  )
+}
+
+// Phase 6 swap path. Once Codex's composed `guided_match_proposal_view.v1`
+// read is fetched at /api/guided/match-proposal-view/<proposal_id>, the page
+// route hands the view to this wrapper instead of fetching three artifacts.
+// The visual component is unchanged.
+export function MatchProposalSurfaceFromView({ view }: { view: GuidedMatchProposalView }) {
+  return (
+    <MatchProposalSurface
+      proposal={view.proposal}
+      libraryEntry={view.library_entry}
+      disclosure={view.disclosure}
+    />
   )
 }
 
@@ -228,6 +280,16 @@ function humanizeTag(tag: string): string {
   return map[tag] ?? tag.replace(/_/g, " ")
 }
 
+function humanizeAnswerKey(key: string): string {
+  const map: Record<string, string> = {
+    risk_profile: "risk profile",
+    drawdown_tolerance: "drawdown tolerance",
+    asset_class_preference: "asset class",
+    time_horizon: "time horizon",
+  }
+  return map[key] ?? key.replace(/_/g, " ")
+}
+
 const btnPrimary = {
   padding: "10px 18px",
   background: "var(--vr-gold, #c8a968)",
@@ -239,6 +301,8 @@ const btnPrimary = {
   fontWeight: 600,
   cursor: "pointer",
   borderRadius: 2,
+  textDecoration: "none",
+  display: "inline-block",
 }
 
 const btnSecondary = {
@@ -250,5 +314,7 @@ const btnSecondary = {
   letterSpacing: "0.16em",
   textTransform: "uppercase" as const,
   cursor: "pointer",
+  textDecoration: "none",
+  display: "inline-block",
   borderRadius: 2,
 }
