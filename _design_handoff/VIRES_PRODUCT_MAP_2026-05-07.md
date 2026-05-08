@@ -157,7 +157,7 @@ Concretely, this means:
 ## Deferred obligations
 
 The active ledger for temporary-but-intentional behavior is
-`_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER_2026-05-08.md`.
+`_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER.md`.
 Any future slice that ships preview, mock, single-tenant, non-persistent,
 or otherwise non-final behavior must add or update a ledger row with a
 tier, trigger, and closure evidence before merging.
