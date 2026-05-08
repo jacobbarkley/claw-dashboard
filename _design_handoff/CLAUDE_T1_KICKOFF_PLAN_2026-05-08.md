@@ -171,7 +171,7 @@ Rationale:
 - Consent ledger needs ACID + replay-idempotency. Document stores fight this.
 - Codex's runtime already produces JSON artifacts with stable schemas — relational tables map cleanly.
 - Vercel-native integrations exist for both Neon and Supabase; auth integration is straightforward.
-- Postgres is the direction set by `DATA-T1-PRIVATE-STORE-DECISION` in `_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER.md` and the AGENTS.md "no user-state in git" rule — both durable in-repo references that frame this T1 work.
+- The ledger row `DATA-T1-PRIVATE-STORE-DECISION` (in `_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER.md`) and the AGENTS.md "no user-state in git" rule require a non-git private store; managed Postgres is **this plan's recommended implementation** because consent / enrollment / idempotency map cleanly to relational constraints. Neither the ledger nor AGENTS.md mandates Postgres specifically — the seam tolerates a non-Postgres choice without dashboard rework.
 - Branching (Neon especially) gives us cheap dev DBs that mirror prod schema.
 
 Not chosen:
@@ -261,7 +261,7 @@ Selection precedence: if `CODEX_PROJECTION_BASE_URL` is set, projection mode win
 
 ### 2.6 Production behavior
 
-- All user-state reads + writes through the DB
+- All user-state reads/writes go through Codex's projection / command service endpoints, which are themselves backed by the private store. The dashboard never speaks to the underlying store directly — production parity with the seam guarantee from §2.1.
 - Auth required for all user-state preview pages (server components throw to a sign-in redirect when scope unresolvable)
 - `MockFallbackBadge` removed from production user-state paths once T1.0e lands; replaced with explicit "no enrollment yet" / "no proposal yet" empty-state UI
 - Public/static APIs unchanged
@@ -332,8 +332,8 @@ Each PR is small, has a single owner, and has clear closure evidence. PR-T1.0a i
 - Migration tool chosen per Codex's runtime language
 
 **Command contract guardrails (must be set in T1.0b, inherited by T1.1–T1.4):**
-- **Authenticated scope on every command.** Service rejects requests without a verified scope tuple (`user_id`, `account_id`, `strategy_group_id`). Authentication shape per the §6 "auth → command service handoff" decision.
-- **Replay/idempotency on irreversible commands.** Every command that mutates user-visible state (`accept_match`, `accept_disclosure`, `start_enrollment`, exit-action commands) requires a client-supplied `idempotency_key`. The service de-duplicates on `(account_id, command, idempotency_key)`. Read-only-equivalent commands (`save_questionnaire_progress`) can opt out.
+- **Authenticated scope on every command.** Codex's command service derives or verifies the scope tuple (`user_id`, `account_id`, `strategy_group_id`) from the authenticated handoff. Any scope passed in the request body must match the verified auth scope or the request is rejected. The dashboard's `lib/guided-commands.server.ts` may pass a scope object as a convenience for typed call sites, but the service treats body-scope as untrusted hint, not authority. Authentication shape per the §6 "auth → command service handoff" decision.
+- **Replay/idempotency on irreversible commands.** Every command that mutates user-visible state (`accept_match`, `accept_disclosure`, `start_enrollment`, exit-action commands) requires a client-supplied `idempotency_key`. The service de-duplicates on **the verified auth scope tuple plus command plus idempotency_key** — i.e., `(user_id, account_id, strategy_group_id, command, idempotency_key)` — so a key replay across users or accounts cannot collide. Read-only-equivalent commands (`save_questionnaire_progress`) can opt out.
 - **Request / correlation ID.** Every request carries `X-Request-ID` (per-call) and an optional `X-Correlation-ID` that links a user-visible flow across commands (e.g., questionnaire submit → match proposal → accept → enrollment). Both surface in events, audit rows, and Codex logs.
 - **Typed error envelope.** All non-2xx responses share one shape: `{ error_code, error_message, retriable: bool, fields?: { [key]: string } }`. The dashboard renders by `error_code`, never by parsing `error_message`.
 - **No live external API calls in tests.** Codex's command service test suite forbids real HTTP calls to brokers, Codex's own LLM-backed services, or any third party. Same rule for the dashboard's command client tests.
