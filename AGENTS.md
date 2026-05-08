@@ -99,3 +99,16 @@ are fine; anything affecting `main`, the deployed Vercel app, the live
 operator feed, or shared producer state warrants explicit confirmation
 before acting. No `--no-verify`, no force pushes to main, no skipping
 hooks.
+
+**Verify doc-only PRs before merge.** A PostToolUse hook on the operator
+side auto-commits `data/*.json` updates whenever Edit/Write fires while
+data files are dirty (live operator-feed refreshes, scheduled updates,
+etc.). On feature branches, this can interleave unrelated `data:`
+commits between intentional doc commits — collateral damage, not
+intentional content. Before merging any PR intended to be doc-only,
+run `gh pr diff <n> --name-only` and confirm only the intended files
+are listed. If unrelated commits crept in, reset the branch to
+`origin/main`, cherry-pick the intentional commits, and force-push
+with `--force-with-lease=<branch>:<prior-remote-head>`. The same check
+also catches stray `node_modules/`, `.next/`, or other generated
+artifacts that should never reach a PR.
