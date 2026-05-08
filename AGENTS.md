@@ -82,6 +82,10 @@ path; the dashboard has no production private store yet.
 - **Validation does not equal permission.** User-created Lab strategies
   are private by default; broader use requires the explicit contribution
   / license flow described in the product map.
+- **No quiet deferral.** If a slice ships preview, mock, single-tenant,
+  non-persistent, or otherwise non-final behavior, update
+  `_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER_2026-05-08.md`
+  with the tier, trigger, and closure evidence before merging.
 - **Audits are hard events, not optional.** Each audit checkpoint
   produces a writable handoff in `_design_handoff/`. Skipping one means
   the next inherits its findings as already-overdue.
