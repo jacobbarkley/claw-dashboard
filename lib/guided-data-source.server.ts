@@ -27,6 +27,7 @@
 
 import { readFile } from "node:fs/promises"
 import path from "node:path"
+import type { z } from "zod"
 
 import type {
   DisclosureVersion,
@@ -38,6 +39,15 @@ import type {
   Questionnaire,
   StrategyLibrary,
 } from "@/components/vires/guided/types"
+import {
+  DisclosureVersionSchema,
+  EnrollmentEventsViewSchema,
+  GuidedEnrollmentSchema,
+  GuidedEnrollmentViewSchema,
+  GuidedMatchProposalViewSchema,
+  QuestionnaireSchema,
+  StrategyLibrarySchema,
+} from "@/lib/guided-data-source.schemas"
 
 export class GuidedArtifactMissingError extends Error {
   constructor(public readonly artifactPath: string) {
@@ -112,17 +122,17 @@ export function resolveUserStateRoot(): string | null {
   return resolveAbsolute(localOverride)
 }
 
-async function readPublicStaticArtifact<T>(relativePath: string, expectedSchemaVersion: string): Promise<T> {
-  return readJsonAt<T>(path.join(resolvePublicStaticRoot(), relativePath), expectedSchemaVersion)
+async function readPublicStaticArtifact<T>(relativePath: string, schema: z.ZodType<T>): Promise<T> {
+  return readJsonAt<T>(path.join(resolvePublicStaticRoot(), relativePath), schema)
 }
 
-async function readUserStateArtifact<T>(relativePath: string, expectedSchemaVersion: string): Promise<T> {
+async function readUserStateArtifact<T>(relativePath: string, schema: z.ZodType<T>): Promise<T> {
   const root = resolveUserStateRoot()
   if (root === null) throw new GuidedUserStateUnavailableError()
-  return readJsonAt<T>(path.join(root, relativePath), expectedSchemaVersion)
+  return readJsonAt<T>(path.join(root, relativePath), schema)
 }
 
-async function readJsonAt<T>(fullPath: string, expectedSchemaVersion: string): Promise<T> {
+async function readJsonAt<T>(fullPath: string, schema: z.ZodType<T>): Promise<T> {
   let raw: string
   try {
     raw = await readFile(fullPath, "utf8")
@@ -137,36 +147,36 @@ async function readJsonAt<T>(fullPath: string, expectedSchemaVersion: string): P
   } catch (err) {
     throw new GuidedArtifactInvalidError(fullPath, `JSON parse failed: ${(err as Error).message}`)
   }
-  if (
-    typeof parsed !== "object" ||
-    parsed === null ||
-    (parsed as { schema_version?: unknown }).schema_version !== expectedSchemaVersion
-  ) {
+  const result = schema.safeParse(parsed)
+  if (!result.success) {
+    const previewIssues = result.error.issues
+      .slice(0, 5)
+      .map(i => `${i.path.join(".") || "<root>"}: ${i.message}`)
+      .join("; ")
+    const more = result.error.issues.length > 5 ? ` (+${result.error.issues.length - 5} more)` : ""
     throw new GuidedArtifactInvalidError(
       fullPath,
-      `expected schema_version="${expectedSchemaVersion}", got ${
-        (parsed as { schema_version?: unknown })?.schema_version ?? "<missing>"
-      }`,
+      `${result.error.issues.length} validation issue(s): ${previewIssues}${more}`,
     )
   }
-  return parsed as T
+  return result.data
 }
 
 // ─── Public/static reads ────────────────────────────────────────────────────
 
 export function readStrategyLibrary(): Promise<StrategyLibrary> {
-  return readPublicStaticArtifact<StrategyLibrary>("strategy_library.json", "strategy_library.v1")
+  return readPublicStaticArtifact<StrategyLibrary>("strategy_library.json", StrategyLibrarySchema)
 }
 
 export function readQuestionnaire(): Promise<Questionnaire> {
-  return readPublicStaticArtifact<Questionnaire>("questionnaire.json", "questionnaire.v1")
+  return readPublicStaticArtifact<Questionnaire>("questionnaire.json", QuestionnaireSchema)
 }
 
 export function readDisclosureVersion(disclosureVersionId: string): Promise<DisclosureVersion> {
   assertSafeId("disclosure_version_id", disclosureVersionId)
   return readPublicStaticArtifact<DisclosureVersion>(
     path.join("disclosures", `${disclosureVersionId}.json`),
-    "disclosure_version.v1",
+    DisclosureVersionSchema,
   )
 }
 
@@ -179,7 +189,7 @@ export function readGuidedMatchProposalView(
   assertSafeId("proposal_id", proposalId)
   return readUserStateArtifact<GuidedMatchProposalView>(
     path.join("views", scopePath(scope), "proposals", proposalId, "guided_match_proposal_view.json"),
-    "guided_match_proposal_view.v1",
+    GuidedMatchProposalViewSchema,
   )
 }
 
@@ -190,7 +200,7 @@ export function readGuidedEnrollment(
   assertSafeId("enrollment_id", enrollmentId)
   return readUserStateArtifact<GuidedEnrollment>(
     path.join("enrollments", scopePath(scope), `${enrollmentId}.json`),
-    "guided_enrollment.v1",
+    GuidedEnrollmentSchema,
   )
 }
 
@@ -201,7 +211,7 @@ export function readGuidedEnrollmentView(
   assertSafeId("enrollment_id", enrollmentId)
   return readUserStateArtifact<GuidedEnrollmentView>(
     path.join("views", scopePath(scope), enrollmentId, "guided_enrollment_view.json"),
-    "guided_enrollment_view.v1",
+    GuidedEnrollmentViewSchema,
   )
 }
 
@@ -212,6 +222,6 @@ export function readEnrollmentEventsView(
   assertSafeId("enrollment_id", enrollmentId)
   return readUserStateArtifact<EnrollmentEventsView>(
     path.join("views", scopePath(scope), enrollmentId, "enrollment_events_view.json"),
-    "enrollment_events_view.v1",
+    EnrollmentEventsViewSchema,
   )
 }
