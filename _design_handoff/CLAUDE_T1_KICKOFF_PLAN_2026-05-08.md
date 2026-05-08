@@ -181,7 +181,7 @@ Not chosen:
 
 **Open decision for Jacob/Codex:** Neon vs Supabase. Neon = smaller surface, branch-per-PR friendly. Supabase = bundles auth + RLS, more batteries-included. Lean Neon for separation-of-concerns (auth as its own decision), but either works.
 
-### 2.2 Scope resolver
+### 2.3 Scope resolver
 
 Today: `PHASE_6_2_INTERNAL_SCOPE = { user_id: "jacob", account_id: "paper_main", strategy_group_id: "default" }` — exported constant.
 
@@ -206,7 +206,7 @@ Option A is canonical and scales to T2; Option B is faster but throwaway. **Reco
 
 `PHASE_6_2_INTERNAL_SCOPE` constant gets removed from `lib/guided-data-source.server.ts` once the resolver lands. This closes `GUIDED-T1-HARDCODED-SCOPE-REMOVAL` (T1 sub).
 
-### 2.3 Tables / records
+### 2.4 Tables / records
 
 Phase 6.2 filesystem layout maps to these tables (column lists are illustrative, not final):
 
@@ -228,7 +228,7 @@ New tables that don't have a filesystem analog:
 
 Primary keys above are illustrative as `(account_id, ...)`; final keys partition by the full scope tuple `(user_id, account_id, strategy_group_id, ...)` matching `GuidedScope`. All row-level access goes through the resolver — no path-traversal-style scope leakage.
 
-### 2.4 Retention / delete / tombstone posture
+### 2.5 Retention / delete / tombstone posture
 
 T1 must define this per table — it's required closure evidence for `DATA-T1-PRIVATE-STORE-DECISION`. The migration cutover (T1.0e) cannot pass review without this matrix being implemented and tested.
 
@@ -245,9 +245,9 @@ T1 must define this per table — it's required closure evidence for `DATA-T1-PR
 
 **T2/T3 scope (deferred):** full self-service account erasure ("delete my account" UI), multi-system propagation (e.g., notifying Codex's analytics/ops aggregates), regulatory-jurisdiction-aware retention rules. These require pipelines T1 doesn't ship — consent reaffirmation broadcasting, downstream notification, jurisdiction routing — and depend on `GUIDED-T1-LEGAL-COPY-REVIEWED` and `GUIDED-T1-ANONYMIZATION-STANDARD` landing first. Add a ledger row when T1.0e closes if the work feels imminent; otherwise it surfaces naturally during T2 planning.
 
-The `MockFallbackBadge` runtime fallback is migration behavior, not retention behavior — covered separately in §2.9.
+The `MockFallbackBadge` runtime fallback is migration behavior, not retention behavior — covered separately in §2.10.
 
-### 2.5 Local dev behavior
+### 2.6 Local dev behavior
 
 Two dev modes, both routed through the read seam (`GuidedReadStore` interface) and the write seam (command client → Codex command service):
 
@@ -259,14 +259,14 @@ Selection precedence: if `CODEX_PROJECTION_BASE_URL` is set, projection mode win
 
 **The seam guarantee:** in either dev mode, server components call the same helper functions and command client functions. Switching modes is one env var. No code changes. The dashboard imports zero DB drivers in either case.
 
-### 2.6 Production behavior
+### 2.7 Production behavior
 
 - All user-state reads/writes go through Codex's projection / command service endpoints, which are themselves backed by the private store. The dashboard never speaks to the underlying store directly — production parity with the seam guarantee from §2.1.
 - Auth required for all user-state preview pages (server components throw to a sign-in redirect when scope unresolvable)
 - `MockFallbackBadge` removed from production user-state paths once T1.0e lands; replaced with explicit "no enrollment yet" / "no proposal yet" empty-state UI
 - Public/static APIs unchanged
 
-### 2.7 What stays unchanged
+### 2.8 What stays unchanged
 
 - `lib/guided-data-source.server.ts` exports stay stable. Internal implementation rewires to delegate to a `GuidedReadStore` interface, but the function signatures and error classes don't change. Preview page imports don't have to be touched.
 - `data/guided/*` stays in git. **Strategy library, questionnaire, disclosure templates only — public/static/versioned content.** No user-state, ever.
@@ -274,7 +274,7 @@ Selection precedence: if `CODEX_PROJECTION_BASE_URL` is set, projection mode win
 - Phase 6.2 filesystem read path stays available for dev (read-only) via `FilesystemGuidedReadStore`.
 - Codex's runtime artifact format stays — the producer adapter writes the same typed projection shapes to DB rows instead of JSON files.
 
-### 2.8 What stays in git vs what doesn't (per Jacob/Codex 2026-05-08)
+### 2.9 What stays in git vs what doesn't (per Jacob/Codex 2026-05-08)
 
 **Stays in git** (`data/guided/`, `data/research_lab/`-pending-classification):
 - Strategy library definitions
@@ -296,7 +296,7 @@ Selection precedence: if `CODEX_PROJECTION_BASE_URL` is set, projection mode win
 
 If a future PR proposes adding any of the second list to `data/`, the PR must be rejected on architectural grounds, not negotiated. The ledger row for that obligation is the appeal path.
 
-### 2.9 Migration path from current preview fixtures
+### 2.10 Migration path from current preview fixtures
 
 Current preview fixtures live in two places, with two distinct fates:
 
