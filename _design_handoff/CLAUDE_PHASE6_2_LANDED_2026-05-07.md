@@ -11,6 +11,48 @@ S1+S2) read from `data/guided/`. When user-state isn't available — Vercel
 production today, or any environment without the env var set — preview
 pages fall back to labeled mocks via `MockFallbackBadge`.
 
+## Post-PR-review correction (2026-05-07)
+
+**The four user-state HTTP API routes documented below were intentionally
+removed during PR #5 review.** They were a public-shaped dev surface in
+front of an internally-scoped, dev-only data path — and exposing
+`(jacob, paper_main, default)`-scoped artifacts on a public-shaped URL with
+no auth was the wrong shape for production-bound code. The dashboard's only
+consumers of those reads are the five user-state preview pages
+(`/vires/guided/preview/{match,broker,active,monitoring,events}`), which
+now call the server helpers in `lib/guided-data-source.server.ts` directly
+inside their server components. No HTTP indirection, no public surface, no
+auth-shaped affordance promised before there is auth.
+
+**What was removed:**
+- `app/api/guided/match-proposal-view/[proposalId]/route.ts`
+- `app/api/guided/enrollments/[enrollmentId]/route.ts`
+- `app/api/guided/enrollment-views/[enrollmentId]/route.ts`
+- `app/api/guided/enrollment-events/[enrollmentId]/route.ts`
+
+**What was kept:**
+- The three public/static API routes (`strategy-library`, `questionnaire`,
+  `disclosures/[id]`) — these stay because their data is genuinely public,
+  schema-versioned, and not user-scoped.
+- All five user-state preview pages — they now read the helper directly.
+- `GuidedUserStateUnavailableError` and `GuidedUnsafeIdError` — the helper
+  still throws them; the preview pages now handle them inline (labeled
+  mock fallback, 400-shaped abort, etc.) instead of HTTP 503 / 400.
+
+**Where this means the docs below are stale:** "API path:" lines for S3,
+S5–S8, S9, S10, S11; the route registration counts in the verification
+section; the list in the "Audit 1 backend/plumbing" patch summary at the
+end. Treat those as historical record of what shipped and was then
+reverted, not current behavior. The preview-page wiring described
+elsewhere in this doc still applies — the only thing that changed is the
+helper is now a function call, not an HTTP fetch.
+
+When a non-dev user-state store ships at T2/T3 and is gated by real auth,
+the access shape we want is "server component reads from auth-scoped
+store," not "any client GETs an unscoped HTTP endpoint." Removing the
+routes now keeps the slice from baking that wrong shape into reviewer
+muscle memory.
+
 ## Phase 6.2 architecture (locked)
 
 - **Public/static reads** (`resolvePublicStaticRoot()`): `GUIDED_LOCAL_REBUILD_PATH` wins in local dev when set, then falls back to `GUIDED_DATA_DIR` (default `data/guided`). Always returns a path.

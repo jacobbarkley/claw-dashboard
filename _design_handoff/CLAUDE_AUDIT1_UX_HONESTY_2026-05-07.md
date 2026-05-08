@@ -171,8 +171,19 @@ These were intentionally not addressed in Audit 1 because they're outside the sm
 
 - `npx tsc --noEmit -p .` clean (exit 0)
 - `npm run build` clean — zero errors, zero warnings
-- All 7 Guided preview routes still register dynamic, all 7 API routes still register dynamic
+- All 7 Guided preview routes still register dynamic
 - No new dependencies. Every patch stays within the frozen contracts.
+
+> **Post-PR-review correction (2026-05-07):** the original verification line
+> claimed "all 7 API routes still register dynamic." Four user-state HTTP
+> API routes (`match-proposal-view`, `enrollments`, `enrollment-views`,
+> `enrollment-events`) were intentionally removed during PR #5 review. Only
+> the three public/static API routes (`strategy-library`, `questionnaire`,
+> `disclosures/[id]`) remain. The five user-state preview pages now call
+> `lib/guided-data-source.server.ts` helpers directly inside their server
+> components — no HTTP indirection. See `CLAUDE_PHASE6_2_LANDED_2026-05-07.md`
+> "Post-PR-review correction" for full reasoning. The honesty patches
+> documented above were unaffected by that route removal.
 
 ## Files modified
 
