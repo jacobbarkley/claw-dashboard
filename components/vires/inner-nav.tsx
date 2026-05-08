@@ -5,16 +5,21 @@ import { usePathname } from "next/navigation"
 import { ViresMark } from "./shared"
 import { useViresTheme } from "./frame"
 
-// Inner Vires shell: Trading · Bench · Guided preview pills, plus the wordmark
-// and the PAPER/LIVE mode pill. Lives at the top of every /vires/* route via
+// Inner Vires shell: Trading · Bench · Guided pills, plus the wordmark and
+// the PAPER/LIVE mode pill. Lives at the top of every /vires/* route via
 // app/vires/layout.tsx so the inner navigation is consistent.
 //
-// `guided · preview` is italic + slightly muted on purpose: it's the entry
-// point into the internal paper-first guided flow (post PR #5 merge), not a
-// public-ready product surface. The italic-pill pattern was previously used
-// for the now-retired `plateau` scaffolding tab; reused here to signal
-// "internal preview, expect change." Drop the italic styling when Guided
-// graduates past the T1 pre-public cleanup gate.
+// The `guided` pill links to /vires/guided/preview — the internal paper-first
+// guided flow (post PR #5 merge), not a public-ready product surface. It's
+// rendered italic + slightly muted on purpose to signal "internal preview,
+// expect change"; the italic-pill pattern was previously used for the
+// now-retired `plateau` scaffolding tab and is reused here for the same
+// "scaffolding / not promoted" signal. The hover title spells out the preview
+// semantics in full ("Internal preview · paper-first guided flow, not
+// public-ready") since the visible label is intentionally compact —
+// `.t-eyebrow` is uppercased and heavily tracked, and a longer label
+// pushed the mobile nav row off-screen on ~390px viewports. Drop the italic
+// styling when Guided graduates past the T1 pre-public cleanup gate.
 //
 // Plateau primer retired from the outer nav 2026-04-22. Its content now lives
 // on passport pages via the Parameter Stability section (real plateau heatmap
@@ -34,7 +39,7 @@ const TABS: Array<{
   {
     href: "/vires/guided/preview",
     key: "guided",
-    label: "guided · preview",
+    label: "guided",
     italic: true,
     title: "Internal preview · paper-first guided flow, not public-ready",
   },
