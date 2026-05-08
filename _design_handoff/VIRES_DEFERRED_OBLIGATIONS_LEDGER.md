@@ -1,0 +1,111 @@
+# Vires Deferred Obligations Ledger
+
+**Created:** 2026-05-08
+**Status:** Durable rolling handoff doc.
+**Purpose:** Prevent intentionally temporary preview behavior from hardening into product behavior.
+
+This ledger operationalizes the Product Map anti-pattern:
+
+> Quiet deferral: anything pushed to "later" must land in a tier with a trigger condition.
+
+Every future slice should check this file before scoping. If a slice touches a temporary behavior listed here, it must either close the obligation, carry it forward explicitly, or retier it with a reason.
+
+## Ledger Rules
+
+- **No "later" without a trigger.** Every deferral gets a tier and a condition that reopens it.
+- **No silent finalization.** Preview-only behavior cannot become product behavior just because the UI works.
+- **No source drift.** If an item depends on producer state, the producer/contract changes before the dashboard presents it as real.
+- **No user-state in git.** User-specific Guided, Lab, broker, consent, proposal, and enrollment state must move to a private scoped store before non-internal use.
+- **Closure needs evidence.** A code merge is not enough; each item names what proof closes it.
+
+## Tier Key
+
+- **T1 / pre-public:** Required before Guided or Lab can be treated as non-preview for Jacob/internal use beyond the current sanity walk.
+- **T2 / post-internal hardening:** Required before broader private beta or repeated operator use.
+- **T3 / public or live-readiness:** Required before public multi-tenant or live trading.
+- **T_Q / queued lane:** Track this in the named later lane, but do not start it until prerequisites are real.
+- **Straddles:** Items that legitimately span tiers use `T1/T2` or `T2/T3`. The trigger or closure evidence must name which sub-decision belongs to which tier.
+- **ID tier:** Obligation IDs use the earliest tier where work starts, even when the tier column straddles later closure work.
+
+## Guided Obligations
+
+| ID | Tier | Temporary state today | Final intended state | Trigger | Closure evidence |
+| --- | --- | --- | --- | --- | --- |
+| GUIDED-T1-QUESTIONNAIRE-PERSISTENCE | T1 | Questionnaire answers live in React state only. The completion screen says preview-only and nothing persists. | Persist in-progress questionnaire state in a private scoped store, with resume and maybe-later semantics. | Before any user is expected to leave and return to Guided, or before recommendations are treated as durable. | `questionnaire_in_progress.v1` or equivalent exists outside git; maybe-later resumes; tests prove no user-state in `data/`. |
+| GUIDED-T1-MATCH-PROPOSAL-WRITE | T1 | "See match" and S3 match proposal use fixed preview artifacts/fallbacks. Answers do not generate a durable proposal. | Questionnaire submission generates a scoped `guided_match_proposal.v1` plus composed `guided_match_proposal_view.v1`. | Before multiple Guided strategies or answer-dependent matching is presented as real. | Runtime command writes proposal/view; dashboard reads it; malformed proposal rejected at read boundary; tests cover no-match and multi-candidate cases. |
+| GUIDED-T1-MATCH-FIT-THRESHOLD | T1 | Preview can select the only strategy even when answer tags do not fit. `matched_answer_keys` / `mismatched_answer_keys` now render, but the matcher still needs a minimum-fit rule. | Matcher can reject low-fit proposals, or explicitly select-with-compromises using durable mismatch rationale. | Before answer-dependent matching is presented as real or before the second Guided strategy is admitted. | Minimum-fit threshold implemented; selected-with-compromises tested; no-fit path wins when tags are incompatible; mismatch rationale comes from producer state. |
+| GUIDED-T1-MATCH-ACCEPTANCE-WRITE | T1 | S3 Continue only navigates to disclosure. It does not POST `accept_match`. | Continue runs an authenticated/scoped `accept_match` command and refreshes user-state projection. | Before "Continue" is framed as using Guided rather than preview navigation; depends on the T1 subclosure of `GUIDED-T1-PRIVATE-USER-STATE-STORE`. | Command endpoint/service exists; idempotency key enforced; proposal state changes; events emitted; UI handles success/failure. |
+| GUIDED-T1-DISCLOSURE-ENROLLMENT-WRITE | T1 | S4 Accept only navigates to broker preview after checkbox attestation. | Accept records disclosure acceptance/consent and starts an enrollment in `ACCEPTED_PENDING_BROKER`. | Before broker setup or enrollment is treated as real; depends on the T1 subclosure of `GUIDED-T1-PRIVATE-USER-STATE-STORE`. | Consent ledger/private store write exists; disclosure version pinned; enrollment artifact/projection generated; replay is idempotent. |
+| GUIDED-T1-DECLINE-REMATCH-FLOW | T1 | Decline restarts the questionnaire; Maybe later returns to index. | Decline captures why the match failed, can re-questionnaire/rematch/next-best, and never traps the user in one forced strategy. | Before a real first match is offered to a user. | Decline reason artifact/command exists; UI offers next-best/no-match; `request_rematch`/`request_re_questionnaire` provenance is persisted. |
+| GUIDED-T1-NO-SUITABLE-MATCH | T1 | The preview can always show Steady Tide because there is one candidate fixture. | Matcher can say "no suitable match yet" when answers do not fit any admitted strategy. | Before strategy library expands beyond the current single CANDIDATE. | Matcher returns explicit no-match result; UI renders no-match; tests cover incompatible answers without falling back to Steady Tide. |
+| GUIDED-T1-STRATEGY-LIBRARY-BREADTH | T1 | `data/guided/strategy_library.json` has one CANDIDATE entry, `steady_tide_internal`, backed by `regime_aware_momentum::stop_5_target_15`. | Guided has multiple admitted/promoted strategies with suitability tags, exclusions, disclosures, and evidence typed separately. | Before answer-dependent matching is marketed or relied on. | At least two/three eligible entries pass admission gates; matcher ranks eligible entries; CANDIDATE remains visibly non-public. |
+| GUIDED-T1-QUESTIONNAIRE-ASSET-CLASS-FIRST-SLEEVE | T1 | The asset-class question asks which sleeve to practice with "first," but architecture is one enrollment at a time and OPTIONS still has known contract gaps. | Copy and matcher semantics make sleeve scope honest: either one-at-a-time with no future implication, or real multi-sleeve/multi-enrollment support. | Before the questionnaire is used as a real matcher input or before OPTIONS/CRYPTO entries are admitted. | Product decision documented; questionnaire copy revised; unsupported sleeves are hidden/disabled/no-match; tests cover unavailable sleeve answers. |
+| GUIDED-T1-QUESTIONNAIRE-CAPITAL-CADENCE | T1 | CLOSED 2026-05-08 / SUPERSEDED: the non-discriminating funding/capital-cadence question is absent from the committed questionnaire. Reintroduction must reopen this row or add a replacement obligation. | Funding/capital-cadence stays absent, or is reframed/conditionally shown only when it changes allocation/matching behavior. | Before any funding/capital-cadence question is reintroduced as a real matcher input. | Current questionnaire omits the question; if reintroduced, questionnaire JSON and matcher semantics agree, with tests proving the answer affects matching/allocation. |
+| GUIDED-T1-CASH-RESERVE-NOT-SYMBOL-HARDCODED | T1 | Active enrollment UI separates cash reserve by filtering `symbol !== "SGOV"`. | Holdings carry a durable cash-reserve role/type so UI does not encode SGOV as the only cash equivalent. | Before a second strategy or cash-equivalent can use BIL, TLT, cash, or anything other than SGOV. | Producer emits `holding_role`/asset type for cash reserve; UI uses that field; tests cover non-SGOV cash equivalent. |
+| GUIDED-T1-SEED-EXTERNAL-LINK-CORRECTNESS | T1 | Broker action-required seed paths previously used placeholder external links. Mocks now show Alpaca paper URL; producer seed must stay real. | Broker `ACTION_REQUIRED` links point to the real Alpaca paper dashboard or no link, never placeholder domains. | Before BROKER_ACTION_REQUIRED is shown outside preview or generated from seed data. | `bin/rebuild_guided.py seed-phase6-internal` contains no `broker.example`; generated artifact URL is reviewed; UI handles null safely. |
+| GUIDED-T1-BROKER-RETRY-ACTION-COMMANDS | T1 | S5-S8 preview buttons navigate between snapshots; "Try again" / "I've fixed it" can jump to ACTIVE in preview. | Broker retry/action-required flows run real capability rechecks and only advance when producer state says VERIFIED. | Before broker setup is treated as real. | Retry/recheck command exists; state transitions cover CHECKING, VERIFIED, FAILED variants; UI cannot navigate directly to ACTIVE without verified producer state. |
+| GUIDED-T1-MANDATE-FIT-ENTRY-ZERO | T1 | Entry zero is a CANDIDATE plumbing seed; mandate-fit is visible but not a final admission decision. | Decide whether `regime_aware_momentum::stop_5_target_15` belongs in Guided, and under what mandate/risk disclosure. | Before Steady Tide appears as ACTIVE/admitted or becomes a default recommendation. | Admission gates have operator/legal/evidence decisions; docs record decision; UI copies no longer rely on CANDIDATE preview caveats. |
+| GUIDED-T1-EXIT-ACTION-SURFACE | T1 | Enrollment state machine includes pause/stop variants, but no user-facing exit-action surface exists. | User can pause, stop-hold-to-close, or stop-liquidate with explicit consequences and audit events. | Before an ACTIVE Guided enrollment is real. | Commands and UI exist; events emitted; monitoring reflects pending/complete exit actions; tests cover each state. |
+| GUIDED-T1-AUDIT-VISIBILITY-DEFAULT | T1 | User-facing events filter internal-only visibility; operator-only event view is deferred. | Lock defaults for `audit_visibility`, user-visible event history, and operator-only event/audit surfaces. | Before real user events or support interventions exist. | Policy documented; user and operator surfaces tested; internal-only events do not leak to user-facing views. |
+| GUIDED-T1-LEGAL-COPY-REVIEWED | T1 | Disclosure copy is a preview seed and has not been legally reviewed for non-preview use. | Disclosure templates and required copy are legal-reviewed, versioned, and immutable after acceptance. | Before non-preview consent is accepted. | Legal-reviewed copy/version captured; disclosure IDs immutable; required-copy non-empty validation remains enforced. |
+| GUIDED-T1-DISCLOSURE-USABILITY-VALIDATION | T1 | S4 is designed as a scannable disclosure, but the "30-second read" usability claim is unvalidated. | User can understand the disclosure, candidate/admission status, and paper-vs-live limits without operator explanation. | Before disclosure copy is used outside internal preview. | Usability checklist or Jacob walkthrough captured; confusing copy revised; disclosure still avoids evidence flattening. |
+| GUIDED-T1-CONSENT-LEDGER-REAFFIRMATION | T1 | Acceptance UI carries attestation text, but durable consent ledger, expiry, and reaffirmation behavior are not wired. | Consent acceptance, expiry, and reaffirmation are durable, idempotent, and visible in user/operator audit history. | Before non-preview consent is accepted or enrollment can start. | Consent ledger/private-store write; idempotency enforced; `reaffirmation_due_at` and `consent_expires_at` behavior tested. |
+| GUIDED-T1-PRIVATE-USER-STATE-STORE | T1/T2 | Production user-state falls back to labeled mocks because `GUIDED_LOCAL_REBUILD_PATH` is dev-only. | T1: a scoped private store supports Jacob/internal writes. T2: generalized auth/multi-tenant scope supports broader users. | T1 before accept/enrollment/write paths are real; T2 before non-Jacob or multi-tenant Guided. | Private store chosen; T1 scope resolver exists; no user-state HTTP routes without auth; no user-state committed to git; T2 auth model documented. |
+| GUIDED-T1-HARDCODED-SCOPE-REMOVAL | T1/T2 | `PHASE_6_2_INTERNAL_SCOPE` hardcodes `(jacob, paper_main, default)` for user-state reads. | Scope resolves from authenticated/session context or explicit internal dev configuration, not a permanent constant. | T1 before real internal writes rely on user-state; T2 before non-Jacob users. | `PHASE_6_2_INTERNAL_SCOPE` removed or quarantined to dev-only fixture code; tests cover unsafe/mismatched scope paths. |
+| GUIDED-T1-PRODUCTION-MOCK-FALLBACK-REMOVAL | T1/T2 | `MockFallbackBadge` is correct in production preview while no private store exists. | Once private store/auth exists, production user-state pages show missing-state/error UI rather than mock user-state. | When the T1 private-store subclosure lands. | Production paths no longer fall back to user-state mocks; `MockFallbackBadge` remains only in preview/dev routes if needed; tests prove missing private state is not silently mocked. |
+| GUIDED-T1-MARKETING-NON-FLATTENING-REVIEW | T1 | Evidence non-flattening is enforced in app surfaces, but marketing/App Store/landing copy has not been reviewed against it. | Public-facing copy preserves evidence typology, CANDIDATE/ACTIVE status, paper-vs-live limits, and no single-number strength claim. | Before any public marketing/App Store/landing-page copy references Guided. | Copy review checklist captured; any marketing surfaces link to evidence typology; no unsupported performance or approval claims. |
+| GUIDED-T1-ANONYMIZATION-STANDARD | T1/T2 | Guided has no standard for aggregating user behavior, telemetry, match outcomes, or enrollment stats. | Aggregates require an explicit anonymization/privacy standard before ops dashboards or queryable surfaces use user behavior. | Before Guided telemetry/ops dashboards aggregate across users or before public multi-tenant planning. | Standard documented (for example k-anonymity threshold or differential privacy parameters) and reviewed by Jacob; same shared standard is referenced or extended by Lab aggregates instead of forked; private per-user data remains scoped. |
+| GUIDED-TQ-BROKER-CHECK-GRANULARITY | T_Q | Broker capability snapshot is a single status; UI therefore shows one honest pending state. | Rich step-by-step broker progress exists only if the contract carries structured sub-checks. | If real broker-check latency makes single-status pending UX insufficient. | Broker check contract adds sub-checks; UI renders only producer-provided steps; no fabricated progress. |
+| GUIDED-T2-NOTIFICATION-DELIVERY | T2 | `notification_intent` exists in the model/runtime, but no in-app/email/push adapter delivers it. | Delivery adapters and user-visible notification center for Guided intents. | Before users depend on Guided for broker/action/risk notices. | Adapter isolation tests; delivery opt-in; retry/de-dupe; no live external calls in tests. |
+| GUIDED-T2-LIVE-EVENT-UPDATES | T2 | Event history reads once per page render. No polling/SSE. | Live-updating event feed where user expectations require it. | Before Guided is used as an active monitoring surface. | Polling/SSE/refresh strategy implemented; stale-state UI; load and error handling verified. |
+| GUIDED-T2-HOMEPAGE-RIBBON | T2 | PR #6 added a compact nav pill. The richer guided ribbon/summary is deferred. | Trading homepage shows current Guided summary and entry/re-run affordances without overclaiming. | When Guided has persisted enrollment state or re-run onboarding command. | Ribbon designed with T1 flows; no overlap/overflow on mobile; re-run command supersedes prior proposal/enrollment correctly. |
+| GUIDED-T2-MULTI-ENROLLMENT-ALLOCATION | T2/T3 | Current framing is one enrollment at a time. "First strategy" language has no real multi-enrollment path. | Per-user allocation layer supports multiple enrollments/strategies intentionally. | Before UI suggests "add another strategy" or multi-strategy Guided management. | Allocation model exists; conflicts/risk budget handled; monitoring aggregates per strategy; copy avoids implying unsupported multi-enrollment. |
+| GUIDED-T3-LIVE-SWAP-PATH | T3 | Guided cannot swap live strategies. Preview/paper surfaces stop well before live replacement. | A governed path can replace or resize live daily strategy allocations only after all live-readiness rails pass. | Before any "make this live" or "replace my live strategy" affordance exists. | Legal, broker, monitoring, risk, consent, and audit rails pass; operator confirmation required; rollback/demotion path tested. |
+
+## Data Platform Obligations
+
+| ID | Tier | Temporary state today | Final intended state | Trigger | Closure evidence |
+| --- | --- | --- | --- | --- | --- |
+| DATA-T1-PRIVATE-STORE-DECISION | T1/T2 | Public/static Guided artifacts live in git; private state has only dev-local rebuild reads. | Chosen private store and scope model for user/account/proposal/enrollment/event/consent records. | Before real Guided writes or public multi-tenant planning. | Architecture note, env plan, auth/scope resolver, retention/delete behavior, migration plan. |
+| DATA-T1-RESEARCH-LAB-GIT-STATE-CLASSIFICATION | T1 | Some `data/research_lab/jacob/paper_main/default/*` artifacts predate this slice and may look user-specific. | Classify which Lab artifacts may remain public/static fixtures and which must move to private state. | Before Lab/Advanced resumes as a serious lane. | Classification doc; any private/stateful artifacts moved or redacted; fixtures clearly marked synthetic/public. |
+
+## Advanced / Lab Obligations
+
+| ID | Tier | Temporary state today | Final intended state | Trigger | Closure evidence |
+| --- | --- | --- | --- | --- | --- |
+| LAB-TQ-EXISTING-TALON-WORK-INTEGRATION | T_Q / Lab Phase 0 | Talon/idea-generation packet work exists on PRs/test branches, not production `main`. | Lab Phase 0 starts from branch archaeology and contract reconciliation, not a blank-slate rebuild. | When Advanced/Lab work resumes after Guided T1 gate. | Branch map reviewed (`codex/lab-talon-reference-builder`, `claude/lab-redesign-idea-detail-controls`, `codex/strategy-authoring-contract-v1`, `test/packet-authoring-walkthrough`, `test/lab-redesign-talon-pipeline`); keep/drop list documented. |
+| LAB-TQ-SANDBOX-VS-ENROLLMENT-WALL | T_Q / Lab Phase 0 | Product map states the wall phrase, but Lab productionization has not rerun the full audit gauntlet. | UI/contracts/routes/tables consistently use sandbox/assignment for Lab and enrollment for Guided. | Before any non-internal user touches Lab. | Audit verifies vocabulary in code/docs; no sandbox can receive passport role or Guided/live admission directly. |
+| LAB-TQ-PRIVATE-BY-DEFAULT-CONTRIBUTION | T_Q / Lab Phase 0 | Private-by-default principle is captured, but contribution/license flow is not built. | User-created strategies remain private unless a deliberate contribution/license flow grants broader use. | Before user-created Lab strategy can be referenced by Talon, matching, marketing, aggregation, or other users. | Contribution contract; consent UI; attribution/provenance ledger; shared anonymization standard referenced or extended from Guided/privacy handoff before aggregates. |
+
+## Strategy Generation Obligations
+
+| ID | Tier | Temporary state today | Final intended state | Trigger | Closure evidence |
+| --- | --- | --- | --- | --- | --- |
+| STRATGEN-TQ-HYBRID-CURATED-GATE | T_Q / after Lab earns trust | Strategy generation is hybrid-curated/Talon-assisted only; autonomous generation is gated. | Autonomous generation tracks unlock only after Lab passes later audits with provenance/evidence integrity. | At least 3 hybrid-curated strategies admitted to ACTIVE without recurring honesty findings across 2 consecutive Lab audits. | Audit record; provenance tests; no evidence-tier flattening; generated strategies cannot bypass bench/promotion. |
+
+## How To Update This Ledger
+
+For any new temporary behavior, add a row before the PR merges. Use this shape:
+
+```md
+| AREA-TIER-SHORT-NAME | T1/T2/T3/T_Q | Temporary state | Final state | Trigger | Closure evidence |
+```
+
+When closing an obligation:
+
+1. Keep the row.
+2. Add `CLOSED YYYY-MM-DD` to the ID or temporary-state cell.
+3. Link the PR/commit/handoff that proves closure.
+4. If the item was intentionally abandoned, mark `SUPERSEDED` and name the replacement decision.
+
+## Sources Swept
+
+- `_design_handoff/VIRES_PRODUCT_MAP_2026-05-07.md`
+- `_design_handoff/CLAUDE_AUDIT1_UX_HONESTY_2026-05-07.md`
+- `_design_handoff/CLAUDE_AUDIT1_VISUAL_WALK_2026-05-07.md`
+- `_design_handoff/CLAUDE_PHASE6_2_LANDED_2026-05-07.md`
+- `_design_handoff/CLAUDE_PHASE6_READINESS_2026-05-07.md`
+- `components/vires/guided/*`
+- `app/vires/guided/*`
+- `data/guided/*`
+- `lib/guided-data-source.server.ts`

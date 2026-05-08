@@ -154,11 +154,19 @@ Concretely, this means:
 
 5. **Live trading only after the six readiness rails are real.** Legal, broker, monitoring, risk, consent, audit. Each of those is its own sub-program. Live unlock is the latest possible gate. The architecture supports it (mode taxonomy includes `LIVE_AUTONOMOUS`), but the architecture supporting something is not the same as the system being ready for it.
 
+## Deferred obligations
+
+The active ledger for temporary-but-intentional behavior is
+`_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER.md`.
+Any future slice that ships preview, mock, single-tenant, non-persistent,
+or otherwise non-final behavior must add or update a ledger row with a
+tier, trigger, and closure evidence before merging.
+
 ## Anti-patterns to actively avoid
 
 These were named explicitly during the architecture dialog with Codex and remain operative:
 
-- **Quiet deferral.** Anything pushed to "later" must land in a tier above (T1 / T2 / T3 / T_Q) with a trigger condition. No "we'll see."
+- **Quiet deferral.** Anything pushed to "later" must land in the deferred obligations ledger with a tier (T1 / T2 / T3 / T_Q), trigger condition, and closure evidence. No "we'll see."
 - **Audit avoidance.** Each audit checkpoint is a hard event. If skipped, the next checkpoint inherits the prior one's findings as already-overdue.
 - **Tier inflation.** Items don't get demoted between tiers without an explicit reason. T0 items don't quietly slide to T1 because the slice is taking longer than expected.
 - **Evidence flattening.** No surface — UI, marketing, App Store description, landing page — can lead with a single performance number. Evidence is typology, never strength score.
@@ -175,6 +183,7 @@ These were named explicitly during the architecture dialog with Codex and remain
 ## When to consult this map
 
 - **Before scoping new work:** which lane does the work live in? Does it respect the sequencing principle?
+- **Before relying on preview behavior:** does the deferred obligations ledger say this is final, or is it still an open temporary state?
 - **When something feels out of order:** is this premature? Is it pulling forward a lane that doesn't yet have its prerequisites?
 - **When a contract change is proposed:** which lane owns it? What does the lane's hard rule say about the change?
 - **When a UX or product question arises:** does this collapse the wall phrase, blur a vocabulary distinction, or flatten evidence?
