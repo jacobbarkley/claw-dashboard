@@ -5,23 +5,44 @@ import { usePathname } from "next/navigation"
 import { ViresMark } from "./shared"
 import { useViresTheme } from "./frame"
 
-// Inner Vires shell: Trading · Bench · Plateau pills, plus the wordmark and
+// Inner Vires shell: Trading · Bench · Guided pills, plus the wordmark and
 // the PAPER/LIVE mode pill. Lives at the top of every /vires/* route via
 // app/vires/layout.tsx so the inner navigation is consistent.
 //
-// Per the design handoff `plateau` is italic + slightly muted because it's
-// scaffolding — once Plateau primer popovers are inlined into the bench
-// metric tooltips, this top-level entry can be removed. Keep until then.
-
+// The `guided` pill links to /vires/guided/preview — the internal paper-first
+// guided flow (post PR #5 merge), not a public-ready product surface. It's
+// rendered italic + slightly muted on purpose to signal "internal preview,
+// expect change"; the italic-pill pattern was previously used for the
+// now-retired `plateau` scaffolding tab and is reused here for the same
+// "scaffolding / not promoted" signal. The hover title spells out the preview
+// semantics in full ("Internal preview · paper-first guided flow, not
+// public-ready") since the visible label is intentionally compact —
+// `.t-eyebrow` is uppercased and heavily tracked, and a longer label
+// pushed the mobile nav row off-screen on ~390px viewports. Drop the italic
+// styling when Guided graduates past the T1 pre-public cleanup gate.
+//
 // Plateau primer retired from the outer nav 2026-04-22. Its content now lives
 // on passport pages via the Parameter Stability section (real plateau heatmap
 // for sweep-based strategies, honest empty state elsewhere) + the Plateau /
 // Era Robustness glossary InfoPops on readiness scorecards. The standalone
 // /vires/plateau route still resolves for direct links, but no longer has a
 // nav surface. See PASSPORT_V2_SPEC_2026-04-21.md §9 for the inlining plan.
-const TABS: Array<{ href: string; key: "trading" | "bench"; label: string; italic?: boolean }> = [
-  { href: "/vires",          key: "trading",  label: "trading"  },
-  { href: "/vires/bench",    key: "bench",    label: "bench"    },
+const TABS: Array<{
+  href: string
+  key: "trading" | "bench" | "guided"
+  label: string
+  italic?: boolean
+  title?: string
+}> = [
+  { href: "/vires",                key: "trading", label: "trading" },
+  { href: "/vires/bench",          key: "bench",   label: "bench"   },
+  {
+    href: "/vires/guided/preview",
+    key: "guided",
+    label: "guided",
+    italic: true,
+    title: "Internal preview · paper-first guided flow, not public-ready",
+  },
 ]
 
 export function ViresInnerNav({ mode = "PAPER" }: { mode?: "PAPER" | "LIVE" }) {
@@ -29,10 +50,12 @@ export function ViresInnerNav({ mode = "PAPER" }: { mode?: "PAPER" | "LIVE" }) {
   const { theme, toggle } = useViresTheme()
   // Map pathname → active tab key. /vires (exact) is trading; everything
   // under /vires/bench (including the Lab sub-tab) highlights the bench
-  // tab; the archived /vires/plateau direct link falls back to trading.
-  const activeKey: "trading" | "bench" =
+  // tab; everything under /vires/guided highlights the guided preview tab;
+  // the archived /vires/plateau direct link falls back to trading.
+  const activeKey: "trading" | "bench" | "guided" =
     pathname === "/vires" ? "trading"
     : pathname.startsWith("/vires/bench") ? "bench"
+    : pathname.startsWith("/vires/guided") ? "guided"
     : "trading"
   const isPaper = mode === "PAPER"
 
@@ -85,7 +108,7 @@ export function ViresInnerNav({ mode = "PAPER" }: { mode?: "PAPER" | "LIVE" }) {
                   opacity: t.italic ? 0.85 : 1,
                   textDecoration: "none",
                 }}
-                title={t.italic ? "Parameter Stability primer · scaffolding while inline popovers land" : undefined}
+                title={t.title}
               >
                 {t.label}
               </Link>
