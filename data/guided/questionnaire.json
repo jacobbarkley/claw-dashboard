@@ -1,0 +1,132 @@
+{
+  "schema_version": "questionnaire.v1",
+  "questionnaire_id": "guided_onboarding",
+  "version": "v1",
+  "title": "Guided onboarding",
+  "questions": [
+    {
+      "key": "risk_profile",
+      "sequence": 1,
+      "text": "How much market movement are you comfortable seeing?",
+      "why_we_ask_text": "This helps separate conservative, balanced, and risk-on strategy matches.",
+      "answer_options": [
+        {
+          "option_id": "conservative",
+          "label": "Conservative",
+          "matcher_value": "CONSERVATIVE",
+          "matcher_tags": [
+            "conservative_drawdown"
+          ]
+        },
+        {
+          "option_id": "balanced",
+          "label": "Balanced",
+          "matcher_value": "BALANCED",
+          "matcher_tags": [
+            "balanced_risk"
+          ]
+        },
+        {
+          "option_id": "risk_on",
+          "label": "Risk-on",
+          "matcher_value": "RISK_ON",
+          "matcher_tags": [
+            "risk_on"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "drawdown_tolerance",
+      "sequence": 2,
+      "text": "How would you feel if your account dropped 20% in a single month?",
+      "why_we_ask_text": "People often overestimate their tolerance until they see the number.",
+      "answer_options": [
+        {
+          "option_id": "hold_wait",
+          "label": "I'd hold and wait it out",
+          "matcher_value": "HIGH_DRAWDOWN_TOLERANCE",
+          "matcher_tags": [
+            "risk_on"
+          ]
+        },
+        {
+          "option_id": "uncomfortable_stay",
+          "label": "I'd be uncomfortable but stay",
+          "matcher_value": "CONSERVATIVE_DRAWDOWN",
+          "matcher_tags": [
+            "conservative_drawdown"
+          ]
+        },
+        {
+          "option_id": "cut_losses",
+          "label": "I'd want to cut losses quickly",
+          "matcher_value": "LOW_DRAWDOWN_TOLERANCE",
+          "matcher_tags": [
+            "conservative_drawdown"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "asset_class_preference",
+      "sequence": 3,
+      "text": "Which sleeve do you want this paper strategy to practice with?",
+      "why_we_ask_text": "Guided v1 creates one paper enrollment at a time.",
+      "answer_options": [
+        {
+          "option_id": "us_equities",
+          "label": "US equities",
+          "matcher_value": "STOCKS",
+          "matcher_tags": [
+            "us_equities"
+          ]
+        },
+        {
+          "option_id": "crypto",
+          "label": "Crypto",
+          "matcher_value": "CRYPTO",
+          "matcher_tags": [
+            "crypto"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "time_horizon",
+      "sequence": 4,
+      "text": "How long should a typical trade last?",
+      "why_we_ask_text": "Holding period changes which strategy evidence is relevant.",
+      "answer_options": [
+        {
+          "option_id": "multi_week",
+          "label": "A few days to a few weeks",
+          "matcher_value": "MULTI_WEEK",
+          "matcher_tags": [
+            "multi_week_horizon"
+          ]
+        },
+        {
+          "option_id": "long_term",
+          "label": "Months or longer",
+          "matcher_value": "LONG_TERM",
+          "matcher_tags": [
+            "long_term"
+          ]
+        }
+      ]
+    }
+  ],
+  "retention": {
+    "retention_class": "PUBLIC_STATIC",
+    "delete_behavior": "TOMBSTONE",
+    "contains_user_data": false,
+    "contains_broker_data": false,
+    "contains_regulated_data": false
+  },
+  "migration": {
+    "introduced_in_schema_version": "questionnaire.v1",
+    "compatible_from_schema_version": "questionnaire.v1",
+    "migration_policy": "ADDITIVE_ONLY"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schema_version": "strategy_library.v1",
+  "generated_at": "2026-05-07T15:30:00Z",
+  "entries": [
+    {
+      "schema_version": "strategy_library_entry.v1",
+      "library_entry_id": "steady_tide_internal",
+      "library_entry_version": 1,
+      "status": "CANDIDATE",
+      "sleeve": "STOCKS",
+      "mandate": "TACTICAL_PARTIAL",
+      "mandate_subtitle": "Tactical equity strategy",
+      "friendly_name": "Steady Tide",
+      "plain_english_thesis": "Trades a small set of large-cap US stocks when momentum aligns with a supportive market regime.",
+      "drawdown_headline": "Bench max drawdown was 8.9% over the evaluated window.",
+      "risk_summary": "Uses 5% stops, 15% targets, max-hold exits, and low single-position sizing.",
+      "holding_period_typical_label": "~5-15 days per trade",
+      "trade_frequency_typical_label": "~2-4 per month",
+      "asset_class_label": "US equities",
+      "coverage_tags": [
+        "conservative_drawdown",
+        "balanced_risk",
+        "us_equities",
+        "multi_week_horizon",
+        "tactical_partial",
+        "paper_internal"
+      ],
+      "backing_strategy": {
+        "backing_record_id": "regime_aware_momentum::stop_5_target_15",
+        "strategy_id": "regime_aware_momentum",
+        "variant_id": "stop_5_target_15",
+        "passport_role_id": "STOCKS_BROAD_MOMENTUM",
+        "execution_manifest_id": "q076b_regime_aware_momentum_frozen_reference.paper_v1",
+        "execution_manifest_path": "backtest/bench/manifests/q076b_regime_aware_momentum_frozen_reference.execution_manifest.json",
+        "strategy_parameters_hash": "sha256:regime-aware-momentum-stop-5-target-15"
+      },
+      "disclosure_version_id": "disc_steady_tide_v1",
+      "evidence": [
+        {
+          "evidence_id": "steady_tide_bench_multi_era_001",
+          "evidence_type": "BENCH_MULTI_ERA",
+          "freshness": {
+            "last_evaluated_at": "2026-05-07T15:30:00Z",
+            "data_window_start": "2022-05-08T15:30:00Z",
+            "data_window_end": "2026-05-06T15:30:00Z",
+            "staleness_policy": "flag_after_30_days"
+          },
+          "sample_size": 247,
+          "regime_coverage": [
+            "CALM",
+            "VOLATILE",
+            "RISK_OFF"
+          ],
+          "broker_realism": "SIMULATED",
+          "fill_realism": "SPREAD_AWARE_SIMULATED",
+          "source_refs": {
+            "bench_report": "backtest/bench/results/q076b/stock_bench_report.json"
+          },
+          "notes": [
+            "CANDIDATE evidence for internal preview; not public ACTIVE admission."
+          ]
+        }
+      ],
+      "admission": {
+        "promoted": false,
+        "disclosed": false,
+        "evidence_typed": false,
+        "mandate_stated": false,
+        "broker_capability_checked": false,
+        "operator_approved": false,
+        "approved_by": null,
+        "approved_at": null
+      },
+      "retention": {
+        "retention_class": "PUBLIC_STATIC",
+        "delete_behavior": "TOMBSTONE",
+        "contains_user_data": false,
+        "contains_broker_data": false,
+        "contains_regulated_data": false
+      },
+      "migration": {
+        "introduced_in_schema_version": "strategy_library_entry.v1",
+        "compatible_from_schema_version": "strategy_library_entry.v1",
+        "migration_policy": "ADDITIVE_ONLY"
+      }
+    }
+  ],
+  "retention": {
+    "retention_class": "PUBLIC_STATIC",
+    "delete_behavior": "TOMBSTONE",
+    "contains_user_data": false,
+    "contains_broker_data": false,
+    "contains_regulated_data": false
+  },
+  "migration": {
+    "introduced_in_schema_version": "strategy_library.v1",
+    "compatible_from_schema_version": "strategy_library.v1",
+    "migration_policy": "ADDITIVE_ONLY"
+  }
+}
