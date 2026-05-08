@@ -243,9 +243,10 @@ export function MatchProposalSurface({
   )
 }
 
-// Phase 6 swap path. Once Codex's composed `guided_match_proposal_view.v1`
-// read is fetched at /api/guided/match-proposal-view/<proposal_id>, the page
-// route hands the view to this wrapper instead of fetching three artifacts.
+// Phase 6 swap path. The page server component reads the composed
+// `guided_match_proposal_view.v1` artifact via
+// `readGuidedMatchProposalView()` in lib/guided-data-source.server.ts and
+// hands the view to this wrapper instead of fetching three artifacts.
 // The visual component is unchanged.
 export function MatchProposalSurfaceFromView({ view }: { view: GuidedMatchProposalView }) {
   return (
