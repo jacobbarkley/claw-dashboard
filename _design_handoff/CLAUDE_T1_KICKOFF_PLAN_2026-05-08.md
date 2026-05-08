@@ -71,9 +71,11 @@ From `CLAUDE_AUDIT1_VISUAL_WALK_2026-05-07.md`:
 
 ```
 [ Browser ]
-    │ user action (e.g. Continue on S3)
+    │ user action (e.g. Continue on S3) — NO direct call to Codex,
+    │ NO Codex auth material in the client bundle
     ▼
-[ Next.js server component / route handler ]  ←── claw-dashboard repo
+[ Next.js route handler / server action / server component ]  ←── claw-dashboard
+    │ "use server" / app/api/* boundary
     │ resolveCurrentScope()
     │
     ├── reads ──▶ [ lib/guided-data-source.server.ts (stable API) ]
@@ -83,7 +85,8 @@ From `CLAUDE_AUDIT1_VISUAL_WALK_2026-05-07.md`:
     │            ├── FilesystemGuidedReadStore  (dev/preview, JSON files)
     │            └── GuidedProjectionReadStore  (HTTP to Codex projection endpoint)
     │
-    └── writes ─▶ [ lib/guided-commands.client.ts ]
+    └── writes ─▶ [ lib/guided-commands.server.ts ] ←── server-only file
+                      │ imports `server-only`; never reaches the client bundle
                       │ POST /commands/<name>
                       ▼
 ─────────── HTTP boundary ───────────────────────────────
@@ -98,6 +101,8 @@ From `CLAUDE_AUDIT1_VISUAL_WALK_2026-05-07.md`:
 ```
 
 **The dashboard side of this diagram contains zero database knowledge.** No `pg`, no `@vercel/postgres`, no Drizzle, no Prisma, no SQLAlchemy, no schema-row types. Postgres lives entirely beyond the HTTP boundary. If Postgres is swapped for any other store, only the lower half of the diagram changes — `claw-dashboard/` doesn't compile differently.
+
+**The browser never calls Codex directly.** All Guided write paths go: browser → dashboard route handler / server action → `lib/guided-commands.server.ts` → Codex. `CODEX_COMMAND_BASE_URL` and any service auth material are server-only env vars, never `NEXT_PUBLIC_*`.
 
 ### 2.1 The storage seam (most important architectural decision)
 
@@ -124,9 +129,12 @@ The `GuidedReadStore` interface methods take `(id, scope)` and return typed proj
 
 #### Write seam — Codex command service (HTTP), no dashboard DB writes
 
-The dashboard never executes writes against the store. Period. Write paths are implemented as a thin client `lib/guided-commands.client.ts` that POSTs to Codex's command service:
+The dashboard never executes writes against the store. Period. Write paths are implemented as a **server-only** thin client `lib/guided-commands.server.ts` that POSTs to Codex's command service:
 
 ```ts
+// lib/guided-commands.server.ts
+import "server-only"
+
 submitQuestionnaire(answers, scope) → Promise<{ proposal_id }>
 acceptMatch(proposalId, scope, idempotencyKey) → Promise<{ enrollment_id }>
 declineMatch(proposalId, scope, reason) → Promise<void>
@@ -134,7 +142,15 @@ acceptDisclosure(proposalId, disclosureVersionId, attestation, idempotencyKey) �
 saveQuestionnaireProgress(answers, scope) → Promise<void>
 ```
 
-Each function POSTs JSON to `${CODEX_COMMAND_BASE_URL}/commands/<name>` with auth headers. The dashboard imports zero DB drivers. This is the single most important rule for migration optionality — it makes the database an implementation detail of Codex's runtime, invisible to everything in `claw-dashboard/`.
+Each function POSTs JSON to `${CODEX_COMMAND_BASE_URL}/commands/<name>` with auth headers.
+
+**Server-only is non-negotiable, enforced four ways:**
+- The file imports `server-only` at the top — Next.js fails the build if any client component imports from it.
+- The `.server.ts` suffix is a coding-convention signal to humans and grep that this code never goes to the browser.
+- Browser/client components never call Codex directly. UI submits to dashboard route handlers (`app/api/guided/*/route.ts`) or server actions (`"use server"` functions). Only those server-side handlers import from `lib/guided-commands.server.ts`.
+- `CODEX_COMMAND_BASE_URL` and any service auth material (JWT signing key / shared secret / mTLS cert) are **server-only env vars**. Never `NEXT_PUBLIC_*`. Never inlined into the client bundle.
+
+The dashboard imports zero DB drivers. This is the single most important rule for migration optionality — it makes the database an implementation detail of Codex's runtime, invisible to everything in `claw-dashboard/`.
 
 Why writes can't live in the dashboard:
 - Codex owns the runtime; runtime owns projections; if dashboard wrote, projections would be a second source of truth
@@ -155,7 +171,7 @@ Rationale:
 - Consent ledger needs ACID + replay-idempotency. Document stores fight this.
 - Codex's runtime already produces JSON artifacts with stable schemas — relational tables map cleanly.
 - Vercel-native integrations exist for both Neon and Supabase; auth integration is straightforward.
-- Memory note `multi-tenant-migration-plan-2026-05-03.md` already sequences "DB → auth → AI worker tier → Capacitor" — Postgres is the assumed direction.
+- Postgres is the direction set by `DATA-T1-PRIVATE-STORE-DECISION` in `_design_handoff/VIRES_DEFERRED_OBLIGATIONS_LEDGER.md` and the AGENTS.md "no user-state in git" rule — both durable in-repo references that frame this T1 work.
 - Branching (Neon especially) gives us cheap dev DBs that mirror prod schema.
 
 Not chosen:
@@ -210,21 +226,26 @@ New tables that don't have a filesystem analog:
 | `consent_ledger` | Disclosure acceptances with `idempotency_key`, `reaffirmation_due_at`, `consent_expires_at`, immutable disclosure_version_id | `GUIDED-T1-CONSENT-LEDGER-REAFFIRMATION` |
 | `match_decline_reasons` | Decline rationale capture for `GUIDED-T1-DECLINE-REMATCH-FLOW` | `GUIDED-T1-DECLINE-REMATCH-FLOW` |
 
-All tables namespaced by `account_id`. Row-level access goes through the resolver — no path-traversal-style scope leakage.
+Primary keys above are illustrative as `(account_id, ...)`; final keys partition by the full scope tuple `(user_id, account_id, strategy_group_id, ...)` matching `GuidedScope`. All row-level access goes through the resolver — no path-traversal-style scope leakage.
 
-### 2.4 Retention / delete posture
+### 2.4 Retention / delete / tombstone posture
 
-| Class | Retention | Deletion |
-|---|---|---|
-| Public/static (library / questionnaire / disclosures) | Forever; in git | N/A — curated content |
-| Questionnaire-in-progress | 30 days from last update | Auto-purge after retention; user-deletable on request |
-| Consent ledger | Forever (legal) | No deletion. SUPERSEDED rows retained for audit. |
-| Match proposals | Forever | No user-initiated deletion at T1; support intervention only with audit row |
-| Enrollments + enrollment views | Forever | Same as proposals |
-| Enrollment events | Append-only; forever | Soft-delete via `audit_visibility` only |
-| `MockFallbackBadge` paths | Removed from production once T1.0e cutover lands | Closes `GUIDED-T1-PRODUCTION-MOCK-FALLBACK-REMOVAL` |
+T1 must define this per table — it's required closure evidence for `DATA-T1-PRIVATE-STORE-DECISION`. The migration cutover (T1.0e) cannot pass review without this matrix being implemented and tested.
 
-Right-to-be-forgotten / GDPR-style erasure is **not** a T1 obligation — the ledger doesn't list one. Scope it for T2/T3 when legal review (`GUIDED-T1-LEGAL-COPY-REVIEWED`) flags it.
+| Class | Retention | Deletion behavior | Tombstone? |
+|---|---|---|---|
+| Public/static (library / questionnaire / disclosures) | Forever; in git | N/A — curated content | N/A |
+| Questionnaire-in-progress | 30 days from last update | Auto-purge after retention; operator-initiated delete on user request via support intervention | No — pre-consent state, no audit obligation |
+| Consent ledger | Forever (legal) | No row deletion. Reaffirmation/expiry creates SUPERSEDED rows; original consent row immutable. | Yes — every consent state change is a new immutable row pointing at the predecessor |
+| Match proposals + views | Forever | No user-initiated deletion at T1; operator deletion via support intervention writes an audit row | Soft-delete flag, original row retained |
+| Enrollments + enrollment views | Forever | Same as proposals | Same as proposals |
+| Enrollment events | Append-only; forever | No deletion; visibility filtered via `audit_visibility` only | N/A — events are themselves the audit log |
+
+**T1 scope (must ship):** the per-table posture above; an operator-initiated single-user deletion path that writes an audit row; tombstone semantics for consent + proposal/enrollment soft-deletes; tests that prove deletion behavior matches the matrix.
+
+**T2/T3 scope (deferred):** full self-service account erasure ("delete my account" UI), multi-system propagation (e.g., notifying Codex's analytics/ops aggregates), regulatory-jurisdiction-aware retention rules. These require pipelines T1 doesn't ship — consent reaffirmation broadcasting, downstream notification, jurisdiction routing — and depend on `GUIDED-T1-LEGAL-COPY-REVIEWED` and `GUIDED-T1-ANONYMIZATION-STANDARD` landing first. Add a ledger row when T1.0e closes if the work feels imminent; otherwise it surfaces naturally during T2 planning.
+
+The `MockFallbackBadge` runtime fallback is migration behavior, not retention behavior — covered separately in §2.9.
 
 ### 2.5 Local dev behavior
 
@@ -304,11 +325,24 @@ Each PR is small, has a single owner, and has clear closure evidence. PR-T1.0a i
 | **T1.3 — Match acceptance + decline-rematch** | Codex (commands + projection) + Claude (UI) | `GUIDED-T1-MATCH-ACCEPTANCE-WRITE`, `GUIDED-T1-DECLINE-REMATCH-FLOW` | T1.2 |
 | **T1.4 — Disclosure acceptance + consent ledger** | Codex (commands + ledger table + projection) + Claude (UI) | `GUIDED-T1-DISCLOSURE-ENROLLMENT-WRITE`, `GUIDED-T1-CONSENT-LEDGER-REAFFIRMATION` | T1.3 |
 
+**T1.0b specifics (Codex's foundation PR):**
+- DB schema migrations (Postgres tables for proposals, enrollments, events, consent ledger, questionnaires-in-progress, decline reasons)
+- Command service skeleton — HTTP endpoints exist but return 501 until each write-path PR fills them in
+- Provider choice locked (Neon vs Supabase, picked per §6 open decisions)
+- Migration tool chosen per Codex's runtime language
+
+**Command contract guardrails (must be set in T1.0b, inherited by T1.1–T1.4):**
+- **Authenticated scope on every command.** Service rejects requests without a verified scope tuple (`user_id`, `account_id`, `strategy_group_id`). Authentication shape per the §6 "auth → command service handoff" decision.
+- **Replay/idempotency on irreversible commands.** Every command that mutates user-visible state (`accept_match`, `accept_disclosure`, `start_enrollment`, exit-action commands) requires a client-supplied `idempotency_key`. The service de-duplicates on `(account_id, command, idempotency_key)`. Read-only-equivalent commands (`save_questionnaire_progress`) can opt out.
+- **Request / correlation ID.** Every request carries `X-Request-ID` (per-call) and an optional `X-Correlation-ID` that links a user-visible flow across commands (e.g., questionnaire submit → match proposal → accept → enrollment). Both surface in events, audit rows, and Codex logs.
+- **Typed error envelope.** All non-2xx responses share one shape: `{ error_code, error_message, retriable: bool, fields?: { [key]: string } }`. The dashboard renders by `error_code`, never by parsing `error_message`.
+- **No live external API calls in tests.** Codex's command service test suite forbids real HTTP calls to brokers, Codex's own LLM-backed services, or any third party. Same rule for the dashboard's command client tests.
+
 **T1.0c specifics (the slice that earns or breaks migration optionality):**
 - New file `lib/guided-read-store.server.ts` defines the `GuidedReadStore` interface (typed methods, no path strings, no DB types in the surface).
 - New file `lib/guided-read-store.filesystem.server.ts` implements `FilesystemGuidedReadStore` — moves the existing `path.join`/`readFile`/zod-validate logic out of `guided-data-source.server.ts` into this implementation. No behavior change in dev.
 - `lib/guided-data-source.server.ts` retains its public exports unchanged; internals delegate to whichever `GuidedReadStore` the resolver picks.
-- New file `lib/guided-commands.client.ts` defines the write seam — typed thin POST functions to the Codex command service. In T1.0c every command throws `CommandServiceUnreachableError` because the service base URL isn't wired yet; the *shape* lands here, the wiring lands in T1.0d.
+- New file `lib/guided-commands.server.ts` defines the write seam — typed thin POST functions to the Codex command service. **Imports `server-only` at the top.** In T1.0c every command throws `CommandServiceUnreachableError` because the service base URL isn't wired yet; the *shape* lands here, the wiring lands in T1.0d.
 - Optionally a stub `GuidedProjectionReadStore` lands in this PR but is never selected (no `CODEX_PROJECTION_BASE_URL` set in the dev loop yet). Final implementation lives in T1.0e once Codex's projection endpoint is real.
 - No new behavior visible to users. tsc + build clean. Existing dev smoke (`GUIDED_LOCAL_REBUILD_PATH` set) still renders all 7 Guided preview routes without `MockFallbackBadge`.
 
@@ -331,7 +365,7 @@ These don't block the write-path PRs. They land when their owner has bandwidth a
 
 ### Claude (dashboard / UX)
 - This kickoff plan
-- T1.0c — read seam (`GuidedReadStore` interface + `FilesystemGuidedReadStore` impl) + write seam skeleton (`guided-commands.client.ts`). Helper API contract preserved.
+- T1.0c — read seam (`GuidedReadStore` interface + `FilesystemGuidedReadStore` impl) + write seam skeleton (`lib/guided-commands.server.ts`, server-only). Helper API contract preserved.
 - T1.0d UI — sign-in surface, post-sign-in redirect, scope-aware error states; wires `CODEX_COMMAND_BASE_URL` into the command client
 - T1.0e UI — `GuidedProjectionReadStore` impl (HTTP client to Codex's projection endpoint) + empty-state UI replaces `MockFallbackBadge` paths in production
 - T1.1 UI — save-on-answer (calls command client), "maybe later" resume (reads via new helper); new helper `readQuestionnaireInProgress` lands here
@@ -384,7 +418,7 @@ These don't block the write-path PRs. They land when their owner has bandwidth a
 - Codex review: PASS — explicitly confirming the dashboard never imports a DB driver and never writes to the store
 - Jacob review: PASS
 - No code changes proposed in this PR (anyone can request schema-design tweaks; those go into T1.0b's PR description, not into this doc)
-- The ledger row `DATA-T1-PRIVATE-STORE-DECISION` is updated with the agreed storage choice in its closure-evidence column
+- **No ledger closure on this PR.** T1.0a records architecture; it does not deliver provider/env/retention/migration evidence. If Jacob picks a provider on this PR, the choice is recorded in the PR thread/body, not in the ledger's closure-evidence column. The actual `DATA-T1-PRIVATE-STORE-DECISION` row updates when T1.0b lands migrations (provider + tool decision evidence) and again when T1.0e lands the production cutover (retention + multi-tenant scope evidence).
 
 After merge, T1.0b (Codex schema PR + command service skeleton) opens against `main`.
 
