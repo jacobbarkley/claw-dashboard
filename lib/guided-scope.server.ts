@@ -1,24 +1,28 @@
 // Server-only Guided scope resolver (T1.0d).
 //
-// Phase 6.2 closes GUIDED-T1-HARDCODED-SCOPE-REMOVAL by retiring the
-// PHASE_6_2_INTERNAL_SCOPE constant that previously sat at every
-// user-state read site. From T1.0d forward:
+// Phase 6.2 closes the T1 sub of GUIDED-T1-HARDCODED-SCOPE-REMOVAL by
+// retiring the PHASE_6_2_INTERNAL_SCOPE constant that previously sat at
+// every user-state read site. From T1.0d forward:
 //
 //   1. The Auth.js session is the only authority for caller identity.
 //      Body-supplied scope (e.g. inside a command request) is treated as
 //      an untrusted hint and is overridden by the value resolved here.
-//   2. The scope is derived from the verified email allowlist. The
-//      mapping is intentionally explicit and lives in env so production
-//      can swap users without a code change.
+//   2. Sign-in eligibility (AUTH_ALLOWED_EMAILS, in lib/auth.server.ts)
+//      is intentionally separate from Guided scope assignment. Scope
+//      mapping reads GUIDED_T1_SCOPE_EMAILS — only emails on this list
+//      receive the (jacob, paper_main, default) internal scope. A test
+//      address that is allowed to sign in but not on the scope list
+//      surfaces UnknownScopeIdentityError, which the preview pages
+//      render as a labeled mock fallback. This split means adding an
+//      auth-only test email cannot accidentally inherit Jacob's Guided
+//      identity.
 //   3. Two failure modes are surfaced as distinct error classes so the
 //      UI can render the right state:
 //        - UnauthenticatedError      → redirect to /signin?from=<path>
 //        - UnknownScopeIdentityError → render labeled MockFallbackBadge
 //
-// The single internal allowlisted email maps to the existing Phase 6.2
-// scope (jacob / paper_main / default) so on-disk artifacts and the
-// runtime command service do not need to be re-keyed in this PR. T2
-// brings real multi-tenant scope routing.
+// T1 keeps a single internal scope. T2/T3 replaces the
+// GUIDED_T1_SCOPE_EMAILS lookup with real multi-tenant scope routing.
 
 import "server-only"
 
@@ -47,8 +51,8 @@ const T1_INTERNAL_SCOPE: GuidedScope = {
   strategy_group_id: "default",
 }
 
-function readInternalAllowlist(): Set<string> {
-  const raw = process.env.AUTH_ALLOWED_EMAILS ?? ""
+function readT1ScopeEmails(): Set<string> {
+  const raw = process.env.GUIDED_T1_SCOPE_EMAILS ?? ""
   return new Set(
     raw
       .split(",")
@@ -58,8 +62,8 @@ function readInternalAllowlist(): Set<string> {
 }
 
 function mapEmailToScope(email: string): GuidedScope | null {
-  const internal = readInternalAllowlist()
-  if (internal.has(email.toLowerCase())) return T1_INTERNAL_SCOPE
+  const t1ScopeEmails = readT1ScopeEmails()
+  if (t1ScopeEmails.has(email.toLowerCase())) return T1_INTERNAL_SCOPE
   return null
 }
 
