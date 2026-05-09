@@ -162,7 +162,15 @@ export interface PostGuidedCommandResult<TResult> {
 // On malformed envelope (success or error): throws
 // CommandServiceMalformedResponseError. The runtime contract guarantees a
 // valid envelope on every response; a malformed response is a contract
-// violation worth surfacing distinctly.
+// violation worth surfacing distinctly. The same error fires on 2xx if the
+// X-Request-ID response header is missing, doesn't match the outgoing
+// request id, or doesn't match the body's echoed request_id field — the
+// header is the contract source of truth and drift is contract-level wrong.
+//
+// On network-layer failure once the URL is set (DNS / connect refused /
+// TLS / mid-handshake abort / etc.): throws CommandServiceUnreachableError
+// with the underlying fetch failure message. Callers branch on
+// instanceof to render retry UI rather than swallowing a raw TypeError.
 export async function postGuidedCommand<TResult = Record<string, unknown>>(
   name: GuidedCommandName,
   args: PostGuidedCommandArgs,
@@ -207,7 +215,18 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
     ...(args.idempotencyKey ? { idempotency_key: args.idempotencyKey } : {}),
   })
 
-  const response = await fetch(url, { method: "POST", headers, body })
+  let response: Response
+  try {
+    response = await fetch(url, { method: "POST", headers, body })
+  } catch (err) {
+    // Network-layer failure (DNS, connect, TLS, mid-handshake abort, etc.).
+    // Surface this in the command-client error taxonomy rather than letting
+    // a raw TypeError leak to callers — they branch on instanceof to render
+    // retry / error UI.
+    throw new CommandServiceUnreachableError(
+      `fetch to ${url} failed: ${(err as Error).message}`,
+    )
+  }
   const rawText = await response.text()
   let parsedJson: unknown
   try {
@@ -238,15 +257,35 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
     )
   }
 
-  // Cross-check against the canonical X-Request-ID header. Per
-  // vires-numeris's GuidedCommandSuccessEnvelope docstring, the response
-  // header is the contract source of truth; the body request_id field is
-  // for client cross-check parity only.
+  // Enforce — not just document — that the X-Request-ID response header is
+  // canonical. Per vires-numeris's GuidedCommandSuccessEnvelope docstring,
+  // the response header is the contract source of truth; the body request_id
+  // field is for client cross-check parity only. On 2xx the runtime always
+  // emits the header (it built it from the inbound X-Request-ID we sent),
+  // so absence or drift is a contract violation worth surfacing as a
+  // malformed response rather than silently trusting the body field.
   const responseRequestIdHeader = response.headers.get(REQUEST_ID_HEADER)
-  const canonicalRequestId = responseRequestIdHeader ?? decoded.data.request_id
+  if (!responseRequestIdHeader) {
+    throw new CommandServiceMalformedResponseError(
+      response.status,
+      `Missing required ${REQUEST_ID_HEADER} response header on 2xx.`,
+    )
+  }
+  if (responseRequestIdHeader !== requestId) {
+    throw new CommandServiceMalformedResponseError(
+      response.status,
+      `${REQUEST_ID_HEADER} response header (${responseRequestIdHeader}) does not match outgoing request id (${requestId}).`,
+    )
+  }
+  if (decoded.data.request_id !== responseRequestIdHeader) {
+    throw new CommandServiceMalformedResponseError(
+      response.status,
+      `Body request_id (${decoded.data.request_id}) does not match canonical ${REQUEST_ID_HEADER} header (${responseRequestIdHeader}).`,
+    )
+  }
 
   return {
-    requestId: canonicalRequestId,
+    requestId: responseRequestIdHeader,
     correlationId: decoded.data.correlation_id ?? null,
     result: decoded.data.result as TResult,
   }
