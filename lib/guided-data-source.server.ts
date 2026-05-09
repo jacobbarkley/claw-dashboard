@@ -63,14 +63,10 @@ export {
 }
 export type { GuidedReadStore }
 
-// Phase 6.2 internal scope. Multi-tenant scope routing is T2/T3 — when
-// resolveCurrentScope() lands at T1.0d, this constant goes away and
-// closes GUIDED-T1-HARDCODED-SCOPE-REMOVAL.
-export const PHASE_6_2_INTERNAL_SCOPE: GuidedScope = {
-  user_id: "jacob",
-  account_id: "paper_main",
-  strategy_group_id: "default",
-}
+// T1.0d closed GUIDED-T1-HARDCODED-SCOPE-REMOVAL. Callers now pass an
+// explicit GuidedScope obtained from resolveCurrentScope() (in
+// lib/guided-scope.server.ts), which is the single authority for caller
+// identity. This module no longer carries a default scope constant.
 
 function resolveAbsolute(p: string): string {
   return path.isAbsolute(p) ? p : path.resolve(process.cwd(), p)
@@ -156,28 +152,28 @@ export function readDisclosureVersion(disclosureVersionId: string): Promise<Disc
 
 export function readGuidedMatchProposalView(
   proposalId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedMatchProposalView> {
   return resolveUserStateStore().readGuidedMatchProposalView(proposalId, scope)
 }
 
 export function readGuidedEnrollment(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedEnrollment> {
   return resolveUserStateStore().readGuidedEnrollment(enrollmentId, scope)
 }
 
 export function readGuidedEnrollmentView(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedEnrollmentView> {
   return resolveUserStateStore().readGuidedEnrollmentView(enrollmentId, scope)
 }
 
 export function readEnrollmentEventsView(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<EnrollmentEventsView> {
   return resolveUserStateStore().readEnrollmentEventsView(enrollmentId, scope)
 }

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 import { MonitoringSurface } from "@/components/vires/guided/monitoring-surface"
 import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
 import { MOCK_ENROLLMENT_VIEW_ACTIVE } from "@/components/vires/guided/mocks"
@@ -6,15 +8,23 @@ import {
   GuidedUserStateUnavailableError,
   readGuidedEnrollmentView,
 } from "@/lib/guided-data-source.server"
-import type { GuidedEnrollmentView } from "@/components/vires/guided/types"
+import {
+  UnauthenticatedError,
+  UnknownScopeIdentityError,
+  resolveCurrentScope,
+} from "@/lib/guided-scope.server"
+import type { GuidedEnrollmentView, GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
 const PHASE_6_2_ACTIVE_ENROLLMENT_ID = "enrollment_entry_zero_active"
+const SIGNIN_FROM_PATH = "/vires/guided/preview/monitoring"
 
-async function loadRealOrMock(): Promise<{ view: GuidedEnrollmentView; fallback: string | null }> {
+async function loadRealOrMock(
+  scope: GuidedScope,
+): Promise<{ view: GuidedEnrollmentView; fallback: string | null }> {
   try {
-    const view = await readGuidedEnrollmentView(PHASE_6_2_ACTIVE_ENROLLMENT_ID)
+    const view = await readGuidedEnrollmentView(PHASE_6_2_ACTIVE_ENROLLMENT_ID, scope)
     return { view, fallback: null }
   } catch (err) {
     if (err instanceof GuidedUserStateUnavailableError) {
@@ -28,7 +38,29 @@ async function loadRealOrMock(): Promise<{ view: GuidedEnrollmentView; fallback:
 }
 
 export default async function GuidedMonitoringPreview() {
-  const { view, fallback } = await loadRealOrMock()
+  let scope: GuidedScope
+  try {
+    scope = await resolveCurrentScope()
+  } catch (err) {
+    if (err instanceof UnauthenticatedError) {
+      redirect(`/signin?from=${encodeURIComponent(SIGNIN_FROM_PATH)}`)
+    }
+    if (err instanceof UnknownScopeIdentityError) {
+      return (
+        <PreviewPageShell
+          title="Paper monitoring readback"
+          subtitle="S10 preview · mock fallback (no Guided scope mapped to this account)"
+          surfaceId="S10"
+        >
+          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
+          <MonitoringSurface view={MOCK_ENROLLMENT_VIEW_ACTIVE} />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
+  const { view, fallback } = await loadRealOrMock(scope)
   return (
     <PreviewPageShell
       title="Paper monitoring readback"

@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 import { BrokerFlowSurface } from "@/components/vires/guided/broker-flow-surface"
 import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
 import {
@@ -11,9 +13,16 @@ import {
   GuidedUserStateUnavailableError,
   readGuidedEnrollment,
 } from "@/lib/guided-data-source.server"
-import type { GuidedEnrollment } from "@/components/vires/guided/types"
+import {
+  UnauthenticatedError,
+  UnknownScopeIdentityError,
+  resolveCurrentScope,
+} from "@/lib/guided-scope.server"
+import type { GuidedEnrollment, GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
+
+const SIGNIN_FROM_PATH = "/vires/guided/preview/broker"
 
 const BROKER_VARIANT_IDS = {
   pending: "enrollment_entry_zero_pending_broker",
@@ -31,11 +40,13 @@ const MOCK_VARIANTS = {
 
 type Variants = Record<keyof typeof BROKER_VARIANT_IDS, GuidedEnrollment>
 
-async function loadRealOrMock(): Promise<{ variants: Variants; fallback: string | null }> {
+async function loadRealOrMock(
+  scope: GuidedScope,
+): Promise<{ variants: Variants; fallback: string | null }> {
   try {
     const entries = await Promise.all(
       (Object.entries(BROKER_VARIANT_IDS) as Array<[keyof typeof BROKER_VARIANT_IDS, string]>).map(
-        async ([key, enrollmentId]) => [key, await readGuidedEnrollment(enrollmentId)] as const,
+        async ([key, enrollmentId]) => [key, await readGuidedEnrollment(enrollmentId, scope)] as const,
       ),
     )
     const variants = Object.fromEntries(entries) as Variants
@@ -52,7 +63,34 @@ async function loadRealOrMock(): Promise<{ variants: Variants; fallback: string 
 }
 
 export default async function GuidedBrokerPreview() {
-  const { variants, fallback } = await loadRealOrMock()
+  let scope: GuidedScope
+  try {
+    scope = await resolveCurrentScope()
+  } catch (err) {
+    if (err instanceof UnauthenticatedError) {
+      redirect(`/signin?from=${encodeURIComponent(SIGNIN_FROM_PATH)}`)
+    }
+    if (err instanceof UnknownScopeIdentityError) {
+      return (
+        <PreviewPageShell
+          title="Broker connect & states"
+          subtitle="S5–S8 preview · mock fallback (no Guided scope mapped to this account)"
+          surfaceId="S5-S8"
+        >
+          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
+          <BrokerFlowSurface
+            pending={MOCK_VARIANTS.pending}
+            retryable={MOCK_VARIANTS.retryable}
+            actionRequired={MOCK_VARIANTS.actionRequired}
+            ineligible={MOCK_VARIANTS.ineligible}
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
+  const { variants, fallback } = await loadRealOrMock(scope)
   return (
     <PreviewPageShell
       title="Broker connect & states"
