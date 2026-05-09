@@ -1,13 +1,22 @@
 // Server-only Auth.js v5 setup for Guided Mode (T1.0d).
 //
 // Persistence policy (locked at T1.0a kickoff §2.7):
-//   - Auth state ONLY (verification tokens, sessions, users, accounts) lives
-//     in a dedicated Upstash Redis project, accessed via env vars
-//     AUTH_UPSTASH_REDIS_REST_URL / AUTH_UPSTASH_REDIS_REST_TOKEN. The
-//     non-prefixed UPSTASH_REDIS_REST_* env already backs Research Lab
-//     live/job state; sharing the same Redis would dissolve the auth-only
-//     store boundary even with key prefixes. Run a separate Upstash database
-//     for these credentials.
+//   - Auth.js state (verification tokens, sessions, users, accounts) is
+//     accessed via env vars AUTH_UPSTASH_REDIS_REST_URL /
+//     AUTH_UPSTASH_REDIS_REST_TOKEN. Research Lab live/job state uses the
+//     non-prefixed UPSTASH_REDIS_REST_* env. The two are kept separate at
+//     the env-name level on purpose — moving auth onto its own physical
+//     Upstash database later is a config change, not a code change.
+//
+//     T1 internal-mode reality: Upstash Free tier allows only one Redis
+//     database, so the AUTH_UPSTASH_REDIS_REST_* values may currently
+//     point at the same database that backs Research Lab. Cohabitation
+//     is enforced by the `guided-auth:` adapter key prefix. This is
+//     acceptable only for single-user / internal use. Before public or
+//     multi-user mode — or before auth/session volume outgrows internal
+//     testing — auth must move onto a physically separate Upstash
+//     database (paid tier or a second project), tracked in the ledger
+//     as AUTH-T2-DEDICATED-AUTH-REDIS.
 //   - Guided user-state (proposals, enrollments, views, events) NEVER lands
 //     here. That store is owned by the vires-numeris private store at T1.0e.
 //   - The dashboard imports zero database drivers for Guided state. Auth.js
@@ -77,7 +86,7 @@ function buildAdapter() {
   const token = process.env.AUTH_UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) {
     throw new AuthMisconfiguredError(
-      "AUTH_UPSTASH_REDIS_REST_URL and AUTH_UPSTASH_REDIS_REST_TOKEN are required for the auth-only token store. Use a dedicated Upstash project — sharing the Research Lab Redis would break the auth-only boundary.",
+      "AUTH_UPSTASH_REDIS_REST_URL and AUTH_UPSTASH_REDIS_REST_TOKEN are required for the Auth.js token store. T1 may co-locate with Research Lab Redis (separated by the `guided-auth:` key prefix); a dedicated database is required before public/multi-user use.",
     )
   }
   return UpstashRedisAdapter(new Redis({ url, token }), { baseKeyPrefix: "guided-auth:" })
