@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 import { EventHistorySurface } from "@/components/vires/guided/event-history-surface"
 import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
 import { MOCK_EVENTS_VIEW } from "@/components/vires/guided/mocks"
@@ -6,22 +8,28 @@ import {
   GuidedUserStateUnavailableError,
   readEnrollmentEventsView,
 } from "@/lib/guided-data-source.server"
-import type { EnrollmentEventsView } from "@/components/vires/guided/types"
+import {
+  UnauthenticatedError,
+  UnknownScopeIdentityError,
+  resolveCurrentScope,
+} from "@/lib/guided-scope.server"
+import type { EnrollmentEventsView, GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
 const PHASE_6_2_ACTIVE_ENROLLMENT_ID = "enrollment_entry_zero_active"
+const PAGE_PATH = "/vires/guided/preview/events"
 
-async function loadRealOrMock(): Promise<{
+async function loadRealOrMock(scope: GuidedScope): Promise<{
   eventsView: EnrollmentEventsView
   fallback: string | null
 }> {
   try {
-    const eventsView = await readEnrollmentEventsView(PHASE_6_2_ACTIVE_ENROLLMENT_ID)
+    const eventsView = await readEnrollmentEventsView(PHASE_6_2_ACTIVE_ENROLLMENT_ID, scope)
     return { eventsView, fallback: null }
   } catch (err) {
     if (err instanceof GuidedUserStateUnavailableError) {
-      return { eventsView: MOCK_EVENTS_VIEW, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
+      return { eventsView: MOCK_EVENTS_VIEW, fallback: "no projection store wired yet (T1.0e)" }
     }
     if (err instanceof GuidedArtifactMissingError) {
       return { eventsView: MOCK_EVENTS_VIEW, fallback: `seed missing (${err.artifactPath})` }
@@ -31,7 +39,29 @@ async function loadRealOrMock(): Promise<{
 }
 
 export default async function GuidedEventsPreview() {
-  const { eventsView, fallback } = await loadRealOrMock()
+  let scope: GuidedScope
+  try {
+    scope = await resolveCurrentScope()
+  } catch (err) {
+    if (err instanceof UnauthenticatedError) {
+      redirect(`/signin?from=${encodeURIComponent(PAGE_PATH)}`)
+    }
+    if (err instanceof UnknownScopeIdentityError) {
+      return (
+        <PreviewPageShell
+          title="Unified event history"
+          subtitle="S11 preview · authenticated identity has no T1 scope mapping"
+          surfaceId="S11"
+        >
+          <MockFallbackBadge reason={`unknown scope identity: ${err.identity}`} />
+          <EventHistorySurface eventsView={MOCK_EVENTS_VIEW} />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
+  const { eventsView, fallback } = await loadRealOrMock(scope)
   return (
     <PreviewPageShell
       title="Unified event history"

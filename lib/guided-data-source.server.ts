@@ -63,14 +63,11 @@ export {
 }
 export type { GuidedReadStore }
 
-// Phase 6.2 internal scope. Multi-tenant scope routing is T2/T3 — when
-// resolveCurrentScope() lands at T1.0d, this constant goes away and
-// closes GUIDED-T1-HARDCODED-SCOPE-REMOVAL.
-export const PHASE_6_2_INTERNAL_SCOPE: GuidedScope = {
-  user_id: "jacob",
-  account_id: "paper_main",
-  strategy_group_id: "default",
-}
+// PHASE_6_2_INTERNAL_SCOPE was removed at T1.0d. Callers must derive
+// scope from the authenticated session via lib/guided-scope.server.ts
+// (resolveCurrentScope) and pass it explicitly into the read helpers
+// below. This closes GUIDED-T1-HARDCODED-SCOPE-REMOVAL (T1 sub) — no
+// permanent default-scope fallback exists in production code.
 
 function resolveAbsolute(p: string): string {
   return path.isAbsolute(p) ? p : path.resolve(process.cwd(), p)
@@ -153,31 +150,36 @@ export function readDisclosureVersion(disclosureVersionId: string): Promise<Disc
 }
 
 // ─── User-state reads (delegated to GuidedReadStore) ────────────────────────
+//
+// Scope is required explicitly. Callers resolve scope from the authenticated
+// session via resolveCurrentScope() and pass it in. There is no default
+// fallback — an unauthenticated caller never gets a real read. Per
+// GUIDED-T1-HARDCODED-SCOPE-REMOVAL closure (T1 sub).
 
 export function readGuidedMatchProposalView(
   proposalId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedMatchProposalView> {
   return resolveUserStateStore().readGuidedMatchProposalView(proposalId, scope)
 }
 
 export function readGuidedEnrollment(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedEnrollment> {
   return resolveUserStateStore().readGuidedEnrollment(enrollmentId, scope)
 }
 
 export function readGuidedEnrollmentView(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<GuidedEnrollmentView> {
   return resolveUserStateStore().readGuidedEnrollmentView(enrollmentId, scope)
 }
 
 export function readEnrollmentEventsView(
   enrollmentId: string,
-  scope: GuidedScope = PHASE_6_2_INTERNAL_SCOPE,
+  scope: GuidedScope,
 ): Promise<EnrollmentEventsView> {
   return resolveUserStateStore().readEnrollmentEventsView(enrollmentId, scope)
 }

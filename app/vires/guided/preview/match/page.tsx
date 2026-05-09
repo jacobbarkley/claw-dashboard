@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation"
+
 import { MatchProposalSurfaceFromView } from "@/components/vires/guided/match-proposal-surface"
 import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
 import { MOCK_MATCH_PROPOSAL_VIEW } from "@/components/vires/guided/mocks"
@@ -6,19 +8,26 @@ import {
   GuidedUserStateUnavailableError,
   readGuidedMatchProposalView,
 } from "@/lib/guided-data-source.server"
+import {
+  UnauthenticatedError,
+  UnknownScopeIdentityError,
+  resolveCurrentScope,
+} from "@/lib/guided-scope.server"
 import type { GuidedMatchProposalView } from "@/components/vires/guided/types"
+import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
 const PHASE_6_2_PREVIEW_PROPOSAL_ID = "proposal_entry_zero_preview"
+const PAGE_PATH = "/vires/guided/preview/match"
 
-async function loadRealOrMock(): Promise<{ view: GuidedMatchProposalView; fallback: string | null }> {
+async function loadRealOrMock(scope: GuidedScope): Promise<{ view: GuidedMatchProposalView; fallback: string | null }> {
   try {
-    const view = await readGuidedMatchProposalView(PHASE_6_2_PREVIEW_PROPOSAL_ID)
+    const view = await readGuidedMatchProposalView(PHASE_6_2_PREVIEW_PROPOSAL_ID, scope)
     return { view, fallback: null }
   } catch (err) {
     if (err instanceof GuidedUserStateUnavailableError) {
-      return { view: MOCK_MATCH_PROPOSAL_VIEW, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
+      return { view: MOCK_MATCH_PROPOSAL_VIEW, fallback: "no projection store wired yet (T1.0e)" }
     }
     if (err instanceof GuidedArtifactMissingError) {
       return { view: MOCK_MATCH_PROPOSAL_VIEW, fallback: `seed missing (${err.artifactPath})` }
@@ -28,7 +37,32 @@ async function loadRealOrMock(): Promise<{ view: GuidedMatchProposalView; fallba
 }
 
 export default async function GuidedMatchPreview() {
-  const { view, fallback } = await loadRealOrMock()
+  let scope: GuidedScope
+  try {
+    scope = await resolveCurrentScope()
+  } catch (err) {
+    if (err instanceof UnauthenticatedError) {
+      redirect(`/signin?from=${encodeURIComponent(PAGE_PATH)}`)
+    }
+    if (err instanceof UnknownScopeIdentityError) {
+      // Authenticated but no scope mapping — surface a clear fallback rather
+      // than rendering empty data. The auth allowlist should already prevent
+      // this, but the resolver is the second line of defense.
+      return (
+        <PreviewPageShell
+          title="Match proposal"
+          subtitle="S3 preview · authenticated identity has no T1 scope mapping"
+          surfaceId="S3"
+        >
+          <MockFallbackBadge reason={`unknown scope identity: ${err.identity}`} />
+          <MatchProposalSurfaceFromView view={MOCK_MATCH_PROPOSAL_VIEW} />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
+  const { view, fallback } = await loadRealOrMock(scope)
   return (
     <PreviewPageShell
       title="Match proposal"

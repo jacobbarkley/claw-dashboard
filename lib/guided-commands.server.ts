@@ -1,14 +1,16 @@
-// Server-only thin client for Codex's Guided command service. Browser clients
-// MUST NOT import from this file — UI submits to dashboard route handlers /
-// server actions, and only those server-side handlers call the functions
-// below. CODEX_COMMAND_BASE_URL and CODEX_COMMAND_BEARER_TOKEN are server-only
-// env vars; never NEXT_PUBLIC_*.
+// Server-only thin client for Codex's Guided command service. Browser
+// clients MUST NOT import from this file — UI submits to dashboard route
+// handlers / server actions, and only those server-side handlers call the
+// functions below. CODEX_COMMAND_BASE_URL and CODEX_COMMAND_JWT_HS256_SECRET
+// are server-only env vars; never NEXT_PUBLIC_*.
 //
-// T1.0c ships the seam shape only. Every postGuidedCommand call throws
-// CommandServiceUnreachableError until T1.0d wires CODEX_COMMAND_BASE_URL.
-// The shape, guardrails, and error surface land here so future feature PRs
-// (T1.1–T1.4) can build typed wrappers on top without re-architecting the
-// transport.
+// T1.0d shipped the auth handoff: every postGuidedCommand call mints a
+// per-request short-lived JWT (lib/guided-command-auth.server.ts) and
+// passes it as the Bearer token. The static CODEX_COMMAND_BEARER_TOKEN
+// from the T1.0c skeleton is gone — it was placeholder transport, not a
+// scoped handoff. CODEX_COMMAND_BASE_URL stays unset until a real Codex
+// command endpoint exists, so postGuidedCommand still throws
+// CommandServiceUnreachableError immediately in production.
 //
 // Sources of truth (vires-numeris):
 //   - command names: src/openclaw_core/models/guided.py (GuidedCommandType)
@@ -25,6 +27,10 @@ import "server-only"
 import { randomUUID } from "node:crypto"
 
 import type { GuidedScope } from "@/components/vires/guided/types"
+import {
+  CommandJwtMisconfiguredError,
+  mintGuidedCommandJwt,
+} from "@/lib/guided-command-auth.server"
 import {
   GuidedCommandErrorEnvelopeSchema,
   GuidedCommandSuccessEnvelopeSchema,
@@ -132,6 +138,11 @@ export class CommandServiceMalformedResponseError extends Error {
 export interface PostGuidedCommandArgs {
   payload?: Record<string, unknown>
   scope: GuidedScope
+  actor: {
+    type: "USER" | "OPERATOR" | "SYSTEM"
+    id: string
+    subject: string
+  }
   idempotencyKey?: string
   correlationId?: string
 }
@@ -144,16 +155,25 @@ export interface PostGuidedCommandResult<TResult> {
 
 // POST a Guided command to Codex's command service.
 //
-// In T1.0c this throws CommandServiceUnreachableError because the service
-// base URL isn't wired. T1.0d adds the env wiring. The shape, guardrails,
-// and error surface land here.
+// In T1.0d this still throws CommandServiceUnreachableError because no
+// production Codex command endpoint exists yet (CODEX_COMMAND_BASE_URL is
+// unset). When a deployed endpoint lands, only env vars change — the
+// shape, guardrails, and JWT minting all stay.
 //
 // Guardrails enforced client-side BEFORE fetch (matching the runtime side):
 //   - CommandServiceUnreachableError if CODEX_COMMAND_BASE_URL unset.
-//   - CommandServiceMisconfiguredError if CODEX_COMMAND_BEARER_TOKEN unset;
-//     we never POST without an auth handoff, even accidentally.
+//   - CommandServiceMisconfiguredError if CODEX_COMMAND_JWT_HS256_SECRET is
+//     unset / too short. We never POST without a signed scoped handoff.
 //   - CommandIdempotencyKeyError if name is in IRREVERSIBLE_GUIDED_COMMANDS
 //     and idempotencyKey is missing or shorter than 8 chars (matches Pydantic).
+//
+// Auth handoff:
+//   - Mints a per-request HS256 JWT with iss=claw-dashboard,
+//     aud=vires-numeris-guided-command-service, exp=iat+60s, jti, and
+//     claims { scope, actor }. See lib/guided-command-auth.server.ts for
+//     the full claim shape and the Codex verifier expectation.
+//   - Body scope is sent as a typed convenience hint. The runtime treats
+//     it as untrusted and rejects mismatch against the JWT scope claim.
 //
 // On non-2xx response: parses the typed error envelope and throws
 // CommandServiceErrorResponseError carrying the structured envelope. Callers
@@ -178,13 +198,7 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
   const baseUrl = process.env.CODEX_COMMAND_BASE_URL
   if (!baseUrl || baseUrl.length === 0) {
     throw new CommandServiceUnreachableError(
-      "CODEX_COMMAND_BASE_URL is not set. T1.0c skeleton — wiring lands at T1.0d.",
-    )
-  }
-  const token = process.env.CODEX_COMMAND_BEARER_TOKEN
-  if (!token || token.length === 0) {
-    throw new CommandServiceMisconfiguredError(
-      "CODEX_COMMAND_BEARER_TOKEN is not set. Refusing to POST without an auth handoff.",
+      "CODEX_COMMAND_BASE_URL is not set. T1.0d: no production Codex command endpoint exists yet — wiring lands when the endpoint is deployed.",
     )
   }
 
@@ -197,12 +211,27 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
     }
   }
 
+  let bearerJwt: string
+  try {
+    bearerJwt = await mintGuidedCommandJwt({
+      scope: args.scope,
+      actorType: args.actor.type,
+      actorId: args.actor.id,
+      subject: args.actor.subject,
+    })
+  } catch (err) {
+    if (err instanceof CommandJwtMisconfiguredError) {
+      throw new CommandServiceMisconfiguredError(err.message)
+    }
+    throw err
+  }
+
   const requestId = randomUUID()
   const url = `${baseUrl.replace(/\/$/, "")}${GUIDED_COMMAND_ROUTE_PREFIX}/${name}`
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
-    [AUTH_HEADER]: `${AUTH_SCHEME} ${token}`,
+    [AUTH_HEADER]: `${AUTH_SCHEME} ${bearerJwt}`,
     [REQUEST_ID_HEADER]: requestId,
   }
   if (args.correlationId) {
