@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-08T20:45:09.022207+00:00",
-  "as_of_date": "2026-05-08",
+  "generated_at": "2026-05-11T13:00:09.770954+00:00",
+  "as_of_date": "2026-05-11",
   "account": {
-    "equity": 85840.96,
+    "equity": 85828.91,
     "cash": 29237.67,
-    "buying_power": 114176.21,
+    "buying_power": 114151.53,
     "base_value": 100000.0,
-    "total_pnl": -14159.04,
-    "total_pnl_pct": -14.159,
-    "today_pnl": 117.43,
-    "today_pnl_pct": 0.137,
-    "positions_value": 56603.29,
-    "equity_deployed": 56603.29,
+    "total_pnl": -14171.09,
+    "total_pnl_pct": -14.1711,
+    "today_pnl": -25.26,
+    "today_pnl_pct": -0.0294,
+    "positions_value": 56591.24,
+    "equity_deployed": 56591.24,
     "options_deployed": 0,
-    "unrealized_pnl": 188.61,
-    "unrealized_pnl_pct": 0.33
+    "unrealized_pnl": 176.57,
+    "unrealized_pnl_pct": 0.31
   },
   "positions": [
     {
@@ -22,55 +22,55 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 292.84,
-      "market_value": 1464.2,
-      "unrealized_pnl": 36.75,
-      "unrealized_pct": 2.57,
-      "change_today_pct": 1.88
+      "current_price": 292.44,
+      "market_value": 1462.2,
+      "unrealized_pnl": 34.75,
+      "unrealized_pct": 2.43,
+      "change_today_pct": -0.3
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 427.93,
-      "market_value": 1283.79,
-      "unrealized_pnl": 33.06,
-      "unrealized_pct": 2.64,
-      "change_today_pct": 3.73
+      "current_price": 424.694,
+      "market_value": 1274.082,
+      "unrealized_pnl": 23.352,
+      "unrealized_pct": 1.87,
+      "change_today_pct": -1.23
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 79994.6,
-      "market_value": 902.427002,
-      "unrealized_pnl": 41.949939,
-      "unrealized_pct": 4.88,
-      "change_today_pct": 0.26
+      "current_price": 81113.563,
+      "market_value": 915.050134,
+      "unrealized_pnl": 54.573071,
+      "unrealized_pct": 6.34,
+      "change_today_pct": -0.38
     },
     {
       "symbol": "NVDA",
       "qty": 7.0,
       "side": "long",
       "entry_price": 200.647143,
-      "current_price": 215.485,
-      "market_value": 1508.395,
-      "unrealized_pnl": 103.864999,
-      "unrealized_pct": 7.4,
-      "change_today_pct": 1.88
+      "current_price": 213.45,
+      "market_value": 1494.15,
+      "unrealized_pnl": 89.619999,
+      "unrealized_pct": 6.38,
+      "change_today_pct": -0.81
     },
     {
       "symbol": "SGOV",
       "qty": 512.0,
       "side": "long",
       "entry_price": 100.530254,
-      "current_price": 100.4775,
-      "market_value": 51444.48,
-      "unrealized_pnl": -27.010048,
+      "current_price": 100.48,
+      "market_value": 51445.76,
+      "unrealized_pnl": -25.730048,
       "unrealized_pct": -0.05,
-      "change_today_pct": 0.03
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -896,6 +896,11 @@
       "date": "2026-05-08",
       "equity": 85723.53,
       "profit_loss": 2.21
+    },
+    {
+      "date": "2026-05-09",
+      "equity": 85854.17,
+      "profit_loss": 130.64
     }
   ],
   "watchlist": {
@@ -1733,30 +1738,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "COF",
-        "price": 193.0,
-        "sector": "Financial Services",
-        "expiry": "2026-05-29",
-        "dte": 21,
-        "short_strike": 205.0,
-        "long_strike": 200.0,
-        "spread_width": 5.0,
-        "net_credit": 2.2,
-        "credit_width_ratio": 0.44,
-        "annualized_yield_pct": 764.8,
-        "max_loss_per_contract": 280.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
