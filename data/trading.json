@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-11T20:00:08.901979+00:00",
+  "generated_at": "2026-05-11T20:15:09.732492+00:00",
   "as_of_date": "2026-05-11",
   "account": {
     "equity": 85911.34,
@@ -1756,12 +1756,30 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
+      },
+      {
+        "symbol": "RCL",
+        "price": 276.94,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-05-29",
+        "dte": 18,
+        "short_strike": 300.0,
+        "long_strike": 295.0,
+        "spread_width": 5.0,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
+        "iv_rank_proxy": 0.047,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 1,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
