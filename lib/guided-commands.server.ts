@@ -1,14 +1,20 @@
 // Server-only thin client for Codex's Guided command service. Browser clients
 // MUST NOT import from this file — UI submits to dashboard route handlers /
 // server actions, and only those server-side handlers call the functions
-// below. CODEX_COMMAND_BASE_URL and CODEX_COMMAND_BEARER_TOKEN are server-only
-// env vars; never NEXT_PUBLIC_*.
+// below. CODEX_COMMAND_BASE_URL and CODEX_COMMAND_JWT_HS256_SECRET are
+// server-only env vars; never NEXT_PUBLIC_*.
 //
-// T1.0c ships the seam shape only. Every postGuidedCommand call throws
-// CommandServiceUnreachableError until T1.0d wires CODEX_COMMAND_BASE_URL.
-// The shape, guardrails, and error surface land here so future feature PRs
-// (T1.1–T1.4) can build typed wrappers on top without re-architecting the
-// transport.
+// T1.0c shipped the seam shape with a static-bearer placeholder. T1.0d swaps
+// in a per-request HS256 JWT minted via lib/guided-command-auth.server.ts.
+// The JWT carries the authoritative scope + actor claims from the resolved
+// auth context — body scope is still sent as a hint for cross-check parity
+// but the runtime side treats the JWT claim as authority.
+//
+// The runtime endpoint is not yet reachable: until T1.0e cuts over,
+// CODEX_COMMAND_BASE_URL is intentionally unset in production and every
+// call throws CommandServiceUnreachableError. The shape, guardrails, and
+// error surface land here so future feature PRs (T1.1–T1.4) can build typed
+// wrappers on top without re-architecting the transport.
 //
 // Sources of truth (vires-numeris):
 //   - command names: src/openclaw_core/models/guided.py (GuidedCommandType)
@@ -24,12 +30,13 @@ import "server-only"
 
 import { randomUUID } from "node:crypto"
 
-import type { GuidedScope } from "@/components/vires/guided/types"
 import {
   GuidedCommandErrorEnvelopeSchema,
   GuidedCommandSuccessEnvelopeSchema,
   type GuidedCommandErrorEnvelope,
 } from "@/lib/guided-commands.schemas"
+import { mintGuidedCommandJwt } from "@/lib/guided-command-auth.server"
+import type { GuidedAuthContext } from "@/lib/guided-scope.server"
 
 // ─── Pinned constants (mirrors of vires-numeris contract) ───────────────────
 
@@ -94,13 +101,6 @@ export class CommandServiceUnreachableError extends Error {
   }
 }
 
-export class CommandServiceMisconfiguredError extends Error {
-  constructor(reason: string) {
-    super(`Guided command service misconfigured: ${reason}`)
-    this.name = "CommandServiceMisconfiguredError"
-  }
-}
-
 export class CommandIdempotencyKeyError extends Error {
   constructor(public readonly commandName: GuidedCommandName, public readonly reason: string) {
     super(`Idempotency key for ${commandName} is invalid: ${reason}`)
@@ -131,7 +131,10 @@ export class CommandServiceMalformedResponseError extends Error {
 
 export interface PostGuidedCommandArgs {
   payload?: Record<string, unknown>
-  scope: GuidedScope
+  // Resolved auth context (from resolveCurrentAuthContext()) is authoritative
+  // for both the JWT scope claim and the body's scope hint. Callers do not
+  // pass a separate scope — the auth context is the only source of identity.
+  authContext: GuidedAuthContext
   idempotencyKey?: string
   correlationId?: string
 }
@@ -144,14 +147,11 @@ export interface PostGuidedCommandResult<TResult> {
 
 // POST a Guided command to Codex's command service.
 //
-// In T1.0c this throws CommandServiceUnreachableError because the service
-// base URL isn't wired. T1.0d adds the env wiring. The shape, guardrails,
-// and error surface land here.
-//
 // Guardrails enforced client-side BEFORE fetch (matching the runtime side):
 //   - CommandServiceUnreachableError if CODEX_COMMAND_BASE_URL unset.
-//   - CommandServiceMisconfiguredError if CODEX_COMMAND_BEARER_TOKEN unset;
-//     we never POST without an auth handoff, even accidentally.
+//   - CommandJwtMisconfiguredError (raised from mintGuidedCommandJwt) if
+//     CODEX_COMMAND_JWT_HS256_SECRET is missing or shorter than 32 chars;
+//     we never POST without a freshly minted, scoped auth handoff.
 //   - CommandIdempotencyKeyError if name is in IRREVERSIBLE_GUIDED_COMMANDS
 //     and idempotencyKey is missing or shorter than 8 chars (matches Pydantic).
 //
@@ -178,13 +178,7 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
   const baseUrl = process.env.CODEX_COMMAND_BASE_URL
   if (!baseUrl || baseUrl.length === 0) {
     throw new CommandServiceUnreachableError(
-      "CODEX_COMMAND_BASE_URL is not set. T1.0c skeleton — wiring lands at T1.0d.",
-    )
-  }
-  const token = process.env.CODEX_COMMAND_BEARER_TOKEN
-  if (!token || token.length === 0) {
-    throw new CommandServiceMisconfiguredError(
-      "CODEX_COMMAND_BEARER_TOKEN is not set. Refusing to POST without an auth handoff.",
+      "CODEX_COMMAND_BASE_URL is not set. Production runtime endpoint lands at T1.0e.",
     )
   }
 
@@ -197,20 +191,30 @@ export async function postGuidedCommand<TResult = Record<string, unknown>>(
     }
   }
 
+  const jwt = await mintGuidedCommandJwt({
+    scope: args.authContext.scope,
+    actorType: args.authContext.actorType,
+    actorId: args.authContext.actorId,
+    subject: args.authContext.subject,
+  })
+
   const requestId = randomUUID()
   const url = `${baseUrl.replace(/\/$/, "")}${GUIDED_COMMAND_ROUTE_PREFIX}/${name}`
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
-    [AUTH_HEADER]: `${AUTH_SCHEME} ${token}`,
+    [AUTH_HEADER]: `${AUTH_SCHEME} ${jwt}`,
     [REQUEST_ID_HEADER]: requestId,
   }
   if (args.correlationId) {
     headers[CORRELATION_ID_HEADER] = args.correlationId
   }
 
+  // Body scope is sent as a parity hint. The JWT scope claim is the
+  // runtime-authoritative source — the verifier treats them as one logical
+  // claim and rejects mismatches.
   const body = JSON.stringify({
-    scope: args.scope,
+    scope: args.authContext.scope,
     payload: args.payload ?? {},
     ...(args.idempotencyKey ? { idempotency_key: args.idempotencyKey } : {}),
   })
