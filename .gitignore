@@ -49,3 +49,8 @@ __pycache__/
 # transient diagnostic output from queue-reconciler.py — surface report
 # in CLI, do not commit the snapshot
 data/queue-reconciliation.json
+
+# Playwright E2E artifacts
+/playwright-report/
+/test-results/
+/playwright/.auth/
