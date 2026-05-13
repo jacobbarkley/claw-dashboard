@@ -1,16 +1,17 @@
 import { redirect } from "next/navigation"
 
 import { BrokerFlowSurface } from "@/components/vires/guided/broker-flow-surface"
-import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
 import {
-  MOCK_ENROLLMENT_BROKER_ACTION_REQUIRED,
-  MOCK_ENROLLMENT_BROKER_INELIGIBLE,
-  MOCK_ENROLLMENT_BROKER_RETRYABLE,
-  MOCK_ENROLLMENT_PENDING_BROKER,
-} from "@/components/vires/guided/mocks"
+  GuidedNotEnabledState,
+  GuidedSurfaceEmptyState,
+  GuidedSurfaceErrorState,
+} from "@/components/vires/guided/empty-states"
+import { PreviewPageShell } from "@/components/vires/guided/shared"
 import {
   GuidedArtifactMissingError,
   GuidedUserStateUnavailableError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceUnreachableError,
   readGuidedEnrollment,
 } from "@/lib/guided-data-source.server"
 import {
@@ -22,8 +23,13 @@ import type { GuidedEnrollment, GuidedScope } from "@/components/vires/guided/ty
 
 export const dynamic = "force-dynamic"
 
-const SIGNIN_FROM_PATH = "/vires/guided/preview/broker"
-
+// The broker preview reads 4 enrollment fixtures side-by-side for design
+// review of the per-state broker UI. Real users have one enrollment in
+// one state at a time; this preview's 4-variant layout is intentionally a
+// debug surface. Variant IDs remain as seed-time fixtures (Codex's
+// real-profile materializer in PR #2 does not produce these); after
+// cutover the page renders an empty state until/unless equivalent variants
+// exist in the projection store. Tracked by GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE.
 const BROKER_VARIANT_IDS = {
   pending: "enrollment_entry_zero_pending_broker",
   retryable: "enrollment_entry_zero_broker_retryable",
@@ -31,36 +37,12 @@ const BROKER_VARIANT_IDS = {
   ineligible: "enrollment_entry_zero_broker_ineligible",
 } as const
 
-const MOCK_VARIANTS = {
-  pending: MOCK_ENROLLMENT_PENDING_BROKER,
-  retryable: MOCK_ENROLLMENT_BROKER_RETRYABLE,
-  actionRequired: MOCK_ENROLLMENT_BROKER_ACTION_REQUIRED,
-  ineligible: MOCK_ENROLLMENT_BROKER_INELIGIBLE,
-} as const
-
 type Variants = Record<keyof typeof BROKER_VARIANT_IDS, GuidedEnrollment>
 
-async function loadRealOrMock(
-  scope: GuidedScope,
-): Promise<{ variants: Variants; fallback: string | null }> {
-  try {
-    const entries = await Promise.all(
-      (Object.entries(BROKER_VARIANT_IDS) as Array<[keyof typeof BROKER_VARIANT_IDS, string]>).map(
-        async ([key, enrollmentId]) => [key, await readGuidedEnrollment(enrollmentId, scope)] as const,
-      ),
-    )
-    const variants = Object.fromEntries(entries) as Variants
-    return { variants, fallback: null }
-  } catch (err) {
-    if (err instanceof GuidedUserStateUnavailableError) {
-      return { variants: MOCK_VARIANTS, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
-    }
-    if (err instanceof GuidedArtifactMissingError) {
-      return { variants: MOCK_VARIANTS, fallback: `seed missing (${err.artifactPath})` }
-    }
-    throw err
-  }
-}
+const SIGNIN_FROM_PATH = "/vires/guided/preview/broker"
+const SHELL_TITLE = "Broker connect & states"
+const SHELL_SURFACE_ID = "S5-S8"
+const SHELL_SUBTITLE = "S5–S8 preview · live reads of 4 guided_enrollment.v1 broker variants"
 
 export default async function GuidedBrokerPreview() {
   let scope: GuidedScope
@@ -72,42 +54,72 @@ export default async function GuidedBrokerPreview() {
     }
     if (err instanceof UnknownScopeIdentityError) {
       return (
-        <PreviewPageShell
-          title="Broker connect & states"
-          subtitle="S5–S8 preview · mock fallback (no Guided scope mapped to this account)"
-          surfaceId="S5-S8"
-        >
-          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
-          <BrokerFlowSurface
-            pending={MOCK_VARIANTS.pending}
-            retryable={MOCK_VARIANTS.retryable}
-            actionRequired={MOCK_VARIANTS.actionRequired}
-            ineligible={MOCK_VARIANTS.ineligible}
-          />
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedNotEnabledState email={err.email} />
         </PreviewPageShell>
       )
     }
     throw err
   }
 
-  const { variants, fallback } = await loadRealOrMock(scope)
-  return (
-    <PreviewPageShell
-      title="Broker connect & states"
-      subtitle={
-        fallback
-          ? "S5–S8 preview · mock fallback (user-state read unavailable)"
-          : "S5–S8 preview · live reads of 4 guided_enrollment.v1 broker variants"
-      }
-      surfaceId="S5-S8"
-    >
-      {fallback ? <MockFallbackBadge reason={fallback} /> : null}
-      <BrokerFlowSurface
-        pending={variants.pending}
-        retryable={variants.retryable}
-        actionRequired={variants.actionRequired}
-        ineligible={variants.ineligible}
-      />
-    </PreviewPageShell>
-  )
+  try {
+    const entries = await Promise.all(
+      (Object.entries(BROKER_VARIANT_IDS) as Array<[keyof typeof BROKER_VARIANT_IDS, string]>).map(
+        async ([key, enrollmentId]) => [key, await readGuidedEnrollment(enrollmentId, scope)] as const,
+      ),
+    )
+    const variants = Object.fromEntries(entries) as Variants
+    return (
+      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+        <BrokerFlowSurface
+          pending={variants.pending}
+          retryable={variants.retryable}
+          actionRequired={variants.actionRequired}
+          ineligible={variants.ineligible}
+        />
+      </PreviewPageShell>
+    )
+  } catch (err) {
+    if (err instanceof GuidedArtifactMissingError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No broker connection state yet"
+            body="Broker setup details will appear here once your enrollment is connecting to Alpaca."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof GuidedUserStateUnavailableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service is not configured"
+            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceUnreachableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service temporarily unavailable"
+            body="The projection endpoint did not respond. Try again in a moment."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceErrorResponseError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service returned an error"
+            body={`${err.envelope.error_code}: ${err.envelope.error_message}`}
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
 }

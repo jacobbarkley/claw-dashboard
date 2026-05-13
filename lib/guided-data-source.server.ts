@@ -44,7 +44,13 @@ import {
   StrategyLibrarySchema,
 } from "@/lib/guided-data-source.schemas"
 import { FilesystemGuidedReadStore } from "@/lib/guided-read-store.filesystem.server"
-import { GuidedProjectionReadStore } from "@/lib/guided-read-store.projection.server"
+import {
+  GuidedProjectionReadStore,
+  GuidedScopeAuthorityMismatchError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceMalformedResponseError,
+  ProjectionServiceUnreachableError,
+} from "@/lib/guided-read-store.projection.server"
 import {
   GuidedArtifactInvalidError,
   GuidedArtifactMissingError,
@@ -54,13 +60,18 @@ import {
   type GuidedReadStore,
 } from "@/lib/guided-read-store.server"
 
-// Re-export error classes so the seven preview pages keep their existing
-// imports working through the read-seam refactor.
+// Re-export error classes so preview pages import the seam, not the
+// underlying store implementations. Pages branch on these by instanceof to
+// render the right state — empty vs. service-error vs. caller bug.
 export {
   GuidedArtifactInvalidError,
   GuidedArtifactMissingError,
+  GuidedScopeAuthorityMismatchError,
   GuidedUnsafeIdError,
   GuidedUserStateUnavailableError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceMalformedResponseError,
+  ProjectionServiceUnreachableError,
 }
 export type { GuidedReadStore }
 
