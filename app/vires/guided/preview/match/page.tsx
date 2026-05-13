@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation"
 
 import { MatchProposalSurfaceFromView } from "@/components/vires/guided/match-proposal-surface"
-import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
-import { MOCK_MATCH_PROPOSAL_VIEW } from "@/components/vires/guided/mocks"
+import {
+  GuidedNotEnabledState,
+  GuidedSurfaceEmptyState,
+  GuidedSurfaceErrorState,
+} from "@/components/vires/guided/empty-states"
+import { PreviewPageShell } from "@/components/vires/guided/shared"
 import {
   GuidedArtifactMissingError,
   GuidedUserStateUnavailableError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceUnreachableError,
   readGuidedMatchProposalView,
 } from "@/lib/guided-data-source.server"
 import {
@@ -13,29 +19,19 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
-import type { GuidedMatchProposalView, GuidedScope } from "@/components/vires/guided/types"
+import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-const PHASE_6_2_PREVIEW_PROPOSAL_ID = "proposal_entry_zero_preview"
+// Temporary URL-hardcoded canonical ID. Tracked by
+// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
+// The long-term path is a Vires hub route that resolves the active match
+// proposal from the signed-in scope, not a hardcoded preview URL.
+const JACOB_PAPER_ACTIVE_PROPOSAL_ID = "proposal_jacob_paper_main_migration"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/match"
-
-async function loadRealOrMock(
-  scope: GuidedScope,
-): Promise<{ view: GuidedMatchProposalView; fallback: string | null }> {
-  try {
-    const view = await readGuidedMatchProposalView(PHASE_6_2_PREVIEW_PROPOSAL_ID, scope)
-    return { view, fallback: null }
-  } catch (err) {
-    if (err instanceof GuidedUserStateUnavailableError) {
-      return { view: MOCK_MATCH_PROPOSAL_VIEW, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
-    }
-    if (err instanceof GuidedArtifactMissingError) {
-      return { view: MOCK_MATCH_PROPOSAL_VIEW, fallback: `seed missing (${err.artifactPath})` }
-    }
-    throw err
-  }
-}
+const SHELL_TITLE = "Match proposal"
+const SHELL_SURFACE_ID = "S3"
+const SHELL_SUBTITLE = "S3 preview · live read of guided_match_proposal_view.v1"
 
 export default async function GuidedMatchPreview() {
   let scope: GuidedScope
@@ -47,32 +43,62 @@ export default async function GuidedMatchPreview() {
     }
     if (err instanceof UnknownScopeIdentityError) {
       return (
-        <PreviewPageShell
-          title="Match proposal"
-          subtitle="S3 preview · mock fallback (no Guided scope mapped to this account)"
-          surfaceId="S3"
-        >
-          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
-          <MatchProposalSurfaceFromView view={MOCK_MATCH_PROPOSAL_VIEW} />
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedNotEnabledState email={err.email} />
         </PreviewPageShell>
       )
     }
     throw err
   }
 
-  const { view, fallback } = await loadRealOrMock(scope)
-  return (
-    <PreviewPageShell
-      title="Match proposal"
-      subtitle={
-        fallback
-          ? "S3 preview · mock fallback (user-state read unavailable)"
-          : "S3 preview · live read of guided_match_proposal_view.v1 from rebuild state"
-      }
-      surfaceId="S3"
-    >
-      {fallback ? <MockFallbackBadge reason={fallback} /> : null}
-      <MatchProposalSurfaceFromView view={view} />
-    </PreviewPageShell>
-  )
+  try {
+    const view = await readGuidedMatchProposalView(JACOB_PAPER_ACTIVE_PROPOSAL_ID, scope)
+    return (
+      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+        <MatchProposalSurfaceFromView view={view} />
+      </PreviewPageShell>
+    )
+  } catch (err) {
+    if (err instanceof GuidedArtifactMissingError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No match proposal yet"
+            body="Your Steady Tide match will appear here once it has been proposed for this account."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof GuidedUserStateUnavailableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service is not configured"
+            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceUnreachableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service temporarily unavailable"
+            body="The projection endpoint did not respond. Try again in a moment."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceErrorResponseError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service returned an error"
+            body={`${err.envelope.error_code}: ${err.envelope.error_message}`}
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
 }

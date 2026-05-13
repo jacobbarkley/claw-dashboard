@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation"
 
 import { ActiveEnrollmentSurface } from "@/components/vires/guided/active-enrollment-surface"
-import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
-import { MOCK_ENROLLMENT_VIEW_ACTIVE } from "@/components/vires/guided/mocks"
+import {
+  GuidedNotEnabledState,
+  GuidedSurfaceEmptyState,
+  GuidedSurfaceErrorState,
+} from "@/components/vires/guided/empty-states"
+import { PreviewPageShell } from "@/components/vires/guided/shared"
 import {
   GuidedArtifactMissingError,
   GuidedUserStateUnavailableError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceUnreachableError,
   readGuidedEnrollmentView,
 } from "@/lib/guided-data-source.server"
 import {
@@ -13,29 +19,19 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
-import type { GuidedEnrollmentView, GuidedScope } from "@/components/vires/guided/types"
+import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-const PHASE_6_2_ACTIVE_ENROLLMENT_ID = "enrollment_entry_zero_active"
+// Temporary URL-hardcoded canonical ID. Tracked by
+// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
+// The long-term path is a Vires hub route that resolves the active
+// enrollment from the signed-in scope, not a hardcoded preview URL.
+const JACOB_PAPER_ACTIVE_ENROLLMENT_ID = "enrollment_jacob_paper_main_active"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/active"
-
-async function loadRealOrMock(
-  scope: GuidedScope,
-): Promise<{ view: GuidedEnrollmentView; fallback: string | null }> {
-  try {
-    const view = await readGuidedEnrollmentView(PHASE_6_2_ACTIVE_ENROLLMENT_ID, scope)
-    return { view, fallback: null }
-  } catch (err) {
-    if (err instanceof GuidedUserStateUnavailableError) {
-      return { view: MOCK_ENROLLMENT_VIEW_ACTIVE, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
-    }
-    if (err instanceof GuidedArtifactMissingError) {
-      return { view: MOCK_ENROLLMENT_VIEW_ACTIVE, fallback: `seed missing (${err.artifactPath})` }
-    }
-    throw err
-  }
-}
+const SHELL_TITLE = "ACTIVE paper enrollment"
+const SHELL_SURFACE_ID = "S9"
+const SHELL_SUBTITLE = "S9 preview · live read of guided_enrollment_view.v1"
 
 export default async function GuidedActivePreview() {
   let scope: GuidedScope
@@ -47,32 +43,62 @@ export default async function GuidedActivePreview() {
     }
     if (err instanceof UnknownScopeIdentityError) {
       return (
-        <PreviewPageShell
-          title="ACTIVE paper enrollment"
-          subtitle="S9 preview · mock fallback (no Guided scope mapped to this account)"
-          surfaceId="S9"
-        >
-          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
-          <ActiveEnrollmentSurface view={MOCK_ENROLLMENT_VIEW_ACTIVE} />
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedNotEnabledState email={err.email} />
         </PreviewPageShell>
       )
     }
     throw err
   }
 
-  const { view, fallback } = await loadRealOrMock(scope)
-  return (
-    <PreviewPageShell
-      title="ACTIVE paper enrollment"
-      subtitle={
-        fallback
-          ? "S9 preview · mock fallback (user-state read unavailable)"
-          : "S9 preview · live read of guided_enrollment_view.v1 from rebuild state"
-      }
-      surfaceId="S9"
-    >
-      {fallback ? <MockFallbackBadge reason={fallback} /> : null}
-      <ActiveEnrollmentSurface view={view} />
-    </PreviewPageShell>
-  )
+  try {
+    const view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
+    return (
+      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+        <ActiveEnrollmentSurface view={view} />
+      </PreviewPageShell>
+    )
+  } catch (err) {
+    if (err instanceof GuidedArtifactMissingError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No paper enrollment yet"
+            body="Once you have enrolled in Steady Tide on paper, the active enrollment view will appear here."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof GuidedUserStateUnavailableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service is not configured"
+            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceUnreachableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service temporarily unavailable"
+            body="The projection endpoint did not respond. Try again in a moment."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceErrorResponseError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service returned an error"
+            body={`${err.envelope.error_code}: ${err.envelope.error_message}`}
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
 }
