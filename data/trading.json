@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-13T18:45:09.716000+00:00",
+  "generated_at": "2026-05-13T19:00:08.320742+00:00",
   "as_of_date": "2026-05-13",
   "account": {
     "equity": 85904.27,
@@ -1745,11 +1745,30 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "DASH",
+        "price": 152.58,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-05",
+        "dte": 23,
+        "short_strike": 165.0,
+        "long_strike": 160.0,
+        "spread_width": 5.0,
+        "net_credit": 1.65,
+        "credit_width_ratio": 0.33,
+        "annualized_yield_pct": 573.6,
+        "max_loss_per_contract": 335.0,
+        "iv_rank_proxy": 0.094,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
