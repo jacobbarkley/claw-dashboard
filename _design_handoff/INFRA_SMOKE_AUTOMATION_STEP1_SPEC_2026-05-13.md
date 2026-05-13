@@ -15,13 +15,17 @@ This is the prerequisite for the rest of the acceleration plan — Steps 2/3/4 e
 
 1. A GitHub Action triggers on `pull_request` against `main`.
 2. The action waits for the Vercel preview deployment to reach `success`.
-3. Playwright signs in as a seeded test user (`e2e+seed@…`) via an Auth.js `CredentialsProvider` bypass — no inbox polling, no magic-link redirect, no human in the loop.
+3. Playwright signs in as a seeded test user via a dedicated server-only `/api/e2e/auth` route gated by `E2E_AUTH_BYPASS=1` — no inbox polling, no magic-link redirect, no CSRF/form-POST fight with Auth.js Credentials, no token in URL query string.
 4. Playwright walks the 5 Guided preview pages (`/active`, `/monitoring`, `/events`, `/match`, `/broker`) and captures one screenshot per page.
 5. A single status check on the PR reflects pass/fail.
-6. On fail: trace artifact attached, status red, OpenClaw escalates to Telegram.
-7. On pass: status green, optional Argos diff gallery comment, Jacob can merge without ever opening the preview URL.
+6. On fail: trace artifact attached, status red.
+7. On pass: status green, optional Argos diff gallery comment, no human needs to open the preview URL.
 8. **Zero env-var rotation per PR.** Test account is seeded once, persists across PRs.
-9. **Zero production env changes.** Bypass exists only in Vercel preview scope.
+9. **Zero production env changes.** Bypass route + secret exist only in Vercel preview scope.
+
+## Out of scope for Step 1 (deferred to Step 4)
+
+- OpenClaw escalation of failed smoke to Telegram. Step 4 wires the daily digest + escalation pipeline; Step 1 just produces the GitHub status check + artifact and lets GitHub's own notifications cover the immediate signal.
 
 ## Constraints
 
@@ -29,7 +33,7 @@ This is the prerequisite for the rest of the acceleration plan — Steps 2/3/4 e
 - **Token discipline:**
   - `VERCEL_TOKEN` (if needed): scoped to `claw-dashboard` project, deployments + env-vars permissions only.
   - `E2E_AUTH_BYPASS_SECRET` (signed-token HMAC key): GitHub Secrets + Vercel preview env only.
-- **Test account isolation:** seeded user uses a distinct email (e.g. `e2e+seed@vires.dev` or similar — Jacob picks). The email must be in `GUIDED_T1_SCOPE_EMAILS` on preview env only, OR the bypass provider can mint a session directly without the email needing to be on the allowlist (cleaner).
+- **Test account isolation:** seeded user is `jacobbarkley95+e2e@gmail.com`. The email MUST be present in both `AUTH_ALLOWED_EMAILS` and `GUIDED_T1_SCOPE_EMAILS` on Vercel **Preview scope only**. This is the simplest path — `resolveCurrentScope()` in `lib/guided-scope.server.ts` derives scope from `session.email` via env-mapping; adding the seeded email to that mapping in Preview means no code changes to the scope resolver. (Alternative if this env discipline becomes annoying later: bypass JWT carries a scope claim, resolver checks for it first. Defer that refactor.)
 - **Argos optional:** if Argos CI wires in ≤30 minutes, include it. Otherwise ship without and revisit later. Don't let visual regression block the basic smoke.
 - **Neon deferred:** the dashboard does not currently talk to a DB. Per-PR DB branching belongs in Step 2 when Supabase lands, not Step 1.
 
@@ -37,40 +41,54 @@ This is the prerequisite for the rest of the acceleration plan — Steps 2/3/4 e
 
 ### Auth bypass shape
 
-Add a conditional Auth.js provider in `lib/auth.server.ts`:
+**Use a dedicated server-only `/api/e2e/auth` route gated by `E2E_AUTH_BYPASS=1`** — not the Credentials provider sign-in callback. Auth.js Credentials sign-in is CSRF/form-POST shaped and a query-string GET callback would either fail or leak the bypass token into logs/URL history. The dedicated route is simpler, narrower, and explicit about purpose.
+
+`app/api/e2e/auth/route.ts`:
 
 ```ts
-const providers = []
+// Server-only E2E auth bypass for Playwright smoke runs. Refuses to mount
+// unless E2E_AUTH_BYPASS=1, which is set only on Vercel preview scope.
+import "server-only"
 
-if (process.env.E2E_AUTH_BYPASS === "1") {
-  providers.push(
-    Credentials({
-      id: "e2e-bypass",
-      credentials: { token: { label: "E2E token" } },
-      async authorize({ token }) {
-        const verified = await verifyE2EBypassToken(
-          token,
-          process.env.E2E_AUTH_BYPASS_SECRET!,
-        )
-        if (!verified) return null
-        return { id: verified.sub, email: verified.email }
-      },
-    }),
-  )
+import { NextResponse } from "next/server"
+import { jwtVerify } from "jose"
+
+import { setGuidedAuthSession } from "@/lib/auth.server" // helper that wraps Auth.js session-cookie write
+
+export async function POST(req: Request) {
+  if (process.env.E2E_AUTH_BYPASS !== "1") {
+    return NextResponse.json({ error: "not enabled" }, { status: 404 })
+  }
+  const { token } = await req.json()
+  const secret = process.env.E2E_AUTH_BYPASS_SECRET
+  if (!secret || secret.length < 32) {
+    return NextResponse.json({ error: "misconfigured" }, { status: 500 })
+  }
+  let payload: { email: string }
+  try {
+    const verified = await jwtVerify(token, new TextEncoder().encode(secret), {
+      issuer: "e2e-playwright",
+      audience: "claw-dashboard-e2e",
+      // jose enforces exp/iat
+    })
+    payload = verified.payload as { email: string }
+  } catch {
+    return NextResponse.json({ error: "invalid token" }, { status: 401 })
+  }
+  await setGuidedAuthSession({ email: payload.email })
+  return NextResponse.json({ ok: true })
 }
-
-providers.push(Resend({ /* existing */ }))
 ```
 
-`verifyE2EBypassToken` verifies an HS256 JWT against `E2E_AUTH_BYPASS_SECRET` with short TTL (60s).
+The token is HS256, short TTL (60s), with `iss`/`aud` claims so an arbitrary signed JWT can't fool the route. The session-cookie write reuses whatever helper `lib/auth.server.ts` already exposes for Auth.js session creation (or adds one — Auth.js's Edge-compatible JWT session model makes this a small wrapper).
 
 ### Playwright shape
 
 - `playwright.config.ts` with `globalSetup` that:
-  1. Mints an E2E bypass JWT
-  2. Hits `/api/auth/callback/credentials?token=…`
-  3. Saves resulting cookies to `storageState.json`
-- Test files in `e2e/guided-preview/*.spec.ts` reuse `storageState` so each test is signed in instantly.
+  1. Mints an E2E bypass JWT signed with `E2E_AUTH_BYPASS_SECRET` (claims: `email`, `iss: "e2e-playwright"`, `aud: "claw-dashboard-e2e"`, `exp: +60s`)
+  2. POSTs `{ token }` to `${PLAYWRIGHT_BASE_URL}/api/e2e/auth`
+  3. Saves the resulting session cookie via `request.storageState({ path: "storageState.json" })`
+- Test files in `e2e/guided-preview/*.spec.ts` set `use.storageState = "storageState.json"` so each test starts signed in.
 - One spec per preview page; each asserts that the page renders real data OR the expected empty state (per Codex's PR #14 + production reality).
 
 ### GitHub Action shape
@@ -101,16 +119,17 @@ If Argos easy: add `@argos-ci/playwright` integration. If not: skip and ship.
 
 ## Tasks (dependency-ordered)
 
-1. **Pick test account email** (Jacob): seeded `e2e+seed@…` address. Decide if it lives in `GUIDED_T1_SCOPE_EMAILS` on preview or the bypass mints a session directly without that constraint.
-2. **Generate `E2E_AUTH_BYPASS_SECRET`** (Jacob): 32+ char HMAC secret. Put in GitHub Secrets + Vercel preview env scope only.
-3. **Add `CredentialsProvider` bypass** to `lib/auth.server.ts`, gated by `E2E_AUTH_BYPASS`.
-4. **Write `verifyE2EBypassToken` helper** with short-TTL JWT verification.
-5. **Install Playwright** as dev dep + scaffold `playwright.config.ts` + `globalSetup`.
-6. **Write 5 spec files** for the preview pages. Assertions: page loads, real data or empty state renders, no MockFallbackBadge on production-path.
-7. **Add GitHub Action** that waits for Vercel preview, runs Playwright, uploads artifacts on failure.
-8. **Attempt Argos integration** (≤30 min): if longer, skip and document.
-9. **Verify on PR #14's smoke** — this work doubles as the verification step for PR #14 itself, replacing the manual smoke loop Codex's tunnel needed.
-10. **Document** the workflow in `docs/e2e-smoke.md`.
+1. **Test account email locked** (Jacob, done): `jacobbarkley95+e2e@gmail.com`.
+2. **`E2E_AUTH_BYPASS_SECRET` generated** (Jacob, done): in GitHub Secrets + Vercel preview env scope.
+3. **Add seeded email to Preview env** (Jacob): `jacobbarkley95+e2e@gmail.com` to BOTH `AUTH_ALLOWED_EMAILS` and `GUIDED_T1_SCOPE_EMAILS` env vars on Vercel **Preview scope only**.
+4. **Add `/api/e2e/auth` route handler** with HS256 verification + Auth.js session-cookie write, gated by `E2E_AUTH_BYPASS === "1"`.
+5. **Set `E2E_AUTH_BYPASS=1`** on Vercel **Preview scope only** so the route mounts.
+6. **Install Playwright** as dev dep + scaffold `playwright.config.ts` + `globalSetup` that POSTs to `/api/e2e/auth` and stores cookies.
+7. **Write 5 spec files** for the preview pages. Assertions: page loads, real data or empty state renders, no MockFallbackBadge on production-path.
+8. **Add GitHub Action** that waits for Vercel preview, runs Playwright, uploads artifacts on failure.
+9. **Attempt Argos integration** (≤30 min): if longer, skip and document.
+10. **Verify on PR #14's smoke** — this work doubles as the verification step for PR #14 itself, replacing the manual smoke loop Codex's tunnel needed.
+11. **Document** the workflow in `docs/e2e-smoke.md`.
 
 ## Risk + abort
 
