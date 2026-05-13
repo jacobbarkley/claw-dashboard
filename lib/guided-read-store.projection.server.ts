@@ -1,25 +1,21 @@
-// Production HTTP implementation of GuidedReadStore (T1.0e skeleton).
+// Production HTTP implementation of GuidedReadStore (T1.0e).
 //
-// Reads user-state projections from Codex's runtime over HTTP. The endpoint
-// is not yet deployed; this file ships the dashboard side of the contract so
-// the cutover PR can be a thin coordination step once the vires-numeris
-// adapter + HS256 verifier land.
-//
-// While CODEX_PROJECTION_BASE_URL is unset (current Vercel state) this store
-// is not selected, and production behavior is identical to before T1.0e —
-// the filesystem store handles dev reads, and prod renders MockFallbackBadge
-// via the existing GuidedUserStateUnavailableError path. The cutover PR
-// (coordinated with Codex's backend deploy) will set the env var, replace
-// page-level mock fallbacks with empty/error UI, and close the matching
-// ledger rows.
+// Reads user-state projections from Codex's runtime over HTTP. While
+// CODEX_PROJECTION_BASE_URL is unset (current Vercel production state) this
+// store is not selected and production behavior is unchanged — the filesystem
+// store handles dev reads, and prod throws GuidedUserStateUnavailableError.
+// Setting the env var in the coordinated cutover activates this store.
 //
 // Sources of truth (vires-numeris):
 //   - GUIDED_PROJECTION_ROUTE_PREFIX + GUIDED_PROJECTION_ROUTE_SEGMENTS:
 //     src/openclaw_core/models/guided_command_service.py
 //   - Projection payload shapes: src/openclaw_core/models/guided.py
 //     (mirrored zod schemas live in lib/guided-data-source.schemas.ts)
+//   - Error envelope shape: src/openclaw_core/services/guided_projection_service.py
+//     (mirrored at lib/guided-projection.schemas.ts — projection-side
+//     error_code enum, separate from the command-side enum)
 //
-// Drift between repos = silently broken reads. The route prefix and segment
+// Drift between repos = silently broken reads. Route prefix and segment
 // strings below are pinned. If Codex changes one, mirror it here in the same
 // contract slice.
 
@@ -42,8 +38,10 @@ import {
   GuidedEnrollmentViewSchema,
   GuidedMatchProposalViewSchema,
 } from "@/lib/guided-data-source.schemas"
-import { GuidedCommandErrorEnvelopeSchema } from "@/lib/guided-commands.schemas"
-import type { GuidedCommandErrorEnvelope } from "@/lib/guided-commands.schemas"
+import {
+  GuidedProjectionErrorEnvelopeSchema,
+  type GuidedProjectionErrorEnvelope,
+} from "@/lib/guided-projection.schemas"
 import {
   GuidedArtifactInvalidError,
   GuidedArtifactMissingError,
@@ -86,7 +84,7 @@ export class ProjectionServiceUnreachableError extends Error {
 export class ProjectionServiceErrorResponseError extends Error {
   constructor(
     public readonly status: number,
-    public readonly envelope: GuidedCommandErrorEnvelope,
+    public readonly envelope: GuidedProjectionErrorEnvelope,
   ) {
     super(
       `Guided projection service returned ${status}: ${envelope.error_code} — ${envelope.error_message}`,
@@ -230,18 +228,17 @@ export class GuidedProjectionReadStore implements GuidedReadStore {
       )
     }
 
-    if (response.status === 404) {
-      // Map "no projection record" to the same error class the filesystem
-      // store throws for ENOENT. Preview pages that branch on
-      // GuidedArtifactMissingError get a uniform "missing record" signal
-      // regardless of store backend; the cutover PR replaces the page-level
-      // mock fallback for this class with a typographic empty state.
-      throw new GuidedArtifactMissingError(url)
-    }
-
     const rawText = await response.text()
 
     if (!response.ok) {
+      // Decode the error envelope before branching. 404 carries
+      // PROJECTION_NOT_FOUND (the user-facing "no record yet" case →
+      // GuidedArtifactMissingError) or UNKNOWN_PROJECTION (bad URL segment
+      // → contract bug, surface as ProjectionServiceErrorResponseError so
+      // the page treats it as a service-level fault rather than missing
+      // user state). Decoding for both lets the dashboard distinguish
+      // intentionally-absent records from contract drift instead of
+      // collapsing every 404 into "missing".
       let parsed: unknown
       try {
         parsed = rawText.length > 0 ? JSON.parse(rawText) : {}
@@ -251,12 +248,18 @@ export class GuidedProjectionReadStore implements GuidedReadStore {
           `Non-JSON error body: ${(err as Error).message}`,
         )
       }
-      const decoded = GuidedCommandErrorEnvelopeSchema.safeParse(parsed)
+      const decoded = GuidedProjectionErrorEnvelopeSchema.safeParse(parsed)
       if (!decoded.success) {
         throw new ProjectionServiceMalformedResponseError(
           response.status,
           `Error envelope failed validation: ${decoded.error.message}`,
         )
+      }
+      if (response.status === 404 && decoded.data.error_code === "PROJECTION_NOT_FOUND") {
+        // Map "no projection record" to the same error class the filesystem
+        // store throws for ENOENT, so preview pages branch on a single
+        // GuidedArtifactMissingError signal regardless of store backend.
+        throw new GuidedArtifactMissingError(url)
       }
       throw new ProjectionServiceErrorResponseError(response.status, decoded.data)
     }
@@ -271,10 +274,24 @@ export class GuidedProjectionReadStore implements GuidedReadStore {
       )
     }
 
-    // X-Request-ID echo on 2xx is intentionally NOT enforced. The command
-    // service contract requires echo parity; the projection contract on
-    // vires-numeris does not yet specify it for raw projection payloads. If
-    // Codex pins echo parity in a later contract slice, tighten here.
+    // Enforce X-Request-ID echo on 2xx. vires-numeris projection service
+    // includes the request id in response_headers when the inbound header
+    // is set, so absence or drift on a 2xx is a contract violation worth
+    // surfacing as a malformed response rather than silently trusting the
+    // body. Pinned mirror of the command-client behavior.
+    const responseRequestIdHeader = response.headers.get(REQUEST_ID_HEADER)
+    if (!responseRequestIdHeader) {
+      throw new ProjectionServiceMalformedResponseError(
+        response.status,
+        `Missing required ${REQUEST_ID_HEADER} response header on 2xx.`,
+      )
+    }
+    if (responseRequestIdHeader !== requestId) {
+      throw new ProjectionServiceMalformedResponseError(
+        response.status,
+        `${REQUEST_ID_HEADER} response header (${responseRequestIdHeader}) does not match outgoing request id (${requestId}).`,
+      )
+    }
 
     const result = schema.safeParse(parsedJson)
     if (!result.success) {

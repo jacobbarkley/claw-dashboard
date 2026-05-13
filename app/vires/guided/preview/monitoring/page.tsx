@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation"
 
 import { MonitoringSurface } from "@/components/vires/guided/monitoring-surface"
-import { MockFallbackBadge, PreviewPageShell } from "@/components/vires/guided/shared"
-import { MOCK_ENROLLMENT_VIEW_ACTIVE } from "@/components/vires/guided/mocks"
+import {
+  GuidedNotEnabledState,
+  GuidedSurfaceEmptyState,
+  GuidedSurfaceErrorState,
+} from "@/components/vires/guided/empty-states"
+import { PreviewPageShell } from "@/components/vires/guided/shared"
 import {
   GuidedArtifactMissingError,
   GuidedUserStateUnavailableError,
+  ProjectionServiceErrorResponseError,
+  ProjectionServiceUnreachableError,
   readGuidedEnrollmentView,
 } from "@/lib/guided-data-source.server"
 import {
@@ -13,29 +19,18 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
-import type { GuidedEnrollmentView, GuidedScope } from "@/components/vires/guided/types"
+import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-const PHASE_6_2_ACTIVE_ENROLLMENT_ID = "enrollment_entry_zero_active"
+// Temporary URL-hardcoded canonical ID. Tracked by
+// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
+const JACOB_PAPER_ACTIVE_ENROLLMENT_ID = "enrollment_jacob_paper_main_active"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/monitoring"
-
-async function loadRealOrMock(
-  scope: GuidedScope,
-): Promise<{ view: GuidedEnrollmentView; fallback: string | null }> {
-  try {
-    const view = await readGuidedEnrollmentView(PHASE_6_2_ACTIVE_ENROLLMENT_ID, scope)
-    return { view, fallback: null }
-  } catch (err) {
-    if (err instanceof GuidedUserStateUnavailableError) {
-      return { view: MOCK_ENROLLMENT_VIEW_ACTIVE, fallback: "GUIDED_LOCAL_REBUILD_PATH unset (production preview)" }
-    }
-    if (err instanceof GuidedArtifactMissingError) {
-      return { view: MOCK_ENROLLMENT_VIEW_ACTIVE, fallback: `seed missing (${err.artifactPath})` }
-    }
-    throw err
-  }
-}
+const SHELL_TITLE = "Paper monitoring readback"
+const SHELL_SURFACE_ID = "S10"
+const SHELL_SUBTITLE =
+  "S10 preview · live read of guided_enrollment_view.v1 + disclosure evidence_summary. 5-axis evidence rendered orthogonally — never collapsed."
 
 export default async function GuidedMonitoringPreview() {
   let scope: GuidedScope
@@ -47,32 +42,62 @@ export default async function GuidedMonitoringPreview() {
     }
     if (err instanceof UnknownScopeIdentityError) {
       return (
-        <PreviewPageShell
-          title="Paper monitoring readback"
-          subtitle="S10 preview · mock fallback (no Guided scope mapped to this account)"
-          surfaceId="S10"
-        >
-          <MockFallbackBadge reason={`no Guided scope mapped to ${err.email}`} />
-          <MonitoringSurface view={MOCK_ENROLLMENT_VIEW_ACTIVE} />
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedNotEnabledState email={err.email} />
         </PreviewPageShell>
       )
     }
     throw err
   }
 
-  const { view, fallback } = await loadRealOrMock(scope)
-  return (
-    <PreviewPageShell
-      title="Paper monitoring readback"
-      subtitle={
-        fallback
-          ? "S10 preview · mock fallback (user-state read unavailable)"
-          : "S10 preview · live read of guided_enrollment_view.v1 + disclosure evidence_summary. 5-axis evidence rendered orthogonally — never collapsed."
-      }
-      surfaceId="S10"
-    >
-      {fallback ? <MockFallbackBadge reason={fallback} /> : null}
-      <MonitoringSurface view={view} />
-    </PreviewPageShell>
-  )
+  try {
+    const view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
+    return (
+      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+        <MonitoringSurface view={view} />
+      </PreviewPageShell>
+    )
+  } catch (err) {
+    if (err instanceof GuidedArtifactMissingError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No monitoring data yet"
+            body="Performance and risk metrics will appear here once your enrollment is active."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof GuidedUserStateUnavailableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service is not configured"
+            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceUnreachableError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service temporarily unavailable"
+            body="The projection endpoint did not respond. Try again in a moment."
+          />
+        </PreviewPageShell>
+      )
+    }
+    if (err instanceof ProjectionServiceErrorResponseError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceErrorState
+            title="Guided state service returned an error"
+            body={`${err.envelope.error_code}: ${err.envelope.error_message}`}
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
 }
