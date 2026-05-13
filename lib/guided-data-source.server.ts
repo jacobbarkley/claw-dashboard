@@ -44,6 +44,7 @@ import {
   StrategyLibrarySchema,
 } from "@/lib/guided-data-source.schemas"
 import { FilesystemGuidedReadStore } from "@/lib/guided-read-store.filesystem.server"
+import { GuidedProjectionReadStore } from "@/lib/guided-read-store.projection.server"
 import {
   GuidedArtifactInvalidError,
   GuidedArtifactMissingError,
@@ -81,15 +82,23 @@ export function resolvePublicStaticRoot(): string {
   return resolveAbsolute(configured)
 }
 
-// Resolve the user-state read store at request time. T1.0c ships only the
-// filesystem implementation; the projection (HTTP) implementation lands at
-// T1.0e. When neither store is reachable, throw GuidedUserStateUnavailableError
-// so callers can render the labeled mock fallback (preview pages) or 503 (API).
+// Resolve the user-state read store at request time. Selection precedence:
+//   1. CODEX_PROJECTION_BASE_URL set → GuidedProjectionReadStore (T1.0e skeleton
+//      — production cutover happens in a coordinated follow-up PR once Codex's
+//      projection endpoint and HS256 verifier are deployed).
+//   2. GUIDED_LOCAL_REBUILD_PATH set → FilesystemGuidedReadStore (dev/preview).
+//   3. Neither set → throw GuidedUserStateUnavailableError so callers can
+//      render the labeled mock fallback (preview pages) or 503 (API).
+//
+// In current production both env vars are intentionally unset, so this
+// function still throws and preview pages still render MockFallbackBadge.
+// The cutover PR sets CODEX_PROJECTION_BASE_URL in Vercel and swaps the
+// page-level mock fallbacks for empty/error UI.
 function resolveUserStateStore(): GuidedReadStore {
+  const projection = GuidedProjectionReadStore.fromEnv()
+  if (projection !== null) return projection
   const filesystem = FilesystemGuidedReadStore.fromEnv()
   if (filesystem !== null) return filesystem
-  // Future (T1.0e): if process.env.CODEX_PROJECTION_BASE_URL is set, return
-  // GuidedProjectionReadStore.fromEnv() here.
   throw new GuidedUserStateUnavailableError()
 }
 
