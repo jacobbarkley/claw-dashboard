@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-11T20:45:08.854456+00:00",
-  "as_of_date": "2026-05-11",
+  "generated_at": "2026-05-13T20:45:09.611802+00:00",
+  "as_of_date": "2026-05-13",
   "account": {
-    "equity": 85911.34,
-    "cash": 29237.67,
-    "buying_power": 114226.77,
+    "equity": 85904.27,
+    "cash": 30826.52,
+    "buying_power": 115843.34,
     "base_value": 100000.0,
-    "total_pnl": -14088.66,
-    "total_pnl_pct": -14.0887,
-    "today_pnl": 57.17,
-    "today_pnl_pct": 0.0666,
-    "positions_value": 56673.67,
-    "equity_deployed": 56673.67,
+    "total_pnl": -14095.73,
+    "total_pnl_pct": -14.0957,
+    "today_pnl": 18.39,
+    "today_pnl_pct": 0.0214,
+    "positions_value": 55077.78,
+    "equity_deployed": 55077.78,
     "options_deployed": 0,
-    "unrealized_pnl": 259.0,
-    "unrealized_pnl_pct": 0.46
+    "unrealized_pnl": 67.63,
+    "unrealized_pnl_pct": 0.12
   },
   "positions": [
     {
@@ -22,55 +22,44 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 292.12,
-      "market_value": 1460.6,
-      "unrealized_pnl": 33.15,
-      "unrealized_pct": 2.32,
-      "change_today_pct": -0.41
+      "current_price": 296.92,
+      "market_value": 1484.6,
+      "unrealized_pnl": 57.15,
+      "unrealized_pct": 4.0,
+      "change_today_pct": 0.72
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 429.875,
-      "market_value": 1289.625,
-      "unrealized_pnl": 38.895,
-      "unrealized_pct": 3.11,
-      "change_today_pct": -0.03
+      "current_price": 415.91,
+      "market_value": 1247.73,
+      "unrealized_pnl": -3.0,
+      "unrealized_pct": -0.24,
+      "change_today_pct": -0.81
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 81751.749,
-      "market_value": 922.249574,
-      "unrealized_pnl": 61.772511,
-      "unrealized_pct": 7.18,
-      "change_today_pct": 0.4
-    },
-    {
-      "symbol": "NVDA",
-      "qty": 7.0,
-      "side": "long",
-      "entry_price": 200.647143,
-      "current_price": 221.84,
-      "market_value": 1552.88,
-      "unrealized_pnl": 148.349999,
-      "unrealized_pct": 10.56,
-      "change_today_pct": 3.09
+      "current_price": 78667.0,
+      "market_value": 887.450215,
+      "unrealized_pnl": 26.973152,
+      "unrealized_pct": 3.14,
+      "change_today_pct": -3.0
     },
     {
       "symbol": "SGOV",
       "qty": 512.0,
       "side": "long",
       "entry_price": 100.530254,
-      "current_price": 100.485,
-      "market_value": 51448.32,
-      "unrealized_pnl": -23.170048,
-      "unrealized_pct": -0.04,
-      "change_today_pct": 0.01
+      "current_price": 100.5039,
+      "market_value": 51457.9968,
+      "unrealized_pnl": -13.493248,
+      "unrealized_pct": -0.03,
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -87,16 +76,16 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 69,
-    "closed_trades": 23,
+    "total_trades": 70,
+    "closed_trades": 24,
     "open_trades": 46,
-    "win_rate_pct": 26.09,
-    "profit_factor": 0.6884,
-    "expectancy": -10.51,
-    "net_pnl": -169.36,
+    "win_rate_pct": 29.17,
+    "profit_factor": 1.0582,
+    "expectancy": -1.7,
+    "net_pnl": 31.61,
     "max_drawdown_pct": 0.4388,
     "max_drawdown_usd": 438.81,
-    "max_win_streak": 2,
+    "max_win_streak": 3,
     "max_loss_streak": 10
   },
   "daily_performance": [
@@ -627,6 +616,14 @@
       "winners": 0,
       "losers": 0,
       "win_rate": null
+    },
+    {
+      "date": "2026-05-13",
+      "net_pnl": 200.97,
+      "trades": 1,
+      "winners": 1,
+      "losers": 0,
+      "win_rate": 100.0
     }
   ],
   "equity_curve": [
@@ -909,6 +906,16 @@
       "date": "2026-05-09",
       "equity": 85854.17,
       "profit_loss": 130.64
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 85889.96,
+      "profit_loss": 35.79
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 85885.88,
+      "profit_loss": -4.08
     }
   ],
   "watchlist": {
@@ -1748,19 +1755,19 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "COF",
-        "price": 193.0,
-        "sector": "Financial Services",
-        "expiry": "2026-05-29",
-        "dte": 18,
-        "short_strike": 205.0,
-        "long_strike": 200.0,
+        "symbol": "DASH",
+        "price": 152.58,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-05",
+        "dte": 23,
+        "short_strike": 165.0,
+        "long_strike": 160.0,
         "spread_width": 5.0,
-        "net_credit": 2.5,
-        "credit_width_ratio": 0.5,
-        "annualized_yield_pct": 869.0,
-        "max_loss_per_contract": 250.0,
-        "iv_rank_proxy": 0.125,
+        "net_credit": 1.45,
+        "credit_width_ratio": 0.29,
+        "annualized_yield_pct": 504.0,
+        "max_loss_per_contract": 355.0,
+        "iv_rank_proxy": 0.094,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
