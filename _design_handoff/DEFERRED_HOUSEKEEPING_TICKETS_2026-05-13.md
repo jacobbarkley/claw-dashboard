@@ -182,6 +182,48 @@ This is too many sources. Future operators won't know which one to file against.
 
 ---
 
+## HOUSEKEEPING-004: Supabase migration runner (GHA workflow)
+
+**Trigger:** Any time after the Step 2 spike is live and verified.
+**Owner:** Codex (volunteered during Step 2 unblock conversation on 2026-05-14).
+
+### Problem
+
+The Step 2 spike unblock required manual SQL Editor paste because Supabase's service-role key is a data/API key — it can read/write rows but not run DDL. Future migrations would require Jacob to manually paste SQL every time, which violates the "no Jacob-clicks for routine work" principle of the acceleration plan.
+
+### Target end state
+
+A GitHub Actions workflow in `vires-numeris` that:
+1. Triggers on `workflow_dispatch` (manual fire) or on push to a migration directory.
+2. Reads a `SUPABASE_DB_URL` (or Supabase Management API access token, whichever path Codex picks) from GitHub Secrets.
+3. Applies pending migration files in order using `psql` or `supabase db push`.
+4. Reports success/failure as a check status.
+
+After this lands, `git push` of a new migration → workflow fires → schema updated. No dashboard clicks.
+
+### Tasks
+
+1. **Decide credential path** (Codex): `SUPABASE_DB_URL` (full Postgres connection string with password) vs Supabase Management API access token. Tradeoff: DB URL is simpler/standard but has broader blast radius; Management API token is scoped but Supabase-specific.
+2. **Add chosen credential to GitHub Secrets** (Jacob): one-time setup, paste from Supabase dashboard, security-rotation-debt rule applies.
+3. **Wire workflow** (Codex): `.github/workflows/supabase-migrate.yml` in vires-numeris.
+4. **Test on a no-op migration** (Codex + Jacob): create an empty/trivial migration, dispatch the workflow, verify success.
+5. **Document** (Codex): `docs/supabase-migrations.md` — how to add a new migration, how to fire the workflow, how to roll back.
+
+### Acceptance criteria
+
+- [ ] Workflow exists and is dispatchable
+- [ ] One real migration applied via workflow (not via SQL Editor paste) end-to-end
+- [ ] Production-grade: workflow refuses to run if migration file is malformed
+- [ ] Rollback path documented (Supabase doesn't auto-rollback; we need manual instructions)
+
+### Risks + mitigation
+
+- **DB password exposure** → `SUPABASE_DB_URL` is a high-blast-radius secret. Mitigation: GitHub Secrets only, never local env, security-rotation-debt entry on first add.
+- **Migration ordering** → if multiple branches modify migrations, the timestamp prefix discipline must hold. Mitigation: PR template reminder + naming convention.
+- **Schema drift** between Supabase dashboard manual edits and migration files → mitigation: docs explicitly forbid dashboard SQL edits after this workflow is live; if dashboard edits happen, baseline a fresh migration capturing the state.
+
+---
+
 ## Where to find this file
 
 Filed under `_design_handoff/` in `claw-dashboard` alongside the acceleration plan specs. Any agent looking for "what's deferred" should find it here.
