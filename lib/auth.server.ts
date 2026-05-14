@@ -43,9 +43,11 @@
 import "server-only"
 
 import NextAuth, { type NextAuthConfig } from "next-auth"
+import Credentials from "next-auth/providers/credentials"
 import Resend from "next-auth/providers/resend"
 import { UpstashRedisAdapter } from "@auth/upstash-redis-adapter"
 import { Redis } from "@upstash/redis"
+import { jwtVerify } from "jose"
 
 // Module augmentation: persist the verified email through to runtime callers
 // of `auth()`. Guided scope resolution reads `session.guidedEmail`.
@@ -104,6 +106,56 @@ function buildResendProvider() {
   return Resend({ apiKey, from })
 }
 
+// E2E auth bypass — gated by E2E_AUTH_BYPASS=1 which must only be set on
+// Vercel Preview scope, never Production. Accepts a short-TTL HS256 JWT
+// minted by Playwright's globalSetup, signed with E2E_AUTH_BYPASS_SECRET,
+// carrying iss/aud claims so an arbitrary signed JWT can't fool the
+// provider. The verified email becomes the session identity.
+//
+// The provider is conditionally added in getConfig() below; if
+// E2E_AUTH_BYPASS is not exactly "1" this code path never runs.
+//
+// Per the T1.0e cutover-prep policy: production runtime never sees this
+// provider. The smoke automation in CI sets E2E_AUTH_BYPASS=1 on the
+// Vercel Preview env only.
+const E2E_BYPASS_JWT_ISSUER = "e2e-playwright"
+const E2E_BYPASS_JWT_AUDIENCE = "claw-dashboard-e2e"
+const E2E_BYPASS_SECRET_MIN_LENGTH = 32
+
+function buildE2EBypassProvider() {
+  return Credentials({
+    id: "e2e-bypass",
+    name: "E2E Auth Bypass",
+    credentials: {
+      token: { label: "E2E bypass token", type: "text" },
+    },
+    async authorize(credentials) {
+      const token = credentials?.token
+      if (typeof token !== "string" || token.length === 0) return null
+      const secret = process.env.E2E_AUTH_BYPASS_SECRET
+      if (!secret || secret.length < E2E_BYPASS_SECRET_MIN_LENGTH) return null
+      try {
+        const verified = await jwtVerify(token, new TextEncoder().encode(secret), {
+          issuer: E2E_BYPASS_JWT_ISSUER,
+          audience: E2E_BYPASS_JWT_AUDIENCE,
+          // jose enforces exp/iat by default
+        })
+        const payload = verified.payload as { email?: unknown }
+        if (typeof payload.email !== "string" || payload.email.length === 0) return null
+        const email = payload.email.toLowerCase()
+        // The bypass-issued session goes through the same signIn() callback
+        // as a real magic-link sign-in, which still gates on
+        // AUTH_ALLOWED_EMAILS. The seeded E2E email must be added to that
+        // env on Preview scope; otherwise authorize() succeeds but signIn()
+        // rejects with the same allowlist check that real users hit.
+        return { id: email, email }
+      } catch {
+        return null
+      }
+    },
+  })
+}
+
 // Build the config lazily so `next build` (which imports this module without
 // invoking handlers) does not require AUTH_* env vars to be set. The factory
 // runs on first request and the result is cached for subsequent requests.
@@ -111,9 +163,13 @@ let cachedConfig: NextAuthConfig | null = null
 
 function getConfig(): NextAuthConfig {
   if (cachedConfig !== null) return cachedConfig
+  const providers: NextAuthConfig["providers"] = [buildResendProvider()]
+  if (process.env.E2E_AUTH_BYPASS === "1") {
+    providers.push(buildE2EBypassProvider())
+  }
   cachedConfig = {
     adapter: buildAdapter(),
-    providers: [buildResendProvider()],
+    providers,
     session: { strategy: "jwt" },
     pages: {
       signIn: "/signin",
