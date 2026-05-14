@@ -24,7 +24,19 @@ After Step 4, the 6-hour Jacob-roundtrip per slice is dead. Spec is the contract
 1. Linear workspace `vires` exists with Jacob as workspace owner.
 2. Two Linear projects exist: `claw-dashboard` (frontend/UX) and `vires-numeris` (backend/trading core). Optional third project `infra` for cross-cutting work.
 3. A custom "Spec Kit Ticket" issue template exists in Linear with sections: **Requirements**, **Design**, **Tasks**, **Acceptance criteria**, **Open questions**.
-4. GitHub Spec Kit CLI is installed locally for Jacob (`pipx install specify-cli && specify init --here --ai claude-code` inside each repo). Each repo gains a `.specify/` directory with templates.
+4. GitHub Spec Kit CLI is installed locally for Jacob. Per current Spec Kit docs (https://github.com/github/spec-kit, https://github.github.io/spec-kit/reference/core.html), install is:
+
+   ```
+   uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@<tag>
+   ```
+
+   Init inside each repo (Codex first, since the integration key is documented):
+
+   ```
+   specify init --here --integration codex --integration-options="--skills"
+   ```
+
+   For Claude-side init, run `specify version --features --json` to enumerate supported integration keys and pin the correct one, then run the equivalent `specify init --here --integration <claude-key>`. Each repo gains a `.specify/` directory with templates.
 5. `LINEAR_API_KEY` is in OpenClaw env (for the digest cron) and in any agent that needs to read tickets.
 
 ### 4b — OpenClaw daily digest cron
@@ -32,15 +44,30 @@ After Step 4, the 6-hour Jacob-roundtrip per slice is dead. Spec is the contract
 6. A cron entry on Jacob's WSL fires `openclaw digest` at 17:30 ET on weekdays (skip weekends).
 7. The digest reads: Linear tickets created/closed/updated in the last 24h, recent PRs across `claw-dashboard` + `vires-numeris` + `OpenClaw-s-Brain` + `youtube-content`, OpenClaw inbox, recent state-file changes in trading-bot.
 8. Output: (a) Telegram message to claude-claw topic with the 3-5 most-important items, (b) full digest appended to `~/.openclaw/workspace/daily/<YYYY-MM-DD>.md` (Obsidian-bound by later HOUSEKEEPING work).
-9. Telegram brief format: terse, mobile-readable, no unnecessary headers. Match OpenClaw's existing message style.
+9. Telegram brief format: terse, mobile-readable, no unnecessary headers. Match OpenClaw's existing message style. Brief stays under 1000 chars; anything longer belongs in the markdown daily log.
+10. Telegram brief ordering — "Needs Jacob" first, not chronology first:
+    1. Production / security / account-risk blockers
+    2. Failed CI / smoke / broken deploys
+    3. PRs ready for Jacob merge or review
+    4. Merged PRs and real shipped progress
+    5. Linear tickets newly blocked / created
+    6. Inbox + notes
+    7. Open-PR drift (no recent activity)
 
-### 4c — Cyrus routing (optional, defer if fighty)
+### 4c — Cyrus routing (explicitly optional, gated on missed-event recovery)
+
+**Gate before any 4c work starts:** Cyrus reacts to Linear webhooks. WSL is only powered on while Jacob's machine is on, so any Cyrus deployment on WSL will miss events. One of the following must be true before Cyrus becomes load-bearing:
+
+- **(a) Documented polling/backfill mode in Cyrus.** Confirm in their docs that Cyrus can poll Linear on startup for `triaged + cyrus:* + no PR link` tickets it missed while offline, OR
+- **(b) Our own reconciliation wrapper.** A 1-2 minute periodic job runs alongside Cyrus, scans Linear for `triaged + cyrus:* + no PR link` tickets older than N minutes, and re-enqueues them via the same trigger Cyrus uses.
+
+If neither is easy, **ship 4a + 4b and defer 4c** — the workflow win is in Linear + Spec Kit + the digest cron, not in Cyrus specifically.
 
 10. Cyrus self-hosted somewhere always-on (WSL service for the spike, VPS for durability).
 11. Linear ticket state `triaged` + label `cyrus:claude` → Cyrus spawns Claude Code worktree on `claw-dashboard`.
 12. Linear ticket state `triaged` + label `cyrus:codex` → Cyrus spawns Codex worktree on `vires-numeris`.
 13. Worktree completes work, opens PR, comments back to Linear ticket with PR URL.
-14. One demonstrated end-to-end Cyrus run (any small ticket, any agent) proves the path.
+14. One demonstrated end-to-end Cyrus run (any small ticket, any agent) proves the path — including a re-enqueue test after a deliberate Cyrus restart, to prove the gate above.
 
 ### Across all three sub-slices
 
@@ -146,7 +173,13 @@ WSL: jacobbarkley user
 | Cyrus config | `OPENAI_API_KEY` | for Codex agents | local |
 | Cyrus config | `GITHUB_TOKEN` | gh CLI token, repo + PR scopes | local |
 
-`LINEAR_API_KEY` is reused across all four locations — single rotation rotates everywhere.
+`LINEAR_API_KEY` reuse across all four locations is a **spike-only bootstrap**, not the durable credential model. One key is acceptable to prove 4a/4b end-to-end; after that, split credentials by surface:
+
+- **Cyrus identity** should prefer a Linear OAuth/app credential (Cyrus self-host setup already expects a Linear OAuth app). That removes Cyrus comments from Jacob's personal-key trail.
+- **OpenClaw digest** and **per-repo GHA jobs** should each get their own scoped API key (or app-token) once 4a/4b are working. One rotation surface is convenient; one key everywhere is a blast-radius problem.
+- **During the spike**, if a real OAuth/app identity isn't easy, every comment Cyrus posts back to Linear or GitHub must carry a stable `[cyrus-bot]` prefix and the resulting "this looks like Jacob but is actually a bot" debt must be logged in the deferred-housekeeping ledger.
+
+Do **not** purchase a separate human seat just to give bots an identity. Linear's free tier currently lists unlimited members plus API/webhook access; if bot-seat semantics turn out to cost a seat anyway, revisit at that point.
 
 ## Tasks (dependency-ordered)
 
@@ -156,7 +189,22 @@ WSL: jacobbarkley user
 2. **Generate Linear API key** (Jacob): Settings → API → Personal API Keys → create with read/write scope.
 3. **Bootstrap script** (Claude): `scripts/bootstrap-linear-env.sh` reads `LINEAR_API_KEY` from temp file, writes to OpenClaw env + GitHub Secrets on both repos.
 4. **Create Spec Kit issue template** (Jacob via Linear UI, or Claude via Linear API): one template per project that drops the markdown template above into new issues.
-5. **Install Spec Kit CLI** (Jacob, ~5 min): `pipx install specify-cli` then `cd ~/claude/claw-dashboard && specify init --here --ai claude-code` and same for `vires-numeris` once it's clonable locally.
+5. **Install Spec Kit CLI** (Jacob, ~5 min):
+
+   ```
+   uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@<tag>
+   ```
+
+   Pick `<tag>` from the spec-kit releases page; pin it in `docs/linear-workflow.md` so re-installs are reproducible. Then per repo:
+
+   ```
+   cd ~/claude/claw-dashboard
+   specify version --features --json   # enumerate supported integration keys
+   specify init --here --integration codex --integration-options="--skills"   # for Codex worktrees
+   specify init --here --integration <claude-key>                              # claude key from the version --features output
+   ```
+
+   Same for `vires-numeris` once it's clonable locally (Codex can run his half from his end).
 6. **Documentation** (Claude): `docs/linear-workflow.md` — how tickets flow, what goes in each Spec Kit section, when to use Cyrus labels.
 
 ### 4b — OpenClaw daily digest cron
@@ -193,19 +241,22 @@ WSL: jacobbarkley user
 - [ ] Spec Kit issue template wired in Linear
 - [ ] Spec Kit CLI installed in claw-dashboard (vires-numeris when local clone exists)
 - [ ] `LINEAR_API_KEY` in OpenClaw env + GitHub Secrets via bootstrap script
-- [ ] OpenClaw digest cron firing at 17:30 ET weekdays, Telegram + markdown working
+- [ ] OpenClaw digest cron firing at 17:30 ET weekdays, Telegram + markdown working, Telegram brief ordered "Needs Jacob first" per §4b item 10
 - [ ] Cyrus running OR explicit deferral logged with reason (4c skipped is fine if fighty)
-- [ ] If Cyrus runs: one end-to-end test ticket → PR
+- [ ] Cyrus path: §4c missed-event-recovery gate either documented as met (Cyrus polling/backfill confirmed in their docs) or covered by our own reconciliation wrapper
+- [ ] If Cyrus runs: one end-to-end test ticket → PR, including a re-enqueue test after a deliberate Cyrus restart
 - [ ] `docs/linear-workflow.md` documents the spec contract
 - [ ] No new tickets filed as TICKET-*.md or queue.md after the Linear cutover date
 
-## Open questions for Codex
+## Codex resolutions (closed 2026-05-14)
 
-1. **Cyrus self-host stability on WSL.** Cyrus needs to be always-on to catch Linear webhooks. WSL is only on when Jacob's PC is on. Acceptable for spike, but: does Cyrus support webhook replay (catch up on missed events), or does it need to poll? If poll-only, fine for spike; if webhook-only and replay isn't supported, we'll miss events.
-2. **Spec Kit + Linear issue template overlap.** Spec Kit's CLI creates markdown files in the repo. Linear's issue body holds the same content. Source of truth conflict: do we keep specs in Linear (operational) and let Spec Kit format the export, or do we keep specs in the repo (versioned) and embed Linear ticket as the operational tracker?
-3. **Agent identity in Linear.** When Cyrus opens a PR, the PR comment back to Linear is made by... whose API key? Recommendation: use a dedicated `cyrus-bot` Linear seat (free for bots). Confirm Linear's bot-seat semantics — if bots cost a seat, this changes the calculus.
-4. **OpenClaw digest content scoring.** With 4 repos + Linear + trading state + inbox, the digest could be overwhelming. What's the priority filter? Suggested: critical state changes > merged PRs > new Linear tickets > inbox > open PRs. Codex weigh in.
-5. **Cyrus and the auto-merge rule.** The agent-auto-merge feedback says Claude/Codex merge routine doc-only PRs themselves. Cyrus spawns Claude or Codex sessions. Does the rule transitively apply? Recommendation: yes, agents merge their own routine PRs even when spawned by Cyrus; Cyrus surfaces ones that need Jacob's judgment.
+These were the five open questions raised when the spec was opened. Codex answered them on PR #24 (https://github.com/jacobbarkley/claw-dashboard/pull/24#issuecomment-4455610230); the answers are folded back here so this doc stays canonical.
+
+1. **Cyrus self-host stability on WSL → resolved by the §4c gate above.** Webhook replay is not confirmed in current public Cyrus docs (https://github.com/cyrusagents/cyrus, https://www.atcyrus.com/docs/how-cyrus-knows). Treat Cyrus as a spike, not the durable router. The §4c "missed event recovery" gate is the durable requirement.
+2. **Spec Kit + Linear source of truth → Linear is operational, repo spec is the snapshot.** Linear issue owns current requirements / open questions / status. When a ticket becomes build-ready, the agent exports/creates the repo spec under `.specify/specs/...` (or `specs/...`) in the same PR that implements the ticket. The PR links back to Linear. No long-lived duplicate spec; code review still gets a versioned artifact.
+3. **Agent identity in Linear → prefer Linear OAuth/app credential.** Cyrus's self-host setup already expects a Linear OAuth app, so use that path if it isn't fiddly. If it is fiddly, fall back to Jacob's personal key tagged with `[cyrus-bot]` prefix on every comment and log the debt — explicitly **not** a permanent state. Do not buy a separate human seat for bots.
+4. **OpenClaw digest content scoring → "Needs Jacob" first, not chronology first.** Priority order: production/security/account-risk blockers > failed CI/smoke or broken deploys > PRs ready for Jacob merge/review > merged PRs and real shipped progress > Linear tickets newly blocked/created > inbox/notes > open-PR drift. Telegram = 3-5 item executive brief under 1000 chars. Markdown daily log carries the full trail.
+5. **Cyrus and auto-merge → Cyrus never merges; spawned sessions may auto-merge under the existing rule.** Cyrus itself opens PRs only. A spawned Claude/Codex session may apply the existing agent-auto-merge rule once the PR is open and checks are green, and only for categories the rule already allows (doc-only / routine / production-effect-neutral). The PR / Linear comment must say "auto-merged by agent under rule X." Anything touching env, auth, private data, trading runtime, production deploys, or contract/data plumbing waits for Jacob.
 
 ## Out-of-band: what Jacob needs to do
 
@@ -217,8 +268,20 @@ WSL: jacobbarkley user
    LINEAR_API_KEY=<paste>
    ```
 5. Run `bash scripts/bootstrap-linear-env.sh ~/linear-spike-secrets.txt`.
-6. Install Spec Kit CLI: `pipx install specify-cli`.
-7. Run `cd ~/claude/claw-dashboard && specify init --here --ai claude-code`.
+6. Install Spec Kit CLI:
+
+   ```
+   uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@<tag>
+   ```
+
+   (Pick `<tag>` from https://github.com/github/spec-kit/releases — pinned in `docs/linear-workflow.md`.)
+7. Inside `~/claude/claw-dashboard`:
+
+   ```
+   specify version --features --json    # see supported integration keys
+   specify init --here --integration codex --integration-options="--skills"
+   specify init --here --integration <claude-key>   # use whatever key the version --features output shows
+   ```
 
 (Vires-numeris Spec Kit init waits until you have a local clone of that repo, or Codex runs it from his end.)
 
