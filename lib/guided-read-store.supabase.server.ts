@@ -143,11 +143,18 @@ export class SupabaseGuidedReadStore implements GuidedReadStore {
     const scopeId = serializeScopeId(authContext.scope)
     assertSafeGuidedId("scope_id", scopeId)
 
+    // Step 2 spike table schema: UNIQUE (user_sub, scope_id), no
+    // enrollment_id column — the enrollment_id lives inside `payload`.
+    // Filtering by scope_id alone is correct: RLS first narrows to the JWT
+    // subject's rows, and the unique constraint guarantees at most one
+    // row remains. We then verify the payload's enrollment_id matches the
+    // caller's request as a post-fetch invariant — if a future spike row
+    // ever pointed at a different enrollment, surface that as invalid
+    // rather than silently returning the wrong projection.
     const { data, error } = await client
       .from(SPIKE_TABLE)
       .select("payload")
       .eq("scope_id", scopeId)
-      .eq("enrollment_id", enrollmentId)
       .maybeSingle()
 
     if (error) {
@@ -161,7 +168,7 @@ export class SupabaseGuidedReadStore implements GuidedReadStore {
       // not an error — same code path as "row was never seeded." Both surface
       // to the page as the missing-artifact empty state.
       throw new GuidedArtifactMissingError(
-        `${SPIKE_TABLE}(scope_id=${scopeId},enrollment_id=${enrollmentId})`,
+        `${SPIKE_TABLE}(scope_id=${scopeId})`,
       )
     }
 
@@ -176,8 +183,15 @@ export class SupabaseGuidedReadStore implements GuidedReadStore {
           ? ` (+${result.error.issues.length - 5} more)`
           : ""
       throw new GuidedArtifactInvalidError(
-        `${SPIKE_TABLE}(scope_id=${scopeId},enrollment_id=${enrollmentId})`,
+        `${SPIKE_TABLE}(scope_id=${scopeId})`,
         `${result.error.issues.length} validation issue(s): ${previewIssues}${more}`,
+      )
+    }
+    const payloadEnrollmentId = result.data.enrollment?.enrollment_id ?? null
+    if (payloadEnrollmentId !== enrollmentId) {
+      throw new GuidedArtifactInvalidError(
+        `${SPIKE_TABLE}(scope_id=${scopeId})`,
+        `payload.enrollment.enrollment_id (${String(payloadEnrollmentId)}) does not match requested enrollment_id (${enrollmentId})`,
       )
     }
     return result.data

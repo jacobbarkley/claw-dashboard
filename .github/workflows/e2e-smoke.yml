@@ -24,6 +24,12 @@ jobs:
     env:
       PLAYWRIGHT_BASE_URL: ${{ github.event.deployment_status.environment_url }}
       E2E_AUTH_BYPASS_SECRET: ${{ secrets.E2E_AUTH_BYPASS_SECRET }}
+      # Mirrors GUIDED_READ_STORE on the Vercel Preview runtime. The
+      # Playwright smoke branches on this to assert the right surface
+      # (supabase = seeded "Steady Tide"; anything else = configured-error).
+      # Override via repo variable `GUIDED_READ_STORE` if Preview's value
+      # ever diverges from the current "supabase" default.
+      GUIDED_READ_STORE: ${{ vars.GUIDED_READ_STORE || 'supabase' }}
     steps:
       - uses: actions/checkout@v4
         with:
