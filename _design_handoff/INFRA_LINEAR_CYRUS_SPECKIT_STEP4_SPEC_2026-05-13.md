@@ -23,7 +23,11 @@ After Step 4, the 6-hour Jacob-roundtrip per slice is dead. Spec is the contract
 
 1. Linear workspace `vires` exists with Jacob as workspace owner.
 2. Two Linear projects exist: `claw-dashboard` (frontend/UX) and `vires-numeris` (backend/trading core). Optional third project `infra` for cross-cutting work.
-3. A custom "Spec Kit Ticket" issue template exists in Linear with sections: **Requirements**, **Design**, **Tasks**, **Acceptance criteria**, **Open questions**.
+3. A custom "Spec Kit Ticket" issue template exists in Linear in **two stages**:
+   - **Intake shape** (what Jacob fills out when creating the ticket): four fields — Intent / problem, Done looks like, Constraints, Open questions. No file paths, data shapes, or sequence — those are for the agent to add.
+   - **Build-ready shape** (what the spec-pass agent expands the ticket into before code starts): Requirements, Design, Tasks, Acceptance criteria, Open questions. Becomes the snapshot exported to `.specify/specs/<ticket>/` in the implementation PR.
+
+   Template text is in §"Design notes → Spec Kit Linear issue template" below.
 4. GitHub Spec Kit CLI is installed locally for Jacob. Per current Spec Kit docs (https://github.com/github/spec-kit, https://github.github.io/spec-kit/reference/core.html), install is:
 
    ```
@@ -112,28 +116,64 @@ Workspace: vires
 
 ### Spec Kit Linear issue template
 
+Two stages so the intake friction stays low and the build-ready quality stays high. Jacob fills the first stage when creating the ticket; the spec-pass agent expands the ticket into the second stage as its first action, *before* writing any code.
+
+**Stage 1 — Intake (Jacob writes when filing the ticket):**
+
 ```markdown
-## Requirements
-What does "done" look like? Specific, testable.
+## Intent / problem
+What's broken or missing? Plain English, no jargon required.
 
-## Design
-How are we going to do it? File paths, data shapes, sequence.
+## Done looks like
+What would you point at to say "yes, that fixed it"? Can be vague
+("trading page feels less cramped") — the spec-pass agent will sharpen it.
 
-## Tasks
-- [ ] Dependency-ordered checklist
-
-## Acceptance criteria
-- [ ] How we know it's done
+## Constraints
+Hard musts / must-nots. Deadlines, can't-break, must-look-like-X.
+Leave blank if none.
 
 ## Open questions
-For Codex/Claude/Jacob to answer before build starts.
+What you're already unsure about. The agent will answer or ask back.
 
 ---
 **Repo:** claw-dashboard | vires-numeris | other
 **Agent:** cyrus:claude | cyrus:codex | manual
 **Priority:** hi | lo
-**Time-box:** N hours/days
+**Time-box:** N hours/days (estimate; agent may revise during spec-pass)
 ```
+
+**Stage 2 — Build-ready (spec-pass agent expands the ticket into this before `in-progress`):**
+
+```markdown
+## Intent / problem
+(carried over from intake, lightly clarified)
+
+## Requirements
+Specific, testable. Derived from intake's "Done looks like" + constraints.
+
+## Design
+File paths, data shapes, sequence. Agent's proposed implementation.
+
+## Tasks
+- [ ] Dependency-ordered checklist
+
+## Acceptance criteria
+- [ ] How we know it's done (each item testable / observable)
+
+## Open questions
+For Jacob to answer before build starts. When this list is empty, ticket
+moves to `in-progress` and the agent starts coding.
+
+## Cross-agent review (when applicable)
+The other agent's `[claude]` / `[codex]` review of this spec-pass.
+Captures critique, scope-risk flags, or LGTM. If there's a disagreement
+neither agent can resolve, surface to Jacob explicitly.
+
+---
+**Repo / Agent / Priority / Time-box:** (carried over, agent may revise)
+```
+
+The Stage 2 expansion is what Spec Kit exports to `.specify/specs/<ticket>/` in the implementation PR, so the repo gets the versioned snapshot at the point work begins.
 
 ### Cyrus deployment shape (spike-grade)
 
