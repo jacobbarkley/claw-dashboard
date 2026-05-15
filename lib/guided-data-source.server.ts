@@ -59,6 +59,7 @@ import {
   assertSafeGuidedId,
   type GuidedReadStore,
 } from "@/lib/guided-read-store.server"
+import { SupabaseGuidedReadStore } from "@/lib/guided-read-store.supabase.server"
 
 // Re-export error classes so preview pages import the seam, not the
 // underlying store implementations. Pages branch on these by instanceof to
@@ -94,18 +95,30 @@ export function resolvePublicStaticRoot(): string {
 }
 
 // Resolve the user-state read store at request time. Selection precedence:
-//   1. CODEX_PROJECTION_BASE_URL set → GuidedProjectionReadStore (T1.0e skeleton
-//      — production cutover happens in a coordinated follow-up PR once Codex's
-//      projection endpoint and HS256 verifier are deployed).
-//   2. GUIDED_LOCAL_REBUILD_PATH set → FilesystemGuidedReadStore (dev/preview).
-//   3. Neither set → throw GuidedUserStateUnavailableError so callers can
-//      render the labeled mock fallback (preview pages) or 503 (API).
+//   1. GUIDED_READ_STORE=supabase → SupabaseGuidedReadStore (Step 2 RLS spike;
+//      requires SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_JWT_SECRET).
+//      This branch supersedes the others on Vercel Preview during the spike
+//      and is intended to graduate to the production backend after Step 3
+//      (WorkOS auth) lands and HS256 → ES256 migration is resolved.
+//   2. CODEX_PROJECTION_BASE_URL set → GuidedProjectionReadStore (T1.0e skeleton
+//      — pre-supabase production cutover path, kept so Codex's projection
+//      endpoint remains available as a fallback if the Supabase spike is
+//      paused).
+//   3. GUIDED_LOCAL_REBUILD_PATH set → FilesystemGuidedReadStore (dev/preview).
+//   4. None set → throw GuidedUserStateUnavailableError so callers render the
+//      configured-error empty state.
 //
-// In current production both env vars are intentionally unset, so this
-// function still throws and preview pages still render MockFallbackBadge.
-// The cutover PR sets CODEX_PROJECTION_BASE_URL in Vercel and swaps the
-// page-level mock fallbacks for empty/error UI.
+// The supabase branch is explicit (string equality, not "any non-empty") so
+// future values like "supabase-direct" or "supabase-rest" can be added without
+// silently grabbing partially-configured environments.
 function resolveUserStateStore(): GuidedReadStore {
+  if (process.env.GUIDED_READ_STORE === "supabase") {
+    const supabase = SupabaseGuidedReadStore.fromEnv()
+    if (supabase !== null) return supabase
+    // Flag flipped but credentials missing — surface as the same configured-
+    // error UI the rest of the cascade uses, not as a silent fall-through.
+    throw new GuidedUserStateUnavailableError()
+  }
   const projection = GuidedProjectionReadStore.fromEnv()
   if (projection !== null) return projection
   const filesystem = FilesystemGuidedReadStore.fromEnv()
