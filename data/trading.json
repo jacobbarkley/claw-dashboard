@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-13T20:45:09.611802+00:00",
-  "as_of_date": "2026-05-13",
+  "generated_at": "2026-05-15T13:00:09.321203+00:00",
+  "as_of_date": "2026-05-15",
   "account": {
-    "equity": 85904.27,
-    "cash": 30826.52,
-    "buying_power": 115843.34,
+    "equity": 85971.7,
+    "cash": 30826.51,
+    "buying_power": 115790.58,
     "base_value": 100000.0,
-    "total_pnl": -14095.73,
-    "total_pnl_pct": -14.0957,
-    "today_pnl": 18.39,
-    "today_pnl_pct": 0.0214,
-    "positions_value": 55077.78,
-    "equity_deployed": 55077.78,
+    "total_pnl": -14028.3,
+    "total_pnl_pct": -14.0283,
+    "today_pnl": -46.92,
+    "today_pnl_pct": -0.0545,
+    "positions_value": 55145.19,
+    "equity_deployed": 55145.19,
     "options_deployed": 0,
-    "unrealized_pnl": 67.63,
-    "unrealized_pnl_pct": 0.12
+    "unrealized_pnl": 135.04,
+    "unrealized_pnl_pct": 0.25
   },
   "positions": [
     {
@@ -22,44 +22,44 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 296.92,
-      "market_value": 1484.6,
-      "unrealized_pnl": 57.15,
-      "unrealized_pct": 4.0,
-      "change_today_pct": 0.72
+      "current_price": 294.94,
+      "market_value": 1474.7,
+      "unrealized_pnl": 47.25,
+      "unrealized_pct": 3.31,
+      "change_today_pct": -1.1
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 415.91,
-      "market_value": 1247.73,
-      "unrealized_pnl": -3.0,
-      "unrealized_pct": -0.24,
-      "change_today_pct": -0.81
+      "current_price": 427.27,
+      "market_value": 1281.81,
+      "unrealized_pnl": 31.08,
+      "unrealized_pct": 2.48,
+      "change_today_pct": -2.85
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 78667.0,
-      "market_value": 887.450215,
-      "unrealized_pnl": 26.973152,
-      "unrealized_pct": 3.14,
-      "change_today_pct": -3.0
+      "current_price": 80406.8,
+      "market_value": 907.077071,
+      "unrealized_pnl": 46.600008,
+      "unrealized_pct": 5.42,
+      "change_today_pct": -0.96
     },
     {
       "symbol": "SGOV",
       "qty": 512.0,
       "side": "long",
       "entry_price": 100.530254,
-      "current_price": 100.5039,
-      "market_value": 51457.9968,
-      "unrealized_pnl": -13.493248,
-      "unrealized_pct": -0.03,
-      "change_today_pct": 0.0
+      "current_price": 100.55,
+      "market_value": 51481.6,
+      "unrealized_pnl": 10.109952,
+      "unrealized_pct": 0.02,
+      "change_today_pct": 0.03
     }
   ],
   "pipeline_status": {
@@ -916,6 +916,16 @@
       "date": "2026-05-13",
       "equity": 85885.88,
       "profit_loss": -4.08
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 85930.67,
+      "profit_loss": 44.79
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 86018.62,
+      "profit_loss": 87.95
     }
   ],
   "watchlist": {
@@ -1753,30 +1763,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "DASH",
-        "price": 152.58,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-06-05",
-        "dte": 23,
-        "short_strike": 165.0,
-        "long_strike": 160.0,
-        "spread_width": 5.0,
-        "net_credit": 1.45,
-        "credit_width_ratio": 0.29,
-        "annualized_yield_pct": 504.0,
-        "max_loss_per_contract": 355.0,
-        "iv_rank_proxy": 0.094,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
