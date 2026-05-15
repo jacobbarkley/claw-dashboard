@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-15T13:30:02.644116+00:00",
+  "generated_at": "2026-05-15T13:35:01.941318+00:00",
   "as_of_date": "2026-05-15",
   "source_context": {
     "mode": "canonical",
@@ -18,12 +18,12 @@
     "total_pnl_pct": -14.0235,
     "today_pnl": -42.12,
     "today_pnl_pct": -0.049,
-    "positions_value": 55142.5,
-    "equity_deployed": 54238.6,
-    "crypto_deployed": 903.9,
+    "positions_value": 55162.48,
+    "equity_deployed": 54259.1,
+    "crypto_deployed": 903.38,
     "options_deployed": 0,
-    "unrealized_pnl": 132.36,
-    "unrealized_pnl_pct": 0.24
+    "unrealized_pnl": 152.33,
+    "unrealized_pnl_pct": 0.28
   },
   "positions": [
     {
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 295.2,
-      "market_value": 1476.0,
-      "unrealized_pnl": 48.55,
-      "unrealized_pct": 3.4,
-      "change_today_pct": -1.01,
+      "current_price": 297.24,
+      "market_value": 1486.2,
+      "unrealized_pnl": 58.75,
+      "unrealized_pct": 4.12,
+      "change_today_pct": -0.33,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 427.0,
-      "market_value": 1281.0,
-      "unrealized_pnl": 30.27,
-      "unrealized_pct": 2.42,
-      "change_today_pct": -2.91,
+      "current_price": 430.91,
+      "market_value": 1292.73,
+      "unrealized_pnl": 42.0,
+      "unrealized_pct": 3.36,
+      "change_today_pct": -2.02,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 80125.558,
-      "market_value": 903.904352,
-      "unrealized_pnl": 43.427289,
-      "unrealized_pct": 5.05,
-      "change_today_pct": -1.31,
+      "current_price": 80079.47,
+      "market_value": 903.384429,
+      "unrealized_pnl": 42.907366,
+      "unrealized_pct": 4.99,
+      "change_today_pct": -1.36,
       "asset_type": "CRYPTO"
     },
     {
@@ -67,9 +67,9 @@
       "qty": 512.0,
       "side": "long",
       "entry_price": 100.530254,
-      "current_price": 100.55,
-      "market_value": 51481.6,
-      "unrealized_pnl": 10.109952,
+      "current_price": 100.5472,
+      "market_value": 51480.1664,
+      "unrealized_pnl": 8.676352,
       "unrealized_pct": 0.02,
       "change_today_pct": 0.03,
       "asset_type": "EQUITY"
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-15T13:30:02.644221+00:00"
+    "audit_written_at": "2026-05-15T13:35:01.941354+00:00"
   },
   "kpis": {
     "total_trades": 70,
@@ -1097,7 +1097,7 @@
         },
         {
           "date": "2026-05-15",
-          "market_value": 54238.6
+          "market_value": 54259.1
         }
       ]
     },
@@ -1194,7 +1194,7 @@
         },
         {
           "date": "2026-05-15",
-          "market_value": 903.9
+          "market_value": 903.38
         }
       ]
     },
@@ -1297,15 +1297,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-15T13:30:02.47423048Z",
+    "as_of": "2026-05-15T13:35:00.580516683Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 297.695,
-        "prior_close": 298.95,
-        "change_usd": -1.255,
-        "change_pct": -0.4198,
+        "current_price": 297.38,
+        "prior_close": 298.25,
+        "change_usd": -0.87,
+        "change_pct": -0.2917,
         "return_20d_pct": 12.2564,
         "in_position": true,
         "strategy_member": true,
@@ -1313,10 +1313,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 432.06,
-        "prior_close": 416.74,
-        "change_usd": 15.32,
-        "change_pct": 3.6762,
+        "current_price": 425.91,
+        "prior_close": 439.34,
+        "change_usd": -13.43,
+        "change_pct": -3.0569,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1324,10 +1324,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1049.725,
-        "prior_close": 1032.99,
-        "change_usd": 16.735,
-        "change_pct": 1.6201,
+        "current_price": 1043.115,
+        "prior_close": 1041.28,
+        "change_usd": 1.835,
+        "change_pct": 0.1762,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1335,10 +1335,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 1007.78,
-        "prior_close": 1015.64,
-        "change_usd": -7.86,
-        "change_pct": -0.7739,
+        "current_price": 1009.76,
+        "prior_close": 1007.78,
+        "change_usd": 1.98,
+        "change_pct": 0.1965,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1346,10 +1346,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 613.54,
-        "prior_close": 616.61,
-        "change_usd": -3.07,
-        "change_pct": -0.4979,
+        "current_price": 610.67,
+        "prior_close": 618.51,
+        "change_usd": -7.84,
+        "change_pct": -1.2676,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1357,10 +1357,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 229.95,
-        "prior_close": 225.91,
-        "change_usd": 4.04,
-        "change_pct": 1.7883,
+        "current_price": 227.43,
+        "prior_close": 235.78,
+        "change_usd": -8.35,
+        "change_pct": -3.5414,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1368,10 +1368,10 @@
       },
       {
         "symbol": "SGOV",
-        "current_price": 100.55,
-        "prior_close": 100.505,
-        "change_usd": 0.045,
-        "change_pct": 0.0448,
+        "current_price": 100.545,
+        "prior_close": 100.52,
+        "change_usd": 0.025,
+        "change_pct": 0.0249,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": false,
@@ -1383,7 +1383,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-15T13:30:02.499824+00:00",
+        "as_of": "2026-05-15T13:35:01.760769+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1393,7 +1393,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-15T13:30:02.643945+00:00",
+        "as_of": "2026-05-15T13:35:01.941148+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2159,7 +2159,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 903.904352,
+          "market_value": 903.384429,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -2194,12 +2194,12 @@
           {
             "date": "2026-05-15",
             "weights": {
-              "SGOV": 94.92,
-              "AAPL": 2.72,
-              "AVGO": 2.36
+              "SGOV": 94.88,
+              "AAPL": 2.74,
+              "AVGO": 2.38
             },
             "cash": 0.0,
-            "total": 54238.6
+            "total": 54259.1
           }
         ]
       },
@@ -2243,7 +2243,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 903.9
+            "total": 903.38
           }
         ]
       },
@@ -2381,6 +2381,15 @@
           "price": 226.9786,
           "usd": null,
           "note": "Holding period ended"
+        },
+        {
+          "date": "2026-05-15",
+          "side": "BUY",
+          "sym": "SGOV",
+          "qty": 1.0,
+          "price": 100.55,
+          "usd": null,
+          "note": "Cash management reserve park"
         }
       ],
       "crypto": [
@@ -2476,7 +2485,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-15T13:30:02.006498+00:00",
+        "as_of": "2026-05-15T13:35:01.497281+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2486,7 +2495,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-15T13:30:02.499824+00:00",
+        "as_of": "2026-05-15T13:35:01.760769+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2496,7 +2505,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-15T13:30:02.643945+00:00",
+        "as_of": "2026-05-15T13:35:01.941148+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
