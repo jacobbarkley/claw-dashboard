@@ -132,3 +132,8 @@ Key sections top to bottom:
 - No silent production deploy with preview/demo feed data
 - No new backend flows just to make the UI easier
 - No changes to trading logic, promotion logic, or approval semantics
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
