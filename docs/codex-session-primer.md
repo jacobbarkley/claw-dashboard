@@ -1,33 +1,50 @@
 # Codex session primer
 
-> **Last refresh:** 2026-05-14
+> **Last refresh:** 2026-05-17
 >
 > This file is the durable handoff to a fresh Codex CLI session on the Vires
 > acceleration plan. Refresh it whenever Jacob starts a new Codex chat. The
 > shape is deliberate: most-important behavioral shift at the top, then state,
-> then ranked next actions. Edit in-place rather than dating it — git history
-> is the version trail.
+> then ranked next actions. Edit in-place — git history is the version trail.
 
-## The big shift — read before anything else
+## The big shifts — read before anything else
+
+### Bridge convention (canonical since 2026-05-14, proven multiple cycles)
 
 The Claude ↔ Codex bridge is no longer Jacob copy-pasting between sessions.
-Both agents now read each other's PR comments directly via `gh` and reply
-on the PR. Convention is at `docs/agent-comments-convention.md` (added in
-PR #28).
+Both agents now read each other's PR comments directly via `gh` and reply on
+the PR. Convention is at `docs/agent-comments-convention.md` (on `main`).
 
 Required first read:
 
 ```
 cd /home/jacobbarkley/claude/claw-dashboard
 git fetch origin
-git show origin/main:docs/agent-comments-convention.md 2>/dev/null || \
-  git show origin/claude/agent-comments-convention:docs/agent-comments-convention.md
+git show origin/main:docs/agent-comments-convention.md
 ```
 
-The rule that matters most: every comment you post on any PR starts with
-`[codex]` as the first tag. Same in reverse — when you `gh pr view <n>
---comments`, the `[claude]` prefix is how you know it's Claude's voice and
-not Jacob's. Jacob posts bare. No more chat-relay.
+Every comment you post on any PR starts with `[codex]` as the first tag. When
+you `gh pr view <n> --comments`, the `[claude]` prefix is how you know it's
+Claude. Jacob posts bare.
+
+### Linear is now operational work intake (set up 2026-05-16)
+
+Linear workspace `vires` is fully provisioned:
+
+- Team: `Vires` (single team, default)
+- Projects: `claw-dashboard`, `vires-numeris`
+- Issue statuses: `Backlog → Triaged → In Progress → In Review → Done`. **Triaged is the agent-pickup trigger.**
+- Intake template: "Spec Kit Ticket — Intake" (4 long-text fields — Intent, Done looks like, Constraints, Open questions). Scoped to Vires team.
+- `LINEAR_API_KEY` mirrored to: vires-numeris GH Secrets, claw-dashboard GH Secrets, OpenClaw env (`~/.openclaw/openclaw.json` at `env.LINEAR_API_KEY`).
+- **Native Linear ↔ Codex integration is ACTIVE** (Jacob connected it 2026-05-16). You can read/write Linear tickets natively; you do not need to fetch the API key for normal ticket interactions.
+
+When you pick up work, the source of truth is **the Linear ticket**, not chat. The ticket holds intent + constraints + open questions; you expand it into the Stage-2 build-ready shape (Requirements / Design / Tasks / Acceptance criteria) as your first action, before writing any code.
+
+### Three-tier merge rule (codified 2026-05-15 — see `feedback_agents_merge_routine_prs.md` on Claude side, mirrored conceptually here)
+
+- **Tier 1 — Routine, auto-merge.** Doc-only / env-gated / production-effect-neutral + CI green + reviewer LGTM + no scope drift. Agent runs `gh pr merge --squash --delete-branch` directly.
+- **Tier 2 — Confirmation needed.** Production-affecting (auth, data path, money, contracts). Agent posts a `[codex]` summary of "what activates on merge, what doesn't" + asks Jacob "ready to merge — green light?", then runs the merge command on his yes. Jacob never clicks merge himself.
+- **Tier 3 — Judgment.** Scope disagreement, blocking review neither agent can resolve, decision not in originating spec. Surface the actual question to Jacob.
 
 ## Repos
 
@@ -38,96 +55,39 @@ not Jacob's. Jacob posts bare. No more chat-relay.
 
 ```
 cd /home/jacobbarkley/.openclaw/workspace/trading-bot && git status -sb && \
-  gh pr view 3 --repo jacobbarkley/vires-numeris \
-    --json number,title,isDraft,mergeStateStatus,headRefName,baseRefName,comments
+  gh pr list --repo jacobbarkley/vires-numeris --state open \
+    --json number,title,headRefName,updatedAt
 
 cd /home/jacobbarkley/claude/claw-dashboard && git status -sb && \
   gh pr list --state open --json number,title,headRefName,author,updatedAt
+
+# Linear queue — pickup-ready tickets in your projects
+# (uses native integration; no need to read the key)
 ```
 
 ## Acceleration plan state
 
-Refer to `_design_handoff/INFRA_*` for full specs. As of this refresh:
+- **Step 1 autonomous smoke** — shipped + proven. Manual tunnel/env loop dead.
+- **Step 2 Supabase RLS spike** — **FULLY MERGED to main, end-to-end.** vires-numeris PR #3 + claw-dashboard PR #27 both on main. Two RLS rows seeded (canonical `jacobbarkley95@gmail.com` + E2E `jacobbarkley95+e2e@gmail.com`). Dashboard reads from Supabase under `GUIDED_READ_STORE=supabase` on Vercel Preview.
+- **Step 3 WorkOS auth spec** — merged. Not yet implemented.
+- **Step 4 Linear + Spec Kit + OpenClaw digest spec** — **MERGED** with your three tightenings (Spec Kit CLI → `uv tool install`, §4c gated on missed-event recovery, `LINEAR_API_KEY` spike-only) + two-stage Linear template (intake-shape Jacob writes, build-ready shape agent expands during spec-pass).
 
-- **Step 1 autonomous smoke** — shipped + proven. Manual tunnel/env loop is
-  dead.
-- **Step 2 Supabase RLS spike** — backend (vires-numeris PR #3) proven end-
-  to-end; dashboard half (claw-dashboard PR #27) open, awaiting Codex review.
-- **Step 3 WorkOS auth spec** — merged with Codex's decisions.
-- **Step 4 Linear + Cyrus + Spec Kit + OpenClaw digest spec** (claw-dashboard
-  PR #24) — Claude folded the three tightening requests in commit `cb787db1`
-  (Spec Kit CLI → `uv tool install`, §4c gated on missed-event recovery,
-  `LINEAR_API_KEY` spike-only). Ready for re-review or merge.
+## Open PRs (volatile — re-fetch with `gh pr list`)
 
-## Open PRs and the action each wants from you
+### vires-numeris #2 — guided t1 projection endpoint adapter
 
-This list is volatile — re-fetch with `gh pr list` to confirm. At last
-refresh:
+- Was open before Step 2 spike. Stacked.
+- May need re-evaluation given Step 2 changed the dashboard's read path (now goes through Supabase under the flag instead of an HTTP projection endpoint). Decide whether the adapter still belongs in the queue, supersedes part of Step 2, or should close.
+- **Action:** triage this; comment a `[codex]` decision on the PR.
 
-### vires-numeris #3 — guided-supabase-rls-spike
-
-- https://github.com/jacobbarkley/vires-numeris/pull/3
-- Branch: `codex/guided-supabase-rls-spike`, base: `codex/guided-t1e-backend`
-- Adds: `20260514010000_guided_enrollment_spike.sql`, `supabase>=2,<3`,
-  `openclaw_core.stores.supabase_spike`, `supabase-spike-write` CLI, hermetic
-  RLS proof tests.
-- Live proof: comment-4447927930 (all 4 RLS legs verified by Claude).
-- Seeded row: `user_sub=jacobbarkley95@gmail.com`,
-  `scope_id=jacob_paper_main_default`,
-  `enrollment_id=enrollment_jacob_paper_main_active`.
-- **Action:** confirm mergeable from your side; self-merge if green.
-
-### claw-dashboard #27 — Supabase RLS read store for Step 2 spike
-
-- https://github.com/jacobbarkley/claw-dashboard/pull/27
-- Branch: `claude/guided-supabase-read-store`
-- Adds:
-  - `@supabase/supabase-js` dep
-  - `lib/guided-read-store.supabase.server.ts` — `SupabaseGuidedReadStore`;
-    only `readGuidedEnrollmentView` is real, other 3 methods reject with
-    `GuidedUserStateUnavailableError` so the other 4 preview specs keep
-    passing untouched.
-  - Factory flag in `lib/guided-data-source.server.ts` on
-    `GUIDED_READ_STORE=supabase`.
-  - `e2e/guided-preview/active.spec.ts` branches on the flag — asserts
-    "Steady Tide" under the flag, configured-error otherwise.
-  - `docs/supabase-rls-spike.md` (operator notes + HS256 → ES256 debt).
-- `tsc` + lint clean locally. CI Preview will assert "Steady Tide" against
-  Supabase end-to-end.
-- **Action:** review. Post `[codex]` review comment(s) directly on the PR.
-
-### claw-dashboard #24 — Step 4 spec
-
-- https://github.com/jacobbarkley/claw-dashboard/pull/24
-- Branch: `step4-linear-cyrus-speckit-spec`
-- Tightenings landed in commit `cb787db1`. Codex's five answers folded into
-  the doc as "Codex resolutions (closed 2026-05-14)".
-- **Action:** re-review; approve/merge or post any remaining `[codex]` notes
-  on the PR.
-
-### claw-dashboard #28 — agent-comments-convention
-
-- The bridge protocol itself.
-- https://github.com/jacobbarkley/claw-dashboard/pull/28
-- Branch: `claude/agent-comments-convention`
-- **Action:** read it, follow it, post a `[codex]` LGTM (or request edits) on
-  the PR. Doc-only; falls under the auto-merge rule once green.
-
-### claw-dashboard #25 — JWT minter
-
-- Already merged to main as `334e4725`.
+All other recent PRs (#3 vires-numeris; #27, #24, #28, #29 claw-dashboard) are merged.
 
 ## Supabase project
 
-- URL: https://gcynmgnzicwpibywfcal.supabase.co (project: `vires-rls-spike`,
-  free tier, us-east-1).
-- **Architectural debt:** project uses ECC P-256 as Current Key; the spike
-  rides the legacy HS256 secret as Previous Key. When Supabase revokes the
-  legacy key, the HS256 minter breaks. Target: Supabase Auth as issuer or
-  ES256. Decision deferred until the Step 3 WorkOS auth cutover. **Do not
-  solve unless explicitly assigned.**
+- URL: https://gcynmgnzicwpibywfcal.supabase.co (project: `vires-rls-spike`, free tier, us-east-1).
+- **Architectural debt:** project uses ECC P-256 as Current Key; the spike rides the legacy HS256 secret as Previous Key. When Supabase revokes the legacy key, the HS256 minter breaks. Target: Supabase Auth as issuer or ES256. Decision deferred until the Step 3 WorkOS auth cutover. **Do not solve unless explicitly assigned.**
 
-## Backend verification commands for PR #3
+## Backend verification commands for past Step 2 work
 
 ```
 cd /home/jacobbarkley/.openclaw/workspace/trading-bot
@@ -142,34 +102,23 @@ Last green: **9 passed**, dry-run emits `enrollment_jacob_paper_main_active`.
 
 ## Local caveats
 
-- `trading-bot` has an untracked `AGENTS.md` that pre-existed as local
-  context. Do not add it unless Jacob explicitly asks.
-- `claw-dashboard` has no in-flight worktree dirt — PR #24's tightenings are
-  committed and pushed.
+- `trading-bot` has an untracked `AGENTS.md` that pre-existed as local context. Do not add it unless Jacob explicitly asks.
+- `claw-dashboard` has no in-flight worktree dirt.
+- `uv` (`~/.local/bin/uv`) and `specify` (`~/.local/bin/specify`) are installed locally for the Spec Kit toolchain. Per-repo `specify init` not yet run — Claude has it queued as part of her next PR (`linear-workflow.md` + bootstrap + Spec Kit init).
+- OpenClaw daily digest cron (Step 4b) is **not yet implemented** — owned by OpenClaw, not you, but flag any backend signal you want surfaced.
 
 ## Likely next-action ranking
 
-1. Read `docs/agent-comments-convention.md` and start tagging your comments
-   `[codex]`. This unblocks every subsequent step.
-2. Review claw-dashboard PR #27 (Supabase read store, dashboard half). Post
-   feedback directly on the PR.
-3. Confirm claw-dashboard PR #24 tightenings address your three asks; LGTM
-   or note remaining items on the PR.
-4. Confirm vires-numeris PR #3 is mergeable from your side.
-5. If asked for new work: **HOUSEKEEPING-004** — Supabase migration runner
-   GitHub Action for vires-numeris. Spec at
-   `claw-dashboard/_design_handoff/DEFERRED_HOUSEKEEPING_TICKETS_2026-05-13.md`.
-   Goal: stop manual Supabase SQL Editor apply. Use proper migration
-   credentials, not the service-role key in dashboard runtime. Service-role
-   is data access, not DDL migration authority.
-6. Step 4 implementation itself does not start until PR #24 is merged.
+1. **HOUSEKEEPING-004 — Supabase migration runner GHA on vires-numeris.** Spec at `claw-dashboard/_design_handoff/DEFERRED_HOUSEKEEPING_TICKETS_2026-05-13.md`. Goal: stop manual Supabase SQL Editor apply. Use proper migration credentials, **not** the service-role key in dashboard runtime — service-role is data access, not DDL migration authority. A Linear ticket for this will exist in your `vires-numeris` project under Triaged when you start (Claude is creating it as the first real ticket through the new system).
+2. Triage vires-numeris PR #2 — keep, rebase, or close.
+3. Step 4 implementation is in motion on Claude's side. Coordinate via PR comments if your work touches the same area (linear-workflow.md, bootstrap-linear-env.sh, per-repo Spec Kit init).
+4. Future: Step 4b digest plugin is OpenClaw's; Step 4c Cyrus is gated until missed-event recovery proven.
 
-## Non-negotiables (Codex's own — unchanged across refreshes)
+## Non-negotiables (your own — unchanged across refreshes)
 
 - Do not touch production env without Jacob approval.
 - Do not paste secrets into chat or git.
 - No live Alpaca / Resend / Vercel / Supabase calls in tests.
-- Dashboard is a thin reader. If a field is missing, fix producer/contract
-  upstream.
+- Dashboard is a thin reader. If a field is missing, fix producer/contract upstream.
 - Do not claim cutover complete just because a spike passes.
-- Jacob owns production approval and merge judgment for risky changes.
+- Jacob owns production approval and merge judgment for risky changes (Tier 2/3 per the merge rule).
