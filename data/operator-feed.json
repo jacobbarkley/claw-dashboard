@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-18T16:00:03.046994+00:00",
+  "generated_at": "2026-05-18T16:05:02.800691+00:00",
   "as_of_date": "2026-05-18",
   "source_context": {
     "mode": "canonical",
@@ -18,11 +18,11 @@
     "total_pnl_pct": -14.0946,
     "today_pnl": -71.65,
     "today_pnl_pct": -0.0833,
-    "positions_value": 55179.48,
-    "equity_deployed": 54318.64,
-    "crypto_deployed": 860.84,
+    "positions_value": 56738.05,
+    "equity_deployed": 55876.71,
+    "crypto_deployed": 861.33,
     "options_deployed": 0,
-    "unrealized_pnl": 68.78,
+    "unrealized_pnl": 70.2,
     "unrealized_pnl_pct": 0.12
   },
   "positions": [
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 295.73,
-      "market_value": 1478.65,
-      "unrealized_pnl": 51.2,
-      "unrealized_pct": 3.59,
-      "change_today_pct": -1.5,
+      "current_price": 295.85,
+      "market_value": 1479.25,
+      "unrealized_pnl": 51.8,
+      "unrealized_pct": 3.63,
+      "change_today_pct": -1.46,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 417.57,
-      "market_value": 1252.71,
-      "unrealized_pnl": 1.98,
-      "unrealized_pct": 0.16,
-      "change_today_pct": -1.79,
+      "current_price": 418.0509,
+      "market_value": 1254.1527,
+      "unrealized_pnl": 3.4227,
+      "unrealized_pct": 0.27,
+      "change_today_pct": -1.68,
       "asset_type": "EQUITY"
     },
     {
@@ -55,21 +55,33 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 76307.933,
-      "market_value": 860.837347,
-      "unrealized_pnl": 0.360284,
-      "unrealized_pct": 0.04,
-      "change_today_pct": -1.02,
+      "current_price": 76351.87,
+      "market_value": 861.333004,
+      "unrealized_pnl": 0.855941,
+      "unrealized_pct": 0.1,
+      "change_today_pct": -0.97,
       "asset_type": "CRYPTO"
+    },
+    {
+      "symbol": "NVDA",
+      "qty": 7.0,
+      "side": "long",
+      "entry_price": 222.45,
+      "current_price": 222.51,
+      "market_value": 1557.57,
+      "unrealized_pnl": 0.42,
+      "unrealized_pct": 0.03,
+      "change_today_pct": -1.25,
+      "asset_type": "EQUITY"
     },
     {
       "symbol": "SGOV",
       "qty": 513.0,
       "side": "long",
       "entry_price": 100.530292,
-      "current_price": 100.56,
-      "market_value": 51587.28,
-      "unrealized_pnl": 15.240204,
+      "current_price": 100.557,
+      "market_value": 51585.741,
+      "unrealized_pnl": 13.701204,
       "unrealized_pct": 0.03,
       "change_today_pct": 0.01,
       "asset_type": "EQUITY"
@@ -86,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-18T16:00:03.047076+00:00"
+    "audit_written_at": "2026-05-18T16:05:02.800726+00:00"
   },
   "kpis": {
     "total_trades": 70,
@@ -101,7 +113,7 @@
     "max_win_streak": 3,
     "max_loss_streak": 10,
     "source": "legacy_pipeline_kpis_v1",
-    "positions_count": 4
+    "positions_count": 5
   },
   "daily_performance": [
     {
@@ -1107,7 +1119,7 @@
         },
         {
           "date": "2026-05-18",
-          "market_value": 54318.64
+          "market_value": 55876.71
         }
       ]
     },
@@ -1208,7 +1220,7 @@
         },
         {
           "date": "2026-05-18",
-          "market_value": 860.84
+          "market_value": 861.33
         }
       ]
     },
@@ -1315,15 +1327,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-18T16:00:02.827919358Z",
+    "as_of": "2026-05-18T16:05:02.147255557Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 295.84,
+        "current_price": 295.755,
         "prior_close": 300.19,
-        "change_usd": -4.35,
-        "change_pct": -1.4491,
+        "change_usd": -4.435,
+        "change_pct": -1.4774,
         "return_20d_pct": 11.0971,
         "in_position": true,
         "strategy_member": true,
@@ -1331,10 +1343,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 418.16,
+        "current_price": 417.375,
         "prior_close": 425.03,
-        "change_usd": -6.87,
-        "change_pct": -1.6164,
+        "change_usd": -7.655,
+        "change_pct": -1.801,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1342,10 +1354,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1064.0,
+        "current_price": 1065.34,
         "prior_close": 1049.3,
-        "change_usd": 14.7,
-        "change_pct": 1.4009,
+        "change_usd": 16.04,
+        "change_pct": 1.5286,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1353,10 +1365,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 981.6,
+        "current_price": 980.775,
         "prior_close": 1004.695,
-        "change_usd": -23.095,
-        "change_pct": -2.2987,
+        "change_usd": -23.92,
+        "change_pct": -2.3808,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1364,10 +1376,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 607.62,
+        "current_price": 607.26,
         "prior_close": 614.38,
-        "change_usd": -6.76,
-        "change_pct": -1.1003,
+        "change_usd": -7.12,
+        "change_pct": -1.1589,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1375,14 +1387,14 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 222.57,
+        "current_price": 221.675,
         "prior_close": 225.305,
-        "change_usd": -2.735,
-        "change_pct": -1.2139,
+        "change_usd": -3.63,
+        "change_pct": -1.6111,
         "return_20d_pct": null,
-        "in_position": false,
+        "in_position": true,
         "strategy_member": true,
-        "position_qty": 0.0
+        "position_qty": 7.0
       },
       {
         "symbol": "SGOV",
@@ -1401,7 +1413,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T16:00:02.882998+00:00",
+        "as_of": "2026-05-18T16:05:02.635053+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1411,7 +1423,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T16:00:03.046770+00:00",
+        "as_of": "2026-05-18T16:05:02.800549+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1437,7 +1449,7 @@
         "target": "259.12",
         "modifier": "MEDIUM",
         "note": "NVDA regime-aware momentum long: 20-day return 11.72% with realized vol 43.32%. Benchmark regime supportive: 50-day SPY return 8.49% with realized vol 15.50% and close 739.17 above trend average 689.87.",
-        "in_position": false
+        "in_position": true
       }
     ],
     "as_of": "2026-05-18",
@@ -2233,7 +2245,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 860.837347,
+          "market_value": 861.333004,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -2249,6 +2261,11 @@
           {
             "sym": "SGOV",
             "label": "SGOV",
+            "color": null
+          },
+          {
+            "sym": "NVDA",
+            "label": "NVDA",
             "color": null
           },
           {
@@ -2268,12 +2285,13 @@
           {
             "date": "2026-05-18",
             "weights": {
-              "SGOV": 94.97,
-              "AAPL": 2.72,
-              "AVGO": 2.31
+              "SGOV": 92.32,
+              "NVDA": 2.79,
+              "AAPL": 2.65,
+              "AVGO": 2.24
             },
             "cash": 0.0,
-            "total": 54318.64
+            "total": 55876.71
           }
         ]
       },
@@ -2317,7 +2335,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 860.84
+            "total": 861.33
           }
         ]
       },
@@ -2464,6 +2482,15 @@
           "price": 100.55,
           "usd": null,
           "note": "Cash management reserve park"
+        },
+        {
+          "date": "2026-05-18",
+          "side": "BUY",
+          "sym": "NVDA",
+          "qty": 7.0,
+          "price": 222.45,
+          "usd": null,
+          "note": "Market order submitted. size_modifier=FULL, shares=7, notional=$1610.73."
         }
       ],
       "crypto": [
@@ -2557,7 +2584,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-18T16:00:02.502584+00:00",
+        "as_of": "2026-05-18T16:05:02.412209+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2567,7 +2594,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T16:00:02.882998+00:00",
+        "as_of": "2026-05-18T16:05:02.635053+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2577,7 +2604,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T16:00:03.046770+00:00",
+        "as_of": "2026-05-18T16:05:02.800549+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
