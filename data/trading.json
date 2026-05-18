@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-18T13:00:09.788634+00:00",
+  "generated_at": "2026-05-18T13:15:09.108698+00:00",
   "as_of_date": "2026-05-18",
   "account": {
-    "equity": 85968.94,
+    "equity": 85962.35,
     "cash": 30725.96,
-    "buying_power": 115819.15,
+    "buying_power": 115814.45,
     "base_value": 100000.0,
-    "total_pnl": -14031.06,
-    "total_pnl_pct": -14.0311,
-    "today_pnl": -8.15,
-    "today_pnl_pct": -0.0095,
-    "positions_value": 55242.98,
-    "equity_deployed": 55242.98,
+    "total_pnl": -14037.65,
+    "total_pnl_pct": -14.0376,
+    "today_pnl": -14.74,
+    "today_pnl_pct": -0.0171,
+    "positions_value": 55236.39,
+    "equity_deployed": 55236.39,
     "options_deployed": 0,
-    "unrealized_pnl": 132.29,
-    "unrealized_pnl_pct": 0.24
+    "unrealized_pnl": 125.69,
+    "unrealized_pnl_pct": 0.23
   },
   "positions": [
     {
@@ -22,42 +22,42 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 300.25,
-      "market_value": 1501.25,
-      "unrealized_pnl": 73.8,
-      "unrealized_pct": 5.17,
-      "change_today_pct": 0.01
+      "current_price": 299.99,
+      "market_value": 1499.95,
+      "unrealized_pnl": 72.5,
+      "unrealized_pct": 5.08,
+      "change_today_pct": -0.08
     },
     {
       "symbol": "AVGO",
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 427.087,
-      "market_value": 1281.261,
-      "unrealized_pnl": 30.531,
-      "unrealized_pct": 2.44,
-      "change_today_pct": 0.45
+      "current_price": 425.7,
+      "market_value": 1277.1,
+      "unrealized_pnl": 26.37,
+      "unrealized_pct": 2.11,
+      "change_today_pct": 0.12
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 77630.4,
-      "market_value": 875.756228,
-      "unrealized_pnl": 15.279165,
-      "unrealized_pct": 1.78,
-      "change_today_pct": 0.69
+      "current_price": 77461.871,
+      "market_value": 873.855035,
+      "unrealized_pnl": 13.377972,
+      "unrealized_pct": 1.55,
+      "change_today_pct": 0.47
     },
     {
       "symbol": "SGOV",
       "qty": 513.0,
       "side": "long",
       "entry_price": 100.530292,
-      "current_price": 100.555,
-      "market_value": 51584.715,
-      "unrealized_pnl": 12.675204,
+      "current_price": 100.5565,
+      "market_value": 51585.4845,
+      "unrealized_pnl": 13.444704,
       "unrealized_pct": 0.03,
       "change_today_pct": 0.01
     }
