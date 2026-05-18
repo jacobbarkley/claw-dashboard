@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-18T18:45:08.908002+00:00",
+  "generated_at": "2026-05-18T19:00:09.813597+00:00",
   "as_of_date": "2026-05-18",
   "account": {
     "equity": 85913.14,
@@ -1789,11 +1789,29 @@
         "short_strike": 118.0,
         "long_strike": 113.0,
         "spread_width": 5.0,
-        "net_credit": 1.96,
-        "credit_width_ratio": 0.392,
-        "annualized_yield_pct": 681.3,
-        "max_loss_per_contract": 304.0,
+        "net_credit": 2.07,
+        "credit_width_ratio": 0.414,
+        "annualized_yield_pct": 719.6,
+        "max_loss_per_contract": 293.0,
         "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "DASH",
+        "price": 152.58,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-05",
+        "dte": 18,
+        "short_strike": 155.0,
+        "long_strike": 150.0,
+        "spread_width": 5.0,
+        "net_credit": 1.3,
+        "credit_width_ratio": 0.26,
+        "annualized_yield_pct": 451.9,
+        "max_loss_per_contract": 370.0,
+        "iv_rank_proxy": 0.094,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1802,7 +1820,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 1,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
