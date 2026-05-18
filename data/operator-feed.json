@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-18T13:45:02.348973+00:00",
+  "generated_at": "2026-05-18T13:50:02.931862+00:00",
   "as_of_date": "2026-05-18",
   "source_context": {
     "mode": "canonical",
@@ -18,12 +18,12 @@
     "total_pnl_pct": -14.0609,
     "today_pnl": -38.03,
     "today_pnl_pct": -0.0442,
-    "positions_value": 55218.11,
-    "equity_deployed": 54347.24,
-    "crypto_deployed": 870.87,
+    "positions_value": 55195.68,
+    "equity_deployed": 54329.38,
+    "crypto_deployed": 866.31,
     "options_deployed": 0,
-    "unrealized_pnl": 107.41,
-    "unrealized_pnl_pct": 0.19
+    "unrealized_pnl": 84.99,
+    "unrealized_pnl_pct": 0.15
   },
   "positions": [
     {
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 285.49,
-      "current_price": 299.885,
-      "market_value": 1499.425,
-      "unrealized_pnl": 71.975,
-      "unrealized_pct": 5.04,
-      "change_today_pct": -0.11,
+      "current_price": 299.08,
+      "market_value": 1495.4,
+      "unrealized_pnl": 67.95,
+      "unrealized_pct": 4.76,
+      "change_today_pct": -0.38,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 3.0,
       "side": "long",
       "entry_price": 416.91,
-      "current_price": 420.23,
-      "market_value": 1260.69,
-      "unrealized_pnl": 9.96,
-      "unrealized_pct": 0.8,
-      "change_today_pct": -1.17,
+      "current_price": 417.275,
+      "market_value": 1251.825,
+      "unrealized_pnl": 1.095,
+      "unrealized_pct": 0.09,
+      "change_today_pct": -1.86,
       "asset_type": "EQUITY"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 77197.03,
-      "market_value": 870.867338,
-      "unrealized_pnl": 10.390275,
-      "unrealized_pct": 1.21,
-      "change_today_pct": 0.13,
+      "current_price": 76792.79,
+      "market_value": 866.307066,
+      "unrealized_pnl": 5.830003,
+      "unrealized_pct": 0.68,
+      "change_today_pct": -0.4,
       "asset_type": "CRYPTO"
     },
     {
@@ -67,11 +67,11 @@
       "qty": 513.0,
       "side": "long",
       "entry_price": 100.530292,
-      "current_price": 100.5597,
-      "market_value": 51587.1261,
-      "unrealized_pnl": 15.086304,
-      "unrealized_pct": 0.03,
-      "change_today_pct": 0.01,
+      "current_price": 100.55,
+      "market_value": 51582.15,
+      "unrealized_pnl": 10.110204,
+      "unrealized_pct": 0.02,
+      "change_today_pct": 0.0,
       "asset_type": "EQUITY"
     }
   ],
@@ -86,7 +86,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-18T13:45:02.349019+00:00"
+    "audit_written_at": "2026-05-18T13:50:02.931916+00:00"
   },
   "kpis": {
     "total_trades": 70,
@@ -1107,7 +1107,7 @@
         },
         {
           "date": "2026-05-18",
-          "market_value": 54347.24
+          "market_value": 54329.38
         }
       ]
     },
@@ -1208,7 +1208,7 @@
         },
         {
           "date": "2026-05-18",
-          "market_value": 870.87
+          "market_value": 866.31
         }
       ]
     },
@@ -1315,15 +1315,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-18T13:45:01.858696583Z",
+    "as_of": "2026-05-18T13:50:01.808258486Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 299.08,
+        "current_price": 298.11,
         "prior_close": 300.19,
-        "change_usd": -1.11,
-        "change_pct": -0.3698,
+        "change_usd": -2.08,
+        "change_pct": -0.6929,
         "return_20d_pct": 11.0971,
         "in_position": true,
         "strategy_member": true,
@@ -1331,10 +1331,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 417.08,
+        "current_price": 416.635,
         "prior_close": 425.03,
-        "change_usd": -7.95,
-        "change_pct": -1.8705,
+        "change_usd": -8.395,
+        "change_pct": -1.9752,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1342,10 +1342,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1061.48,
+        "current_price": 1062.51,
         "prior_close": 1049.3,
-        "change_usd": 12.18,
-        "change_pct": 1.1608,
+        "change_usd": 13.21,
+        "change_pct": 1.2589,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1353,10 +1353,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 992.0,
+        "current_price": 992.145,
         "prior_close": 1004.695,
-        "change_usd": -12.695,
-        "change_pct": -1.2636,
+        "change_usd": -12.55,
+        "change_pct": -1.2491,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1364,10 +1364,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 607.84,
+        "current_price": 609.08,
         "prior_close": 614.38,
-        "change_usd": -6.54,
-        "change_pct": -1.0645,
+        "change_usd": -5.3,
+        "change_pct": -0.8627,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1375,10 +1375,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 224.395,
+        "current_price": 224.13,
         "prior_close": 225.305,
-        "change_usd": -0.91,
-        "change_pct": -0.4039,
+        "change_usd": -1.175,
+        "change_pct": -0.5215,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1401,7 +1401,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T13:45:02.224601+00:00",
+        "as_of": "2026-05-18T13:50:02.740352+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1411,7 +1411,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T13:45:02.348783+00:00",
+        "as_of": "2026-05-18T13:50:02.931703+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2177,7 +2177,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 870.867338,
+          "market_value": 866.307066,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -2212,12 +2212,12 @@
           {
             "date": "2026-05-18",
             "weights": {
-              "SGOV": 94.92,
-              "AAPL": 2.76,
-              "AVGO": 2.32
+              "SGOV": 94.94,
+              "AAPL": 2.75,
+              "AVGO": 2.3
             },
-            "cash": 0.0,
-            "total": 54347.24
+            "cash": 0.01,
+            "total": 54329.38
           }
         ]
       },
@@ -2261,7 +2261,7 @@
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 870.87
+            "total": 866.31
           }
         ]
       },
@@ -2503,7 +2503,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-18T13:45:01.795169+00:00",
+        "as_of": "2026-05-18T13:50:02.408837+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2513,7 +2513,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T13:45:02.224601+00:00",
+        "as_of": "2026-05-18T13:50:02.740352+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2523,7 +2523,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-18T13:45:02.348783+00:00",
+        "as_of": "2026-05-18T13:50:02.931703+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
