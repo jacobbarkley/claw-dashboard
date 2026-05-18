@@ -1,4 +1,4 @@
-// Shared primitives for the Guided Stage 2 mocked previews. Banner +
+// Shared primitives for the Guided preview surfaces. Banner +
 // evidence display + helpers used across the slice.
 
 import type { CSSProperties, ReactNode } from "react"

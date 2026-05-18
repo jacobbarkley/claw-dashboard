@@ -51,13 +51,9 @@ export default async function GuidedActivePreview() {
     throw err
   }
 
+  let view
   try {
-    const view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
-    return (
-      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
-        <ActiveEnrollmentSurface view={view} />
-      </PreviewPageShell>
-    )
+    view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (
@@ -74,7 +70,7 @@ export default async function GuidedActivePreview() {
         <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
           <GuidedSurfaceErrorState
             title="Guided state service is not configured"
-            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+            body="An operator needs to configure the Guided read store before this page can show real data."
           />
         </PreviewPageShell>
       )
@@ -101,4 +97,9 @@ export default async function GuidedActivePreview() {
     }
     throw err
   }
+  return (
+    <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+      <ActiveEnrollmentSurface view={view} />
+    </PreviewPageShell>
+  )
 }

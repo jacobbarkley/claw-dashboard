@@ -62,23 +62,14 @@ export default async function GuidedBrokerPreview() {
     throw err
   }
 
+  let variants: Variants
   try {
     const entries = await Promise.all(
       (Object.entries(BROKER_VARIANT_IDS) as Array<[keyof typeof BROKER_VARIANT_IDS, string]>).map(
         async ([key, enrollmentId]) => [key, await readGuidedEnrollment(enrollmentId, scope)] as const,
       ),
     )
-    const variants = Object.fromEntries(entries) as Variants
-    return (
-      <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
-        <BrokerFlowSurface
-          pending={variants.pending}
-          retryable={variants.retryable}
-          actionRequired={variants.actionRequired}
-          ineligible={variants.ineligible}
-        />
-      </PreviewPageShell>
-    )
+    variants = Object.fromEntries(entries) as Variants
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (
@@ -95,7 +86,7 @@ export default async function GuidedBrokerPreview() {
         <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
           <GuidedSurfaceErrorState
             title="Guided state service is not configured"
-            body="An operator needs to configure the Guided projection endpoint before this page can show real data."
+            body="This user-state surface is not wired on the current Guided read store."
           />
         </PreviewPageShell>
       )
@@ -122,4 +113,14 @@ export default async function GuidedBrokerPreview() {
     }
     throw err
   }
+  return (
+    <PreviewPageShell title={SHELL_TITLE} subtitle={SHELL_SUBTITLE} surfaceId={SHELL_SURFACE_ID}>
+      <BrokerFlowSurface
+        pending={variants.pending}
+        retryable={variants.retryable}
+        actionRequired={variants.actionRequired}
+        ineligible={variants.ineligible}
+      />
+    </PreviewPageShell>
+  )
 }
