@@ -17,7 +17,8 @@ test.describe("VIR-10 exit-action POST contract", () => {
     test(`${route} rejects invalid JSON with 400`, async ({ request }) => {
       const res = await request.post(route, {
         headers: { "Content-Type": "application/json" },
-        data: "not json",
+        // Raw bytes — Playwright's `data: <string>` JSON-encodes the value.
+        data: Buffer.from("not json"),
       })
       expect(res.status()).toBe(400)
       const body = await res.json()
