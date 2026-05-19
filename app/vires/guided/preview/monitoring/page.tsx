@@ -19,13 +19,14 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
+import {
+  NoActiveGuidedRefsError,
+  resolveActiveEnrollmentId,
+} from "@/lib/guided-active-refs.server"
 import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-// Temporary URL-hardcoded canonical ID. Tracked by
-// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
-const JACOB_PAPER_ACTIVE_ENROLLMENT_ID = "enrollment_jacob_paper_main_active"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/monitoring"
 const SHELL_TITLE = "Paper monitoring readback"
 const SHELL_SURFACE_ID = "S10"
@@ -50,9 +51,26 @@ export default async function GuidedMonitoringPreview() {
     throw err
   }
 
+  let enrollmentId: string
+  try {
+    enrollmentId = resolveActiveEnrollmentId(scope)
+  } catch (err) {
+    if (err instanceof NoActiveGuidedRefsError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No active enrollment to monitor"
+            body="Once you enroll in a Guided strategy on paper, monitoring data will appear here."
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
   let view
   try {
-    view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
+    view = await readGuidedEnrollmentView(enrollmentId, scope)
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (

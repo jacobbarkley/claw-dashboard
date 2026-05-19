@@ -19,13 +19,14 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
+import {
+  NoActiveGuidedRefsError,
+  resolveActiveEnrollmentId,
+} from "@/lib/guided-active-refs.server"
 import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-// Temporary URL-hardcoded canonical ID. Tracked by
-// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
-const JACOB_PAPER_ACTIVE_ENROLLMENT_ID = "enrollment_jacob_paper_main_active"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/events"
 const SHELL_TITLE = "Unified event history"
 const SHELL_SURFACE_ID = "S11"
@@ -49,9 +50,26 @@ export default async function GuidedEventsPreview() {
     throw err
   }
 
+  let enrollmentId: string
+  try {
+    enrollmentId = resolveActiveEnrollmentId(scope)
+  } catch (err) {
+    if (err instanceof NoActiveGuidedRefsError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No enrollment events to show"
+            body="Event history populates once you have an active Guided enrollment."
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
   let eventsView
   try {
-    eventsView = await readEnrollmentEventsView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
+    eventsView = await readEnrollmentEventsView(enrollmentId, scope)
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (
