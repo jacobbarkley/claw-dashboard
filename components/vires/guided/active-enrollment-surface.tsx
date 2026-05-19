@@ -1,7 +1,17 @@
 "use client"
 
-import type { GuidedEnrollmentView } from "./types"
+import { useState } from "react"
+import type { EnrollmentStatus, GuidedEnrollmentView } from "./types"
 import { FieldEyebrow, GuidedHeroCard, PendingUserActionsBanner, formatUsd } from "./shared"
+import { ExitActionSurface } from "./exit-action-surface"
+
+const EXIT_ELIGIBLE_STATUSES: ReadonlySet<EnrollmentStatus> = new Set<EnrollmentStatus>([
+  "ACTIVE",
+  "PAUSED",
+  "STOP_HOLD_TO_CLOSE",
+  "STOP_LIQUIDATE",
+  "ENDED",
+])
 
 // S9 — guided_enrollment.status = ACTIVE paper-running view.
 // Hard rule: enrollment ACTIVE ≠ library_entry ACTIVE.
@@ -11,9 +21,23 @@ import { FieldEyebrow, GuidedHeroCard, PendingUserActionsBanner, formatUsd } fro
 const COLD_START_DAYS_THRESHOLD = 5
 
 export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }) {
+  const [showExitActions, setShowExitActions] = useState(false)
+
   if (!view.enrollment) {
     return <p>No enrollment in this projection.</p>
   }
+
+  if (showExitActions) {
+    return (
+      <ExitActionSurface
+        enrollmentId={view.enrollment.enrollment_id}
+        enrollmentStatus={view.enrollment.status}
+        onCancel={() => setShowExitActions(false)}
+      />
+    )
+  }
+
+  const exitEligible = EXIT_ELIGIBLE_STATUSES.has(view.enrollment.status)
 
   const realized = view.cumulative_paper_pnl_realized ?? 0
   const unrealized = view.cumulative_paper_pnl_unrealized ?? 0
@@ -231,6 +255,25 @@ export function ActiveEnrollmentSurface({ view }: { view: GuidedEnrollmentView }
         >
           View event history →
         </a>
+        {exitEligible ? (
+          <button
+            type="button"
+            onClick={() => setShowExitActions(true)}
+            style={{
+              padding: "10px 14px",
+              border: "1px solid var(--vr-line, #2a2438)",
+              background: "transparent",
+              color: "var(--vr-cream-dim, #c4bdac)",
+              fontSize: 11,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              borderRadius: 2,
+            }}
+          >
+            Manage enrollment
+          </button>
+        ) : null}
       </div>
     </GuidedHeroCard>
   )
