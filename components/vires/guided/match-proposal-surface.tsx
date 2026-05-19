@@ -8,6 +8,7 @@ import type {
   StrategyLibraryEntry,
 } from "./types"
 import { EvidenceCard, FieldEyebrow, GuidedHeroCard, SectionLabel } from "./shared"
+import { DeclineMatchSurface } from "./decline-match-surface"
 
 // S3 — Match proposal preview. Shows the friendly_name, mandate_subtitle,
 // drawdown headline, plain_english_thesis, asset_class_label,
@@ -34,6 +35,13 @@ export function MatchProposalSurface({
   disclosure: DisclosureVersion
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [view, setView] = useState<"match" | "declining">("match")
+  const [maybeLaterState, setMaybeLaterState] = useState<
+    | { stage: "idle" }
+    | { stage: "submitting" }
+    | { stage: "submitted"; warning: string | null }
+    | { stage: "error"; reason: string }
+  >({ stage: "idle" })
 
   const winner = proposal.considered_candidates.find(
     c =>
@@ -42,6 +50,53 @@ export function MatchProposalSurface({
       c.library_entry_version === proposal.matched_library_entry_version,
   )
   const rejected = proposal.considered_candidates.filter(c => c.decision === "REJECTED")
+  const hasAlternatives = rejected.length > 0
+
+  if (view === "declining") {
+    return (
+      <DeclineMatchSurface
+        proposalId={proposal.proposal_id}
+        hasAlternatives={hasAlternatives}
+        onCancel={() => setView("match")}
+      />
+    )
+  }
+
+  async function submitMaybeLater() {
+    setMaybeLaterState({ stage: "submitting" })
+    try {
+      const res = await fetch("/api/guided/save-questionnaire-progress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "maybe_later_from_match" }),
+      })
+      const json = (await res.json()) as { ok?: boolean; next_path?: string; error?: string }
+      if (res.status === 503) {
+        setMaybeLaterState({
+          stage: "submitted",
+          warning: "Saved locally; backend not yet live in this environment.",
+        })
+        if (json.next_path) {
+          window.setTimeout(() => window.location.assign(json.next_path as string), 600)
+        }
+        return
+      }
+      if (!res.ok || !json.ok) {
+        setMaybeLaterState({
+          stage: "error",
+          reason: json.error ?? `HTTP ${res.status}`,
+        })
+        return
+      }
+      setMaybeLaterState({ stage: "submitted", warning: null })
+      if (json.next_path) window.location.assign(json.next_path)
+    } catch (err) {
+      setMaybeLaterState({
+        stage: "error",
+        reason: (err as Error).message ?? "network_error",
+      })
+    }
+  }
 
   return (
     <GuidedHeroCard>
@@ -226,19 +281,62 @@ export function MatchProposalSurface({
       ) : null}
 
       <div style={{ display: "flex", gap: 8, justifyContent: "space-between", flexWrap: "wrap", marginTop: 18 }}>
-        <a href="/vires/guided/preview/questionnaire" style={btnSecondary}>
+        <button
+          type="button"
+          onClick={() => setView("declining")}
+          disabled={maybeLaterState.stage === "submitting"}
+          style={btnSecondary}
+        >
           Decline
-        </a>
-        <a href="/vires/guided/preview" style={btnSecondary}>
-          Maybe later
-        </a>
+        </button>
+        <button
+          type="button"
+          onClick={submitMaybeLater}
+          disabled={maybeLaterState.stage === "submitting" || maybeLaterState.stage === "submitted"}
+          style={btnSecondary}
+        >
+          {maybeLaterState.stage === "submitting"
+            ? "Saving…"
+            : maybeLaterState.stage === "submitted"
+              ? "Saved"
+              : "Maybe later"}
+        </button>
         <a href="/vires/guided/preview/disclosure" style={btnPrimary}>
           Continue →
         </a>
       </div>
-      <div style={{ marginTop: 12, fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--vr-cream-mute, #8c8579)" }}>
-        Preview only · clicks navigate between surfaces, no commands run
-      </div>
+      {maybeLaterState.stage === "submitted" && maybeLaterState.warning ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            border: "1px dashed var(--vr-gold, #c8a968)55",
+            background: "rgba(200,169,104,0.05)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 12,
+            borderRadius: 2,
+            lineHeight: 1.5,
+          }}
+        >
+          {maybeLaterState.warning}
+        </div>
+      ) : null}
+      {maybeLaterState.stage === "error" ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            border: "1px solid #c8686855",
+            background: "rgba(200,104,104,0.06)",
+            color: "#e6a8a8",
+            fontSize: 12,
+            borderRadius: 2,
+            lineHeight: 1.5,
+          }}
+        >
+          Could not save ({maybeLaterState.reason}). Try again or choose Decline to share more.
+        </div>
+      ) : null}
     </GuidedHeroCard>
   )
 }

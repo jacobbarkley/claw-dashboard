@@ -1,0 +1,68 @@
+{
+  "schema_version": "decline_questions.v1",
+  "decline_questions_id": "decline_questions_t1_internal",
+  "version": "0.1.0-internal",
+  "title": "Why is this match not right?",
+  "subtitle": "All answers optional. We're trying to learn what makes a match feel wrong, not pressure you to explain.",
+  "questions": [
+    {
+      "key": "risk_profile_fit",
+      "sequence": 1,
+      "text": "How did the risk feel?",
+      "answer_options": [
+        { "option_id": "risk_about_right", "label": "About right" },
+        { "option_id": "risk_too_high", "label": "Too high for me" },
+        { "option_id": "risk_too_low", "label": "Too low for what I want" },
+        { "option_id": "risk_unsure", "label": "Hard to say" }
+      ]
+    },
+    {
+      "key": "time_horizon_fit",
+      "sequence": 2,
+      "text": "How does the holding period feel?",
+      "answer_options": [
+        { "option_id": "horizon_about_right", "label": "About right" },
+        { "option_id": "horizon_too_long", "label": "Too long" },
+        { "option_id": "horizon_too_short", "label": "Too short" },
+        { "option_id": "horizon_unsure", "label": "Hard to say" }
+      ]
+    },
+    {
+      "key": "asset_class_fit",
+      "sequence": 3,
+      "text": "How do you feel about the asset class?",
+      "answer_options": [
+        { "option_id": "asset_comfortable", "label": "Comfortable" },
+        { "option_id": "asset_unfamiliar", "label": "Unfamiliar — want to learn more first" },
+        { "option_id": "asset_wanted_different", "label": "I wanted a different asset class" },
+        { "option_id": "asset_unsure", "label": "Hard to say" }
+      ]
+    },
+    {
+      "key": "strategy_clarity",
+      "sequence": 4,
+      "text": "Did you understand how the strategy works?",
+      "answer_options": [
+        { "option_id": "clarity_yes", "label": "Yes, clearly" },
+        { "option_id": "clarity_somewhat", "label": "Somewhat" },
+        { "option_id": "clarity_no", "label": "Not really" }
+      ]
+    },
+    {
+      "key": "mandate_fit",
+      "sequence": 5,
+      "text": "Did the mandate (the role this strategy plays) match what you wanted?",
+      "answer_options": [
+        { "option_id": "mandate_yes", "label": "Yes" },
+        { "option_id": "mandate_no", "label": "No, I wanted something different" },
+        { "option_id": "mandate_unsure", "label": "I'm not sure what mandate means" }
+      ]
+    }
+  ],
+  "open_ended_question": {
+    "key": "open_ended_note",
+    "text": "Anything else you want to tell us?",
+    "placeholder": "Optional — in your own words",
+    "max_length": 500
+  }
+}
