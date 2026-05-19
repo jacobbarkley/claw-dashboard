@@ -20,10 +20,12 @@ const DECLINE_PATH = "/api/guided/decline-match"
 const MAYBE_LATER_PATH = "/api/guided/save-questionnaire-progress"
 
 test.describe("VIR-9 decline-match POST contract", () => {
-  test("invalid JSON body returns 400", async ({ request }) => {
+  test("invalid JSON body returns 400 invalid_json", async ({ request }) => {
     const res = await request.post(DECLINE_PATH, {
       headers: { "Content-Type": "application/json" },
-      data: "not json at all",
+      // Buffer keeps raw bytes; Playwright's `data: <string>` JSON-encodes the
+      // value and silently produces a valid JSON string body.
+      data: Buffer.from("not json at all"),
     })
     expect(res.status()).toBe(400)
     const body = await res.json()
