@@ -297,9 +297,7 @@ function Retryable({ enrollment }: { enrollment: GuidedEnrollment }) {
           <a href="/vires/guided/preview" style={btnSecondary}>
             Cancel
           </a>
-          <a href="/vires/guided/preview/active" style={btnPrimary}>
-            Try again
-          </a>
+          <RetryBrokerSetupButton enrollmentId={enrollment.enrollment_id} label="Try again" />
         </>
       }
     />
@@ -322,12 +320,87 @@ function ActionRequired({ enrollment }: { enrollment: GuidedEnrollment }) {
           ) : (
             <span />
           )}
-          <a href="/vires/guided/preview/active" style={btnPrimary}>
-            I&apos;ve fixed it
-          </a>
+          <RetryBrokerSetupButton enrollmentId={enrollment.enrollment_id} label="I've fixed it" />
         </>
       }
     />
+  )
+}
+
+// Both Retryable + ActionRequired surfaces fire the same retry_broker_setup
+// command — the runtime re-checks broker capability and transitions the
+// enrollment back through CHECKING. UI navigates back to the broker flow on
+// success (or graceful 503 fallback when the runtime is unwired).
+function RetryBrokerSetupButton({
+  enrollmentId,
+  label,
+}: {
+  enrollmentId: string
+  label: string
+}) {
+  const [state, setState] = useState<
+    | { stage: "idle" }
+    | { stage: "submitting" }
+    | { stage: "submitted"; warning: string | null }
+    | { stage: "error"; reason: string }
+  >({ stage: "idle" })
+
+  async function fire() {
+    setState({ stage: "submitting" })
+    try {
+      const res = await fetch("/api/guided/retry-broker-setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enrollment_id: enrollmentId }),
+      })
+      const json = (await res.json()) as { ok?: boolean; next_path?: string; error?: string }
+      if (res.status === 503) {
+        setState({
+          stage: "submitted",
+          warning: "Retry recorded locally; runtime not yet wired in this environment.",
+        })
+        if (json.next_path) {
+          window.setTimeout(() => window.location.assign(json.next_path as string), 700)
+        }
+        return
+      }
+      if (!res.ok || !json.ok) {
+        setState({ stage: "error", reason: json.error ?? `HTTP ${res.status}` })
+        return
+      }
+      setState({ stage: "submitted", warning: null })
+      if (json.next_path) window.location.assign(json.next_path)
+    } catch (err) {
+      setState({ stage: "error", reason: (err as Error).message ?? "network_error" })
+    }
+  }
+
+  const submitting = state.stage === "submitting"
+  const submitted = state.stage === "submitted"
+
+  return (
+    <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+      <button
+        type="button"
+        onClick={fire}
+        disabled={submitting || submitted}
+        style={{
+          ...btnPrimary,
+          opacity: submitting || submitted ? 0.7 : 1,
+          cursor: submitting || submitted ? "not-allowed" : "pointer",
+        }}
+      >
+        {submitting ? "Re-checking…" : submitted ? "Re-check sent" : label}
+      </button>
+      {state.stage === "error" ? (
+        <span style={{ fontSize: 11, color: "#e6a8a8" }}>
+          Could not send retry ({state.reason}).
+        </span>
+      ) : null}
+      {state.stage === "submitted" && state.warning ? (
+        <span style={{ fontSize: 11, color: "var(--vr-cream-mute, #8c8579)" }}>{state.warning}</span>
+      ) : null}
+    </div>
   )
 }
 
