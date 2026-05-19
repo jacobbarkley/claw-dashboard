@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T15:15:09.368025+00:00",
+  "generated_at": "2026-05-19T15:30:09.752526+00:00",
   "as_of_date": "2026-05-19",
   "account": {
     "equity": 85897.9,
@@ -1781,11 +1781,48 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "BKNG",
+        "price": 173.46,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-12",
+        "dte": 24,
+        "short_strike": 165.0,
+        "long_strike": 160.0,
+        "spread_width": 5.0,
+        "net_credit": 2.0,
+        "credit_width_ratio": 0.4,
+        "annualized_yield_pct": 695.2,
+        "max_loss_per_contract": 300.0,
+        "iv_rank_proxy": 0.0,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "KKR",
+        "price": 91.22,
+        "sector": "Financial Services",
+        "expiry": "2026-06-12",
+        "dte": 24,
+        "short_strike": 95.0,
+        "long_strike": 90.0,
+        "spread_width": 5.0,
+        "net_credit": 1.45,
+        "credit_width_ratio": 0.29,
+        "annualized_yield_pct": 504.0,
+        "max_loss_per_contract": 355.0,
+        "iv_rank_proxy": 0.02,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
