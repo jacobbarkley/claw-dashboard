@@ -8,7 +8,8 @@ test.describe("VIR-12 accept-disclosure POST contract", () => {
   test("invalid JSON returns 400", async ({ request }) => {
     const res = await request.post(ROUTE, {
       headers: { "Content-Type": "application/json" },
-      data: "not json",
+      // Raw bytes — Playwright's `data: <string>` JSON-encodes the value.
+      data: Buffer.from("not json"),
     })
     expect(res.status()).toBe(400)
     const body = await res.json()
