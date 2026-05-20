@@ -37,11 +37,11 @@ const TABS: Array<{
   { href: "/vires",                key: "trading", label: "trading" },
   { href: "/vires/bench",          key: "bench",   label: "bench"   },
   {
-    href: "/vires/guided/preview",
+    href: "/vires/guided",
     key: "guided",
     label: "guided",
     italic: true,
-    title: "Internal preview · paper-first guided flow, not public-ready",
+    title: "Paper-first guided strategy sleeve",
   },
 ]
 
