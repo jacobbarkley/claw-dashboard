@@ -30,7 +30,7 @@ Environment variables required for the Supabase path:
 | `SUPABASE_URL` | server-side | Vercel env (Preview + Production) | Project URL |
 | `SUPABASE_ANON_KEY` | server-side | Vercel env | PostgREST API gate; per-row auth comes from JWT, not this key |
 | `SUPABASE_JWT_SECRET` | server-side | Vercel env | Legacy HS256 — used to mint short-TTL JWTs in `lib/guided-supabase-jwt.server.ts` |
-| `SUPABASE_DB_URL` | server-side (migrations only) | GitHub Secret + Vercel env | Direct Postgres URL for the migration runner; not used at request time |
+| `SUPABASE_DB_URL` | server-side (migrations only) | GitHub Secret (vires-numeris migration workflow only); not present in Vercel request-time env. | Direct Postgres URL for the migration runner; not used at request time |
 | `GUIDED_READ_STORE` | server-side | Vercel env (`supabase` on Preview) | Selects between filesystem / projection-HTTP / Supabase read stores |
 
 **Secrets are server-only.** Never `NEXT_PUBLIC_*` prefixed. The anon key is server-side too even though it's "public" in Supabase parlance — we don't expose it to browsers because per-row auth needs the JWT, and the JWT minting must stay server-side.
@@ -108,7 +108,7 @@ Migrations are managed by `scripts/supabase_migrate.py` (in `vires-numeris`), wh
 - Tracks applied migrations in `public.schema_migrations` (created by `20260514000000_schema_migrations_ledger.sql`).
 - Supports `validate` (parse + dry-run plan) and `apply --dry-run` / `apply` (execute).
 
-The runner is invoked from `.github/workflows/supabase-migrate.yml` (manual dispatch + on push of new migrations).
+The runner is invoked from `.github/workflows/supabase-migrate.yml` (validates on PRs touching migrations/runner files; applies only via manual workflow_dispatch apply).
 
 Current migrations:
 1. `20260514000000_schema_migrations_ledger.sql` — the migrations ledger table itself.
