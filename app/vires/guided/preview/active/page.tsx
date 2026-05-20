@@ -19,15 +19,14 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
+import {
+  NoActiveGuidedRefsError,
+  resolveActiveEnrollmentId,
+} from "@/lib/guided-active-refs.server"
 import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-// Temporary URL-hardcoded canonical ID. Tracked by
-// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
-// The long-term path is a Vires hub route that resolves the active
-// enrollment from the signed-in scope, not a hardcoded preview URL.
-const JACOB_PAPER_ACTIVE_ENROLLMENT_ID = "enrollment_jacob_paper_main_active"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/active"
 const SHELL_TITLE = "ACTIVE paper enrollment"
 const SHELL_SURFACE_ID = "S9"
@@ -51,9 +50,26 @@ export default async function GuidedActivePreview() {
     throw err
   }
 
+  let enrollmentId: string
+  try {
+    enrollmentId = resolveActiveEnrollmentId(scope)
+  } catch (err) {
+    if (err instanceof NoActiveGuidedRefsError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No active Guided enrollment"
+            body="Your account has no active Guided enrollment registered yet. Once you enroll in Steady Tide on paper, the active enrollment view appears here."
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
   let view
   try {
-    view = await readGuidedEnrollmentView(JACOB_PAPER_ACTIVE_ENROLLMENT_ID, scope)
+    view = await readGuidedEnrollmentView(enrollmentId, scope)
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (

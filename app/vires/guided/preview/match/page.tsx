@@ -19,15 +19,14 @@ import {
   UnknownScopeIdentityError,
   resolveCurrentScope,
 } from "@/lib/guided-scope.server"
+import {
+  NoActiveGuidedRefsError,
+  resolveActiveMatchProposalId,
+} from "@/lib/guided-active-refs.server"
 import type { GuidedScope } from "@/components/vires/guided/types"
 
 export const dynamic = "force-dynamic"
 
-// Temporary URL-hardcoded canonical ID. Tracked by
-// GUIDED-T1-PREVIEW-ROUTE-DEHARDCODE in the deferred obligations ledger.
-// The long-term path is a Vires hub route that resolves the active match
-// proposal from the signed-in scope, not a hardcoded preview URL.
-const JACOB_PAPER_ACTIVE_PROPOSAL_ID = "proposal_jacob_paper_main_migration"
 const SIGNIN_FROM_PATH = "/vires/guided/preview/match"
 const SHELL_TITLE = "Match proposal"
 const SHELL_SURFACE_ID = "S3"
@@ -51,9 +50,26 @@ export default async function GuidedMatchPreview() {
     throw err
   }
 
+  let proposalId: string
+  try {
+    proposalId = resolveActiveMatchProposalId(scope)
+  } catch (err) {
+    if (err instanceof NoActiveGuidedRefsError) {
+      return (
+        <PreviewPageShell title={SHELL_TITLE} surfaceId={SHELL_SURFACE_ID}>
+          <GuidedSurfaceEmptyState
+            title="No match proposal for this account"
+            body="A Steady Tide match proposal appears here once the matcher has run for your account."
+          />
+        </PreviewPageShell>
+      )
+    }
+    throw err
+  }
+
   let view
   try {
-    view = await readGuidedMatchProposalView(JACOB_PAPER_ACTIVE_PROPOSAL_ID, scope)
+    view = await readGuidedMatchProposalView(proposalId, scope)
   } catch (err) {
     if (err instanceof GuidedArtifactMissingError) {
       return (
