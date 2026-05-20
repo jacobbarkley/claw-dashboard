@@ -42,6 +42,12 @@ export function MatchProposalSurface({
     | { stage: "submitted"; warning: string | null }
     | { stage: "error"; reason: string }
   >({ stage: "idle" })
+  const [acceptState, setAcceptState] = useState<
+    | { stage: "idle" }
+    | { stage: "submitting" }
+    | { stage: "submitted"; warning: string | null }
+    | { stage: "error"; reason: string }
+  >({ stage: "idle" })
 
   const winner = proposal.considered_candidates.find(
     c =>
@@ -60,6 +66,40 @@ export function MatchProposalSurface({
         onCancel={() => setView("match")}
       />
     )
+  }
+
+  async function submitAcceptMatch() {
+    setAcceptState({ stage: "submitting" })
+    try {
+      const res = await fetch("/api/guided/accept-match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proposal_id: proposal.proposal_id,
+          matched_library_entry_id: proposal.matched_library_entry_id,
+          matched_library_entry_version: proposal.matched_library_entry_version,
+        }),
+      })
+      const json = (await res.json()) as { ok?: boolean; next_path?: string; error?: string }
+      if (res.status === 503) {
+        setAcceptState({
+          stage: "submitted",
+          warning: "Match acceptance recorded locally; runtime not yet wired in this environment.",
+        })
+        if (json.next_path) {
+          window.setTimeout(() => window.location.assign(json.next_path as string), 800)
+        }
+        return
+      }
+      if (!res.ok || !json.ok) {
+        setAcceptState({ stage: "error", reason: json.error ?? `HTTP ${res.status}` })
+        return
+      }
+      setAcceptState({ stage: "submitted", warning: null })
+      if (json.next_path) window.location.assign(json.next_path)
+    } catch (err) {
+      setAcceptState({ stage: "error", reason: (err as Error).message ?? "network_error" })
+    }
   }
 
   async function submitMaybeLater() {
@@ -301,10 +341,58 @@ export function MatchProposalSurface({
               ? "Saved"
               : "Maybe later"}
         </button>
-        <a href="/vires/guided/preview/disclosure" style={btnPrimary}>
-          Continue →
-        </a>
+        <button
+          type="button"
+          onClick={submitAcceptMatch}
+          disabled={acceptState.stage === "submitting" || acceptState.stage === "submitted"}
+          style={{
+            ...btnPrimary,
+            opacity: acceptState.stage === "submitting" || acceptState.stage === "submitted" ? 0.7 : 1,
+            cursor:
+              acceptState.stage === "submitting" || acceptState.stage === "submitted"
+                ? "not-allowed"
+                : "pointer",
+          }}
+        >
+          {acceptState.stage === "submitting"
+            ? "Accepting…"
+            : acceptState.stage === "submitted"
+              ? "Accepted"
+              : "Continue →"}
+        </button>
       </div>
+      {acceptState.stage === "submitted" && acceptState.warning ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            border: "1px dashed var(--vr-gold, #c8a968)55",
+            background: "rgba(200,169,104,0.05)",
+            color: "var(--vr-cream-dim, #c4bdac)",
+            fontSize: 12,
+            borderRadius: 2,
+            lineHeight: 1.5,
+          }}
+        >
+          {acceptState.warning}
+        </div>
+      ) : null}
+      {acceptState.stage === "error" ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: 10,
+            border: "1px solid #c8686855",
+            background: "rgba(200,104,104,0.06)",
+            color: "#e6a8a8",
+            fontSize: 12,
+            borderRadius: 2,
+            lineHeight: 1.5,
+          }}
+        >
+          Could not accept the match ({acceptState.reason}). Try again or choose Decline.
+        </div>
+      ) : null}
       {maybeLaterState.stage === "submitted" && maybeLaterState.warning ? (
         <div
           style={{
