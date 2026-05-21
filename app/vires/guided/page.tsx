@@ -7,6 +7,7 @@ import {
   GuidedSurfaceEmptyState,
   GuidedSurfaceErrorState,
 } from "@/components/vires/guided/empty-states"
+import { userVisibleGuidedEvents } from "@/components/vires/guided/audit-visibility"
 import { GuidedHeroCard, PreviewPageShell, SectionLabel, formatUsd } from "@/components/vires/guided/shared"
 import {
   GuidedArtifactMissingError,
@@ -125,6 +126,7 @@ function ActiveEnrollmentHub({ view }: { view: GuidedEnrollmentView }) {
   const realized = view.cumulative_paper_pnl_realized ?? 0
   const unrealized = view.cumulative_paper_pnl_unrealized ?? 0
   const totalValue = view.current_value_usd ?? 0
+  const recentUserVisibleEvents = userVisibleGuidedEvents(view.recent_events)
 
   return (
     <GuidedHeroCard accent="var(--vr-sleeve-stocks, #c8a968)">
@@ -145,7 +147,7 @@ function ActiveEnrollmentHub({ view }: { view: GuidedEnrollmentView }) {
       <div style={cardRow}>
         <HubLink href="/vires/guided/preview/active" label="Active enrollment" detail="Holdings + state" />
         <HubLink href="/vires/guided/preview/monitoring" label="Paper monitoring" detail="Evidence + cold-start tracker" />
-        <HubLink href="/vires/guided/preview/events" label="Event history" detail={`${view.recent_events.length} recent`} />
+        <HubLink href="/vires/guided/preview/events" label="Event history" detail={`${recentUserVisibleEvents.length} recent`} />
         <HubLink href="/vires/guided/preview/match" label="Original match" detail="See why this fit" />
       </div>
 
