@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import type { EnrollmentEventsView, GuidedEvent, GuidedEventSource } from "./types"
+import { userVisibleGuidedEvents } from "./audit-visibility"
 import { FieldEyebrow, GuidedHeroCard } from "./shared"
 
 // S11 — Unified event history. Filter by source primarily (per the
@@ -27,10 +28,12 @@ export function EventHistorySurface({ eventsView }: { eventsView: EnrollmentEven
   const [filter, setFilter] = useState<SourceFilter>("all")
 
   const visible = useMemo(() => {
-    const userVisible = eventsView.events.filter(e => e.audit_visibility === "USER_VISIBLE")
+    const userVisible = userVisibleGuidedEvents(eventsView.events)
     const filtered = filter === "all" ? userVisible : userVisible.filter(e => e.source === filter)
     return [...filtered].sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1))
   }, [eventsView.events, filter])
+  const hasEvents = eventsView.events.length > 0
+  const hasUserVisibleEvents = userVisibleGuidedEvents(eventsView.events).length > 0
 
   return (
     <GuidedHeroCard>
@@ -83,8 +86,10 @@ export function EventHistorySurface({ eventsView }: { eventsView: EnrollmentEven
               lineHeight: 1.55,
             }}
           >
-            {eventsView.events.length === 0
+            {!hasEvents
               ? "Paper enrollment hasn't generated any events yet."
+              : !hasUserVisibleEvents
+                ? "No user-visible events are published yet."
               : "No events match this filter."}
           </div>
         ) : (
