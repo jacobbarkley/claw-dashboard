@@ -1,65 +1,65 @@
 {
-  "generated_at": "2026-05-19T15:30:09.752526+00:00",
-  "as_of_date": "2026-05-19",
+  "generated_at": "2026-05-27T17:30:12.330872+00:00",
+  "as_of_date": "2026-05-27",
   "account": {
-    "equity": 85897.9,
-    "cash": 30654.41,
-    "buying_power": 115686.51,
+    "equity": 85867.05,
+    "cash": 30944.52,
+    "buying_power": 115963.19,
     "base_value": 100000.0,
-    "total_pnl": -14102.1,
-    "total_pnl_pct": -14.1021,
-    "today_pnl": -29.77,
-    "today_pnl_pct": -0.0346,
-    "positions_value": 55243.6,
-    "equity_deployed": 55243.6,
+    "total_pnl": -14132.95,
+    "total_pnl_pct": -14.1329,
+    "today_pnl": 33.07,
+    "today_pnl_pct": 0.0385,
+    "positions_value": 54922.09,
+    "equity_deployed": 54922.09,
     "options_deployed": 0,
-    "unrealized_pnl": 3.2,
-    "unrealized_pnl_pct": 0.01
+    "unrealized_pnl": 120.11,
+    "unrealized_pnl_pct": 0.22
   },
   "positions": [
     {
-      "symbol": "AVGO",
-      "qty": 3.0,
+      "symbol": "AAPL",
+      "qty": 5.0,
       "side": "long",
-      "entry_price": 416.91,
-      "current_price": 410.97,
-      "market_value": 1232.91,
-      "unrealized_pnl": -17.82,
-      "unrealized_pct": -1.43,
-      "change_today_pct": -2.31
+      "entry_price": 298.94,
+      "current_price": 311.73,
+      "market_value": 1558.65,
+      "unrealized_pnl": 63.95,
+      "unrealized_pct": 4.28,
+      "change_today_pct": 1.1
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 76747.6,
-      "market_value": 865.797274,
-      "unrealized_pnl": 5.320211,
-      "unrealized_pct": 0.62,
-      "change_today_pct": 0.21
+      "current_price": 75204.1,
+      "market_value": 848.384897,
+      "unrealized_pnl": -12.092166,
+      "unrealized_pct": -1.41,
+      "change_today_pct": -0.89
     },
     {
-      "symbol": "NVDA",
-      "qty": 7.0,
+      "symbol": "LLY",
+      "qty": 1.0,
       "side": "long",
-      "entry_price": 222.45,
-      "current_price": 221.7899,
-      "market_value": 1552.5293,
-      "unrealized_pnl": -4.6207,
-      "unrealized_pct": -0.3,
-      "change_today_pct": -0.24
+      "entry_price": 1075.82,
+      "current_price": 1086.99,
+      "market_value": 1086.99,
+      "unrealized_pnl": 11.17,
+      "unrealized_pct": 1.04,
+      "change_today_pct": 2.09
     },
     {
       "symbol": "SGOV",
-      "qty": 513.0,
+      "qty": 511.0,
       "side": "long",
-      "entry_price": 100.530292,
-      "current_price": 100.5699,
-      "market_value": 51592.3587,
-      "unrealized_pnl": 20.318904,
-      "unrealized_pct": 0.04,
-      "change_today_pct": 0.01
+      "entry_price": 100.530294,
+      "current_price": 100.642,
+      "market_value": 51428.062,
+      "unrealized_pnl": 57.081766,
+      "unrealized_pct": 0.11,
+      "change_today_pct": 0.0
     }
   ],
   "pipeline_status": {
@@ -76,16 +76,16 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 71,
-    "closed_trades": 24,
-    "open_trades": 47,
-    "win_rate_pct": 29.17,
-    "profit_factor": 1.0582,
-    "expectancy": -1.7,
-    "net_pnl": 31.61,
+    "total_trades": 78,
+    "closed_trades": 28,
+    "open_trades": 50,
+    "win_rate_pct": 35.71,
+    "profit_factor": 1.208,
+    "expectancy": 1.84,
+    "net_pnl": 129.37,
     "max_drawdown_pct": 0.4388,
     "max_drawdown_usd": 438.81,
-    "max_win_streak": 3,
+    "max_win_streak": 5,
     "max_loss_streak": 10
   },
   "daily_performance": [
@@ -632,6 +632,38 @@
       "winners": 0,
       "losers": 0,
       "win_rate": null
+    },
+    {
+      "date": "2026-05-19",
+      "net_pnl": 91.14,
+      "trades": 1,
+      "winners": 1,
+      "losers": 0,
+      "win_rate": 100.0
+    },
+    {
+      "date": "2026-05-20",
+      "net_pnl": 16.65,
+      "trades": 3,
+      "winners": 1,
+      "losers": 0,
+      "win_rate": 100.0
+    },
+    {
+      "date": "2026-05-21",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-05-26",
+      "net_pnl": -9.83,
+      "trades": 4,
+      "winners": 2,
+      "losers": 1,
+      "win_rate": 66.67
     }
   ],
   "equity_curve": [
@@ -944,6 +976,31 @@
       "date": "2026-05-19",
       "equity": 85927.67,
       "profit_loss": -49.42
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 85890.17,
+      "profit_loss": -37.5
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 85940.29,
+      "profit_loss": 50.12
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 85900.7,
+      "profit_loss": -39.59
+    },
+    {
+      "date": "2026-05-23",
+      "equity": 85869.97,
+      "profit_loss": -30.73
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 85833.98,
+      "profit_loss": -35.99
     }
   ],
   "watchlist": {
@@ -1783,19 +1840,55 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "BKNG",
-        "price": 173.46,
+        "symbol": "LVS",
+        "price": 53.45,
         "sector": "Consumer Cyclical",
-        "expiry": "2026-06-12",
-        "dte": 24,
-        "short_strike": 165.0,
-        "long_strike": 160.0,
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 55.0,
+        "long_strike": 50.0,
         "spread_width": 5.0,
-        "net_credit": 2.0,
-        "credit_width_ratio": 0.4,
-        "annualized_yield_pct": 695.2,
-        "max_loss_per_contract": 300.0,
-        "iv_rank_proxy": 0.0,
+        "net_credit": 2.6,
+        "credit_width_ratio": 0.52,
+        "annualized_yield_pct": 903.8,
+        "max_loss_per_contract": 240.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "HAS",
+        "price": 91.73,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 92.5,
+        "long_strike": 87.5,
+        "spread_width": 5.0,
+        "net_credit": 2.35,
+        "credit_width_ratio": 0.47,
+        "annualized_yield_pct": 816.9,
+        "max_loss_per_contract": 265.0,
+        "iv_rank_proxy": 0.25,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "OMC",
+        "price": 74.77,
+        "sector": "Communication Services",
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
+        "spread_width": 5.0,
+        "net_credit": 1.55,
+        "credit_width_ratio": 0.31,
+        "annualized_yield_pct": 538.8,
+        "max_loss_per_contract": 345.0,
+        "iv_rank_proxy": 0.094,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1804,16 +1897,52 @@
         "symbol": "KKR",
         "price": 91.22,
         "sector": "Financial Services",
-        "expiry": "2026-06-12",
-        "dte": 24,
-        "short_strike": 95.0,
-        "long_strike": 90.0,
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 92.5,
+        "long_strike": 87.5,
         "spread_width": 5.0,
-        "net_credit": 1.45,
-        "credit_width_ratio": 0.29,
-        "annualized_yield_pct": 504.0,
-        "max_loss_per_contract": 355.0,
+        "net_credit": 1.35,
+        "credit_width_ratio": 0.27,
+        "annualized_yield_pct": 469.3,
+        "max_loss_per_contract": 365.0,
         "iv_rank_proxy": 0.02,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "BX",
+        "price": 114.83,
+        "sector": "Financial Services",
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 115.0,
+        "long_strike": 110.0,
+        "spread_width": 5.0,
+        "net_credit": 1.27,
+        "credit_width_ratio": 0.254,
+        "annualized_yield_pct": 441.5,
+        "max_loss_per_contract": 373.0,
+        "iv_rank_proxy": 0.125,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "DASH",
+        "price": 152.58,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-06-18",
+        "dte": 22,
+        "short_strike": 155.0,
+        "long_strike": 150.0,
+        "spread_width": 5.0,
+        "net_credit": 1.25,
+        "credit_width_ratio": 0.25,
+        "annualized_yield_pct": 434.5,
+        "max_loss_per_contract": 375.0,
+        "iv_rank_proxy": 0.094,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1822,7 +1951,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 6,
     "universe_watch": [
       {
         "symbol": "BKNG",
