@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-05-28T13:15:11.775440+00:00",
+  "generated_at": "2026-05-28T13:30:12.643310+00:00",
   "as_of_date": "2026-05-28",
   "account": {
-    "equity": 85839.72,
+    "equity": 85846.91,
     "cash": 30944.52,
-    "buying_power": 115958.59,
+    "buying_power": 115967.39,
     "base_value": 100000.0,
-    "total_pnl": -14160.28,
-    "total_pnl_pct": -14.1603,
-    "today_pnl": -11.55,
-    "today_pnl_pct": -0.0135,
-    "positions_value": 54895.2,
-    "equity_deployed": 54895.2,
+    "total_pnl": -14153.09,
+    "total_pnl_pct": -14.1531,
+    "today_pnl": -4.36,
+    "today_pnl_pct": -0.0051,
+    "positions_value": 54902.69,
+    "equity_deployed": 54902.69,
     "options_deployed": 0,
-    "unrealized_pnl": 93.22,
-    "unrealized_pnl_pct": 0.17
+    "unrealized_pnl": 100.71,
+    "unrealized_pnl_pct": 0.18
   },
   "positions": [
     {
@@ -22,42 +22,42 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 298.94,
-      "current_price": 310.19,
-      "market_value": 1550.95,
-      "unrealized_pnl": 56.25,
-      "unrealized_pct": 3.76,
-      "change_today_pct": -0.21
+      "current_price": 310.38,
+      "market_value": 1551.9,
+      "unrealized_pnl": 57.2,
+      "unrealized_pct": 3.83,
+      "change_today_pct": -0.15
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 73188.987,
-      "market_value": 825.652208,
-      "unrealized_pnl": -34.824855,
-      "unrealized_pct": -4.05,
-      "change_today_pct": -1.46
+      "current_price": 73045.83,
+      "market_value": 824.03724,
+      "unrealized_pnl": -36.439823,
+      "unrealized_pct": -4.23,
+      "change_today_pct": -1.65
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1086.45,
-      "market_value": 1086.45,
-      "unrealized_pnl": 10.63,
-      "unrealized_pct": 0.99,
-      "change_today_pct": 0.33
+      "current_price": 1094.195,
+      "market_value": 1094.195,
+      "unrealized_pnl": 18.375,
+      "unrealized_pct": 1.71,
+      "change_today_pct": 1.04
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530294,
-      "current_price": 100.65,
-      "market_value": 51432.15,
-      "unrealized_pnl": 61.169766,
+      "current_price": 100.6508,
+      "market_value": 51432.5588,
+      "unrealized_pnl": 61.578566,
       "unrealized_pct": 0.12,
       "change_today_pct": 0.0
     }
