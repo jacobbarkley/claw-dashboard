@@ -1,7 +1,7 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-05-27T20:48:03.021361+00:00",
-  "as_of_date": "2026-05-27",
+  "generated_at": "2026-05-28T13:30:03.506458+00:00",
+  "as_of_date": "2026-05-28",
   "source_context": {
     "mode": "canonical",
     "label": "canonical",
@@ -10,20 +10,20 @@
     "note": "Feed generated from canonical rebuild artifacts."
   },
   "account": {
-    "equity": 85862.74,
+    "equity": 85847.14,
     "cash": 30944.52,
-    "buying_power": 115957.35,
+    "buying_power": 115963.5,
     "base_value": 100000.0,
-    "total_pnl": -14137.26,
-    "total_pnl_pct": -14.1373,
-    "today_pnl": 28.76,
-    "today_pnl_pct": 0.0335,
-    "positions_value": 54914.85,
-    "equity_deployed": 54067.15,
-    "crypto_deployed": 847.7,
+    "total_pnl": -14152.86,
+    "total_pnl_pct": -14.1529,
+    "today_pnl": -4.13,
+    "today_pnl_pct": -0.0048,
+    "positions_value": 54895.2,
+    "equity_deployed": 54069.55,
+    "crypto_deployed": 825.65,
     "options_deployed": 0,
-    "unrealized_pnl": 112.87,
-    "unrealized_pnl_pct": 0.21
+    "unrealized_pnl": 93.22,
+    "unrealized_pnl_pct": 0.17
   },
   "positions": [
     {
@@ -31,11 +31,11 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 298.94,
-      "current_price": 310.5,
-      "market_value": 1552.5,
-      "unrealized_pnl": 57.8,
-      "unrealized_pct": 3.87,
-      "change_today_pct": 0.7,
+      "current_price": 310.19,
+      "market_value": 1550.95,
+      "unrealized_pnl": 56.25,
+      "unrealized_pct": 3.76,
+      "change_today_pct": -0.21,
       "asset_type": "EQUITY"
     },
     {
@@ -43,11 +43,11 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 75143.16,
-      "market_value": 847.697427,
-      "unrealized_pnl": -12.779636,
-      "unrealized_pct": -1.49,
-      "change_today_pct": -0.97,
+      "current_price": 73188.987,
+      "market_value": 825.652208,
+      "unrealized_pnl": -34.824855,
+      "unrealized_pct": -4.05,
+      "change_today_pct": -1.46,
       "asset_type": "CRYPTO"
     },
     {
@@ -55,11 +55,11 @@
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1082.5,
-      "market_value": 1082.5,
-      "unrealized_pnl": 6.68,
-      "unrealized_pct": 0.62,
-      "change_today_pct": 1.67,
+      "current_price": 1086.45,
+      "market_value": 1086.45,
+      "unrealized_pnl": 10.63,
+      "unrealized_pct": 0.99,
+      "change_today_pct": 0.33,
       "asset_type": "EQUITY"
     },
     {
@@ -71,22 +71,22 @@
       "market_value": 51432.15,
       "unrealized_pnl": 61.169766,
       "unrealized_pct": 0.12,
-      "change_today_pct": 0.01,
+      "change_today_pct": 0.0,
       "asset_type": "EQUITY"
     }
   ],
   "pipeline_status": {
-    "trading_date": "2026-05-27",
-    "run_id": "2026-05-27-shadow-midday-01",
+    "trading_date": "2026-05-28",
+    "run_id": "2026-05-28-shadow-premarket-01",
     "circuit_breaker": "OPEN",
     "verdict": "WARN",
     "critical_issues": 0,
-    "high_issues": 2,
+    "high_issues": 3,
     "medium_issues": 3,
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-05-27T20:48:03.021461+00:00"
+    "audit_written_at": "2026-05-28T13:30:03.506564+00:00"
   },
   "kpis": {
     "total_trades": 78,
@@ -1091,6 +1091,12 @@
       "equity": 85833.98,
       "profit_loss": -35.99,
       "profit_loss_pct": -0.04
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 85851.27,
+      "profit_loss": 17.29,
+      "profit_loss_pct": 0.02
     }
   ],
   "sleeve_equity_history": {
@@ -1211,7 +1217,11 @@
         },
         {
           "date": "2026-05-27",
-          "market_value": 54067.15
+          "market_value": 55562.35
+        },
+        {
+          "date": "2026-05-28",
+          "market_value": 54069.55
         }
       ]
     },
@@ -1332,7 +1342,11 @@
         },
         {
           "date": "2026-05-27",
-          "market_value": 847.7
+          "market_value": 849.91
+        },
+        {
+          "date": "2026-05-28",
+          "market_value": 825.65
         }
       ]
     },
@@ -1454,31 +1468,35 @@
         {
           "date": "2026-05-27",
           "market_value": 0.0
+        },
+        {
+          "date": "2026-05-28",
+          "market_value": 0.0
         }
       ]
     }
   },
   "strategy_universe": {
-    "as_of": "2026-05-27T20:47:59.073108674Z",
+    "as_of": "2026-05-28T13:30:03.246116983Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 310.46,
+        "current_price": 310.5,
         "prior_close": 308.33,
-        "change_usd": 2.13,
-        "change_pct": 0.6908,
-        "return_20d_pct": 13.9352,
+        "change_usd": 2.17,
+        "change_pct": 0.7038,
+        "return_20d_pct": 15.242,
         "in_position": true,
         "strategy_member": true,
         "position_qty": 5.0
       },
       {
         "symbol": "AVGO",
-        "current_price": 423.16,
+        "current_price": 419.85,
         "prior_close": 422.06,
-        "change_usd": 1.1,
-        "change_pct": 0.2606,
+        "change_usd": -2.21,
+        "change_pct": -0.5236,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1486,10 +1504,10 @@
       },
       {
         "symbol": "COST",
-        "current_price": 1003.86,
+        "current_price": 1011.59,
         "prior_close": 1002.645,
-        "change_usd": 1.215,
-        "change_pct": 0.1212,
+        "change_usd": 8.945,
+        "change_pct": 0.8921,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1508,10 +1526,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 636.61,
+        "current_price": 641.0,
         "prior_close": 612.36,
-        "change_usd": 24.25,
-        "change_pct": 3.9601,
+        "change_usd": 28.64,
+        "change_pct": 4.677,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1519,10 +1537,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 212.42,
+        "current_price": 211.63,
         "prior_close": 214.785,
-        "change_usd": -2.365,
-        "change_pct": -1.1011,
+        "change_usd": -3.155,
+        "change_pct": -1.4689,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1530,10 +1548,10 @@
       },
       {
         "symbol": "SGOV",
-        "current_price": 100.64,
+        "current_price": 100.655,
         "prior_close": 100.63,
-        "change_usd": 0.01,
-        "change_pct": 0.0099,
+        "change_usd": 0.025,
+        "change_pct": 0.0248,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": false,
@@ -1545,7 +1563,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-27T20:48:02.864620+00:00",
+        "as_of": "2026-05-28T13:30:03.339115+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1555,7 +1573,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-27T20:48:03.020853+00:00",
+        "as_of": "2026-05-28T13:30:03.506171+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1564,27 +1582,8 @@
     }
   },
   "watchlist": {
-    "items": [
-      {
-        "symbol": "AAPL",
-        "trigger": "GENERAL",
-        "stop": "292.91",
-        "target": "354.58",
-        "modifier": "MEDIUM",
-        "note": "AAPL regime-aware momentum long: 20-day return 15.22% with realized vol 17.10%. Benchmark regime supportive: 50-day SPY return 13.33% with realized vol 14.69% and close 750.59 above trend average 697.73.",
-        "in_position": true
-      },
-      {
-        "symbol": "LLY",
-        "trigger": "GENERAL",
-        "stop": "1011.50",
-        "target": "1224.45",
-        "modifier": "MEDIUM",
-        "note": "LLY regime-aware momentum long: 20-day return 22.63% with realized vol 42.80%. Benchmark regime supportive: 50-day SPY return 13.33% with realized vol 14.69% and close 750.59 above trend average 697.73.",
-        "in_position": true
-      }
-    ],
-    "as_of": "2026-05-27",
+    "items": [],
+    "as_of": "2026-05-28",
     "source": "rebuild_pregate_intent"
   },
   "exit_candidates": [],
@@ -1599,7 +1598,7 @@
     "consecutive_loss_limit": null,
     "consecutive_loss_size_modifier": null,
     "reduce_only_size_cap": "FULL_SIZE",
-    "updated_at": "2026-05-27T11:45:09.320644-04:00"
+    "updated_at": "2026-05-28T08:00:09.170116-04:00"
   },
   "options": null,
   "hedges": null,
@@ -1626,16 +1625,16 @@
         "checkpoint05_passed": false,
         "live_capital_enabled": false,
         "blocking_incidents": [
-          "steward.open_action_deferred_existing_position:AAPL",
-          "steward.open_action_deferred_existing_position:LLY",
-          "steward.position_missing_snapshot_grace:NVDA"
+          "shadow.trade_plan_empty",
+          "steward.position_marked_closed_after_confirmed_missing_snapshot:NVDA",
+          "strategy.thesis_set_empty"
         ]
       },
       "note": "Governed Autonomous Paper mode is active; paper execution may run without approval."
     },
     "session": {
-      "run_id": "2026-05-27-shadow-midday-01",
-      "phase": "INTRADAY",
+      "run_id": "2026-05-28-shadow-premarket-01",
+      "phase": "PREMARKET",
       "entry_mode": "OPEN",
       "policy_version": "0.1.0"
     },
@@ -1648,28 +1647,23 @@
       "one_sided_days": 6,
       "trivial_days": 7,
       "avg_substantive_match": 0.1429,
-      "latest_suppression_cause": "NOT_SUPPRESSED",
+      "latest_suppression_cause": "NO_SIGNAL",
       "blocking_notes": [
         "Only 1 substantive post-gate day(s); need at least 10.",
-        "6 one-sided post-gate day(s) remain in the current window."
+        "6 one-sided post-gate day(s) remain in the current window.",
+        "Latest live shadow day is still suppressed post-gate (NO_SIGNAL)."
       ]
     },
     "plan": {
-      "pre_gate_status": "HAS_CANDIDATES",
-      "pre_gate_candidate_count": 2,
-      "pre_gate_symbols": [
-        "AAPL",
-        "LLY"
-      ],
-      "trade_plan_status": "READY",
-      "trade_plan_count": 2,
-      "trade_plan_symbols": [
-        "AAPL",
-        "LLY"
-      ],
+      "pre_gate_status": "NO_CANDIDATES",
+      "pre_gate_candidate_count": 0,
+      "pre_gate_symbols": [],
+      "trade_plan_status": "NO_TRADES",
+      "trade_plan_count": 0,
+      "trade_plan_symbols": [],
       "blocked_reasons": [],
-      "suppression_cause": "NOT_SUPPRESSED",
-      "narrative": "2 trade(s) are ready to express today: AAPL, LLY."
+      "suppression_cause": "NO_SIGNAL",
+      "narrative": "No candidates surfaced in the current rebuild slice."
     },
     "research": {
       "tradable_symbol_count": 6,
@@ -1681,38 +1675,19 @@
         "META"
       ],
       "research_item_count": 6,
-      "thesis_item_count": 2,
-      "long_bias_count": 2,
+      "thesis_item_count": 0,
+      "long_bias_count": 0,
       "short_bias_count": 0,
       "neutral_count": 0,
-      "top_theses": [
-        {
-          "symbol": "AAPL",
-          "side_bias": "LONG",
-          "confidence": "MEDIUM",
-          "bull_prob": 75,
-          "bear_prob": 25,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "AAPL regime-aware momentum long: 20-day return 15.22% with realized vol 17.10%. Benchmark regime supportive: 50-day SPY return 13.33% with realized vol 14.69% and close 750.59 above trend average 697.73."
-        },
-        {
-          "symbol": "LLY",
-          "side_bias": "LONG",
-          "confidence": "MEDIUM",
-          "bull_prob": 75,
-          "bear_prob": 25,
-          "catalyst_label": "GENERAL",
-          "thesis_summary": "LLY regime-aware momentum long: 20-day return 22.63% with realized vol 42.80%. Benchmark regime supportive: 50-day SPY return 13.33% with realized vol 14.69% and close 750.59 above trend average 697.73."
-        }
-      ],
-      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). Current thesis mix is 2 long / 0 short. Lead idea is AAPL Long on a General setup."
+      "top_theses": [],
+      "narrative": "Coverage spans 6 liquid names (AAPL, AVGO, COST, LLY, META +1 more). No lead thesis is populated yet."
     },
     "regime": {
-      "vix_level": 16.93,
+      "vix_level": 16.74,
       "vix_regime": "MEDIUM",
       "hmm_regime": "CALM",
       "vol_persistence_regime": "RANDOM_WALK",
-      "vol_persistence_hurst": 0.5232,
+      "vol_persistence_hurst": 0.5213,
       "suppress_mean_reversion": false,
       "jump_variation_pctile": 100.0,
       "jump_variation_regime": "DIFFUSION_DOMINATED",
@@ -1721,13 +1696,13 @@
         "native_regime_enrichment_active"
       ],
       "populated": true,
-      "narrative": "VIX is 16.93 in a Medium regime. HMM reads Calm. jump stress is elevated."
+      "narrative": "VIX is 16.74 in a Medium regime. HMM reads Calm. jump stress is elevated."
     },
     "report_paths": {
       "local_only": true,
       "checkpoint05_status": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/checkpoint05/checkpoint05_status_latest.json",
-      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-05-27-midday-01.json",
-      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-05-27-midday-01.json"
+      "shadow_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/shadow/checkpoint05-shadow-report-2026-05-28-premarket-01.json",
+      "pregate_report": "/home/jacobbarkley/.openclaw/workspace/trading-bot/state/rebuild_reports/pregate/checkpoint05-pregate-report-2026-05-28-premarket-01.json"
     },
     "approval": null,
     "strategy_bank": {
@@ -2364,7 +2339,7 @@
           "state": "RISK_OFF",
           "tier_label": "Tier 3",
           "target_exposure_pct": 10.0,
-          "market_value": 847.697427,
+          "market_value": 825.652208,
           "qty": 0.011281099,
           "status": "SKIPPED"
         }
@@ -2397,14 +2372,14 @@
         "regimeTones": {},
         "series": [
           {
-            "date": "2026-05-27",
+            "date": "2026-05-28",
             "weights": {
-              "SGOV": 95.13,
+              "SGOV": 95.12,
               "AAPL": 2.87,
-              "LLY": 2.0
+              "LLY": 2.01
             },
             "cash": 0.0,
-            "total": 54067.15
+            "total": 54069.55
           }
         ]
       },
@@ -2422,8 +2397,8 @@
         ],
         "regimes": [
           {
-            "from": "2026-05-27",
-            "to": "2026-05-27",
+            "from": "2026-05-28",
+            "to": "2026-05-28",
             "label": "RISK_OFF"
           }
         ],
@@ -2443,12 +2418,12 @@
         },
         "series": [
           {
-            "date": "2026-05-27",
+            "date": "2026-05-28",
             "weights": {
               "BTCUSD": 100.0
             },
             "cash": 0.0,
-            "total": 847.7
+            "total": 825.65
           }
         ]
       },
@@ -2722,9 +2697,9 @@
       "note": "Showing the latest governed mode-control events from rebuild history."
     },
     "incident_flags": [
-      "steward.open_action_deferred_existing_position:AAPL",
-      "steward.open_action_deferred_existing_position:LLY",
-      "steward.position_missing_snapshot_grace:NVDA"
+      "shadow.trade_plan_empty",
+      "steward.position_marked_closed_after_confirmed_missing_snapshot:NVDA",
+      "strategy.thesis_set_empty"
     ],
     "notes": [
       "shadow_slice_read_only",
@@ -2735,7 +2710,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-05-27T20:48:02.383959+00:00",
+        "as_of": "2026-05-28T13:30:02.618971+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2745,7 +2720,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-27T20:48:02.864620+00:00",
+        "as_of": "2026-05-28T13:30:03.339115+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2755,7 +2730,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-05-27T20:48:03.020853+00:00",
+        "as_of": "2026-05-28T13:30:03.506171+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
