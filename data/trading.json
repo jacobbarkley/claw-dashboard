@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-03T16:15:12.206289+00:00",
+  "generated_at": "2026-06-03T16:30:10.363637+00:00",
   "as_of_date": "2026-06-03",
   "account": {
     "equity": 85641.51,
@@ -1896,29 +1896,11 @@
         "short_strike": 35.0,
         "long_strike": 30.0,
         "spread_width": 5.0,
-        "net_credit": 1.7,
-        "credit_width_ratio": 0.34,
-        "annualized_yield_pct": 591.0,
-        "max_loss_per_contract": 330.0,
+        "net_credit": 1.75,
+        "credit_width_ratio": 0.35,
+        "annualized_yield_pct": 608.3,
+        "max_loss_per_contract": 325.0,
         "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "SCHW",
-        "price": 94.8,
-        "sector": "Financial Services",
-        "expiry": "2026-06-26",
-        "dte": 23,
-        "short_strike": 88.0,
-        "long_strike": 83.0,
-        "spread_width": 5.0,
-        "net_credit": 1.25,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 375.0,
-        "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -1927,7 +1909,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
