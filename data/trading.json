@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-06-03T15:30:11.040558+00:00",
-  "as_of_date": "2026-05-29",
+  "generated_at": "2026-06-03T15:45:13.974398+00:00",
+  "as_of_date": "2026-06-03",
   "account": {
-    "equity": 85901.14,
+    "equity": 85645.69,
     "cash": 30944.52,
-    "buying_power": 116020.52,
+    "buying_power": 115843.06,
     "base_value": 100000.0,
-    "total_pnl": -14098.86,
-    "total_pnl_pct": -14.0989,
-    "today_pnl": 5.93,
-    "today_pnl_pct": 0.0069,
-    "positions_value": 54956.62,
-    "equity_deployed": 54956.62,
+    "total_pnl": -14354.31,
+    "total_pnl_pct": -14.3543,
+    "today_pnl": 29.67,
+    "today_pnl_pct": 0.0347,
+    "positions_value": 54701.17,
+    "equity_deployed": 54701.17,
     "options_deployed": 0,
-    "unrealized_pnl": 154.64,
-    "unrealized_pnl_pct": 0.28
+    "unrealized_pnl": -100.8,
+    "unrealized_pnl_pct": -0.18
   },
   "positions": [
     {
@@ -22,44 +22,44 @@
       "qty": 5.0,
       "side": "long",
       "entry_price": 298.94,
-      "current_price": 314.0,
-      "market_value": 1570.0,
-      "unrealized_pnl": 75.3,
-      "unrealized_pct": 5.04,
-      "change_today_pct": 0.48
+      "current_price": 311.515,
+      "market_value": 1557.575,
+      "unrealized_pnl": 62.875,
+      "unrealized_pct": 4.21,
+      "change_today_pct": -1.17
     },
     {
       "symbol": "BTCUSD",
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 73143.7,
-      "market_value": 825.141321,
-      "unrealized_pnl": -35.335742,
-      "unrealized_pct": -4.11,
-      "change_today_pct": -0.49
+      "current_price": 66230.321,
+      "market_value": 747.150808,
+      "unrealized_pnl": -113.326255,
+      "unrealized_pct": -13.17,
+      "change_today_pct": -0.94
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1114.0,
-      "market_value": 1114.0,
-      "unrealized_pnl": 38.18,
-      "unrealized_pct": 3.55,
-      "change_today_pct": -1.14
+      "current_price": 1086.53,
+      "market_value": 1086.53,
+      "unrealized_pnl": 10.71,
+      "unrealized_pct": 1.0,
+      "change_today_pct": 2.1
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530294,
-      "current_price": 100.68,
-      "market_value": 51447.48,
-      "unrealized_pnl": 76.499766,
-      "unrealized_pct": 0.15,
-      "change_today_pct": 0.03
+      "current_price": 100.4108,
+      "market_value": 51309.9188,
+      "unrealized_pnl": -61.061434,
+      "unrealized_pct": -0.12,
+      "change_today_pct": 0.01
     }
   ],
   "pipeline_status": {
@@ -1027,6 +1027,21 @@
       "date": "2026-05-29",
       "equity": 85895.21,
       "profit_loss": 43.94
+    },
+    {
+      "date": "2026-05-30",
+      "equity": 85881.06,
+      "profit_loss": -14.15
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 85659.67,
+      "profit_loss": -221.39
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 85616.02,
+      "profit_loss": -43.65
     }
   ],
   "watchlist": {
@@ -1874,10 +1889,10 @@
         "short_strike": 115.0,
         "long_strike": 110.0,
         "spread_width": 5.0,
-        "net_credit": 1.8,
-        "credit_width_ratio": 0.36,
-        "annualized_yield_pct": 625.7,
-        "max_loss_per_contract": 320.0,
+        "net_credit": 2.25,
+        "credit_width_ratio": 0.45,
+        "annualized_yield_pct": 782.1,
+        "max_loss_per_contract": 275.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
