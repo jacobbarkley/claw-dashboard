@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04T20:30:09.995450+00:00",
+  "generated_at": "2026-06-04T20:41:08.589634+00:00",
   "as_of_date": "2026-06-04",
   "account": {
     "equity": 85670.86,
@@ -98,9 +98,9 @@
     "audit_written_at": "2026-04-14T20:20:00-04:00"
   },
   "kpis": {
-    "total_trades": 79,
+    "total_trades": 82,
     "closed_trades": 29,
-    "open_trades": 50,
+    "open_trades": 53,
     "win_rate_pct": 37.93,
     "profit_factor": 1.4167,
     "expectancy": 6.26,
