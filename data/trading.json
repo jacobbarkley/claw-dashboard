@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-06-04T13:00:10.145147+00:00",
+  "generated_at": "2026-06-04T13:15:11.130978+00:00",
   "as_of_date": "2026-06-04",
   "account": {
-    "equity": 85635.36,
+    "equity": 85634.37,
     "cash": 32502.18,
-    "buying_power": 234836.64,
+    "buying_power": 234838.07,
     "base_value": 100000.0,
-    "total_pnl": -14364.64,
-    "total_pnl_pct": -14.3646,
-    "today_pnl": 44.05,
-    "today_pnl_pct": 0.0515,
-    "positions_value": 53133.18,
-    "equity_deployed": 53133.18,
+    "total_pnl": -14365.63,
+    "total_pnl_pct": -14.3656,
+    "today_pnl": 43.06,
+    "today_pnl_pct": 0.0503,
+    "positions_value": 53132.19,
+    "equity_deployed": 53132.19,
     "options_deployed": 0,
-    "unrealized_pnl": -174.1,
+    "unrealized_pnl": -175.09,
     "unrealized_pnl_pct": -0.33
   },
   "positions": [
@@ -22,33 +22,33 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 63754.5,
-      "market_value": 719.220826,
-      "unrealized_pnl": -141.256237,
-      "unrealized_pct": -16.42,
-      "change_today_pct": 2.56
+      "current_price": 63603.369,
+      "market_value": 717.515902,
+      "unrealized_pnl": -142.961161,
+      "unrealized_pct": -16.61,
+      "change_today_pct": 2.32
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1095.25,
-      "market_value": 1095.25,
-      "unrealized_pnl": 19.43,
-      "unrealized_pct": 1.81,
-      "change_today_pct": 1.53
+      "current_price": 1097.5,
+      "market_value": 1097.5,
+      "unrealized_pnl": 21.68,
+      "unrealized_pct": 2.02,
+      "change_today_pct": 1.74
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530294,
-      "current_price": 100.428,
-      "market_value": 51318.708,
-      "unrealized_pnl": -52.272234,
+      "current_price": 100.425,
+      "market_value": 51317.175,
+      "unrealized_pnl": -53.805234,
       "unrealized_pct": -0.1,
-      "change_today_pct": 0.02
+      "change_today_pct": 0.01
     }
   ],
   "pipeline_status": {
