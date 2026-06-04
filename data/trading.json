@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-06-04T13:30:10.342268+00:00",
+  "generated_at": "2026-06-04T13:45:10.450755+00:00",
   "as_of_date": "2026-06-04",
   "account": {
-    "equity": 85638.68,
+    "equity": 85656.35,
     "cash": 32502.18,
-    "buying_power": 234856.25,
+    "buying_power": 234872.36,
     "base_value": 100000.0,
-    "total_pnl": -14361.32,
-    "total_pnl_pct": -14.3613,
-    "today_pnl": 47.37,
-    "today_pnl_pct": 0.0553,
-    "positions_value": 53136.5,
-    "equity_deployed": 53136.5,
+    "total_pnl": -14343.65,
+    "total_pnl_pct": -14.3437,
+    "today_pnl": 65.04,
+    "today_pnl_pct": 0.076,
+    "positions_value": 53154.17,
+    "equity_deployed": 53154.17,
     "options_deployed": 0,
-    "unrealized_pnl": -170.78,
-    "unrealized_pnl_pct": -0.32
+    "unrealized_pnl": -153.11,
+    "unrealized_pnl_pct": -0.29
   },
   "positions": [
     {
@@ -22,31 +22,31 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 63179.2,
-      "market_value": 712.73081,
-      "unrealized_pnl": -147.746253,
-      "unrealized_pct": -17.17,
-      "change_today_pct": 1.64
+      "current_price": 64031.72,
+      "market_value": 722.348172,
+      "unrealized_pnl": -138.128891,
+      "unrealized_pct": -16.05,
+      "change_today_pct": 3.01
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1106.03,
-      "market_value": 1106.03,
-      "unrealized_pnl": 30.21,
-      "unrealized_pct": 2.81,
-      "change_today_pct": 2.53
+      "current_price": 1113.88,
+      "market_value": 1113.88,
+      "unrealized_pnl": 38.06,
+      "unrealized_pct": 3.54,
+      "change_today_pct": 3.25
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530294,
-      "current_price": 100.4261,
-      "market_value": 51317.7371,
-      "unrealized_pnl": -53.243134,
+      "current_price": 100.4265,
+      "market_value": 51317.9415,
+      "unrealized_pnl": -53.038734,
       "unrealized_pct": -0.1,
       "change_today_pct": 0.02
     }
