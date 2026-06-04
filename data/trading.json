@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-04T20:00:09.732431+00:00",
+  "generated_at": "2026-06-04T20:15:09.144119+00:00",
   "as_of_date": "2026-06-04",
   "account": {
     "equity": 85670.86,
@@ -1950,30 +1950,12 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
-      },
-      {
-        "symbol": "BX",
-        "price": 114.83,
-        "sector": "Financial Services",
-        "expiry": "2026-06-26",
-        "dte": 22,
-        "short_strike": 115.0,
-        "long_strike": 110.0,
-        "spread_width": 5.0,
-        "net_credit": 1.26,
-        "credit_width_ratio": 0.252,
-        "annualized_yield_pct": 438.0,
-        "max_loss_per_contract": 374.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
