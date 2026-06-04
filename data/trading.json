@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-06-03T20:45:09.054841+00:00",
-  "as_of_date": "2026-06-03",
+  "generated_at": "2026-06-04T13:00:10.145147+00:00",
+  "as_of_date": "2026-06-04",
   "account": {
-    "equity": 85641.51,
-    "cash": 32502.2,
-    "buying_power": 117399.42,
+    "equity": 85635.36,
+    "cash": 32502.18,
+    "buying_power": 234836.64,
     "base_value": 100000.0,
-    "total_pnl": -14358.49,
-    "total_pnl_pct": -14.3585,
-    "today_pnl": 25.49,
-    "today_pnl_pct": 0.0298,
-    "positions_value": 53142.58,
-    "equity_deployed": 53142.58,
+    "total_pnl": -14364.64,
+    "total_pnl_pct": -14.3646,
+    "today_pnl": 44.05,
+    "today_pnl_pct": 0.0515,
+    "positions_value": 53133.18,
+    "equity_deployed": 53133.18,
     "options_deployed": 0,
-    "unrealized_pnl": -164.69,
-    "unrealized_pnl_pct": -0.31
+    "unrealized_pnl": -174.1,
+    "unrealized_pnl_pct": -0.33
   },
   "positions": [
     {
@@ -22,32 +22,32 @@
       "qty": 0.011281099,
       "side": "long",
       "entry_price": 76275.996084291,
-      "current_price": 65976.9,
-      "market_value": 744.291941,
-      "unrealized_pnl": -116.185122,
-      "unrealized_pct": -13.5,
-      "change_today_pct": -1.31
+      "current_price": 63754.5,
+      "market_value": 719.220826,
+      "unrealized_pnl": -141.256237,
+      "unrealized_pct": -16.42,
+      "change_today_pct": 2.56
     },
     {
       "symbol": "LLY",
       "qty": 1.0,
       "side": "long",
       "entry_price": 1075.82,
-      "current_price": 1085.5123,
-      "market_value": 1085.5123,
-      "unrealized_pnl": 9.6923,
-      "unrealized_pct": 0.9,
-      "change_today_pct": 2.01
+      "current_price": 1095.25,
+      "market_value": 1095.25,
+      "unrealized_pnl": 19.43,
+      "unrealized_pct": 1.81,
+      "change_today_pct": 1.53
     },
     {
       "symbol": "SGOV",
       "qty": 511.0,
       "side": "long",
       "entry_price": 100.530294,
-      "current_price": 100.4164,
-      "market_value": 51312.7804,
-      "unrealized_pnl": -58.199834,
-      "unrealized_pct": -0.11,
+      "current_price": 100.428,
+      "market_value": 51318.708,
+      "unrealized_pnl": -52.272234,
+      "unrealized_pct": -0.1,
       "change_today_pct": 0.02
     }
   ],
@@ -1039,6 +1039,11 @@
       "date": "2026-06-03",
       "equity": 85616.02,
       "profit_loss": -43.65
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 85591.31,
+      "profit_loss": -24.71
     }
   ],
   "watchlist": {
@@ -1876,48 +1881,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "COF",
-        "price": 193.0,
-        "sector": "Financial Services",
-        "expiry": "2026-06-26",
-        "dte": 23,
-        "short_strike": 205.0,
-        "long_strike": 200.0,
-        "spread_width": 5.0,
-        "net_credit": 2.7,
-        "credit_width_ratio": 0.54,
-        "annualized_yield_pct": 938.6,
-        "max_loss_per_contract": 230.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-06-26",
-        "dte": 23,
-        "short_strike": 37.0,
-        "long_strike": 32.0,
-        "spread_width": 5.0,
-        "net_credit": 2.5,
-        "credit_width_ratio": 0.5,
-        "annualized_yield_pct": 869.0,
-        "max_loss_per_contract": 250.0,
-        "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 2,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
