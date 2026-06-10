@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-06-10T20:00:02.509762+00:00",
+  "generated_at": "2026-06-10T20:48:01.877553+00:00",
   "as_of_date": "2026-06-09",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-06-10T20:00:02.509841+00:00"
+    "audit_written_at": "2026-06-10T20:48:01.877587+00:00"
   },
   "kpis": {
     "total_trades": 85,
@@ -731,6 +731,14 @@
       "winners": 1,
       "losers": 2,
       "win_rate": 33.33
+    },
+    {
+      "date": "2026-06-10",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
     }
   ],
   "equity_curve": [
@@ -1629,15 +1637,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-06-10T19:59:59.563799107Z",
+    "as_of": "2026-06-10T20:39:11.950133839Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 291.48,
+        "current_price": 292.02,
         "prior_close": 290.36,
-        "change_usd": 1.12,
-        "change_pct": 0.3857,
+        "change_usd": 1.66,
+        "change_pct": 0.5717,
         "return_20d_pct": 2.8722,
         "in_position": true,
         "strategy_member": true,
@@ -1645,10 +1653,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 371.88,
+        "current_price": 372.12,
         "prior_close": 392.765,
-        "change_usd": -20.885,
-        "change_pct": -5.3174,
+        "change_usd": -20.645,
+        "change_pct": -5.2563,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1689,10 +1697,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 200.41,
+        "current_price": 200.29,
         "prior_close": 208.2,
-        "change_usd": -7.79,
-        "change_pct": -3.7416,
+        "change_usd": -7.91,
+        "change_pct": -3.7992,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1700,10 +1708,10 @@
       },
       {
         "symbol": "SGOV",
-        "current_price": 100.475,
+        "current_price": 100.48,
         "prior_close": 100.47,
-        "change_usd": 0.005,
-        "change_pct": 0.005,
+        "change_usd": 0.01,
+        "change_pct": 0.01,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": false,
@@ -1715,7 +1723,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-10T20:00:02.381253+00:00",
+        "as_of": "2026-06-10T20:48:01.751641+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1725,7 +1733,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-10T20:00:02.509449+00:00",
+        "as_of": "2026-06-10T20:48:01.877392+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2952,7 +2960,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-06-10T20:00:02.167036+00:00",
+        "as_of": "2026-06-10T20:48:01.543308+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2962,7 +2970,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-10T20:00:02.381253+00:00",
+        "as_of": "2026-06-10T20:48:01.751641+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2972,7 +2980,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-10T20:00:02.509449+00:00",
+        "as_of": "2026-06-10T20:48:01.877392+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
