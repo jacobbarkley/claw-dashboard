@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-09T20:45:12.158173+00:00",
+  "generated_at": "2026-06-10T13:00:08.746044+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -1934,30 +1934,11 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [
-      {
-        "symbol": "CF",
-        "price": 121.32,
-        "sector": "Basic Materials",
-        "expiry": "2026-07-02",
-        "dte": 23,
-        "short_strike": 116.0,
-        "long_strike": 110.0,
-        "spread_width": 6.0,
-        "net_credit": 1.8,
-        "credit_width_ratio": 0.3,
-        "annualized_yield_pct": 521.4,
-        "max_loss_per_contract": 420.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      }
-    ],
+    "targets": [],
     "recent_fills": [],
-    "screener_status": "screened",
-    "scanned": 30,
-    "approved": 1,
+    "screener_status": "no_candidates",
+    "scanned": null,
+    "approved": null,
     "universe_watch": [
       {
         "symbol": "BKNG",
