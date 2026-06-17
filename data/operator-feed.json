@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-06-17T20:00:01.967196+00:00",
+  "generated_at": "2026-06-17T20:48:02.424455+00:00",
   "as_of_date": "2026-06-09",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-06-17T20:00:01.967269+00:00"
+    "audit_written_at": "2026-06-17T20:48:02.424489+00:00"
   },
   "kpis": {
     "total_trades": 85,
@@ -742,6 +742,14 @@
     },
     {
       "date": "2026-06-16",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-06-17",
       "net_pnl": 0.0,
       "trades": 0,
       "winners": 0,
@@ -1645,7 +1653,7 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-06-17T19:59:59.670157288Z",
+    "as_of": "2026-06-17T20:37:43.12253977Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
@@ -1661,10 +1669,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 392.91,
+        "current_price": 395.38,
         "prior_close": 376.53,
-        "change_usd": 16.38,
-        "change_pct": 4.3503,
+        "change_usd": 18.85,
+        "change_pct": 5.0062,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1705,10 +1713,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 204.7,
+        "current_price": 205.15,
         "prior_close": 207.37,
-        "change_usd": -2.67,
-        "change_pct": -1.2876,
+        "change_usd": -2.22,
+        "change_pct": -1.0706,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1731,7 +1739,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-17T20:00:01.694532+00:00",
+        "as_of": "2026-06-17T20:48:02.294775+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1741,7 +1749,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-17T20:00:01.966870+00:00",
+        "as_of": "2026-06-17T20:48:02.424305+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2914,7 +2922,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-06-17T20:00:01.476303+00:00",
+        "as_of": "2026-06-17T20:48:02.096679+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2924,7 +2932,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-17T20:00:01.694532+00:00",
+        "as_of": "2026-06-17T20:48:02.294775+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2934,7 +2942,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-17T20:00:01.966870+00:00",
+        "as_of": "2026-06-17T20:48:02.424305+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
