@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-06-19T20:00:02.541049+00:00",
+  "generated_at": "2026-06-19T20:48:00.873568+00:00",
   "as_of_date": "2026-06-09",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-06-19T20:00:02.541086+00:00"
+    "audit_written_at": "2026-06-19T20:48:00.873642+00:00"
   },
   "kpis": {
     "total_trades": 85,
@@ -750,6 +750,14 @@
     },
     {
       "date": "2026-06-17",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-06-19",
       "net_pnl": 0.0,
       "trades": 0,
       "winners": 0,
@@ -1739,7 +1747,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T20:00:02.393682+00:00",
+        "as_of": "2026-06-19T20:48:00.738789+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1749,7 +1757,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T20:00:02.540902+00:00",
+        "as_of": "2026-06-19T20:48:00.873409+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2895,7 +2903,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-06-19T20:00:02.204885+00:00",
+        "as_of": "2026-06-19T20:48:00.510015+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2905,7 +2913,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T20:00:02.393682+00:00",
+        "as_of": "2026-06-19T20:48:00.738789+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2915,7 +2923,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T20:00:02.540902+00:00",
+        "as_of": "2026-06-19T20:48:00.873409+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
