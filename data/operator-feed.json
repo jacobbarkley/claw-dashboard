@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-06-19T16:25:01.969442+00:00",
+  "generated_at": "2026-06-19T16:30:02.625889+00:00",
   "as_of_date": "2026-06-09",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-06-19T16:25:01.969502+00:00"
+    "audit_written_at": "2026-06-19T16:30:02.625925+00:00"
   },
   "kpis": {
     "total_trades": 85,
@@ -1739,7 +1739,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T16:25:01.832664+00:00",
+        "as_of": "2026-06-19T16:30:02.466395+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1749,7 +1749,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T16:25:01.969232+00:00",
+        "as_of": "2026-06-19T16:30:02.625756+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2895,7 +2895,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-06-19T16:25:01.635884+00:00",
+        "as_of": "2026-06-19T16:30:02.227802+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2905,7 +2905,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T16:25:01.832664+00:00",
+        "as_of": "2026-06-19T16:30:02.466395+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2915,7 +2915,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-19T16:25:01.969232+00:00",
+        "as_of": "2026-06-19T16:30:02.625756+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
