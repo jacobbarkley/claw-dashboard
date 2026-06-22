@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-22T18:45:10.720830+00:00",
+  "generated_at": "2026-06-22T19:00:10.850275+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -1976,10 +1976,10 @@
         "short_strike": 75.0,
         "long_strike": 70.0,
         "spread_width": 5.0,
-        "net_credit": 2.05,
-        "credit_width_ratio": 0.41,
-        "annualized_yield_pct": 712.6,
-        "max_loss_per_contract": 295.0,
+        "net_credit": 2.3,
+        "credit_width_ratio": 0.46,
+        "annualized_yield_pct": 799.5,
+        "max_loss_per_contract": 270.0,
         "iv_rank_proxy": 0.094,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
