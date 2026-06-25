@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T18:30:10.784613+00:00",
+  "generated_at": "2026-06-25T18:45:11.533865+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2002,11 +2002,29 @@
         "short_strike": 40.0,
         "long_strike": 35.0,
         "spread_width": 5.0,
-        "net_credit": 1.3,
-        "credit_width_ratio": 0.26,
-        "annualized_yield_pct": 451.9,
-        "max_loss_per_contract": 370.0,
+        "net_credit": 1.35,
+        "credit_width_ratio": 0.27,
+        "annualized_yield_pct": 469.3,
+        "max_loss_per_contract": 365.0,
         "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "HAS",
+        "price": 91.73,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-07-17",
+        "dte": 22,
+        "short_strike": 85.0,
+        "long_strike": 80.0,
+        "spread_width": 5.0,
+        "net_credit": 1.25,
+        "credit_width_ratio": 0.25,
+        "annualized_yield_pct": 434.5,
+        "max_loss_per_contract": 375.0,
+        "iv_rank_proxy": 0.25,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -2015,7 +2033,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 3,
     "universe_watch": [
       {
         "symbol": "BKNG",
