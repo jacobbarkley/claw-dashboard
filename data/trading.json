@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T19:45:10.825713+00:00",
+  "generated_at": "2026-06-26T20:00:14.181301+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -1984,6 +1984,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "INCY",
+        "price": 96.07,
+        "sector": "Healthcare",
+        "expiry": "2026-07-17",
+        "dte": 21,
+        "short_strike": 115.0,
+        "long_strike": 110.0,
+        "spread_width": 5.0,
+        "net_credit": 1.75,
+        "credit_width_ratio": 0.35,
+        "annualized_yield_pct": 608.3,
+        "max_loss_per_contract": 325.0,
+        "iv_rank_proxy": 0.078,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "KKR",
         "price": 91.22,
         "sector": "Financial Services",
@@ -1997,24 +2015,6 @@
         "annualized_yield_pct": 521.4,
         "max_loss_per_contract": 350.0,
         "iv_rank_proxy": 0.02,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "INCY",
-        "price": 96.07,
-        "sector": "Healthcare",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 115.0,
-        "long_strike": 110.0,
-        "spread_width": 5.0,
-        "net_credit": 1.45,
-        "credit_width_ratio": 0.29,
-        "annualized_yield_pct": 504.0,
-        "max_loss_per_contract": 355.0,
-        "iv_rank_proxy": 0.078,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
