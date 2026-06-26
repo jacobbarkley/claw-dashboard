@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T18:30:10.554718+00:00",
+  "generated_at": "2026-06-26T18:45:11.026115+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2002,42 +2002,6 @@
         "selected": false
       },
       {
-        "symbol": "HAS",
-        "price": 91.73,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 87.5,
-        "long_strike": 82.5,
-        "spread_width": 5.0,
-        "net_credit": 1.9,
-        "credit_width_ratio": 0.38,
-        "annualized_yield_pct": 660.5,
-        "max_loss_per_contract": 310.0,
-        "iv_rank_proxy": 0.25,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "KKR",
-        "price": 91.22,
-        "sector": "Financial Services",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 92.5,
-        "long_strike": 87.5,
-        "spread_width": 5.0,
-        "net_credit": 1.75,
-        "credit_width_ratio": 0.35,
-        "annualized_yield_pct": 608.3,
-        "max_loss_per_contract": 325.0,
-        "iv_rank_proxy": 0.02,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "BX",
         "price": 114.83,
         "sector": "Financial Services",
@@ -2046,10 +2010,10 @@
         "short_strike": 115.0,
         "long_strike": 110.0,
         "spread_width": 5.0,
-        "net_credit": 1.54,
-        "credit_width_ratio": 0.308,
-        "annualized_yield_pct": 535.3,
-        "max_loss_per_contract": 346.0,
+        "net_credit": 1.53,
+        "credit_width_ratio": 0.306,
+        "annualized_yield_pct": 531.9,
+        "max_loss_per_contract": 347.0,
         "iv_rank_proxy": 0.125,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
@@ -2059,7 +2023,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 4,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
