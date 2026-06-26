@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T19:15:11.039207+00:00",
+  "generated_at": "2026-06-26T19:30:12.589083+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -1984,6 +1984,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "KKR",
+        "price": 91.22,
+        "sector": "Financial Services",
+        "expiry": "2026-07-17",
+        "dte": 21,
+        "short_strike": 97.5,
+        "long_strike": 92.5,
+        "spread_width": 5.0,
+        "net_credit": 2.0,
+        "credit_width_ratio": 0.4,
+        "annualized_yield_pct": 695.2,
+        "max_loss_per_contract": 300.0,
+        "iv_rank_proxy": 0.02,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "INCY",
         "price": 96.07,
         "sector": "Healthcare",
@@ -2000,48 +2018,12 @@
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
-      },
-      {
-        "symbol": "BX",
-        "price": 114.83,
-        "sector": "Financial Services",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 115.0,
-        "long_strike": 110.0,
-        "spread_width": 5.0,
-        "net_credit": 1.71,
-        "credit_width_ratio": 0.342,
-        "annualized_yield_pct": 594.4,
-        "max_loss_per_contract": 329.0,
-        "iv_rank_proxy": 0.125,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "OMC",
-        "price": 74.77,
-        "sector": "Communication Services",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 75.0,
-        "long_strike": 70.0,
-        "spread_width": 5.0,
-        "net_credit": 1.25,
-        "credit_width_ratio": 0.25,
-        "annualized_yield_pct": 434.5,
-        "max_loss_per_contract": 375.0,
-        "iv_rank_proxy": 0.094,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
       }
     ],
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 2,
     "universe_watch": [
       {
         "symbol": "BKNG",
