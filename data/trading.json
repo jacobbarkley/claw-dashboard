@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T15:30:11.066562+00:00",
+  "generated_at": "2026-06-26T15:45:11.475850+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2020,6 +2020,24 @@
         "selected": false
       },
       {
+        "symbol": "HAS",
+        "price": 91.73,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-07-17",
+        "dte": 21,
+        "short_strike": 87.5,
+        "long_strike": 82.5,
+        "spread_width": 5.0,
+        "net_credit": 1.75,
+        "credit_width_ratio": 0.35,
+        "annualized_yield_pct": 608.3,
+        "max_loss_per_contract": 325.0,
+        "iv_rank_proxy": 0.25,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "KKR",
         "price": 91.22,
         "sector": "Financial Services",
@@ -2041,7 +2059,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 3,
+    "approved": 4,
     "universe_watch": [
       {
         "symbol": "BKNG",
