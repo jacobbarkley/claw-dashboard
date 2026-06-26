@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T17:00:11.733378+00:00",
+  "generated_at": "2026-06-26T17:15:10.347202+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -1984,6 +1984,24 @@
     "positions": [],
     "targets": [
       {
+        "symbol": "KKR",
+        "price": 91.22,
+        "sector": "Financial Services",
+        "expiry": "2026-07-17",
+        "dte": 21,
+        "short_strike": 92.5,
+        "long_strike": 87.5,
+        "spread_width": 5.0,
+        "net_credit": 1.6,
+        "credit_width_ratio": 0.32,
+        "annualized_yield_pct": 556.2,
+        "max_loss_per_contract": 340.0,
+        "iv_rank_proxy": 0.02,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
         "symbol": "IP",
         "price": 36.5,
         "sector": "Consumer Cyclical",
@@ -1997,24 +2015,6 @@
         "annualized_yield_pct": 556.2,
         "max_loss_per_contract": 340.0,
         "iv_rank_proxy": 0.031,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "KKR",
-        "price": 91.22,
-        "sector": "Financial Services",
-        "expiry": "2026-07-17",
-        "dte": 21,
-        "short_strike": 92.5,
-        "long_strike": 87.5,
-        "spread_width": 5.0,
-        "net_credit": 1.5,
-        "credit_width_ratio": 0.3,
-        "annualized_yield_pct": 521.4,
-        "max_loss_per_contract": 350.0,
-        "iv_rank_proxy": 0.02,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
