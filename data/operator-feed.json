@@ -1,6 +1,6 @@
 {
   "contract_version": "1",
-  "generated_at": "2026-06-29T20:48:02.362961+00:00",
+  "generated_at": "2026-06-30T13:30:03.931105+00:00",
   "as_of_date": "2026-06-09",
   "source_context": {
     "mode": "canonical",
@@ -98,7 +98,7 @@
     "chain_ok": false,
     "approval_path": "AUTONOMOUS_PAPER",
     "paper_compliant": true,
-    "audit_written_at": "2026-06-29T20:48:02.363085+00:00"
+    "audit_written_at": "2026-06-30T13:30:03.931245+00:00"
   },
   "kpis": {
     "total_trades": 85,
@@ -1693,15 +1693,15 @@
     }
   },
   "strategy_universe": {
-    "as_of": "2026-06-29T20:04:47.546426814Z",
+    "as_of": "2026-06-30T13:30:03.490777435Z",
     "source": "alpaca_market_data_snapshots",
     "symbols": [
       {
         "symbol": "AAPL",
-        "current_price": 281.4,
+        "current_price": 281.51,
         "prior_close": 281.31,
-        "change_usd": 0.09,
-        "change_pct": 0.032,
+        "change_usd": 0.2,
+        "change_pct": 0.0711,
         "return_20d_pct": -9.7176,
         "in_position": true,
         "strategy_member": true,
@@ -1709,10 +1709,10 @@
       },
       {
         "symbol": "AVGO",
-        "current_price": 372.3,
+        "current_price": 375.07,
         "prior_close": 363.91,
-        "change_usd": 8.39,
-        "change_pct": 2.3055,
+        "change_usd": 11.16,
+        "change_pct": 3.0667,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1731,10 +1731,10 @@
       },
       {
         "symbol": "LLY",
-        "current_price": 1229.06,
+        "current_price": 1224.615,
         "prior_close": 1206.57,
-        "change_usd": 22.49,
-        "change_pct": 1.864,
+        "change_usd": 18.045,
+        "change_pct": 1.4956,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1742,10 +1742,10 @@
       },
       {
         "symbol": "META",
-        "current_price": 562.37,
+        "current_price": 560.45,
         "prior_close": 549.92,
-        "change_usd": 12.45,
-        "change_pct": 2.264,
+        "change_usd": 10.53,
+        "change_pct": 1.9148,
         "return_20d_pct": null,
         "in_position": false,
         "strategy_member": true,
@@ -1753,10 +1753,10 @@
       },
       {
         "symbol": "NVDA",
-        "current_price": 194.92,
+        "current_price": 196.68,
         "prior_close": 191.97,
-        "change_usd": 2.95,
-        "change_pct": 1.5367,
+        "change_usd": 4.71,
+        "change_pct": 2.4535,
         "return_20d_pct": null,
         "in_position": true,
         "strategy_member": true,
@@ -1779,7 +1779,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-29T20:48:02.205392+00:00",
+        "as_of": "2026-06-30T13:30:03.690586+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -1789,7 +1789,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-29T20:48:02.362516+00:00",
+        "as_of": "2026-06-30T13:30:03.930547+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2681,15 +2681,6 @@
     "order_blotter": {
       "stocks": [
         {
-          "date": "2026-05-01",
-          "side": "SELL",
-          "sym": "AAPL",
-          "qty": 5.0,
-          "price": 282.466,
-          "usd": null,
-          "note": "Holding period ended"
-        },
-        {
           "date": "2026-05-06",
           "side": "SELL",
           "sym": "AVGO",
@@ -2917,7 +2908,7 @@
         "subsystem": "recent_orders",
         "status": "fresh",
         "source": "alpaca_trading",
-        "as_of": "2026-06-29T20:48:01.987268+00:00",
+        "as_of": "2026-06-30T13:30:03.325602+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2927,7 +2918,7 @@
         "subsystem": "stock_snapshots",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-29T20:48:02.205392+00:00",
+        "as_of": "2026-06-30T13:30:03.690586+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
@@ -2937,7 +2928,7 @@
         "subsystem": "stock_return_20d",
         "status": "fresh",
         "source": "alpaca_market_data",
-        "as_of": "2026-06-29T20:48:02.362516+00:00",
+        "as_of": "2026-06-30T13:30:03.930547+00:00",
         "attempts": 1,
         "fallback_used": false,
         "stale_from": null,
