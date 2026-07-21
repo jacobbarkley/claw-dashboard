@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-21T20:15:11.890922+00:00",
+  "generated_at": "2026-07-21T20:30:11.894799+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -790,6 +790,14 @@
     },
     {
       "date": "2026-07-20",
+      "net_pnl": 0.0,
+      "trades": 0,
+      "winners": 0,
+      "losers": 0,
+      "win_rate": null
+    },
+    {
+      "date": "2026-07-21",
       "net_pnl": 0.0,
       "trades": 0,
       "winners": 0,
