@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T13:48:16.534081+00:00",
+  "generated_at": "2026-07-28T14:00:14.315050+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2030,11 +2030,30 @@
     "max_active_positions": 10,
     "exits_needed": [],
     "positions": [],
-    "targets": [],
+    "targets": [
+      {
+        "symbol": "IP",
+        "price": 36.5,
+        "sector": "Consumer Cyclical",
+        "expiry": "2026-08-21",
+        "dte": 24,
+        "short_strike": 50.0,
+        "long_strike": 45.0,
+        "spread_width": 5.0,
+        "net_credit": 2.5,
+        "credit_width_ratio": 0.5,
+        "annualized_yield_pct": 869.0,
+        "max_loss_per_contract": 250.0,
+        "iv_rank_proxy": 0.031,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      }
+    ],
     "recent_fills": [],
-    "screener_status": "no_candidates",
-    "scanned": null,
-    "approved": null,
+    "screener_status": "screened",
+    "scanned": 30,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
