@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T17:00:11.582679+00:00",
+  "generated_at": "2026-07-31T17:15:11.217877+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2074,24 +2074,6 @@
         "selected": false
       },
       {
-        "symbol": "CF",
-        "price": 121.32,
-        "sector": "Basic Materials",
-        "expiry": "2026-08-21",
-        "dte": 21,
-        "short_strike": 125.0,
-        "long_strike": 120.0,
-        "spread_width": 5.0,
-        "net_credit": 1.7,
-        "credit_width_ratio": 0.34,
-        "annualized_yield_pct": 591.0,
-        "max_loss_per_contract": 330.0,
-        "iv_rank_proxy": 0.0,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
         "symbol": "OMC",
         "price": 74.77,
         "sector": "Communication Services",
@@ -2105,6 +2087,24 @@
         "annualized_yield_pct": 573.6,
         "max_loss_per_contract": 335.0,
         "iv_rank_proxy": 0.094,
+        "decision": "APPROVE",
+        "rationale": "Auto-approved (no API key)",
+        "selected": false
+      },
+      {
+        "symbol": "CF",
+        "price": 121.32,
+        "sector": "Basic Materials",
+        "expiry": "2026-08-21",
+        "dte": 21,
+        "short_strike": 125.0,
+        "long_strike": 120.0,
+        "spread_width": 5.0,
+        "net_credit": 1.5,
+        "credit_width_ratio": 0.3,
+        "annualized_yield_pct": 521.4,
+        "max_loss_per_contract": 350.0,
+        "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
