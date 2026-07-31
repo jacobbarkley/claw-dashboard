@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T14:00:16.651109+00:00",
+  "generated_at": "2026-07-31T14:15:11.024167+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2056,37 +2056,19 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "ES",
-        "price": 69.97,
-        "sector": "Utilities",
+        "symbol": "CF",
+        "price": 121.32,
+        "sector": "Basic Materials",
         "expiry": "2026-08-21",
         "dte": 21,
-        "short_strike": 75.0,
-        "long_strike": 70.0,
+        "short_strike": 130.0,
+        "long_strike": 125.0,
         "spread_width": 5.0,
-        "net_credit": 2.35,
-        "credit_width_ratio": 0.47,
-        "annualized_yield_pct": 816.9,
-        "max_loss_per_contract": 265.0,
-        "iv_rank_proxy": 0.25,
-        "decision": "APPROVE",
-        "rationale": "Auto-approved (no API key)",
-        "selected": false
-      },
-      {
-        "symbol": "IP",
-        "price": 36.5,
-        "sector": "Consumer Cyclical",
-        "expiry": "2026-08-21",
-        "dte": 21,
-        "short_strike": 50.0,
-        "long_strike": 45.0,
-        "spread_width": 5.0,
-        "net_credit": 2.1,
-        "credit_width_ratio": 0.42,
-        "annualized_yield_pct": 730.0,
-        "max_loss_per_contract": 290.0,
-        "iv_rank_proxy": 0.031,
+        "net_credit": 2.0,
+        "credit_width_ratio": 0.4,
+        "annualized_yield_pct": 695.2,
+        "max_loss_per_contract": 300.0,
+        "iv_rank_proxy": 0.0,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
@@ -2095,7 +2077,7 @@
     "recent_fills": [],
     "screener_status": "screened",
     "scanned": 30,
-    "approved": 2,
+    "approved": 1,
     "universe_watch": [
       {
         "symbol": "BKNG",
