@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T16:15:11.486866+00:00",
+  "generated_at": "2026-07-31T16:30:13.317386+00:00",
   "as_of_date": "2026-06-09",
   "account": {
     "equity": 85445.1,
@@ -2056,19 +2056,19 @@
     "positions": [],
     "targets": [
       {
-        "symbol": "CINF",
-        "price": 161.14,
-        "sector": "Financial Services",
+        "symbol": "ES",
+        "price": 69.97,
+        "sector": "Utilities",
         "expiry": "2026-08-21",
         "dte": 21,
-        "short_strike": 180.0,
-        "long_strike": 175.0,
+        "short_strike": 75.0,
+        "long_strike": 70.0,
         "spread_width": 5.0,
-        "net_credit": 2.0,
-        "credit_width_ratio": 0.4,
-        "annualized_yield_pct": 695.2,
-        "max_loss_per_contract": 300.0,
-        "iv_rank_proxy": 0.125,
+        "net_credit": 1.75,
+        "credit_width_ratio": 0.35,
+        "annualized_yield_pct": 608.3,
+        "max_loss_per_contract": 325.0,
+        "iv_rank_proxy": 0.25,
         "decision": "APPROVE",
         "rationale": "Auto-approved (no API key)",
         "selected": false
