@@ -281,14 +281,14 @@ function computeOpsMetrics(tickets: Ticket[]): OpsMetrics {
 
 // ─── Escalation / Close helpers (preserved from original) ─────────────────────
 
-const PUSH_COMMAND = "bash /home/jacobbarkley/claude/claw-dashboard/scripts/push-dashboard-data.sh"
+const PUSH_COMMAND = "bash /home/jacobbarkley/work/projects/claw-dashboard/scripts/push-dashboard-data.sh"
 
 function buildCloseCommand(ticket: Ticket): string {
   const today = new Date().toISOString().slice(0, 10)
   return `# Close ${ticket.ticket_id}
 # Edit the ticket file, then run the push script:
 
-TICKET_FILE=~/claude/OpenClaw-s-Brain/System/Design-Backlog/rebuild-tickets/${ticket.file ?? ticket.ticket_id + ".md"}
+TICKET_FILE=~/work/projects/openclaw-brain/System/Design-Backlog/rebuild-tickets/${ticket.file ?? ticket.ticket_id + ".md"}
 
 # Update status to RESOLVED and last_updated to today:
 sed -i 's/^status: .*/status: RESOLVED/' "$TICKET_FILE"

@@ -62,8 +62,8 @@ body: |
   tags:      $tags
 
   Please investigate and update the ticket status in:
-  ~/claude/OpenClaw-s-Brain/System/Design-Backlog/rebuild-tickets/$ticket_id.md
-  Then run: bash /home/jacobbarkley/claude/claw-dashboard/scripts/push-dashboard-data.sh
+  ~/work/projects/openclaw-brain/System/Design-Backlog/rebuild-tickets/$ticket_id.md
+  Then run: bash /home/jacobbarkley/work/projects/claw-dashboard/scripts/push-dashboard-data.sh
 ---
 "
 
