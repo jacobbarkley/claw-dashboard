@@ -5,6 +5,15 @@ repo. Keep it current.
 
 Last updated: 2026-04-09
 
+## Where this runs
+| | |
+|---|---|
+| Dev | `~/work/projects/claw-dashboard` (WSL; currently on branch `codex/guided-ledger-wave-20260527`) |
+| Prod | Vercel (repo has `.vercel/`); not on Hetzner. Its data-push crons have been paused since 2026-08-03. |
+| Deploy | Vercel: push to `main` = production (ask Jacob first); any other branch = preview only |
+| Gate | `.claude/gate.sh`: runs `npx tsc --noEmit` |
+| Remote | git@github.com:jacobbarkley/claw-dashboard.git |
+
 ## What this is
 
 The Vercel-hosted operator surface for the ClawBoy trading system. Next.js +
